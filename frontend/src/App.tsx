@@ -6,6 +6,7 @@ import { theme } from "./theme";
 import { DashboardLayout } from "./components/Layout/DashboardLayout";
 import { Dashboard } from "./pages/Dashboard";
 import { Patients } from "./pages/Patients";
+import { MealPlan } from "./pages/MealPlan";
 
 const queryClient = new QueryClient();
 
@@ -18,6 +19,7 @@ function App() {
             <Routes>
               <Route path="/" element={<Dashboard />} />
               <Route path="/patients" element={<Patients />} />
+              <Route path="/meal-plan" element={<MealPlan />} />
               {/* Adicione mais rotas aqui conforme necessário */}
             </Routes>
           </DashboardLayout>

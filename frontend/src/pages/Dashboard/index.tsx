@@ -7,6 +7,7 @@ import {
   CardContent,
   Box,
   Skeleton,
+  useTheme,
 } from "@mui/material";
 import {
   People as PeopleIcon,
@@ -14,6 +15,7 @@ import {
   TrendingUp as TrendingUpIcon,
   CalendarToday as CalendarIcon,
   Construction as ConstructionIcon,
+  Dashboard as DashboardIcon,
 } from "@mui/icons-material";
 import { useQuery } from "@tanstack/react-query";
 import { patientService } from "../../services/patientService";
@@ -32,43 +34,56 @@ const StatCard = ({
   color: string;
   isLoading?: boolean;
   comingSoon?: boolean;
-}) => (
-  <Card sx={{ height: "100%" }}>
-    <CardContent>
-      <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
-        <Box
-          sx={{
-            backgroundColor: `${color}15`,
-            borderRadius: "50%",
-            p: 1,
-            mr: 2,
-          }}
-        >
-          {icon}
-        </Box>
-        <Typography variant="h6" component="div">
-          {title}
-        </Typography>
-      </Box>
-      {isLoading ? (
-        <Skeleton variant="text" width="60%" height={40} />
-      ) : comingSoon ? (
-        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-          <ConstructionIcon sx={{ color: "text.secondary" }} />
-          <Typography variant="body1" color="text.secondary">
-            Em breve
+}) => {
+  const theme = useTheme();
+
+  return (
+    <Card sx={{ height: "100%" }}>
+      <CardContent sx={{ height: "100%", p: 3 }}>
+        <Box sx={{ display: "flex", alignItems: "center", mb: 3 }}>
+          <Box
+            sx={{
+              backgroundColor: `${color}15`,
+              borderRadius: "12px",
+              p: 1.5,
+              mr: 2,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+          >
+            {icon}
+          </Box>
+          <Typography variant="h6" component="div" color="text.primary">
+            {title}
           </Typography>
         </Box>
-      ) : (
-        <Typography variant="h4" component="div" sx={{ color }}>
-          {value}
-        </Typography>
-      )}
-    </CardContent>
-  </Card>
-);
+        {isLoading ? (
+          <Skeleton variant="text" width="60%" height={48} />
+        ) : comingSoon ? (
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+            <ConstructionIcon sx={{ color: theme.palette.text.secondary }} />
+            <Typography variant="body1" color="text.secondary">
+              Em breve
+            </Typography>
+          </Box>
+        ) : (
+          <Typography
+            variant="h3"
+            component="div"
+            sx={{ color, fontWeight: "bold" }}
+          >
+            {value}
+          </Typography>
+        )}
+      </CardContent>
+    </Card>
+  );
+};
 
 export const Dashboard = () => {
+  const theme = useTheme();
+
   // Buscar dados dos pacientes
   const { data: patients, isLoading: isLoadingPatients } = useQuery({
     queryKey: ["patients"],
@@ -85,61 +100,112 @@ export const Dashboard = () => {
     {
       title: "Total de Pacientes",
       value: totalPatients,
-      icon: <PeopleIcon sx={{ color: "#2196f3" }} />,
-      color: "#2196f3",
+      icon: <PeopleIcon sx={{ color: theme.palette.primary.main }} />,
+      color: theme.palette.primary.main,
       isLoading: isLoadingPatients,
     },
     {
       title: "Avaliações Realizadas",
       value: totalMeasurements,
-      icon: <AssessmentIcon sx={{ color: "#4caf50" }} />,
-      color: "#4caf50",
+      icon: <AssessmentIcon sx={{ color: theme.palette.primary.light }} />,
+      color: theme.palette.primary.light,
       comingSoon: true,
     },
     {
       title: "Taxa de Sucesso",
       value: `${successRate}%`,
-      icon: <TrendingUpIcon sx={{ color: "#ff9800" }} />,
-      color: "#ff9800",
+      icon: <TrendingUpIcon sx={{ color: theme.palette.primary.dark }} />,
+      color: theme.palette.primary.dark,
       comingSoon: true,
     },
     {
       title: "Próximas Consultas",
       value: upcomingAppointments,
-      icon: <CalendarIcon sx={{ color: "#f44336" }} />,
-      color: "#f44336",
+      icon: <CalendarIcon sx={{ color: theme.palette.secondary.main }} />,
+      color: theme.palette.secondary.main,
       comingSoon: true,
     },
   ];
 
   return (
     <Box sx={{ flexGrow: 1 }}>
-      <Typography variant="h4" sx={{ mb: 4 }}>
-        Dashboard
-      </Typography>
+      {/* Header com gradiente */}
+      <Box
+        sx={{
+          background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.dark} 100%)`,
+          borderRadius: 4,
+          mb: 4,
+          p: 4,
+          color: "white",
+          position: "relative",
+          overflow: "hidden",
+        }}
+      >
+        {/* Círculos decorativos */}
+        <Box
+          sx={{
+            position: "absolute",
+            top: -20,
+            right: -20,
+            width: 200,
+            height: 200,
+            borderRadius: "50%",
+            background: "rgba(255, 255, 255, 0.1)",
+          }}
+        />
+        <Box
+          sx={{
+            position: "absolute",
+            bottom: -40,
+            right: 60,
+            width: 120,
+            height: 120,
+            borderRadius: "50%",
+            background: "rgba(255, 255, 255, 0.05)",
+          }}
+        />
+
+        <Box sx={{ position: "relative", zIndex: 1 }}>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 2, mb: 2 }}>
+            <DashboardIcon sx={{ fontSize: 32 }} />
+            <Typography variant="h4" component="h1" sx={{ fontWeight: "bold" }}>
+              Dashboard
+            </Typography>
+          </Box>
+          <Typography variant="subtitle1" sx={{ opacity: 0.9 }}>
+            Bem-vindo ao seu painel de controle. Gerencie seus pacientes e
+            acompanhe suas evoluções.
+          </Typography>
+        </Box>
+      </Box>
 
       <Grid container spacing={3}>
         {stats.map((stat) => (
-          <Grid key={stat.title} xs={12} sm={6} md={3}>
+          <Grid item xs={12} sm={6} md={3} key={stat.title}>
             <StatCard {...stat} />
           </Grid>
         ))}
 
-        <Grid xs={12} md={8}>
+        <Grid item xs={12} md={8}>
           <Paper sx={{ p: 3, height: "400px" }}>
-            <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 2 }}>
-              <Typography variant="h6">Evolução dos Pacientes</Typography>
-              <ConstructionIcon sx={{ color: "text.secondary" }} />
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 3 }}>
+              <Typography variant="h6" color="text.primary">
+                Evolução dos Pacientes
+              </Typography>
+              <ConstructionIcon sx={{ color: theme.palette.text.secondary }} />
               <Typography variant="body2" color="text.secondary">
                 Em breve
               </Typography>
             </Box>
             <Box
               sx={{
-                height: "calc(100% - 40px)",
+                height: "calc(100% - 48px)",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
+                p: 3,
+                backgroundColor: "rgba(0, 135, 95, 0.04)",
+                borderRadius: 2,
               }}
             >
               <Typography variant="body1" color="text.secondary" align="center">
@@ -150,21 +216,26 @@ export const Dashboard = () => {
           </Paper>
         </Grid>
 
-        <Grid xs={12} md={4}>
+        <Grid item xs={12} md={4}>
           <Paper sx={{ p: 3, height: "400px" }}>
-            <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 2 }}>
-              <Typography variant="h6">Próximas Consultas</Typography>
-              <ConstructionIcon sx={{ color: "text.secondary" }} />
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 3 }}>
+              <Typography variant="h6" color="text.primary">
+                Próximas Consultas
+              </Typography>
+              <ConstructionIcon sx={{ color: theme.palette.text.secondary }} />
               <Typography variant="body2" color="text.secondary">
                 Em breve
               </Typography>
             </Box>
             <Box
               sx={{
-                height: "calc(100% - 40px)",
+                height: "calc(100% - 48px)",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
+                p: 3,
+                backgroundColor: "rgba(0, 135, 95, 0.04)",
+                borderRadius: 2,
               }}
             >
               <Typography variant="body1" color="text.secondary" align="center">

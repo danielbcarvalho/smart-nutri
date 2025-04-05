@@ -1,20 +1,16 @@
 import React, { useState } from "react";
 import {
-  AppBar,
   Box,
   CssBaseline,
   Drawer,
-  IconButton,
   List,
   ListItem,
   ListItemIcon,
   ListItemText,
   Toolbar,
   Typography,
-  useTheme,
 } from "@mui/material";
 import {
-  Menu as MenuIcon,
   Dashboard as DashboardIcon,
   People as PeopleIcon,
   Assessment as AssessmentIcon,
@@ -32,7 +28,6 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
   children,
 }) => {
   const [mobileOpen, setMobileOpen] = useState(false);
-  const theme = useTheme();
   const navigate = useNavigate();
 
   const handleDrawerToggle = () => {
@@ -42,7 +37,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
   const menuItems = [
     { text: "Dashboard", icon: <DashboardIcon />, path: "/" },
     { text: "Pacientes", icon: <PeopleIcon />, path: "/patients" },
-    { text: "Avaliações", icon: <AssessmentIcon />, path: "/assessments" },
+    { text: "Plano Alimentar", icon: <AssessmentIcon />, path: "/meal-plan" },
     { text: "Configurações", icon: <SettingsIcon />, path: "/settings" },
   ];
 
@@ -67,28 +62,6 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
   return (
     <Box sx={{ display: "flex" }}>
       <CssBaseline />
-      <AppBar
-        position="fixed"
-        sx={{
-          width: { sm: `calc(100% - ${drawerWidth}px)` },
-          ml: { sm: `${drawerWidth}px` },
-        }}
-      >
-        <Toolbar>
-          <IconButton
-            color="inherit"
-            aria-label="open drawer"
-            edge="start"
-            onClick={handleDrawerToggle}
-            sx={{ mr: 2, display: { sm: "none" } }}
-          >
-            <MenuIcon />
-          </IconButton>
-          <Typography variant="h6" noWrap component="div">
-            Dashboard
-          </Typography>
-        </Toolbar>
-      </AppBar>
       <Box
         component="nav"
         sx={{ width: { sm: drawerWidth }, flexShrink: { sm: 0 } }}
@@ -130,7 +103,6 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
           flexGrow: 1,
           p: 3,
           width: { sm: `calc(100% - ${drawerWidth}px)` },
-          mt: "64px",
         }}
       >
         {children}

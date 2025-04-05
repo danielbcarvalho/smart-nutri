@@ -45,11 +45,11 @@ import { AxiosError } from "axios";
 
 interface Props {
   patient: Patient;
-  open: boolean;
-  onClose: () => void;
+  open?: boolean;
+  onClose?: () => void;
 }
 
-export function PatientMeasurements({ patient, open, onClose }: Props) {
+export function PatientMeasurements({ patient, open = false, onClose }: Props) {
   const [showAddForm, setShowAddForm] = useState(false);
   const [showAllMeasurements, setShowAllMeasurements] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -262,277 +262,38 @@ export function PatientMeasurements({ patient, open, onClose }: Props) {
     .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 
   return (
-    <Dialog open={open} onClose={onClose} maxWidth="lg" fullWidth>
-      <DialogTitle>
-        <Stack
-          direction="row"
-          justifyContent="space-between"
-          alignItems="center"
-        >
-          <Stack direction="row" spacing={1} alignItems="center">
-            <TimelineIcon />
-            <Typography variant="h6">Avaliações do Paciente</Typography>
-          </Stack>
-          <IconButton
-            edge="end"
-            color="inherit"
-            onClick={onClose}
-            aria-label="close"
-          >
-            <CloseIcon />
-          </IconButton>
-        </Stack>
-      </DialogTitle>
-      <DialogContent>
-        <Stack spacing={3}>
-          {/* Informações do paciente */}
-          <Paper sx={{ p: 2, mb: 2 }}>
-            <Typography variant="h6" gutterBottom>
-              Informações do Paciente
-            </Typography>
-            <Box sx={{ display: "flex", gap: 2, flexWrap: "wrap" }}>
-              <Box>
-                <Typography variant="subtitle2" color="text.secondary">
-                  Altura
-                </Typography>
-                <Typography variant="body1">
-                  {patient?.height ? `${patient.height} cm` : "-"}
-                </Typography>
-              </Box>
-              <Box>
-                <Typography variant="subtitle2" color="text.secondary">
-                  Peso
-                </Typography>
-                <Typography variant="body1">
-                  {patient?.weight ? `${patient.weight} kg` : "-"}
-                </Typography>
-              </Box>
-              <Box>
-                <Typography variant="subtitle2" color="text.secondary">
-                  IMC
-                </Typography>
-                <Typography variant="body1">{formatIMC(imc)}</Typography>
-              </Box>
-            </Box>
-          </Paper>
-
-          {/* Última Avaliação */}
-          {lastMeasurement && (
-            <Paper sx={{ p: 2, mb: 2 }}>
-              <Typography variant="h6" gutterBottom>
-                Última Avaliação -{" "}
-                {format(new Date(lastMeasurement.date), "dd/MM/yyyy")}
-              </Typography>
-              <Box
-                sx={{
-                  display: "grid",
-                  gridTemplateColumns: "repeat(3, 1fr)",
-                  gap: 2,
-                }}
-              >
-                <Box>
-                  <Typography variant="subtitle2" color="text.secondary">
-                    Peso
-                  </Typography>
-                  <Typography variant="body1">
-                    {lastMeasurement.weight.toFixed(1)} kg
-                  </Typography>
-                </Box>
-                <Box>
-                  <Typography variant="subtitle2" color="text.secondary">
-                    Altura
-                  </Typography>
-                  <Typography variant="body1">
-                    {lastMeasurement.height.toFixed(1)} cm
-                  </Typography>
-                </Box>
-                <Box>
-                  <Typography variant="subtitle2" color="text.secondary">
-                    IMC
-                  </Typography>
-                  <Typography variant="body1">
-                    {formatIMC(
-                      calculateIMC(
-                        lastMeasurement.weight,
-                        lastMeasurement.height
-                      )
-                    )}
-                  </Typography>
-                </Box>
-                {lastMeasurement.bodyFat && (
-                  <Box>
-                    <Typography variant="subtitle2" color="text.secondary">
-                      Gordura Corporal
-                    </Typography>
-                    <Typography variant="body1">
-                      {lastMeasurement.bodyFat.toFixed(1)}%
-                    </Typography>
-                  </Box>
-                )}
-                {lastMeasurement.muscleMass && (
-                  <Box>
-                    <Typography variant="subtitle2" color="text.secondary">
-                      Massa Muscular
-                    </Typography>
-                    <Typography variant="body1">
-                      {lastMeasurement.muscleMass.toFixed(1)}%
-                    </Typography>
-                  </Box>
-                )}
-              </Box>
-            </Paper>
-          )}
-
-          {/* Gráfico de evolução */}
-          <Paper sx={{ p: 2 }}>
-            <Typography variant="h6" gutterBottom>
-              Evolução
-            </Typography>
-            <Box sx={{ height: 300, width: "100%" }}>
-              <ResponsiveContainer>
-                <LineChart data={chartData}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="date" />
-                  <YAxis
-                    yAxisId="left"
-                    domain={["dataMin - 5", "dataMax + 5"]}
-                    label={{
-                      value: "Peso (kg)",
-                      angle: -90,
-                      position: "insideLeft",
-                    }}
-                  />
-                  <YAxis
-                    yAxisId="right"
-                    orientation="right"
-                    domain={["dataMin - 2", "dataMax + 2"]}
-                    label={{ value: "IMC", angle: 90, position: "insideRight" }}
-                  />
-                  <Tooltip
-                    formatter={(value: number, name: string) => {
-                      if (name === "Peso (kg)") return `${value.toFixed(1)} kg`;
-                      if (name === "IMC") return value.toFixed(2);
-                      return value;
-                    }}
-                  />
-                  <Legend />
-                  <Line
-                    yAxisId="left"
-                    type="monotone"
-                    dataKey="weight"
-                    stroke="#8884d8"
-                    name="Peso (kg)"
-                    strokeWidth={2}
-                    dot={{ r: 6 }}
-                    activeDot={{ r: 8 }}
-                  />
-                  <Line
-                    yAxisId="right"
-                    type="monotone"
-                    dataKey="imc"
-                    stroke="#82ca9d"
-                    name="IMC"
-                    strokeWidth={2}
-                    dot={{ r: 6 }}
-                    activeDot={{ r: 8 }}
-                  />
-                </LineChart>
-              </ResponsiveContainer>
-            </Box>
-          </Paper>
-
-          {/* Botões de ação */}
-          <Stack direction="row" spacing={2}>
-            <Button
-              variant="contained"
-              startIcon={<AddIcon />}
-              onClick={() => {
-                setShowAddForm(true);
-                setShowAllMeasurements(false);
-                setError(null);
-              }}
+    <>
+      {open ? (
+        <Dialog open={open} onClose={onClose} maxWidth="lg" fullWidth>
+          <DialogTitle>
+            <Stack
+              direction="row"
+              justifyContent="space-between"
+              alignItems="center"
             >
-              Adicionar nova avaliação
-            </Button>
-            <Button
-              variant="outlined"
-              startIcon={<VisibilityIcon />}
-              onClick={() => {
-                setShowAllMeasurements(!showAllMeasurements);
-                setShowAddForm(false);
-              }}
-            >
-              {showAllMeasurements
-                ? "Ocultar histórico"
-                : "Ver histórico completo"}
-            </Button>
-          </Stack>
-
-          {/* Tabela com todas as medições */}
-          {showAllMeasurements && measurements && measurements.length > 0 && (
-            <Paper sx={{ p: 2 }}>
-              <Typography variant="h6" gutterBottom>
-                Histórico de Avaliações
-              </Typography>
-              <TableContainer>
-                <Table size="small">
-                  <TableHead>
-                    <TableRow>
-                      <TableCell>Data</TableCell>
-                      <TableCell align="right">Peso (kg)</TableCell>
-                      <TableCell align="right">Altura (cm)</TableCell>
-                      <TableCell align="right">IMC</TableCell>
-                      <TableCell align="right">Gordura (%)</TableCell>
-                      <TableCell align="right">Músculo (%)</TableCell>
-                    </TableRow>
-                  </TableHead>
-                  <TableBody>
-                    {measurements
-                      .sort(
-                        (a, b) =>
-                          new Date(b.date).getTime() -
-                          new Date(a.date).getTime()
-                      )
-                      .map((measurement) => {
-                        const weight = Number(measurement.weight);
-                        const height = Number(patient.height);
-                        const bodyFat = measurement.bodyFat
-                          ? Number(measurement.bodyFat)
-                          : undefined;
-                        const muscleMass = measurement.muscleMass
-                          ? Number(measurement.muscleMass)
-                          : undefined;
-
-                        return (
-                          <TableRow key={measurement.id}>
-                            <TableCell>
-                              {format(new Date(measurement.date), "dd/MM/yyyy")}
-                            </TableCell>
-                            <TableCell align="right">
-                              {weight.toFixed(1)}
-                            </TableCell>
-                            <TableCell align="right">
-                              {height.toFixed(1)}
-                            </TableCell>
-                            <TableCell align="right">
-                              {formatIMC(calculateIMC(weight, height))}
-                            </TableCell>
-                            <TableCell align="right">
-                              {bodyFat ? bodyFat.toFixed(1) : "-"}
-                            </TableCell>
-                            <TableCell align="right">
-                              {muscleMass ? muscleMass.toFixed(1) : "-"}
-                            </TableCell>
-                          </TableRow>
-                        );
-                      })}
-                  </TableBody>
-                </Table>
-              </TableContainer>
-            </Paper>
-          )}
-        </Stack>
-      </DialogContent>
+              <Stack direction="row" spacing={1} alignItems="center">
+                <TimelineIcon />
+                <Typography variant="h6">Avaliações do Paciente</Typography>
+              </Stack>
+              {onClose && (
+                <IconButton
+                  edge="end"
+                  color="inherit"
+                  onClick={onClose}
+                  aria-label="close"
+                >
+                  <CloseIcon />
+                </IconButton>
+              )}
+            </Stack>
+          </DialogTitle>
+          <DialogContent>
+            <MeasurementsContent />
+          </DialogContent>
+        </Dialog>
+      ) : (
+        <MeasurementsContent />
+      )}
 
       {/* Modal separado para o formulário de nova avaliação */}
       <Dialog
@@ -694,6 +455,255 @@ export function PatientMeasurements({ patient, open, onClose }: Props) {
           </Box>
         </DialogContent>
       </Dialog>
-    </Dialog>
+    </>
   );
+
+  function MeasurementsContent() {
+    return (
+      <Stack spacing={3}>
+        {/* Informações do paciente */}
+        <Paper sx={{ p: 2, mb: 2 }}>
+          <Typography variant="h6" gutterBottom>
+            Informações do Paciente
+          </Typography>
+          <Box sx={{ display: "flex", gap: 2, flexWrap: "wrap" }}>
+            <Box>
+              <Typography variant="subtitle2" color="text.secondary">
+                Altura
+              </Typography>
+              <Typography variant="body1">
+                {patient?.height ? `${patient.height} cm` : "-"}
+              </Typography>
+            </Box>
+            <Box>
+              <Typography variant="subtitle2" color="text.secondary">
+                Peso
+              </Typography>
+              <Typography variant="body1">
+                {patient?.weight ? `${patient.weight} kg` : "-"}
+              </Typography>
+            </Box>
+            <Box>
+              <Typography variant="subtitle2" color="text.secondary">
+                IMC
+              </Typography>
+              <Typography variant="body1">{formatIMC(imc)}</Typography>
+            </Box>
+          </Box>
+        </Paper>
+
+        {/* Última Avaliação */}
+        {lastMeasurement && (
+          <Paper sx={{ p: 2, mb: 2 }}>
+            <Typography variant="h6" gutterBottom>
+              Última Avaliação -{" "}
+              {format(new Date(lastMeasurement.date), "dd/MM/yyyy")}
+            </Typography>
+            <Box
+              sx={{
+                display: "grid",
+                gridTemplateColumns: "repeat(3, 1fr)",
+                gap: 2,
+              }}
+            >
+              <Box>
+                <Typography variant="subtitle2" color="text.secondary">
+                  Peso
+                </Typography>
+                <Typography variant="body1">
+                  {lastMeasurement.weight.toFixed(1)} kg
+                </Typography>
+              </Box>
+              <Box>
+                <Typography variant="subtitle2" color="text.secondary">
+                  Altura
+                </Typography>
+                <Typography variant="body1">
+                  {lastMeasurement.height.toFixed(1)} cm
+                </Typography>
+              </Box>
+              <Box>
+                <Typography variant="subtitle2" color="text.secondary">
+                  IMC
+                </Typography>
+                <Typography variant="body1">
+                  {formatIMC(
+                    calculateIMC(lastMeasurement.weight, lastMeasurement.height)
+                  )}
+                </Typography>
+              </Box>
+              {lastMeasurement.bodyFat && (
+                <Box>
+                  <Typography variant="subtitle2" color="text.secondary">
+                    Gordura Corporal
+                  </Typography>
+                  <Typography variant="body1">
+                    {lastMeasurement.bodyFat.toFixed(1)}%
+                  </Typography>
+                </Box>
+              )}
+              {lastMeasurement.muscleMass && (
+                <Box>
+                  <Typography variant="subtitle2" color="text.secondary">
+                    Massa Muscular
+                  </Typography>
+                  <Typography variant="body1">
+                    {lastMeasurement.muscleMass.toFixed(1)}%
+                  </Typography>
+                </Box>
+              )}
+            </Box>
+          </Paper>
+        )}
+
+        {/* Gráfico de evolução */}
+        <Paper sx={{ p: 2 }}>
+          <Typography variant="h6" gutterBottom>
+            Evolução
+          </Typography>
+          <Box sx={{ height: 300, width: "100%" }}>
+            <ResponsiveContainer>
+              <LineChart data={chartData}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="date" />
+                <YAxis
+                  yAxisId="left"
+                  domain={["dataMin - 5", "dataMax + 5"]}
+                  label={{
+                    value: "Peso (kg)",
+                    angle: -90,
+                    position: "insideLeft",
+                  }}
+                />
+                <YAxis
+                  yAxisId="right"
+                  orientation="right"
+                  domain={["dataMin - 2", "dataMax + 2"]}
+                  label={{ value: "IMC", angle: 90, position: "insideRight" }}
+                />
+                <Tooltip
+                  formatter={(value: number, name: string) => {
+                    if (name === "Peso (kg)") return `${value.toFixed(1)} kg`;
+                    if (name === "IMC") return value.toFixed(2);
+                    return value;
+                  }}
+                />
+                <Legend />
+                <Line
+                  yAxisId="left"
+                  type="monotone"
+                  dataKey="weight"
+                  stroke="#8884d8"
+                  name="Peso (kg)"
+                  strokeWidth={2}
+                  dot={{ r: 6 }}
+                  activeDot={{ r: 8 }}
+                />
+                <Line
+                  yAxisId="right"
+                  type="monotone"
+                  dataKey="imc"
+                  stroke="#82ca9d"
+                  name="IMC"
+                  strokeWidth={2}
+                  dot={{ r: 6 }}
+                  activeDot={{ r: 8 }}
+                />
+              </LineChart>
+            </ResponsiveContainer>
+          </Box>
+        </Paper>
+
+        {/* Botões de ação */}
+        <Stack direction="row" spacing={2}>
+          <Button
+            variant="contained"
+            startIcon={<AddIcon />}
+            onClick={() => {
+              setShowAddForm(true);
+              setShowAllMeasurements(false);
+              setError(null);
+            }}
+          >
+            Adicionar nova avaliação
+          </Button>
+          <Button
+            variant="outlined"
+            startIcon={<VisibilityIcon />}
+            onClick={() => {
+              setShowAllMeasurements(!showAllMeasurements);
+              setShowAddForm(false);
+            }}
+          >
+            {showAllMeasurements
+              ? "Ocultar histórico"
+              : "Ver histórico completo"}
+          </Button>
+        </Stack>
+
+        {/* Tabela com todas as medições */}
+        {showAllMeasurements && measurements && measurements.length > 0 && (
+          <Paper sx={{ p: 2 }}>
+            <Typography variant="h6" gutterBottom>
+              Histórico de Avaliações
+            </Typography>
+            <TableContainer>
+              <Table size="small">
+                <TableHead>
+                  <TableRow>
+                    <TableCell>Data</TableCell>
+                    <TableCell align="right">Peso (kg)</TableCell>
+                    <TableCell align="right">Altura (cm)</TableCell>
+                    <TableCell align="right">IMC</TableCell>
+                    <TableCell align="right">Gordura (%)</TableCell>
+                    <TableCell align="right">Músculo (%)</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {measurements
+                    .sort(
+                      (a, b) =>
+                        new Date(b.date).getTime() - new Date(a.date).getTime()
+                    )
+                    .map((measurement) => {
+                      const weight = Number(measurement.weight);
+                      const height = Number(patient.height);
+                      const bodyFat = measurement.bodyFat
+                        ? Number(measurement.bodyFat)
+                        : undefined;
+                      const muscleMass = measurement.muscleMass
+                        ? Number(measurement.muscleMass)
+                        : undefined;
+
+                      return (
+                        <TableRow key={measurement.id}>
+                          <TableCell>
+                            {format(new Date(measurement.date), "dd/MM/yyyy")}
+                          </TableCell>
+                          <TableCell align="right">
+                            {weight.toFixed(1)}
+                          </TableCell>
+                          <TableCell align="right">
+                            {height.toFixed(1)}
+                          </TableCell>
+                          <TableCell align="right">
+                            {formatIMC(calculateIMC(weight, height))}
+                          </TableCell>
+                          <TableCell align="right">
+                            {bodyFat ? bodyFat.toFixed(1) : "-"}
+                          </TableCell>
+                          <TableCell align="right">
+                            {muscleMass ? muscleMass.toFixed(1) : "-"}
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
+                </TableBody>
+              </Table>
+            </TableContainer>
+          </Paper>
+        )}
+      </Stack>
+    );
+  }
 }
