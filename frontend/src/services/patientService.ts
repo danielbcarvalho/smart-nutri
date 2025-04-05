@@ -1,4 +1,4 @@
-import axios from "axios";
+import { api } from "../lib/axios";
 
 const API_URL = "http://localhost:8000";
 
@@ -11,11 +11,11 @@ export interface Patient {
   gender: "M" | "F" | "OTHER";
   height: number;
   weight: number;
-  goals?: string[];
-  allergies?: string[];
-  healthConditions?: string[];
-  medications?: string[];
-  observations?: string;
+  goals: string[];
+  allergies: string[];
+  healthConditions: string[];
+  medications: string[];
+  observations: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -47,68 +47,70 @@ export interface BodyMeasurements {
 
 export interface Measurement {
   id: string;
-  date: string;
-  weight: number;
-  bodyFat?: number;
-  muscleMass?: number;
-  bodyWater?: number;
-  visceralFat?: number;
-  measurements: BodyMeasurements;
   patientId: string;
+  date: string;
+  weight: string | number;
+  bodyFat?: string | number | null;
+  muscleMass?: string | number | null;
+  bodyWater?: string | number | null;
+  visceralFat?: string | number | null;
+  measurements: BodyMeasurements;
   createdAt: string;
   updatedAt: string;
 }
 
 export interface CreateMeasurementDto {
-  date: string;
   weight: number;
+  height: number;
   bodyFat?: number;
   muscleMass?: number;
   bodyWater?: number;
   visceralFat?: number;
-  measurements?: BodyMeasurements;
+  notes?: string;
+  date: string;
+  measurements: BodyMeasurements;
 }
 
 class PatientService {
   private readonly baseUrl = `${API_URL}/patients`;
 
   async getAll(): Promise<Patient[]> {
-    const response = await axios.get<Patient[]>(this.baseUrl);
+    const response = await api.get<Patient[]>("/patients");
     return response.data;
   }
 
   async getById(id: string): Promise<Patient> {
-    const response = await axios.get<Patient>(`${this.baseUrl}/${id}`);
+    const response = await api.get<Patient>(`/patients/${id}`);
     return response.data;
   }
 
   async create(data: CreatePatientDto): Promise<Patient> {
-    const response = await axios.post<Patient>(this.baseUrl, data);
+    const response = await api.post<Patient>("/patients", data);
     return response.data;
   }
 
   async update(id: string, data: UpdatePatientDto): Promise<Patient> {
-    const response = await axios.patch<Patient>(`${this.baseUrl}/${id}`, data);
+    const response = await api.patch<Patient>(`/patients/${id}`, data);
     return response.data;
   }
 
   async delete(id: string): Promise<void> {
-    await axios.delete(`${this.baseUrl}/${id}`);
+    await api.delete(`/patients/${id}`);
   }
 
-  async getMeasurements(id: string): Promise<Measurement[]> {
-    const response = await axios.get<Measurement[]>(
-      `${this.baseUrl}/${id}/measurements`
+  async getMeasurements(patientId: string): Promise<Measurement[]> {
+    const response = await api.get<Measurement[]>(
+      `/patients/${patientId}/measurements`
     );
     return response.data;
   }
 
   async createMeasurement(
-    id: string,
+    patientId: string,
     data: CreateMeasurementDto
   ): Promise<Measurement> {
-    const response = await axios.post<Measurement>(
-      `${this.baseUrl}/${id}/measurements`,
+    const response = await api.post<Measurement>(
+      `/patients/${patientId}/measurements`,
       data
     );
     return response.data;

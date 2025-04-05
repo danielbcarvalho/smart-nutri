@@ -30,6 +30,7 @@ import {
   Male as MaleIcon,
   Female as FemaleIcon,
   Transgender as TransgenderIcon,
+  Timeline as TimelineIcon,
 } from "@mui/icons-material";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
@@ -39,10 +40,13 @@ import {
 } from "../../services/patientService";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { PatientMeasurements } from "../../components/PatientMeasurements";
 
 export function Patients() {
   const [open, setOpen] = useState(false);
   const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
+  const [selectedPatientForMeasurements, setSelectedPatientForMeasurements] =
+    useState<Patient | null>(null);
   const [formData, setFormData] = useState<CreatePatientDto>({
     name: "",
     email: "",
@@ -333,21 +337,34 @@ export function Patients() {
                         : ""}
                     </Typography>
                   </Box>
-                  <Stack direction="row" spacing={1}>
-                    <IconButton
+                  <Stack direction="column" spacing={1}>
+                    <Button
                       size="small"
-                      onClick={() => handleEdit(patient)}
+                      onClick={() => setSelectedPatientForMeasurements(patient)}
                       color="primary"
+                      variant="outlined"
+                      startIcon={<TimelineIcon />}
                     >
-                      <EditIcon />
-                    </IconButton>
-                    <IconButton
-                      size="small"
-                      onClick={() => handleDelete(patient)}
-                      color="error"
-                    >
-                      <DeleteIcon />
-                    </IconButton>
+                      Avaliação
+                    </Button>
+                    <Stack direction="row" spacing={1}>
+                      <IconButton
+                        size="small"
+                        onClick={() => handleEdit(patient)}
+                        color="primary"
+                        aria-label="editar paciente"
+                      >
+                        <EditIcon />
+                      </IconButton>
+                      <IconButton
+                        size="small"
+                        onClick={() => handleDelete(patient)}
+                        color="error"
+                        aria-label="excluir paciente"
+                      >
+                        <DeleteIcon />
+                      </IconButton>
+                    </Stack>
                   </Stack>
                 </Stack>
 
@@ -568,6 +585,19 @@ export function Patients() {
           </Button>
         </DialogActions>
       </Dialog>
+
+      {/* Modal de Medições */}
+      {selectedPatientForMeasurements && (
+        <PatientMeasurements
+          patient={{
+            ...selectedPatientForMeasurements,
+            height: Number(selectedPatientForMeasurements.height) || 0,
+            weight: Number(selectedPatientForMeasurements.weight) || 0,
+          }}
+          open={!!selectedPatientForMeasurements}
+          onClose={() => setSelectedPatientForMeasurements(null)}
+        />
+      )}
     </Box>
   );
 }
