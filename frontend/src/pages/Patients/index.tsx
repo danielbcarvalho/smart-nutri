@@ -11,18 +11,25 @@ import {
   MenuItem,
   IconButton,
   Stack,
+  Paper,
+  InputAdornment,
+  Chip,
+  ToggleButton,
+  ToggleButtonGroup,
+  Card,
+  CardContent,
+  Avatar,
 } from "@mui/material";
-import {
-  DataGrid,
-  GridColDef,
-  GridRenderCellParams,
-  GridInitialState,
-} from "@mui/x-data-grid";
 import {
   Add as AddIcon,
   Edit as EditIcon,
   Delete as DeleteIcon,
   Close as CloseIcon,
+  Search as SearchIcon,
+  FilterList as FilterListIcon,
+  Male as MaleIcon,
+  Female as FemaleIcon,
+  Transgender as TransgenderIcon,
 } from "@mui/icons-material";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
@@ -48,7 +55,18 @@ export function Patients() {
 
   const queryClient = useQueryClient();
 
-  const { data: patients, isLoading } = useQuery({
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 600);
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 600);
+    };
+
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
+  const { data: patients } = useQuery({
     queryKey: ["patients"],
     queryFn: async () => {
       const data = await patientService.getAll();
@@ -104,12 +122,11 @@ export function Patients() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Converte os valores de string para número antes de enviar
     const formattedData = {
       ...formData,
       height: Number(formData.height),
       weight: Number(formData.weight),
-      gender: formData.gender as "M" | "F" | "OTHER", // Garante que apenas M, F ou OTHER seja enviado
+      gender: formData.gender as "M" | "F" | "OTHER",
     };
 
     if (selectedPatient) {
@@ -139,168 +156,236 @@ export function Patients() {
     }
   };
 
-  const [isMobile, setIsMobile] = useState(window.innerWidth < 600);
-  const [isTablet, setIsTablet] = useState(window.innerWidth < 960);
-
-  useEffect(() => {
-    const handleResize = () => {
-      setIsMobile(window.innerWidth < 600);
-      setIsTablet(window.innerWidth < 960);
-    };
-
-    window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
-  }, []);
-
-  const initialState: GridInitialState = {
-    columns: {
-      columnVisibilityModel: {
-        email: !isMobile,
-        phone: !isMobile,
-        height: !isTablet,
-        weight: !isTablet,
-      },
-    },
-  };
-
-  const columns: GridColDef<Patient>[] = [
-    {
-      field: "name",
-      headerName: "Nome",
-      flex: 1,
-      minWidth: 150,
-    },
-    {
-      field: "email",
-      headerName: "Email",
-      flex: 1,
-      minWidth: 200,
-    },
-    {
-      field: "phone",
-      headerName: "Telefone",
-      flex: 1,
-      minWidth: 130,
-    },
-    {
-      field: "birthDate",
-      headerName: "Data de Nascimento",
-      flex: 1,
-      minWidth: 130,
-      renderCell: ({ row }: GridRenderCellParams<Patient>) => {
-        if (!row?.birthDate) return "";
-        try {
-          const date = new Date(row.birthDate);
-          if (isNaN(date.getTime())) return row.birthDate;
-          return format(date, "dd/MM/yyyy", { locale: ptBR });
-        } catch (error) {
-          console.error("Erro ao formatar data:", error);
-          return row.birthDate;
-        }
-      },
-    },
-    {
-      field: "gender",
-      headerName: "Gênero",
-      flex: 1,
-      minWidth: 100,
-      renderCell: ({ row }: GridRenderCellParams<Patient>) => {
-        if (!row?.gender) return "";
-        switch (row.gender) {
-          case "M":
-            return "Masculino";
-          case "F":
-            return "Feminino";
-          case "OTHER":
-            return "Outro";
-          default:
-            return row.gender;
-        }
-      },
-    },
-    {
-      field: "height",
-      headerName: "Altura (cm)",
-      flex: 1,
-      minWidth: 100,
-    },
-    {
-      field: "weight",
-      headerName: "Peso (kg)",
-      flex: 1,
-      minWidth: 100,
-    },
-    {
-      field: "actions",
-      headerName: "Ações",
-      flex: 1,
-      minWidth: 100,
-      renderCell: ({ row }: GridRenderCellParams<Patient>) => (
-        <Stack direction="row" spacing={1}>
-          <IconButton
-            size="small"
-            onClick={() => handleEdit(row)}
-            sx={{
-              padding: { xs: "8px", sm: "4px" }, // Maior área de toque em mobile
-            }}
-          >
-            <EditIcon />
-          </IconButton>
-          <IconButton
-            size="small"
-            onClick={() => handleDelete(row)}
-            sx={{
-              padding: { xs: "8px", sm: "4px" }, // Maior área de toque em mobile
-            }}
-          >
-            <DeleteIcon />
-          </IconButton>
-        </Stack>
-      ),
-    },
-  ];
+  const [searchTerm, setSearchTerm] = useState("");
+  const [showFilters, setShowFilters] = useState(false);
+  const [filters, setFilters] = useState({
+    gender: "all",
+    createdAt: "all",
+    updatedAt: "all",
+  });
 
   return (
-    <Box sx={{ height: "100%", width: "100%", p: { xs: 1, sm: 2 } }}>
-      <Stack
-        direction="row"
-        justifyContent="space-between"
-        alignItems="center"
-        spacing={2}
-        sx={{ mb: 2 }}
-      >
-        <Typography variant="h5" component="h1">
-          Pacientes
-        </Typography>
-        <Button
-          variant="contained"
-          onClick={handleClickOpen}
-          startIcon={<AddIcon />}
-          sx={{
-            minWidth: { xs: "auto", sm: "140px" },
-            px: { xs: 2, sm: 3 },
-          }}
-        >
-          {window.innerWidth < 600 ? "+" : "Novo Paciente"}
-        </Button>
-      </Stack>
-
-      <DataGrid
-        rows={patients || []}
-        columns={columns}
-        loading={isLoading}
-        autoHeight
-        disableRowSelectionOnClick
-        initialState={initialState}
+    <Box sx={{ height: "100%", width: "100%", p: { xs: 1, sm: 3 } }}>
+      {/* Header */}
+      <Paper
+        elevation={0}
         sx={{
-          "& .MuiDataGrid-cell": {
-            padding: { xs: "8px 4px", sm: "16px 8px" },
-          },
-          "& .MuiDataGrid-columnHeader": {
-            padding: { xs: "8px 4px", sm: "16px 8px" },
-          },
+          p: 3,
+          mb: 3,
+          bgcolor: "primary.main",
+          color: "primary.contrastText",
+          borderRadius: 2,
         }}
-      />
+      >
+        <Stack
+          direction={{ xs: "column", sm: "row" }}
+          justifyContent="space-between"
+          alignItems={{ xs: "stretch", sm: "center" }}
+          spacing={2}
+        >
+          <Box>
+            <Typography variant="h4" component="h1" gutterBottom>
+              Pacientes
+            </Typography>
+            <Typography variant="subtitle1">
+              Total de pacientes: {patients?.length || 0}
+            </Typography>
+          </Box>
+          <Button
+            variant="contained"
+            onClick={handleClickOpen}
+            startIcon={<AddIcon />}
+            sx={{
+              bgcolor: "white",
+              color: "primary.main",
+              "&:hover": {
+                bgcolor: "grey.100",
+              },
+            }}
+          >
+            Novo Paciente
+          </Button>
+        </Stack>
+      </Paper>
+
+      {/* Search and Filters */}
+      <Paper sx={{ p: 2, mb: 3 }} elevation={1}>
+        <Stack spacing={2}>
+          <Stack
+            direction={{ xs: "column", sm: "row" }}
+            spacing={2}
+            alignItems="center"
+          >
+            <TextField
+              fullWidth
+              placeholder="Buscar pacientes..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <SearchIcon />
+                  </InputAdornment>
+                ),
+              }}
+              sx={{ flex: 1 }}
+            />
+            <Button
+              variant="outlined"
+              onClick={() => setShowFilters(!showFilters)}
+              startIcon={<FilterListIcon />}
+              sx={{ minWidth: 130 }}
+            >
+              Filtros
+            </Button>
+          </Stack>
+
+          {showFilters && (
+            <Box sx={{ pt: 2 }}>
+              <Typography variant="subtitle2" gutterBottom>
+                Gênero
+              </Typography>
+              <ToggleButtonGroup
+                value={filters.gender}
+                exclusive
+                onChange={(e, value) =>
+                  setFilters({ ...filters, gender: value || "all" })
+                }
+                size="small"
+                sx={{ mb: 2 }}
+              >
+                <ToggleButton value="all">Todos</ToggleButton>
+                <ToggleButton value="M">
+                  <MaleIcon sx={{ mr: 1 }} /> Masculino
+                </ToggleButton>
+                <ToggleButton value="F">
+                  <FemaleIcon sx={{ mr: 1 }} /> Feminino
+                </ToggleButton>
+                <ToggleButton value="OTHER">
+                  <TransgenderIcon sx={{ mr: 1 }} /> Outro
+                </ToggleButton>
+              </ToggleButtonGroup>
+
+              <Typography variant="subtitle2" gutterBottom>
+                Data de cadastro
+              </Typography>
+              <ToggleButtonGroup
+                value={filters.createdAt}
+                exclusive
+                onChange={(e, value) =>
+                  setFilters({ ...filters, createdAt: value || "all" })
+                }
+                size="small"
+              >
+                <ToggleButton value="all">Todos</ToggleButton>
+                <ToggleButton value="today">Hoje</ToggleButton>
+                <ToggleButton value="week">Última semana</ToggleButton>
+                <ToggleButton value="month">Último mês</ToggleButton>
+              </ToggleButtonGroup>
+            </Box>
+          )}
+        </Stack>
+      </Paper>
+
+      {/* Patient Cards */}
+      <Box
+        sx={{
+          display: "grid",
+          gap: 2,
+          gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr", md: "1fr 1fr 1fr" },
+        }}
+      >
+        {(patients || [])
+          .filter((patient) => {
+            if (!searchTerm) return true;
+            return (
+              patient.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+              patient.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+              patient.phone.includes(searchTerm)
+            );
+          })
+          .filter((patient) => {
+            if (filters.gender === "all") return true;
+            return patient.gender === filters.gender;
+          })
+          .map((patient) => (
+            <Card key={patient.id}>
+              <CardContent>
+                <Stack
+                  direction="row"
+                  spacing={2}
+                  alignItems="center"
+                  sx={{ mb: 2 }}
+                >
+                  <Avatar sx={{ bgcolor: "primary.main" }}>
+                    {patient.name.charAt(0)}
+                  </Avatar>
+                  <Box sx={{ flex: 1 }}>
+                    <Typography variant="h6">{patient.name}</Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      {patient.email}
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      {patient.birthDate
+                        ? format(new Date(patient.birthDate), "dd/MM/yyyy", {
+                            locale: ptBR,
+                          })
+                        : ""}
+                    </Typography>
+                  </Box>
+                  <Stack direction="row" spacing={1}>
+                    <IconButton
+                      size="small"
+                      onClick={() => handleEdit(patient)}
+                      color="primary"
+                    >
+                      <EditIcon />
+                    </IconButton>
+                    <IconButton
+                      size="small"
+                      onClick={() => handleDelete(patient)}
+                      color="error"
+                    >
+                      <DeleteIcon />
+                    </IconButton>
+                  </Stack>
+                </Stack>
+
+                <Stack direction="row" spacing={2} flexWrap="wrap" useFlexGap>
+                  <Chip
+                    icon={
+                      patient.gender === "M" ? (
+                        <MaleIcon />
+                      ) : patient.gender === "F" ? (
+                        <FemaleIcon />
+                      ) : (
+                        <TransgenderIcon />
+                      )
+                    }
+                    label={
+                      patient.gender === "M"
+                        ? "Masculino"
+                        : patient.gender === "F"
+                        ? "Feminino"
+                        : "Outro"
+                    }
+                    size="small"
+                  />
+                  <Chip
+                    label={`${patient.height}cm`}
+                    size="small"
+                    variant="outlined"
+                  />
+                  <Chip
+                    label={`${patient.weight}kg`}
+                    size="small"
+                    variant="outlined"
+                  />
+                </Stack>
+              </CardContent>
+            </Card>
+          ))}
+      </Box>
 
       <Dialog
         open={open}
