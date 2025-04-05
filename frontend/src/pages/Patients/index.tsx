@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Box,
   Button,
@@ -12,11 +12,17 @@ import {
   IconButton,
   Stack,
 } from "@mui/material";
-import { DataGrid, GridColDef, GridRenderCellParams } from "@mui/x-data-grid";
+import {
+  DataGrid,
+  GridColDef,
+  GridRenderCellParams,
+  GridInitialState,
+} from "@mui/x-data-grid";
 import {
   Add as AddIcon,
   Edit as EditIcon,
   Delete as DeleteIcon,
+  Close as CloseIcon,
 } from "@mui/icons-material";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
@@ -133,26 +139,54 @@ export function Patients() {
     }
   };
 
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 600);
+  const [isTablet, setIsTablet] = useState(window.innerWidth < 960);
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 600);
+      setIsTablet(window.innerWidth < 960);
+    };
+
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
+  const initialState: GridInitialState = {
+    columns: {
+      columnVisibilityModel: {
+        email: !isMobile,
+        phone: !isMobile,
+        height: !isTablet,
+        weight: !isTablet,
+      },
+    },
+  };
+
   const columns: GridColDef<Patient>[] = [
     {
       field: "name",
       headerName: "Nome",
       flex: 1,
+      minWidth: 150,
     },
     {
       field: "email",
       headerName: "Email",
       flex: 1,
+      minWidth: 200,
     },
     {
       field: "phone",
       headerName: "Telefone",
       flex: 1,
+      minWidth: 130,
     },
     {
       field: "birthDate",
       headerName: "Data de Nascimento",
       flex: 1,
+      minWidth: 130,
       renderCell: ({ row }: GridRenderCellParams<Patient>) => {
         if (!row?.birthDate) return "";
         try {
@@ -169,6 +203,7 @@ export function Patients() {
       field: "gender",
       headerName: "Gênero",
       flex: 1,
+      minWidth: 100,
       renderCell: ({ row }: GridRenderCellParams<Patient>) => {
         if (!row?.gender) return "";
         switch (row.gender) {
@@ -187,44 +222,68 @@ export function Patients() {
       field: "height",
       headerName: "Altura (cm)",
       flex: 1,
+      minWidth: 100,
     },
     {
       field: "weight",
       headerName: "Peso (kg)",
       flex: 1,
+      minWidth: 100,
     },
     {
       field: "actions",
       headerName: "Ações",
-      width: 120,
+      flex: 1,
+      minWidth: 100,
       renderCell: ({ row }: GridRenderCellParams<Patient>) => (
-        <Box>
-          <IconButton onClick={() => handleEdit(row)}>
+        <Stack direction="row" spacing={1}>
+          <IconButton
+            size="small"
+            onClick={() => handleEdit(row)}
+            sx={{
+              padding: { xs: "8px", sm: "4px" }, // Maior área de toque em mobile
+            }}
+          >
             <EditIcon />
           </IconButton>
-          <IconButton onClick={() => handleDelete(row)}>
+          <IconButton
+            size="small"
+            onClick={() => handleDelete(row)}
+            sx={{
+              padding: { xs: "8px", sm: "4px" }, // Maior área de toque em mobile
+            }}
+          >
             <DeleteIcon />
           </IconButton>
-        </Box>
+        </Stack>
       ),
     },
   ];
 
   return (
-    <Box sx={{ height: "100%", width: "100%", p: 2 }}>
-      <Box sx={{ display: "flex", justifyContent: "space-between", mb: 2 }}>
-        <Typography variant="h4" component="h1">
+    <Box sx={{ height: "100%", width: "100%", p: { xs: 1, sm: 2 } }}>
+      <Stack
+        direction="row"
+        justifyContent="space-between"
+        alignItems="center"
+        spacing={2}
+        sx={{ mb: 2 }}
+      >
+        <Typography variant="h5" component="h1">
           Pacientes
         </Typography>
         <Button
           variant="contained"
-          color="primary"
-          startIcon={<AddIcon />}
           onClick={handleClickOpen}
+          startIcon={<AddIcon />}
+          sx={{
+            minWidth: { xs: "auto", sm: "140px" },
+            px: { xs: 2, sm: 3 },
+          }}
         >
-          Novo Paciente
+          {window.innerWidth < 600 ? "+" : "Novo Paciente"}
         </Button>
-      </Box>
+      </Stack>
 
       <DataGrid
         rows={patients || []}
@@ -232,155 +291,197 @@ export function Patients() {
         loading={isLoading}
         autoHeight
         disableRowSelectionOnClick
+        initialState={initialState}
+        sx={{
+          "& .MuiDataGrid-cell": {
+            padding: { xs: "8px 4px", sm: "16px 8px" },
+          },
+          "& .MuiDataGrid-columnHeader": {
+            padding: { xs: "8px 4px", sm: "16px 8px" },
+          },
+        }}
       />
 
-      <Dialog open={open} onClose={handleClose} maxWidth="md" fullWidth>
-        <form onSubmit={handleSubmit}>
-          <DialogTitle>
+      <Dialog
+        open={open}
+        onClose={handleClose}
+        maxWidth="md"
+        fullWidth
+        fullScreen={isMobile}
+        sx={{
+          "& .MuiDialog-paper": {
+            margin: { xs: 0, sm: 2 },
+          },
+        }}
+      >
+        <DialogTitle>
+          <Stack
+            direction="row"
+            justifyContent="space-between"
+            alignItems="center"
+          >
             {selectedPatient ? "Editar Paciente" : "Novo Paciente"}
-          </DialogTitle>
-          <DialogContent>
-            <Box sx={{ mt: 2 }}>
-              <Stack
-                spacing={2}
-                direction={{ xs: "column", sm: "row" }}
-                useFlexGap
-                flexWrap="wrap"
-              >
-                <Box sx={{ width: { xs: "100%", sm: "calc(50% - 8px)" } }}>
-                  <TextField
-                    autoFocus
-                    margin="dense"
-                    id="name"
-                    label="Nome"
-                    type="text"
-                    fullWidth
-                    value={formData.name}
-                    onChange={(e) =>
-                      setFormData({ ...formData, name: e.target.value })
-                    }
-                  />
-                </Box>
-                <Box sx={{ width: { xs: "100%", sm: "calc(50% - 8px)" } }}>
-                  <TextField
-                    margin="dense"
-                    id="email"
-                    label="Email"
-                    type="email"
-                    fullWidth
-                    value={formData.email}
-                    onChange={(e) =>
-                      setFormData({ ...formData, email: e.target.value })
-                    }
-                  />
-                </Box>
-                <Box sx={{ width: { xs: "100%", sm: "calc(50% - 8px)" } }}>
-                  <TextField
-                    margin="dense"
-                    id="phone"
-                    label="Telefone"
-                    type="tel"
-                    fullWidth
-                    value={formData.phone}
-                    onChange={(e) =>
-                      setFormData({ ...formData, phone: e.target.value })
-                    }
-                  />
-                </Box>
-                <Box sx={{ width: { xs: "100%", sm: "calc(50% - 8px)" } }}>
-                  <TextField
-                    margin="dense"
-                    id="birthDate"
-                    label="Data de Nascimento"
-                    type="date"
-                    fullWidth
-                    InputLabelProps={{ shrink: true }}
-                    value={formData.birthDate}
-                    onChange={(e) =>
-                      setFormData({ ...formData, birthDate: e.target.value })
-                    }
-                  />
-                </Box>
-                <Box sx={{ width: { xs: "100%", sm: "calc(50% - 8px)" } }}>
-                  <TextField
-                    select
-                    margin="dense"
-                    id="gender"
-                    label="Gênero"
-                    fullWidth
-                    value={formData.gender}
-                    onChange={(e) => {
-                      console.log("Mudando gênero para:", e.target.value);
-                      setFormData({
-                        ...formData,
-                        gender: e.target.value as "M" | "F" | "OTHER",
-                      });
-                      console.log("Novo formData:", {
-                        ...formData,
-                        gender: e.target.value,
-                      });
-                    }}
-                  >
-                    <MenuItem value="M">Masculino</MenuItem>
-                    <MenuItem value="F">Feminino</MenuItem>
-                    <MenuItem value="OTHER">Outro</MenuItem>
-                  </TextField>
-                </Box>
-                <Box sx={{ width: { xs: "100%", sm: "calc(50% - 8px)" } }}>
-                  <TextField
-                    margin="dense"
-                    id="height"
-                    label="Altura (cm)"
-                    type="number"
-                    fullWidth
-                    inputProps={{
-                      step: "0.01",
-                      min: "0",
-                    }}
-                    value={formData.height}
-                    onChange={(e) =>
-                      setFormData({
-                        ...formData,
-                        height: e.target.value ? Number(e.target.value) : 0,
-                      })
-                    }
-                  />
-                </Box>
-                <Box sx={{ width: { xs: "100%", sm: "calc(50% - 8px)" } }}>
-                  <TextField
-                    margin="dense"
-                    id="weight"
-                    label="Peso (kg)"
-                    type="number"
-                    fullWidth
-                    inputProps={{
-                      step: "0.01",
-                      min: "0",
-                    }}
-                    value={formData.weight}
-                    onChange={(e) =>
-                      setFormData({
-                        ...formData,
-                        weight: e.target.value ? Number(e.target.value) : 0,
-                      })
-                    }
-                  />
-                </Box>
-              </Stack>
-            </Box>
-          </DialogContent>
-          <DialogActions>
-            <Button onClick={handleClose}>Cancelar</Button>
-            <Button
-              type="submit"
-              variant="contained"
-              color="primary"
-              disabled={createMutation.isPending || updateMutation.isPending}
+            <IconButton
+              edge="end"
+              color="inherit"
+              onClick={handleClose}
+              aria-label="close"
+              sx={{ display: { xs: "flex", sm: "none" } }}
             >
-              {selectedPatient ? "Salvar" : "Criar"}
-            </Button>
-          </DialogActions>
-        </form>
+              <CloseIcon />
+            </IconButton>
+          </Stack>
+        </DialogTitle>
+        <DialogContent>
+          <Box
+            component="form"
+            onSubmit={handleSubmit}
+            sx={{
+              display: "flex",
+              flexDirection: "column",
+              gap: 2,
+              mt: 2,
+            }}
+          >
+            <Stack
+              direction={{ xs: "column", sm: "row" }}
+              spacing={2}
+              sx={{ width: "100%" }}
+            >
+              <TextField
+                required
+                margin="dense"
+                id="name"
+                label="Nome"
+                fullWidth
+                value={formData.name}
+                onChange={(e) =>
+                  setFormData({ ...formData, name: e.target.value })
+                }
+              />
+              <TextField
+                required
+                margin="dense"
+                id="email"
+                label="Email"
+                type="email"
+                fullWidth
+                value={formData.email}
+                onChange={(e) =>
+                  setFormData({ ...formData, email: e.target.value })
+                }
+              />
+            </Stack>
+
+            <Stack
+              direction={{ xs: "column", sm: "row" }}
+              spacing={2}
+              sx={{ width: "100%" }}
+            >
+              <TextField
+                required
+                margin="dense"
+                id="phone"
+                label="Telefone"
+                fullWidth
+                value={formData.phone}
+                onChange={(e) =>
+                  setFormData({ ...formData, phone: e.target.value })
+                }
+              />
+              <TextField
+                required
+                margin="dense"
+                id="birthDate"
+                label="Data de Nascimento"
+                type="date"
+                fullWidth
+                value={formData.birthDate}
+                onChange={(e) =>
+                  setFormData({ ...formData, birthDate: e.target.value })
+                }
+                InputLabelProps={{
+                  shrink: true,
+                }}
+              />
+            </Stack>
+
+            <Stack
+              direction={{ xs: "column", sm: "row" }}
+              spacing={2}
+              sx={{ width: "100%" }}
+            >
+              <TextField
+                select
+                margin="dense"
+                id="gender"
+                label="Gênero"
+                fullWidth
+                value={formData.gender}
+                onChange={(e) =>
+                  setFormData({
+                    ...formData,
+                    gender: e.target.value as "M" | "F" | "OTHER",
+                  })
+                }
+              >
+                <MenuItem value="M">Masculino</MenuItem>
+                <MenuItem value="F">Feminino</MenuItem>
+                <MenuItem value="OTHER">Outro</MenuItem>
+              </TextField>
+              <TextField
+                required
+                margin="dense"
+                id="height"
+                label="Altura (cm)"
+                type="number"
+                fullWidth
+                value={formData.height}
+                onChange={(e) =>
+                  setFormData({
+                    ...formData,
+                    height: Number(e.target.value),
+                  })
+                }
+                inputProps={{
+                  step: "0.01",
+                  min: "0",
+                }}
+              />
+              <TextField
+                required
+                margin="dense"
+                id="weight"
+                label="Peso (kg)"
+                type="number"
+                fullWidth
+                value={formData.weight}
+                onChange={(e) =>
+                  setFormData({
+                    ...formData,
+                    weight: Number(e.target.value),
+                  })
+                }
+                inputProps={{
+                  step: "0.01",
+                  min: "0",
+                }}
+              />
+            </Stack>
+          </Box>
+        </DialogContent>
+        <DialogActions sx={{ p: { xs: 2, sm: 3 } }}>
+          <Button onClick={handleClose} sx={{ mr: 1 }}>
+            Cancelar
+          </Button>
+          <Button
+            variant="contained"
+            onClick={handleSubmit}
+            sx={{ minWidth: { xs: "120px", sm: "140px" } }}
+          >
+            {selectedPatient ? "Salvar" : "Criar"}
+          </Button>
+        </DialogActions>
       </Dialog>
     </Box>
   );
