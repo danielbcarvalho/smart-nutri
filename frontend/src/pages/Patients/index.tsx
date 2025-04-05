@@ -9,9 +9,10 @@ import {
   DialogActions,
   TextField,
   MenuItem,
-  Grid,
+  IconButton,
+  Stack,
 } from "@mui/material";
-import { DataGrid, GridColDef, GridValueGetterParams } from "@mui/x-data-grid";
+import { DataGrid, GridColDef, GridRenderCellParams } from "@mui/x-data-grid";
 import {
   Add as AddIcon,
   Edit as EditIcon,
@@ -26,64 +27,7 @@ import {
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
-const genderOptions = [
-  { value: "M", label: "Masculino" },
-  { value: "F", label: "Feminino" },
-  { value: "OTHER", label: "Outro" },
-];
-
-const columns: GridColDef[] = [
-  { field: "name", headerName: "Nome", flex: 1 },
-  { field: "email", headerName: "Email", flex: 1 },
-  { field: "phone", headerName: "Telefone", flex: 1 },
-  {
-    field: "birthDate",
-    headerName: "Data de Nascimento",
-    flex: 1,
-    valueGetter: (params: GridValueGetterParams) =>
-      format(new Date(params.row.birthDate), "dd/MM/yyyy", { locale: ptBR }),
-  },
-  {
-    field: "gender",
-    headerName: "Gênero",
-    flex: 1,
-    valueGetter: (params: GridValueGetterParams) => {
-      const genderMap: Record<string, string> = {
-        M: "Masculino",
-        F: "Feminino",
-        OTHER: "Outro",
-      };
-      return genderMap[params.row.gender] || params.row.gender;
-    },
-  },
-  {
-    field: "actions",
-    headerName: "Ações",
-    flex: 1,
-    sortable: false,
-    renderCell: (params) => (
-      <Box>
-        <Button
-          size="small"
-          startIcon={<EditIcon />}
-          onClick={() => handleEdit(params.row)}
-        >
-          Editar
-        </Button>
-        <Button
-          size="small"
-          color="error"
-          startIcon={<DeleteIcon />}
-          onClick={() => handleDelete(params.row.id)}
-        >
-          Excluir
-        </Button>
-      </Box>
-    ),
-  },
-];
-
-export const Patients = () => {
+export function Patients() {
   const [open, setOpen] = useState(false);
   const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
   const [formData, setFormData] = useState<CreatePatientDto>({
@@ -98,13 +42,18 @@ export const Patients = () => {
 
   const queryClient = useQueryClient();
 
-  const { data: patients = [], isLoading } = useQuery({
+  const { data: patients, isLoading } = useQuery({
     queryKey: ["patients"],
-    queryFn: patientService.getAll,
+    queryFn: async () => {
+      const data = await patientService.getAll();
+      console.log("Dados recebidos do backend:", data);
+      return data;
+    },
+    refetchOnWindowFocus: true,
   });
 
   const createMutation = useMutation({
-    mutationFn: patientService.create,
+    mutationFn: (data: CreatePatientDto) => patientService.create(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["patients"] });
       handleClose();
@@ -121,14 +70,19 @@ export const Patients = () => {
   });
 
   const deleteMutation = useMutation({
-    mutationFn: patientService.delete,
+    mutationFn: (id: string) => patientService.delete(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["patients"] });
     },
   });
 
-  const handleOpen = () => {
+  const handleClickOpen = () => {
+    setSelectedPatient(null);
     setOpen(true);
+  };
+
+  const handleClose = () => {
+    setOpen(false);
     setSelectedPatient(null);
     setFormData({
       name: "",
@@ -141,9 +95,22 @@ export const Patients = () => {
     });
   };
 
-  const handleClose = () => {
-    setOpen(false);
-    setSelectedPatient(null);
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+
+    // Converte os valores de string para número antes de enviar
+    const formattedData = {
+      ...formData,
+      height: Number(formData.height),
+      weight: Number(formData.weight),
+      gender: formData.gender as "M" | "F" | "OTHER", // Garante que apenas M, F ou OTHER seja enviado
+    };
+
+    if (selectedPatient) {
+      updateMutation.mutate({ id: selectedPatient.id, data: formattedData });
+    } else {
+      createMutation.mutate(formattedData);
+    }
   };
 
   const handleEdit = (patient: Patient) => {
@@ -156,63 +123,115 @@ export const Patients = () => {
       gender: patient.gender,
       height: patient.height,
       weight: patient.weight,
-      goals: patient.goals,
-      allergies: patient.allergies,
-      healthConditions: patient.healthConditions,
-      medications: patient.medications,
-      observations: patient.observations,
     });
     setOpen(true);
   };
 
-  const handleDelete = async (id: string) => {
+  const handleDelete = (patient: Patient) => {
     if (window.confirm("Tem certeza que deseja excluir este paciente?")) {
-      await deleteMutation.mutateAsync(id);
+      deleteMutation.mutateAsync(patient.id);
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (selectedPatient) {
-      await updateMutation.mutateAsync({
-        id: selectedPatient.id,
-        data: formData,
-      });
-    } else {
-      await createMutation.mutateAsync(formData);
-    }
-  };
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
-  };
+  const columns: GridColDef<Patient>[] = [
+    {
+      field: "name",
+      headerName: "Nome",
+      flex: 1,
+    },
+    {
+      field: "email",
+      headerName: "Email",
+      flex: 1,
+    },
+    {
+      field: "phone",
+      headerName: "Telefone",
+      flex: 1,
+    },
+    {
+      field: "birthDate",
+      headerName: "Data de Nascimento",
+      flex: 1,
+      renderCell: ({ row }: GridRenderCellParams<Patient>) => {
+        if (!row?.birthDate) return "";
+        try {
+          const date = new Date(row.birthDate);
+          if (isNaN(date.getTime())) return row.birthDate;
+          return format(date, "dd/MM/yyyy", { locale: ptBR });
+        } catch (error) {
+          console.error("Erro ao formatar data:", error);
+          return row.birthDate;
+        }
+      },
+    },
+    {
+      field: "gender",
+      headerName: "Gênero",
+      flex: 1,
+      renderCell: ({ row }: GridRenderCellParams<Patient>) => {
+        if (!row?.gender) return "";
+        switch (row.gender) {
+          case "M":
+            return "Masculino";
+          case "F":
+            return "Feminino";
+          case "OTHER":
+            return "Outro";
+          default:
+            return row.gender;
+        }
+      },
+    },
+    {
+      field: "height",
+      headerName: "Altura (cm)",
+      flex: 1,
+    },
+    {
+      field: "weight",
+      headerName: "Peso (kg)",
+      flex: 1,
+    },
+    {
+      field: "actions",
+      headerName: "Ações",
+      width: 120,
+      renderCell: ({ row }: GridRenderCellParams<Patient>) => (
+        <Box>
+          <IconButton onClick={() => handleEdit(row)}>
+            <EditIcon />
+          </IconButton>
+          <IconButton onClick={() => handleDelete(row)}>
+            <DeleteIcon />
+          </IconButton>
+        </Box>
+      ),
+    },
+  ];
 
   return (
-    <Box sx={{ height: "100%", width: "100%" }}>
+    <Box sx={{ height: "100%", width: "100%", p: 2 }}>
       <Box sx={{ display: "flex", justifyContent: "space-between", mb: 2 }}>
-        <Typography variant="h4">Pacientes</Typography>
+        <Typography variant="h4" component="h1">
+          Pacientes
+        </Typography>
         <Button
           variant="contained"
+          color="primary"
           startIcon={<AddIcon />}
-          onClick={handleOpen}
+          onClick={handleClickOpen}
         >
           Novo Paciente
         </Button>
       </Box>
 
       <DataGrid
-        rows={patients}
+        rows={patients || []}
         columns={columns}
         loading={isLoading}
         autoHeight
-        pageSizeOptions={[10, 25, 50]}
-        initialState={{
-          pagination: { paginationModel: { pageSize: 10 } },
-        }}
+        disableRowSelectionOnClick
       />
 
       <Dialog open={open} onClose={handleClose} maxWidth="md" fullWidth>
@@ -221,96 +240,143 @@ export const Patients = () => {
             {selectedPatient ? "Editar Paciente" : "Novo Paciente"}
           </DialogTitle>
           <DialogContent>
-            <Grid container spacing={2} sx={{ mt: 1 }}>
-              <Grid item xs={12} sm={6}>
-                <TextField
-                  fullWidth
-                  label="Nome"
-                  name="name"
-                  value={formData.name}
-                  onChange={handleChange}
-                  required
-                />
-              </Grid>
-              <Grid item xs={12} sm={6}>
-                <TextField
-                  fullWidth
-                  label="Email"
-                  name="email"
-                  type="email"
-                  value={formData.email}
-                  onChange={handleChange}
-                  required
-                />
-              </Grid>
-              <Grid item xs={12} sm={6}>
-                <TextField
-                  fullWidth
-                  label="Telefone"
-                  name="phone"
-                  value={formData.phone}
-                  onChange={handleChange}
-                  required
-                />
-              </Grid>
-              <Grid item xs={12} sm={6}>
-                <TextField
-                  fullWidth
-                  label="Data de Nascimento"
-                  name="birthDate"
-                  type="date"
-                  value={formData.birthDate}
-                  onChange={handleChange}
-                  required
-                  InputLabelProps={{ shrink: true }}
-                />
-              </Grid>
-              <Grid item xs={12} sm={6}>
-                <TextField
-                  fullWidth
-                  select
-                  label="Gênero"
-                  name="gender"
-                  value={formData.gender}
-                  onChange={handleChange}
-                  required
-                >
-                  {genderOptions.map((option) => (
-                    <MenuItem key={option.value} value={option.value}>
-                      {option.label}
-                    </MenuItem>
-                  ))}
-                </TextField>
-              </Grid>
-              <Grid item xs={12} sm={6}>
-                <TextField
-                  fullWidth
-                  label="Altura (m)"
-                  name="height"
-                  type="number"
-                  value={formData.height}
-                  onChange={handleChange}
-                  required
-                  inputProps={{ step: 0.01 }}
-                />
-              </Grid>
-              <Grid item xs={12} sm={6}>
-                <TextField
-                  fullWidth
-                  label="Peso (kg)"
-                  name="weight"
-                  type="number"
-                  value={formData.weight}
-                  onChange={handleChange}
-                  required
-                  inputProps={{ step: 0.1 }}
-                />
-              </Grid>
-            </Grid>
+            <Box sx={{ mt: 2 }}>
+              <Stack
+                spacing={2}
+                direction={{ xs: "column", sm: "row" }}
+                useFlexGap
+                flexWrap="wrap"
+              >
+                <Box sx={{ width: { xs: "100%", sm: "calc(50% - 8px)" } }}>
+                  <TextField
+                    autoFocus
+                    margin="dense"
+                    id="name"
+                    label="Nome"
+                    type="text"
+                    fullWidth
+                    value={formData.name}
+                    onChange={(e) =>
+                      setFormData({ ...formData, name: e.target.value })
+                    }
+                  />
+                </Box>
+                <Box sx={{ width: { xs: "100%", sm: "calc(50% - 8px)" } }}>
+                  <TextField
+                    margin="dense"
+                    id="email"
+                    label="Email"
+                    type="email"
+                    fullWidth
+                    value={formData.email}
+                    onChange={(e) =>
+                      setFormData({ ...formData, email: e.target.value })
+                    }
+                  />
+                </Box>
+                <Box sx={{ width: { xs: "100%", sm: "calc(50% - 8px)" } }}>
+                  <TextField
+                    margin="dense"
+                    id="phone"
+                    label="Telefone"
+                    type="tel"
+                    fullWidth
+                    value={formData.phone}
+                    onChange={(e) =>
+                      setFormData({ ...formData, phone: e.target.value })
+                    }
+                  />
+                </Box>
+                <Box sx={{ width: { xs: "100%", sm: "calc(50% - 8px)" } }}>
+                  <TextField
+                    margin="dense"
+                    id="birthDate"
+                    label="Data de Nascimento"
+                    type="date"
+                    fullWidth
+                    InputLabelProps={{ shrink: true }}
+                    value={formData.birthDate}
+                    onChange={(e) =>
+                      setFormData({ ...formData, birthDate: e.target.value })
+                    }
+                  />
+                </Box>
+                <Box sx={{ width: { xs: "100%", sm: "calc(50% - 8px)" } }}>
+                  <TextField
+                    select
+                    margin="dense"
+                    id="gender"
+                    label="Gênero"
+                    fullWidth
+                    value={formData.gender}
+                    onChange={(e) => {
+                      console.log("Mudando gênero para:", e.target.value);
+                      setFormData({
+                        ...formData,
+                        gender: e.target.value as "M" | "F" | "OTHER",
+                      });
+                      console.log("Novo formData:", {
+                        ...formData,
+                        gender: e.target.value,
+                      });
+                    }}
+                  >
+                    <MenuItem value="M">Masculino</MenuItem>
+                    <MenuItem value="F">Feminino</MenuItem>
+                    <MenuItem value="OTHER">Outro</MenuItem>
+                  </TextField>
+                </Box>
+                <Box sx={{ width: { xs: "100%", sm: "calc(50% - 8px)" } }}>
+                  <TextField
+                    margin="dense"
+                    id="height"
+                    label="Altura (cm)"
+                    type="number"
+                    fullWidth
+                    inputProps={{
+                      step: "0.01",
+                      min: "0",
+                    }}
+                    value={formData.height}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        height: e.target.value ? Number(e.target.value) : 0,
+                      })
+                    }
+                  />
+                </Box>
+                <Box sx={{ width: { xs: "100%", sm: "calc(50% - 8px)" } }}>
+                  <TextField
+                    margin="dense"
+                    id="weight"
+                    label="Peso (kg)"
+                    type="number"
+                    fullWidth
+                    inputProps={{
+                      step: "0.01",
+                      min: "0",
+                    }}
+                    value={formData.weight}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        weight: e.target.value ? Number(e.target.value) : 0,
+                      })
+                    }
+                  />
+                </Box>
+              </Stack>
+            </Box>
           </DialogContent>
           <DialogActions>
             <Button onClick={handleClose}>Cancelar</Button>
-            <Button type="submit" variant="contained">
+            <Button
+              type="submit"
+              variant="contained"
+              color="primary"
+              disabled={createMutation.isPending || updateMutation.isPending}
+            >
               {selectedPatient ? "Salvar" : "Criar"}
             </Button>
           </DialogActions>
@@ -318,4 +384,4 @@ export const Patients = () => {
       </Dialog>
     </Box>
   );
-};
+}
