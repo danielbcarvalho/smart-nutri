@@ -27,6 +27,11 @@ import {
   CreatePatientDto,
 } from "../../services/patientService";
 
+// Função para validar o nome (apenas letras e espaços)
+const validateName = (name: string) => {
+  return /^[A-Za-zÀ-ÖØ-öø-ÿ\s]*$/.test(name);
+};
+
 export function PatientForm() {
   const { patientId } = useParams();
   const navigate = useNavigate();
@@ -42,6 +47,10 @@ export function PatientForm() {
     gender: "OTHER",
     instagram: "",
     status: "active",
+  });
+
+  const [errors, setErrors] = useState({
+    name: "",
   });
 
   const [photoPreview, setPhotoPreview] = useState<string>("");
@@ -88,8 +97,32 @@ export function PatientForm() {
     },
   });
 
+  const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newName = e.target.value;
+    setFormData({ ...formData, name: newName });
+
+    if (newName && !validateName(newName)) {
+      setErrors({
+        ...errors,
+        name: "O nome deve conter apenas letras e espaços",
+      });
+    } else {
+      setErrors({ ...errors, name: "" });
+    }
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+
+    // Validar antes de enviar
+    if (!validateName(formData.name)) {
+      setErrors({
+        ...errors,
+        name: "O nome deve conter apenas letras e espaços",
+      });
+      return;
+    }
+
     if (isEditing) {
       updateMutation.mutate({ id: patientId!, data: formData });
     } else {
@@ -184,17 +217,16 @@ export function PatientForm() {
               required
               fullWidth
               value={formData.name}
-              onChange={(e) =>
-                setFormData({ ...formData, name: e.target.value })
-              }
+              onChange={handleNameChange}
+              error={Boolean(errors.name)}
+              helperText={errors.name}
               placeholder="Nome completo"
             />
           </Box>
           <Box>
             <TextField
-              label="E-mail *"
+              label="E-mail"
               type="email"
-              required
               fullWidth
               value={formData.email}
               onChange={(e) =>
@@ -230,10 +262,11 @@ export function PatientForm() {
               label="Data de nascimento"
               type="date"
               fullWidth
-              value={formData.birthDate}
-              onChange={(e) =>
-                setFormData({ ...formData, birthDate: e.target.value })
-              }
+              value={formData.birthDate || ""}
+              onChange={(e) => {
+                const value = e.target.value;
+                setFormData({ ...formData, birthDate: value || undefined });
+              }}
               InputLabelProps={{ shrink: true }}
               placeholder="dd/mm/yyyy"
             />

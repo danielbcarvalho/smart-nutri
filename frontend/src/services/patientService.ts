@@ -96,7 +96,7 @@ export const patientService = {
     id: string,
     patient: Partial<Omit<Patient, "id" | "createdAt" | "updatedAt">>
   ): Promise<Patient> => {
-    const response = await api.put(`/patients/${id}`, patient);
+    const response = await api.patch(`/patients/${id}`, patient);
     return response.data;
   },
 

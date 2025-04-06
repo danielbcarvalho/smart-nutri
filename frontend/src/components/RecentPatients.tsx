@@ -136,13 +136,19 @@ export function RecentPatients() {
           sx={{
             display: "flex",
             justifyContent: "space-between",
-            alignItems: "center",
+            alignItems: "flex-start",
             mb: 2,
           }}
         >
-          <Typography variant="h6" component="h2">
-            Seus pacientes
-          </Typography>
+          <Box>
+            <Typography variant="h6" component="h2">
+              Seus pacientes
+            </Typography>
+            <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+              Para adicionar uma avaliação ou plano alimentar, selecione um
+              paciente
+            </Typography>
+          </Box>
           <Button
             variant="contained"
             startIcon={<AddIcon />}
@@ -157,7 +163,7 @@ export function RecentPatients() {
               },
             }}
           >
-            Adicionar paciente
+            Novo
           </Button>
         </Box>
         <TextField

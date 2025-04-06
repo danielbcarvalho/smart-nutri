@@ -1,38 +1,38 @@
 import { api } from "../lib/axios";
+import { SearchResult } from "../types/search";
 
-export interface SearchResult {
+interface SearchResponseItem {
   id: string;
+  name?: string;
+  title?: string;
+  description?: string;
+  email?: string;
+  phone?: string;
+  patientName?: string;
   type: "patient" | "mealPlan";
-  name: string;
-  subtitle?: string;
 }
 
 export async function searchAll(query: string): Promise<SearchResult[]> {
+  if (!query || query.length < 3) return [];
+
   try {
-    // Busca pacientes
-    const patientsResponse = await api.get(`/patients?search=${query}`);
-    const patients: SearchResult[] = patientsResponse.data.map(
-      (patient: any) => ({
-        id: patient.id,
-        type: "patient",
-        name: patient.name,
-        subtitle: "Paciente",
-      })
+    const response = await api.get<SearchResponseItem[]>(
+      `/search?q=${encodeURIComponent(query)}`
     );
-
-    // Busca planos de alimentação
-    const mealPlansResponse = await api.get(`/meal-plans?search=${query}`);
-    const mealPlans: SearchResult[] = mealPlansResponse.data.map(
-      (plan: any) => ({
-        id: plan.id,
-        type: "mealPlan",
-        name: plan.name,
-        subtitle: `Plano de ${plan.patient?.name || "Paciente"}`,
-      })
-    );
-
-    // Combina e retorna os resultados
-    return [...patients, ...mealPlans];
+    return response.data.map((item: SearchResponseItem) => ({
+      id: item.id,
+      title: item.name || item.title || "",
+      description:
+        item.description ||
+        (item.type === "patient"
+          ? `${item.email || "Sem email"} • ${item.phone || "Sem telefone"}`
+          : `Plano para ${item.patientName || "paciente"}`),
+      link:
+        item.type === "patient"
+          ? `/patients/${item.id}`
+          : `/meal-plans/${item.id}`,
+      type: item.type,
+    }));
   } catch (error) {
     console.error("Erro ao buscar:", error);
     return [];

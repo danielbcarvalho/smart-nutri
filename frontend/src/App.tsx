@@ -12,6 +12,8 @@ import { PatientDetails } from "./pages/PatientDetails";
 import { MealPlan } from "./pages/MealPlan";
 import { MealPlanDetails } from "./pages/MealPlanDetails";
 import { PatientInfo } from "./pages/PatientInfo";
+import { NewAssessment } from "./pages/NewAssessment";
+import { NewMealPlan } from "./pages/NewMealPlan";
 
 const queryClient = new QueryClient();
 
@@ -48,6 +50,10 @@ const router = createBrowserRouter([
                 element: <MealPlan />,
               },
               {
+                path: "new",
+                element: <NewMealPlan />,
+              },
+              {
                 path: ":planId",
                 element: <MealPlanDetails />,
               },
@@ -63,7 +69,16 @@ const router = createBrowserRouter([
           },
           {
             path: "assessments",
-            element: <PatientInfo />, // Using PatientInfo as a placeholder until you create an Assessments component
+            children: [
+              {
+                index: true,
+                element: <PatientInfo />, // Using PatientInfo as a placeholder until you create an Assessments component
+              },
+              {
+                path: "new",
+                element: <NewAssessment />,
+              },
+            ],
           },
         ],
       },

@@ -17,6 +17,7 @@ import {
   Settings as SettingsIcon,
 } from "@mui/icons-material";
 import { useNavigate } from "react-router-dom";
+import { Header } from "./Header";
 
 const drawerWidth = 240;
 
@@ -60,8 +61,9 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
   );
 
   return (
-    <Box sx={{ display: "flex" }}>
+    <Box sx={{ display: "flex", minHeight: "100vh" }}>
       <CssBaseline />
+      <Header onDrawerToggle={handleDrawerToggle} />
       <Box
         component="nav"
         sx={{ width: { sm: drawerWidth }, flexShrink: { sm: 0 } }}
@@ -90,6 +92,8 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
             "& .MuiDrawer-paper": {
               boxSizing: "border-box",
               width: drawerWidth,
+              borderRight: "1px solid rgba(0, 0, 0, 0.12)",
+              mt: "64px", // Altura do AppBar
             },
           }}
           open
@@ -103,6 +107,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
           flexGrow: 1,
           p: 3,
           width: { sm: `calc(100% - ${drawerWidth}px)` },
+          mt: "64px", // Altura do AppBar
         }}
       >
         {children}
