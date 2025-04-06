@@ -7,6 +7,7 @@ import { MealFood } from './entities/meal-food.entity';
 import { Patient } from '../patients/entities/patient.entity';
 import { Repository } from 'typeorm';
 
+// Test file for MealPlansService
 describe('MealPlansService', () => {
   let service: MealPlansService;
   let mealPlanRepository: Repository<MealPlan>;
