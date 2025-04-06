@@ -115,7 +115,15 @@ export class FoodsController {
     summary: 'Buscar alimento por ID',
     description: 'Retorna os detalhes de um alimento específico',
   })
-  @ApiParam({ name: 'id', description: 'ID do alimento' })
+  @ApiParam({
+    name: 'id',
+    description: 'ID do alimento',
+    example: '123e4567-e89b-12d3-a456-426614174000',
+    schema: {
+      type: 'string',
+      format: 'uuid',
+    },
+  })
   @ApiResponse({
     status: 200,
     description: 'Alimento encontrado',
@@ -134,7 +142,15 @@ export class FoodsController {
     summary: 'Atualizar alimento',
     description: 'Atualiza as informações de um alimento existente',
   })
-  @ApiParam({ name: 'id', description: 'ID do alimento' })
+  @ApiParam({
+    name: 'id',
+    description: 'ID do alimento',
+    example: '123e4567-e89b-12d3-a456-426614174000',
+    schema: {
+      type: 'string',
+      format: 'uuid',
+    },
+  })
   @ApiResponse({
     status: 200,
     description: 'Alimento atualizado com sucesso',
@@ -154,7 +170,15 @@ export class FoodsController {
     summary: 'Remover alimento',
     description: 'Remove um alimento do banco de dados',
   })
-  @ApiParam({ name: 'id', description: 'ID do alimento' })
+  @ApiParam({
+    name: 'id',
+    description: 'ID do alimento',
+    example: '123e4567-e89b-12d3-a456-426614174000',
+    schema: {
+      type: 'string',
+      format: 'uuid',
+    },
+  })
   @ApiResponse({
     status: 204,
     description: 'Alimento removido com sucesso',
@@ -172,7 +196,15 @@ export class FoodsController {
     summary: 'Alternar favorito',
     description: 'Marca ou desmarca um alimento como favorito',
   })
-  @ApiParam({ name: 'id', description: 'ID do alimento' })
+  @ApiParam({
+    name: 'id',
+    description: 'ID do alimento',
+    example: '123e4567-e89b-12d3-a456-426614174000',
+    schema: {
+      type: 'string',
+      format: 'uuid',
+    },
+  })
   @ApiResponse({
     status: 200,
     description: 'Status de favorito alterado com sucesso',

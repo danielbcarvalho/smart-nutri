@@ -17,8 +17,12 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/foods",
-              "host": ["{{baseUrl}}"],
-              "path": ["foods"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "foods"
+              ]
             }
           }
         },
@@ -38,8 +42,13 @@
             },
             "url": {
               "raw": "{{baseUrl}}/foods/save-from-api",
-              "host": ["{{baseUrl}}"],
-              "path": ["foods", "save-from-api"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "foods",
+                "save-from-api"
+              ]
             }
           }
         },
@@ -70,8 +79,13 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/foods/search?query=arroz&page=0&pageSize=20",
-              "host": ["{{baseUrl}}"],
-              "path": ["foods", "search"],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "foods",
+                "search"
+              ],
               "query": [
                 {
                   "key": "query",
@@ -105,8 +119,12 @@
             },
             "url": {
               "raw": "{{baseUrl}}/foods",
-              "host": ["{{baseUrl}}"],
-              "path": ["foods"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "foods"
+              ]
             }
           }
         },
@@ -117,8 +135,13 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/foods/:id",
-              "host": ["{{baseUrl}}"],
-              "path": ["foods", ":id"],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "foods",
+                ":id"
+              ],
               "variable": [
                 {
                   "key": "id",
@@ -145,8 +168,13 @@
             },
             "url": {
               "raw": "{{baseUrl}}/foods/:id",
-              "host": ["{{baseUrl}}"],
-              "path": ["foods", ":id"],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "foods",
+                ":id"
+              ],
               "variable": [
                 {
                   "key": "id",
@@ -164,8 +192,13 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/foods/:id",
-              "host": ["{{baseUrl}}"],
-              "path": ["foods", ":id"],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "foods",
+                ":id"
+              ],
               "variable": [
                 {
                   "key": "id",
@@ -183,8 +216,13 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/foods/favorites",
-              "host": ["{{baseUrl}}"],
-              "path": ["foods", "favorites"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "foods",
+                "favorites"
+              ]
             }
           }
         },
@@ -195,8 +233,14 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/foods/:id/favorite",
-              "host": ["{{baseUrl}}"],
-              "path": ["foods", ":id", "favorite"],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "foods",
+                ":id",
+                "favorite"
+              ],
               "variable": [
                 {
                   "key": "id",
@@ -220,8 +264,12 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/meal-plans",
-              "host": ["{{baseUrl}}"],
-              "path": ["meal-plans"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "meal-plans"
+              ]
             }
           }
         },
@@ -232,8 +280,13 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/meal-plans/{{mealPlanId}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["meal-plans", "{{mealPlanId}}"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "meal-plans",
+                "{{mealPlanId}}"
+              ]
             }
           }
         },
@@ -271,8 +324,12 @@
             },
             "url": {
               "raw": "{{baseUrl}}/meal-plans",
-              "host": ["{{baseUrl}}"],
-              "path": ["meal-plans"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "meal-plans"
+              ]
             }
           }
         },
@@ -292,8 +349,13 @@
             },
             "url": {
               "raw": "{{baseUrl}}/meal-plans/{{mealPlanId}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["meal-plans", "{{mealPlanId}}"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "meal-plans",
+                "{{mealPlanId}}"
+              ]
             }
           }
         },
@@ -304,8 +366,13 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/meal-plans/{{mealPlanId}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["meal-plans", "{{mealPlanId}}"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "meal-plans",
+                "{{mealPlanId}}"
+              ]
             }
           }
         }
@@ -322,8 +389,12 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/patients",
-              "host": ["{{baseUrl}}"],
-              "path": ["patients"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "patients"
+              ]
             }
           }
         },
@@ -334,8 +405,13 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/patients/{{patientId}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["patients", "{{patientId}}"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "patients",
+                "{{patientId}}"
+              ]
             }
           }
         },
@@ -373,8 +449,12 @@
             },
             "url": {
               "raw": "{{baseUrl}}/patients",
-              "host": ["{{baseUrl}}"],
-              "path": ["patients"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "patients"
+              ]
             }
           }
         },
@@ -394,8 +474,13 @@
             },
             "url": {
               "raw": "{{baseUrl}}/patients/{{patientId}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["patients", "{{patientId}}"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "patients",
+                "{{patientId}}"
+              ]
             }
           }
         },
@@ -406,8 +491,13 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/patients/{{patientId}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["patients", "{{patientId}}"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "patients",
+                "{{patientId}}"
+              ]
             }
           }
         },
@@ -427,8 +517,14 @@
             },
             "url": {
               "raw": "{{baseUrl}}/patients/{{patientId}}/measurements",
-              "host": ["{{baseUrl}}"],
-              "path": ["patients", "{{patientId}}", "measurements"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "patients",
+                "{{patientId}}",
+                "measurements"
+              ]
             }
           }
         },
@@ -439,8 +535,14 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/patients/{{patientId}}/measurements",
-              "host": ["{{baseUrl}}"],
-              "path": ["patients", "{{patientId}}", "measurements"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "patients",
+                "{{patientId}}",
+                "measurements"
+              ]
             }
           }
         }
@@ -450,7 +552,7 @@
   "variable": [
     {
       "key": "baseUrl",
-      "value": "http://localhost:3000",
+      "value": "http://localhost:8000",
       "type": "string"
     },
     {

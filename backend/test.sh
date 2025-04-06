@@ -10,7 +10,7 @@ run_tests() {
     echo -e "${GREEN}Iniciando testes da API SmartNutri...${NC}\n"
 
     # Verifica se o servidor está rodando
-    if ! curl -s http://localhost:3000/health > /dev/null; then
+    if ! curl -s http://localhost:8000/health > /dev/null; then
         echo -e "${RED}Erro: O servidor não está rodando. Inicie o servidor com 'npm run start:dev' primeiro.${NC}"
         exit 1
     fi
@@ -24,7 +24,7 @@ run_tests() {
     # Executa os testes
     echo "Executando testes..."
     newman run postman/SmartNutri.postman_collection.json \
-        --env-var "baseUrl=http://localhost:3000"
+        --env-var "baseUrl=http://localhost:8000"
 }
 
 # Executa os testes

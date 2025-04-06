@@ -8,6 +8,7 @@ import { Patient } from '../patients/entities/patient.entity';
 import { CreateMealPlanDto } from './dto/create-meal-plan.dto';
 import { UpdateMealPlanDto } from './dto/update-meal-plan.dto';
 import { CreateMealDto } from './dto/create-meal.dto';
+import { PatientsService } from '../patients/patients.service';
 
 @Injectable()
 export class MealPlansService {
@@ -20,6 +21,7 @@ export class MealPlansService {
     private readonly mealFoodRepository: Repository<MealFood>,
     @InjectRepository(Patient)
     private readonly patientRepository: Repository<Patient>,
+    private readonly patientsService: PatientsService,
   ) {}
 
   async create(createMealPlanDto: CreateMealPlanDto): Promise<MealPlan> {
@@ -76,18 +78,17 @@ export class MealPlansService {
   }
 
   async findByPatient(patientId: string): Promise<MealPlan[]> {
-    const patient = await this.patientRepository.findOne({
-      where: { id: patientId },
-    });
-
-    if (!patient) {
-      throw new NotFoundException(
-        `Paciente com ID ${patientId} não encontrado`,
-      );
+    try {
+      await this.patientsService.findOne(patientId);
+    } catch (error) {
+      if (error instanceof NotFoundException) {
+        return [];
+      }
+      throw error;
     }
 
     return this.mealPlanRepository.find({
-      where: { patientId },
+      where: { patient: { id: patientId } },
       relations: [
         'patient',
         'meals',
@@ -97,17 +98,61 @@ export class MealPlansService {
     });
   }
 
-  async update(
-    id: string,
-    updateMealPlanDto: UpdateMealPlanDto,
-  ): Promise<MealPlan> {
+  async update(id: string, mealPlanDto: UpdateMealPlanDto): Promise<MealPlan> {
     const mealPlan = await this.findOne(id);
-    this.mealPlanRepository.merge(mealPlan, updateMealPlanDto);
-    return this.mealPlanRepository.save(mealPlan);
+
+    // Delete existing meals and their foods
+    const meals = await this.mealRepository.find({
+      where: { mealPlan: { id } },
+      relations: ['mealFoods'],
+    });
+
+    for (const meal of meals) {
+      await this.mealFoodRepository.delete({ meal: { id: meal.id } });
+    }
+    await this.mealRepository.delete({ mealPlan: { id } });
+
+    // Update meal plan basic info
+    Object.assign(mealPlan, mealPlanDto);
+
+    // Create new meals
+    if (mealPlanDto.meals) {
+      mealPlan.meals = [];
+      for (const mealDto of mealPlanDto.meals) {
+        // Ensure time format is HH:mm
+        const formattedTime = mealDto.time.split(':').slice(0, 2).join(':');
+
+        const meal = this.mealRepository.create({
+          ...mealDto,
+          time: formattedTime,
+          mealPlan,
+        });
+        const savedMeal = await this.mealRepository.save(meal);
+
+        // Create meal foods
+        if (mealDto.mealFoods) {
+          savedMeal.mealFoods = [];
+          for (const mealFoodDto of mealDto.mealFoods) {
+            const mealFood = this.mealFoodRepository.create({
+              ...mealFoodDto,
+              meal: savedMeal,
+            });
+            await this.mealFoodRepository.save(mealFood);
+            savedMeal.mealFoods.push(mealFood);
+          }
+        }
+        mealPlan.meals.push(savedMeal);
+      }
+    }
+
+    await this.mealPlanRepository.save(mealPlan);
+    return this.findOne(id);
   }
 
   async remove(id: string): Promise<void> {
     const mealPlan = await this.findOne(id);
+
+    // Remove o plano alimentar e todas as suas relações em cascata
     await this.mealPlanRepository.remove(mealPlan);
   }
 
@@ -130,5 +175,10 @@ export class MealPlansService {
       console.error('Service: Error saving meal:', error);
       throw error;
     }
+  }
+
+  async getMeals(id: string): Promise<Meal[]> {
+    const mealPlan = await this.findOne(id);
+    return mealPlan.meals;
   }
 }

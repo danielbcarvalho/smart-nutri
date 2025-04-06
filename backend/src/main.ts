@@ -21,6 +21,8 @@ async function bootstrap() {
     }),
   );
 
+  const port = process.env.PORT || 8000;
+
   // Configuração do Swagger
   const config = new DocumentBuilder()
     .setTitle('SmartNutri API')
@@ -53,7 +55,7 @@ async function bootstrap() {
     .addTag('meal-plans', 'Gerenciamento de planos alimentares e refeições')
     .addTag('foods', 'Gerenciamento de alimentos e informações nutricionais')
     .addBearerAuth()
-    .addServer('http://localhost:3000', 'Servidor de Desenvolvimento')
+    .addServer(`http://localhost:${port}`, 'Servidor de Desenvolvimento')
     .build();
 
   const document = SwaggerModule.createDocument(app, config);
@@ -74,10 +76,15 @@ async function bootstrap() {
       showCommonExtensions: true,
       deepLinking: true,
       displayRequestDuration: true,
+      urls: [
+        {
+          url: `http://localhost:${port}/api-docs-json`,
+          name: 'API Documentation',
+        },
+      ],
     },
   });
 
-  const port = process.env.PORT || 8000;
   await app.listen(port);
   console.log(`Application is running on: http://localhost:${port}`);
   console.log(

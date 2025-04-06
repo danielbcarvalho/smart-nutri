@@ -76,10 +76,14 @@ export class MealPlansController {
     name: 'patientId',
     description: 'ID do paciente',
     example: '123e4567-e89b-12d3-a456-426614174000',
+    schema: {
+      type: 'string',
+      format: 'uuid',
+    },
   })
   @ApiResponse({
     status: 200,
-    description: 'Lista de planos alimentares do paciente',
+    description: 'Lista de planos alimentares retornada com sucesso',
     type: [MealPlan],
   })
   @ApiResponse({
@@ -92,13 +96,17 @@ export class MealPlansController {
 
   @Get(':id')
   @ApiOperation({
-    summary: 'Buscar plano por ID',
+    summary: 'Buscar plano alimentar por ID',
     description: 'Retorna os detalhes de um plano alimentar específico',
   })
   @ApiParam({
     name: 'id',
     description: 'ID do plano alimentar',
     example: '123e4567-e89b-12d3-a456-426614174000',
+    schema: {
+      type: 'string',
+      format: 'uuid',
+    },
   })
   @ApiResponse({
     status: 200,
@@ -122,6 +130,10 @@ export class MealPlansController {
     name: 'id',
     description: 'ID do plano alimentar',
     example: '123e4567-e89b-12d3-a456-426614174000',
+    schema: {
+      type: 'string',
+      format: 'uuid',
+    },
   })
   @ApiBody({ type: UpdateMealPlanDto })
   @ApiResponse({
@@ -154,6 +166,10 @@ export class MealPlansController {
     name: 'id',
     description: 'ID do plano alimentar',
     example: '123e4567-e89b-12d3-a456-426614174000',
+    schema: {
+      type: 'string',
+      format: 'uuid',
+    },
   })
   @ApiResponse({
     status: 204,
@@ -176,6 +192,10 @@ export class MealPlansController {
     name: 'id',
     description: 'ID do plano alimentar',
     example: '123e4567-e89b-12d3-a456-426614174000',
+    schema: {
+      type: 'string',
+      format: 'uuid',
+    },
   })
   @ApiBody({ type: CreateMealDto })
   @ApiResponse({
@@ -193,5 +213,33 @@ export class MealPlansController {
   })
   async addMeal(@Param('id') id: string, @Body() createMealDto: CreateMealDto) {
     return this.mealPlansService.addMeal(id, createMealDto);
+  }
+
+  @Get(':id/meals')
+  @ApiOperation({
+    summary: 'Listar refeições do plano',
+    description:
+      'Retorna uma lista de refeições de um plano alimentar específico',
+  })
+  @ApiParam({
+    name: 'id',
+    description: 'ID do plano alimentar',
+    example: '123e4567-e89b-12d3-a456-426614174000',
+    schema: {
+      type: 'string',
+      format: 'uuid',
+    },
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Lista de refeições retornada com sucesso',
+    type: [Meal],
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'Plano alimentar não encontrado',
+  })
+  getMeals(@Param('id') id: string) {
+    return this.mealPlansService.getMeals(id);
   }
 }

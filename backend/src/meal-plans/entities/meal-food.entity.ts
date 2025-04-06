@@ -14,13 +14,24 @@ export class MealFood {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @ManyToOne(() => Meal, meal => meal.mealFoods)
+  @ManyToOne(() => Meal, (meal) => meal.mealFoods, {
+    onDelete: 'CASCADE',
+  })
   meal: Meal;
 
-  @ManyToOne(() => Food)
+  @ManyToOne(() => Food, {
+    onDelete: 'NO ACTION',
+  })
   food: Food;
 
-  @Column('decimal', { precision: 10, scale: 2 })
+  @Column('decimal', {
+    precision: 10,
+    scale: 2,
+    transformer: {
+      to: (value: number) => value,
+      from: (value: string) => parseFloat(value),
+    },
+  })
   amount: number; // Quantidade em gramas ou ml
 
   @Column()

@@ -18,17 +18,26 @@ export class Meal {
   @Column()
   name: string; // Café da manhã, Almoço, etc.
 
-  @Column({ type: 'time' })
+  @Column({
+    type: 'time',
+    transformer: {
+      to: (value: string) => value.split(':').slice(0, 2).join(':'),
+      from: (value: string) => value.split(':').slice(0, 2).join(':'),
+    },
+  })
   time: string; // Horário da refeição
 
   @Column({ type: 'text', nullable: true })
   notes: string;
 
-  @ManyToOne(() => MealPlan, mealPlan => mealPlan.meals)
+  @ManyToOne(() => MealPlan, (mealPlan) => mealPlan.meals, {
+    onDelete: 'CASCADE',
+  })
   mealPlan: MealPlan;
 
-  @OneToMany(() => MealFood, mealFood => mealFood.meal, {
+  @OneToMany(() => MealFood, (mealFood) => mealFood.meal, {
     cascade: true,
+    onDelete: 'CASCADE',
   })
   mealFoods: MealFood[];
 

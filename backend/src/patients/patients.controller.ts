@@ -68,12 +68,16 @@ export class PatientsController {
   @Get(':id')
   @ApiOperation({
     summary: 'Buscar paciente por ID',
-    description: 'Retorna os detalhes de um paciente específico.',
+    description: 'Retorna os detalhes de um paciente específico',
   })
   @ApiParam({
     name: 'id',
     description: 'ID do paciente',
     example: '123e4567-e89b-12d3-a456-426614174000',
+    schema: {
+      type: 'string',
+      format: 'uuid',
+    },
   })
   @ApiResponse({
     status: 200,
@@ -91,12 +95,16 @@ export class PatientsController {
   @Patch(':id')
   @ApiOperation({
     summary: 'Atualizar paciente',
-    description: 'Atualiza as informações de um paciente existente.',
+    description: 'Atualiza as informações de um paciente existente',
   })
   @ApiParam({
     name: 'id',
     description: 'ID do paciente',
     example: '123e4567-e89b-12d3-a456-426614174000',
+    schema: {
+      type: 'string',
+      format: 'uuid',
+    },
   })
   @ApiBody({ type: UpdatePatientDto })
   @ApiResponse({
@@ -127,12 +135,16 @@ export class PatientsController {
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({
     summary: 'Remover paciente',
-    description: 'Remove um paciente do sistema.',
+    description: 'Remove um paciente do sistema',
   })
   @ApiParam({
     name: 'id',
     description: 'ID do paciente',
     example: '123e4567-e89b-12d3-a456-426614174000',
+    schema: {
+      type: 'string',
+      format: 'uuid',
+    },
   })
   @ApiResponse({
     status: 204,
@@ -149,12 +161,16 @@ export class PatientsController {
   @Post(':id/measurements')
   @ApiOperation({
     summary: 'Adicionar medição',
-    description: 'Adiciona uma nova medição para um paciente específico.',
+    description: 'Adiciona uma nova medição para um paciente específico',
   })
   @ApiParam({
     name: 'id',
     description: 'ID do paciente',
     example: '123e4567-e89b-12d3-a456-426614174000',
+    schema: {
+      type: 'string',
+      format: 'uuid',
+    },
   })
   @ApiBody({ type: CreateMeasurementDto })
   @ApiResponse({
@@ -180,12 +196,16 @@ export class PatientsController {
   @Get(':id/measurements')
   @ApiOperation({
     summary: 'Listar medições',
-    description: 'Retorna todas as medições de um paciente específico.',
+    description: 'Retorna todas as medições de um paciente específico',
   })
   @ApiParam({
     name: 'id',
     description: 'ID do paciente',
     example: '123e4567-e89b-12d3-a456-426614174000',
+    schema: {
+      type: 'string',
+      format: 'uuid',
+    },
   })
   @ApiResponse({
     status: 200,
