@@ -25,14 +25,35 @@ async function bootstrap() {
   const config = new DocumentBuilder()
     .setTitle('SmartNutri API')
     .setDescription(
-      'API para gestão de pacientes, avaliações nutricionais e planos alimentares',
+      `
+      # SmartNutri API Documentation
+      
+      API para gestão completa de nutrição, incluindo:
+      - Gestão de pacientes
+      - Avaliações nutricionais
+      - Planos alimentares
+      - Base de dados de alimentos
+      
+      ## Autenticação
+      Esta API utiliza autenticação JWT (Bearer Token).
+      
+      ## Endpoints Principais
+      - /patients: Gerenciamento de pacientes
+      - /measurements: Medições e avaliações
+      - /meal-plans: Planos alimentares
+      - /foods: Alimentos e informações nutricionais
+    `,
     )
     .setVersion('1.0')
-    .addTag('patients', 'Gerenciamento de pacientes')
-    .addTag('measurements', 'Gerenciamento de medições e avaliações')
-    .addTag('meal-plans', 'Gerenciamento de planos alimentares')
+    .addTag('patients', 'Gerenciamento de pacientes e suas informações')
+    .addTag(
+      'measurements',
+      'Gerenciamento de medições e avaliações nutricionais',
+    )
+    .addTag('meal-plans', 'Gerenciamento de planos alimentares e refeições')
     .addTag('foods', 'Gerenciamento de alimentos e informações nutricionais')
     .addBearerAuth()
+    .addServer('http://localhost:3000', 'Servidor de Desenvolvimento')
     .build();
 
   const document = SwaggerModule.createDocument(app, config);
@@ -49,7 +70,10 @@ async function bootstrap() {
       persistAuthorization: true,
       docExpansion: 'none',
       filter: true,
-      showRequestDuration: true,
+      showExtensions: true,
+      showCommonExtensions: true,
+      deepLinking: true,
+      displayRequestDuration: true,
     },
   });
 

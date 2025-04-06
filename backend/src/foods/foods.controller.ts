@@ -10,7 +10,13 @@ import {
   HttpCode,
   HttpStatus,
 } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiParam,
+  ApiQuery,
+} from '@nestjs/swagger';
 import { FoodsService } from './foods.service';
 import { CreateFoodDto } from './dto/create-food.dto';
 import { UpdateFoodDto } from './dto/update-food.dto';
@@ -24,27 +30,51 @@ export class FoodsController {
   constructor(private readonly foodsService: FoodsService) {}
 
   @Post()
-  @ApiOperation({ summary: 'Criar um novo alimento manualmente' })
+  @ApiOperation({
+    summary: 'Criar um novo alimento manualmente',
+    description:
+      'Cria um novo alimento no banco de dados local com informações nutricionais detalhadas',
+  })
   @ApiResponse({
     status: 201,
-    description: 'Food item created successfully',
+    description: 'Alimento criado com sucesso',
     type: Food,
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'Dados inválidos fornecidos',
   })
   create(@Body() createFoodDto: CreateFoodDto): Promise<Food> {
     return this.foodsService.create(createFoodDto);
   }
 
   @Post('save-from-api')
-  @ApiOperation({ summary: 'Salvar um alimento da API no banco de dados local' })
+  @ApiOperation({
+    summary: 'Salvar um alimento da API no banco de dados local',
+    description:
+      'Importa um alimento da API externa e salva no banco de dados local',
+  })
+  @ApiResponse({
+    status: 201,
+    description: 'Alimento importado com sucesso',
+    type: Food,
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'Alimento não encontrado na API externa',
+  })
   saveFromApi(@Body() saveApiFoodDto: SaveApiFoodDto) {
     return this.foodsService.saveFromApi(saveApiFoodDto.externalId);
   }
 
   @Get()
-  @ApiOperation({ summary: 'Get all food items' })
+  @ApiOperation({
+    summary: 'Listar todos os alimentos',
+    description: 'Retorna uma lista paginada de todos os alimentos cadastrados',
+  })
   @ApiResponse({
     status: 200,
-    description: 'List of all food items',
+    description: 'Lista de alimentos retornada com sucesso',
     type: [Food],
   })
   findAll() {
@@ -52,10 +82,14 @@ export class FoodsController {
   }
 
   @Get('search')
-  @ApiOperation({ summary: 'Search food items' })
+  @ApiOperation({
+    summary: 'Pesquisar alimentos',
+    description: 'Pesquisa alimentos por nome ou descrição',
+  })
+  @ApiQuery({ name: 'query', required: false, description: 'Termo de busca' })
   @ApiResponse({
     status: 200,
-    description: 'Search results from local cache and FatSecret API',
+    description: 'Resultados da pesquisa',
     type: [Food],
   })
   search(@Query() searchFoodDto: SearchFoodDto) {
@@ -63,10 +97,13 @@ export class FoodsController {
   }
 
   @Get('favorites')
-  @ApiOperation({ summary: 'Get favorite food items' })
+  @ApiOperation({
+    summary: 'Listar alimentos favoritos',
+    description: 'Retorna a lista de alimentos marcados como favoritos',
+  })
   @ApiResponse({
     status: 200,
-    description: 'List of favorite food items',
+    description: 'Lista de favoritos retornada com sucesso',
     type: [Food],
   })
   getFavorites() {
@@ -74,19 +111,38 @@ export class FoodsController {
   }
 
   @Get(':id')
-  @ApiOperation({ summary: 'Get a food item by ID' })
-  @ApiResponse({ status: 200, description: 'Food item found', type: Food })
-  @ApiResponse({ status: 404, description: 'Food item not found' })
+  @ApiOperation({
+    summary: 'Buscar alimento por ID',
+    description: 'Retorna os detalhes de um alimento específico',
+  })
+  @ApiParam({ name: 'id', description: 'ID do alimento' })
+  @ApiResponse({
+    status: 200,
+    description: 'Alimento encontrado',
+    type: Food,
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'Alimento não encontrado',
+  })
   findOne(@Param('id') id: string) {
     return this.foodsService.findOne(id);
   }
 
   @Patch(':id')
-  @ApiOperation({ summary: 'Update a food item' })
+  @ApiOperation({
+    summary: 'Atualizar alimento',
+    description: 'Atualiza as informações de um alimento existente',
+  })
+  @ApiParam({ name: 'id', description: 'ID do alimento' })
   @ApiResponse({
     status: 200,
-    description: 'Food item updated successfully',
+    description: 'Alimento atualizado com sucesso',
     type: Food,
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'Alimento não encontrado',
   })
   update(@Param('id') id: string, @Body() updateFoodDto: UpdateFoodDto) {
     return this.foodsService.update(id, updateFoodDto);
@@ -94,18 +150,37 @@ export class FoodsController {
 
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
-  @ApiOperation({ summary: 'Delete a food item' })
-  @ApiResponse({ status: 204, description: 'Food item deleted successfully' })
+  @ApiOperation({
+    summary: 'Remover alimento',
+    description: 'Remove um alimento do banco de dados',
+  })
+  @ApiParam({ name: 'id', description: 'ID do alimento' })
+  @ApiResponse({
+    status: 204,
+    description: 'Alimento removido com sucesso',
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'Alimento não encontrado',
+  })
   remove(@Param('id') id: string) {
     return this.foodsService.remove(id);
   }
 
-  @Patch(':id/favorite')
-  @ApiOperation({ summary: 'Toggle favorite status of a food item' })
+  @Post(':id/favorite')
+  @ApiOperation({
+    summary: 'Alternar favorito',
+    description: 'Marca ou desmarca um alimento como favorito',
+  })
+  @ApiParam({ name: 'id', description: 'ID do alimento' })
   @ApiResponse({
     status: 200,
-    description: 'Food item favorite status toggled',
+    description: 'Status de favorito alterado com sucesso',
     type: Food,
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'Alimento não encontrado',
   })
   toggleFavorite(@Param('id') id: string) {
     return this.foodsService.toggleFavorite(id);

@@ -43,6 +43,10 @@ export class PatientsController {
     status: 400,
     description: 'Dados inválidos fornecidos',
   })
+  @ApiResponse({
+    status: 409,
+    description: 'Paciente já existe com o mesmo CPF ou email',
+  })
   create(@Body() createPatientDto: CreatePatientDto): Promise<Patient> {
     return this.patientsService.create(createPatientDto);
   }
@@ -50,7 +54,7 @@ export class PatientsController {
   @Get()
   @ApiOperation({
     summary: 'Listar todos os pacientes',
-    description: 'Retorna uma lista com todos os pacientes cadastrados.',
+    description: 'Retorna uma lista de todos os pacientes cadastrados.',
   })
   @ApiResponse({
     status: 200,
@@ -64,17 +68,16 @@ export class PatientsController {
   @Get(':id')
   @ApiOperation({
     summary: 'Buscar paciente por ID',
-    description: 'Retorna os dados detalhados de um paciente específico.',
+    description: 'Retorna os detalhes de um paciente específico.',
   })
   @ApiParam({
     name: 'id',
     description: 'ID do paciente',
-    type: 'string',
-    format: 'uuid',
+    example: '123e4567-e89b-12d3-a456-426614174000',
   })
   @ApiResponse({
     status: 200,
-    description: 'Paciente encontrado com sucesso',
+    description: 'Paciente encontrado',
     type: Patient,
   })
   @ApiResponse({
@@ -88,13 +91,12 @@ export class PatientsController {
   @Patch(':id')
   @ApiOperation({
     summary: 'Atualizar paciente',
-    description: 'Atualiza os dados de um paciente específico.',
+    description: 'Atualiza as informações de um paciente existente.',
   })
   @ApiParam({
     name: 'id',
     description: 'ID do paciente',
-    type: 'string',
-    format: 'uuid',
+    example: '123e4567-e89b-12d3-a456-426614174000',
   })
   @ApiBody({ type: UpdatePatientDto })
   @ApiResponse({
@@ -103,8 +105,16 @@ export class PatientsController {
     type: Patient,
   })
   @ApiResponse({
+    status: 400,
+    description: 'Dados inválidos fornecidos',
+  })
+  @ApiResponse({
     status: 404,
     description: 'Paciente não encontrado',
+  })
+  @ApiResponse({
+    status: 409,
+    description: 'Conflito com outro paciente (CPF ou email já existente)',
   })
   update(
     @Param('id') id: string,
@@ -122,8 +132,7 @@ export class PatientsController {
   @ApiParam({
     name: 'id',
     description: 'ID do paciente',
-    type: 'string',
-    format: 'uuid',
+    example: '123e4567-e89b-12d3-a456-426614174000',
   })
   @ApiResponse({
     status: 204,
@@ -145,13 +154,12 @@ export class PatientsController {
   @ApiParam({
     name: 'id',
     description: 'ID do paciente',
-    type: 'string',
-    format: 'uuid',
+    example: '123e4567-e89b-12d3-a456-426614174000',
   })
   @ApiBody({ type: CreateMeasurementDto })
   @ApiResponse({
     status: 201,
-    description: 'Medição adicionada com sucesso',
+    description: 'Medição criada com sucesso',
     type: Measurement,
   })
   @ApiResponse({
@@ -177,8 +185,7 @@ export class PatientsController {
   @ApiParam({
     name: 'id',
     description: 'ID do paciente',
-    type: 'string',
-    format: 'uuid',
+    example: '123e4567-e89b-12d3-a456-426614174000',
   })
   @ApiResponse({
     status: 200,
