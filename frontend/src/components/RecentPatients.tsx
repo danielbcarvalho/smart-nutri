@@ -19,6 +19,8 @@ import {
   Add as AddIcon,
   Search as SearchIcon,
   PersonAdd as PersonAddIcon,
+  Assessment as AssessmentIcon,
+  RestaurantMenu as RestaurantMenuIcon,
 } from "@mui/icons-material";
 import { useNavigate } from "react-router-dom";
 import { api } from "../lib/axios";
@@ -141,7 +143,18 @@ export function RecentPatients() {
           }}
         >
           <Box>
-            <Typography variant="h6" component="h2">
+            <Typography
+              variant="h6"
+              component="h2"
+              onClick={() => navigate("/patients")}
+              sx={{
+                cursor: "pointer",
+                "&:hover": {
+                  color: "primary.main",
+                  textDecoration: "underline",
+                },
+              }}
+            >
               Seus pacientes
             </Typography>
             <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
@@ -194,11 +207,27 @@ export function RecentPatients() {
           <List
             sx={{
               width: "100%",
-              maxHeight: 400,
+              maxHeight: "calc(100vh - 400px)",
+              minHeight: 400,
               overflow: "auto",
+              "&::-webkit-scrollbar": {
+                width: "8px",
+                backgroundColor: "transparent",
+              },
+              "&::-webkit-scrollbar-thumb": {
+                backgroundColor: "rgba(0, 0, 0, 0.1)",
+                borderRadius: "4px",
+                "&:hover": {
+                  backgroundColor: "rgba(0, 0, 0, 0.2)",
+                },
+              },
+              "&::-webkit-scrollbar-track": {
+                backgroundColor: "transparent",
+              },
               "& .MuiListItem-root": {
                 px: 3,
                 py: 2,
+                transition: "background-color 0.2s ease",
                 "&:hover": {
                   bgcolor: "action.hover",
                   cursor: "pointer",
@@ -222,35 +251,85 @@ export function RecentPatients() {
                   <ListItemText
                     primary={patient.name}
                     secondary={
-                      <Box
-                        sx={{
-                          display: "flex",
-                          alignItems: "center",
-                          gap: 1,
-                          mt: 0.5,
-                        }}
-                      >
-                        <Typography
-                          variant="caption"
-                          color="text.secondary"
-                          component="span"
+                      <Box>
+                        <Box
+                          sx={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: 1,
+                            mt: 0.5,
+                          }}
                         >
-                          {formatLastUpdate(patient.updatedAt)}
-                        </Typography>
-                        {patient.status && (
-                          <Chip
-                            label={
-                              patient.status === "active" ? "Ativo" : "Inativo"
-                            }
+                          <Typography
+                            variant="caption"
+                            color="text.secondary"
+                            component="span"
+                          >
+                            {formatLastUpdate(patient.updatedAt)}
+                          </Typography>
+                          {patient.status && (
+                            <Chip
+                              label={
+                                patient.status === "active"
+                                  ? "Ativo"
+                                  : "Inativo"
+                              }
+                              size="small"
+                              color={
+                                patient.status === "active"
+                                  ? "success"
+                                  : "default"
+                              }
+                              sx={{ height: 20 }}
+                            />
+                          )}
+                        </Box>
+                        <Box sx={{ mt: 1, display: "flex", gap: 1 }}>
+                          <Button
                             size="small"
-                            color={
-                              patient.status === "active"
-                                ? "success"
-                                : "default"
-                            }
-                            sx={{ height: 20 }}
-                          />
-                        )}
+                            variant="outlined"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              navigate(
+                                `/patient/${patient.id}/assessments/new`
+                              );
+                            }}
+                            startIcon={<AssessmentIcon />}
+                            sx={{
+                              borderRadius: 20,
+                              textTransform: "none",
+                              borderColor: "success.main",
+                              color: "success.main",
+                              "&:hover": {
+                                borderColor: "success.dark",
+                                bgcolor: "success.lighter",
+                              },
+                            }}
+                          >
+                            Nova Avaliação
+                          </Button>
+                          <Button
+                            size="small"
+                            variant="outlined"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              navigate(`/patient/${patient.id}/meal-plans/new`);
+                            }}
+                            startIcon={<RestaurantMenuIcon />}
+                            sx={{
+                              borderRadius: 20,
+                              textTransform: "none",
+                              borderColor: "info.main",
+                              color: "info.main",
+                              "&:hover": {
+                                borderColor: "info.dark",
+                                bgcolor: "info.lighter",
+                              },
+                            }}
+                          >
+                            Novo Plano
+                          </Button>
+                        </Box>
                       </Box>
                     }
                   />

@@ -79,15 +79,31 @@ export function Home() {
           color: "common.white",
           "&:hover": {
             bgcolor: "custom.dark",
+            cursor: "pointer",
           },
         }}
+        onClick={() => navigate("/patients")}
       >
         <CardContent>
           <Grid container spacing={2}>
             <Grid item xs={12} sm={6}>
               <Stack spacing={1}>
                 <Typography variant="h3">{activePatients.length}</Typography>
-                <Typography variant="body1">Pacientes Ativos</Typography>
+                <Typography
+                  variant="body1"
+                  sx={{
+                    "&:hover": {
+                      textDecoration: "underline",
+                    },
+                    cursor: "pointer",
+                  }}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    navigate("/patients");
+                  }}
+                >
+                  Pacientes Ativos
+                </Typography>
               </Stack>
             </Grid>
             <Grid item xs={12} sm={6}>
@@ -98,7 +114,10 @@ export function Home() {
                 <Button
                   variant="contained"
                   size="large"
-                  onClick={() => navigate("/patients")}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    navigate("/patients");
+                  }}
                   sx={{
                     bgcolor: "common.white",
                     color: "custom.main",
