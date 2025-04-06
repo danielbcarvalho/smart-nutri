@@ -17,15 +17,15 @@ import {
 } from "@mui/material";
 import {
   ExpandMore as ExpandMoreIcon,
-  ViewList as ViewListIcon,
+  Add as AddIcon,
   Edit as EditIcon,
   Delete as DeleteIcon,
   Sort as SortIcon,
   UnfoldMore as UnfoldMoreIcon,
-  Add as AddIcon,
 } from "@mui/icons-material";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { mealPlanService } from "../../services/mealPlanService";
+import { Meal } from "../../services/mealPlanService";
 
 const DEFAULT_MEALS = [
   { name: "Café da manhã", time: "07:00" },
@@ -54,7 +54,7 @@ export function MealPlanDetails() {
   });
 
   const addMealMutation = useMutation({
-    mutationFn: (newMeal: { name: string; time: string; notes: string }) =>
+    mutationFn: (newMeal: Omit<Meal, "id">) =>
       mealPlanService.addMeal(planId as string, newMeal),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["mealPlan", planId] });
@@ -81,6 +81,7 @@ export function MealPlanDetails() {
               name: meal.name,
               time: formatTime(meal.time),
               notes: "",
+              mealFoods: [],
             });
           }
         } catch (error) {
@@ -107,7 +108,11 @@ export function MealPlanDetails() {
       name: newMealName,
       time: formatTime(selectedTime),
       notes: "",
+      mealFoods: [],
     });
+    setOpenMealDialog(false);
+    setNewMealName("");
+    setSelectedTime("12:00");
   };
 
   const handleExpandMeal = (mealId: string) => {
@@ -116,6 +121,16 @@ export function MealPlanDetails() {
         ? prev.filter((id) => id !== mealId)
         : [...prev, mealId]
     );
+  };
+
+  const handleAddFood = (mealId: string) => {
+    // TODO: Implementar adição de alimento
+    console.log("Adicionar alimento à refeição:", mealId);
+  };
+
+  const handleEditMeal = (meal: Meal) => {
+    // TODO: Implementar edição de refeição
+    console.log("Editar refeição:", meal);
   };
 
   if (isLoading) {
@@ -198,29 +213,32 @@ export function MealPlanDetails() {
                 <Typography sx={{ minWidth: 80 }}>{meal.time}</Typography>
                 <Typography sx={{ flex: 1 }}>{meal.name}</Typography>
 
-                <Stack direction="row" spacing={1}>
-                  <IconButton
+                <div className="flex items-center gap-2">
+                  <Button
+                    onClick={() => handleAddFood(meal.id)}
+                    startIcon={<AddIcon />}
+                    variant="outlined"
                     size="small"
-                    onClick={() => {}}
-                    sx={{ color: "primary.main" }}
+                    color="primary"
+                    sx={{ mr: 1 }}
                   >
-                    <ViewListIcon />
-                  </IconButton>
+                    Adicionar Alimento
+                  </Button>
                   <IconButton
+                    onClick={() => handleEditMeal(meal)}
                     size="small"
-                    onClick={() => {}}
-                    sx={{ color: "primary.main" }}
+                    color="primary"
                   >
                     <EditIcon />
                   </IconButton>
                   <IconButton
-                    size="small"
                     onClick={() => deleteMealMutation.mutate(meal.id)}
-                    sx={{ color: "error.main" }}
+                    size="small"
+                    color="error"
                   >
                     <DeleteIcon />
                   </IconButton>
-                </Stack>
+                </div>
               </Box>
             </ListItem>
           ))}
