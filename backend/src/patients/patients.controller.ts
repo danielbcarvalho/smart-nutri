@@ -8,6 +8,7 @@ import {
   Delete,
   HttpCode,
   HttpStatus,
+  Query,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -15,6 +16,7 @@ import {
   ApiResponse,
   ApiParam,
   ApiBody,
+  ApiQuery,
 } from '@nestjs/swagger';
 import { PatientsService } from './patients.service';
 import { CreatePatientDto } from './dto/create-patient.dto';
@@ -218,5 +220,25 @@ export class PatientsController {
   })
   async findMeasurements(@Param('id') id: string): Promise<Measurement[]> {
     return this.patientsService.findMeasurements(id);
+  }
+
+  @Get('search')
+  @ApiOperation({
+    summary: 'Buscar pacientes',
+    description: 'Busca pacientes por nome ou email',
+  })
+  @ApiQuery({
+    name: 'query',
+    required: true,
+    type: String,
+    description: 'Termo de busca (nome ou email)',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Lista de pacientes encontrados',
+    type: [Patient],
+  })
+  async search(@Query('query') query: string) {
+    return this.patientsService.search(query);
   }
 }

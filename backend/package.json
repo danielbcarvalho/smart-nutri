@@ -20,7 +20,10 @@
     "test:e2e": "jest --config ./test/jest-e2e.json",
     "test:api": "chmod +x ./test-api.sh && ./test-api.sh",
     "test:dredd": "chmod +x ./test-dredd.sh && ./test-dredd.sh",
-    "generate:swagger": "node generate-swagger-json.js"
+    "generate:swagger": "node generate-swagger-json.js",
+    "migration:generate": "typeorm-ts-node-commonjs migration:generate -d src/config/typeorm.migrations.config.ts",
+    "migration:run": "typeorm-ts-node-commonjs migration:run -d src/config/typeorm.migrations.config.ts",
+    "migration:revert": "typeorm-ts-node-commonjs migration:revert -d src/config/typeorm.migrations.config.ts"
   },
   "dependencies": {
     "@nestjs/axios": "^4.0.0",
@@ -36,6 +39,7 @@
     "bcrypt": "^5.1.1",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.0",
+    "fatsecret": "^1.0.2",
     "passport": "^0.7.0",
     "passport-jwt": "^4.0.1",
     "passport-local": "^1.0.0",

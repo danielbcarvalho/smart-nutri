@@ -1,9 +1,11 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, DeepPartial } from 'typeorm';
+import { Repository, DeepPartial, ILike } from 'typeorm';
 import { Patient } from './entities/patient.entity';
 import { Measurement } from './entities/measurement.entity';
 import { UpdatePatientDto } from './dto/update-patient.dto';
+import { CreatePatientDto } from './dto/create-patient.dto';
+import { CreateMeasurementDto } from './dto/create-measurement.dto';
 
 @Injectable()
 export class PatientsService {
@@ -73,6 +75,13 @@ export class PatientsService {
     return this.measurementRepository.find({
       where: { patient: { id: patientId } },
       order: { date: 'DESC' },
+    });
+  }
+
+  async search(query: string): Promise<Patient[]> {
+    return this.patientRepository.find({
+      where: [{ name: ILike(`%${query}%`) }, { email: ILike(`%${query}%`) }],
+      take: 5, // Limita a 5 resultados
     });
   }
 }

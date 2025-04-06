@@ -8,6 +8,7 @@ import {
   Delete,
   HttpCode,
   HttpStatus,
+  Query,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -15,6 +16,7 @@ import {
   ApiResponse,
   ApiParam,
   ApiBody,
+  ApiQuery,
 } from '@nestjs/swagger';
 import { MealPlansService } from './meal-plans.service';
 import { CreateMealPlanDto } from './dto/create-meal-plan.dto';
@@ -241,5 +243,25 @@ export class MealPlansController {
   })
   getMeals(@Param('id') id: string) {
     return this.mealPlansService.getMeals(id);
+  }
+
+  @Get('search')
+  @ApiOperation({
+    summary: 'Buscar planos de alimentação',
+    description: 'Busca planos de alimentação por nome',
+  })
+  @ApiQuery({
+    name: 'query',
+    required: true,
+    type: String,
+    description: 'Termo de busca (nome do plano)',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Lista de planos encontrados',
+    type: [MealPlan],
+  })
+  async search(@Query('query') query: string) {
+    return this.mealPlansService.search(query);
   }
 }

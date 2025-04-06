@@ -46,10 +46,10 @@ export class TypeOrmConfigService {
       password,
       database,
       entities: [__dirname + '/../**/*.entity{.ts,.js}'],
-      synchronize: true,
+      synchronize: false,
       dropSchema: isTestEnvironment,
-      migrationsRun: false,
-      migrations: [],
+      migrationsRun: true,
+      migrations: [__dirname + '/../migrations/*{.ts,.js}'],
       logging: true,
       // Adicionar opções específicas para o ambiente de teste
       ...(isTestEnvironment && {

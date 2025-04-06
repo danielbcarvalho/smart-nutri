@@ -1,12 +1,9 @@
 import {
   IsString,
   IsEmail,
-  IsDate,
-  IsNumber,
   IsOptional,
   IsEnum,
   IsArray,
-  IsPhoneNumber,
   Matches,
   MinLength,
   MaxLength,
@@ -14,6 +11,7 @@ import {
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import { Gender } from '../enums/gender.enum';
+import { Transform } from 'class-transformer';
 
 export class CreatePatientDto {
   @ApiProperty({
@@ -28,59 +26,69 @@ export class CreatePatientDto {
   })
   name: string;
 
-  @ApiProperty({
+  @ApiPropertyOptional({
     description: 'Email do paciente',
     example: 'joao.silva@email.com',
   })
+  @IsOptional()
   @IsEmail({}, { message: 'Email inválido' })
-  email: string;
+  @Transform(({ value }): string | null => (value === '' ? null : value))
+  email?: string;
 
-  @ApiProperty({
+  @ApiPropertyOptional({
     description: 'Telefone do paciente',
     example: '(11) 98765-4321',
   })
-  @IsPhoneNumber('BR', { message: 'Telefone inválido' })
-  phone: string;
+  @IsOptional()
+  @Transform(({ value }): string | null => (value === '' ? null : value))
+  phone?: string;
 
-  @ApiProperty({
+  @ApiPropertyOptional({
     description: 'Data de nascimento do paciente',
     example: '1990-01-01',
     type: Date,
   })
+  @IsOptional()
+  @Transform(({ value }) => {
+    if (!value || value === '') return null;
+    const date = new Date(value);
+    return isNaN(date.getTime()) ? null : date;
+  })
   @Type(() => Date)
-  @IsDate()
-  birthDate: Date;
+  birthDate?: Date;
 
-  @ApiProperty({
+  @ApiPropertyOptional({
     description: 'Gênero do paciente',
     enum: Gender,
     example: Gender.MALE,
   })
+  @IsOptional()
   @IsEnum(Gender, {
     message: 'Gênero deve ser MALE, FEMALE ou OTHER',
   })
-  gender: Gender;
+  gender?: Gender;
 
-  @ApiProperty({
+  @ApiPropertyOptional({
     description: 'Altura do paciente em metros',
     example: 1.75,
     type: Number,
   })
-  @IsNumber({}, { message: 'A altura deve ser um número' })
-  height: number;
+  @IsOptional()
+  @Transform(({ value }) => (value === '' ? null : Number(value)))
+  height?: number;
 
-  @ApiProperty({
+  @ApiPropertyOptional({
     description: 'Peso do paciente em quilogramas',
     example: 70.5,
     type: Number,
   })
-  @IsNumber({}, { message: 'O peso deve ser um número' })
-  weight: number;
+  @IsOptional()
+  @Transform(({ value }) => (value === '' ? null : Number(value)))
+  weight?: number;
 
-  @ApiProperty({
+  @ApiPropertyOptional({
     description: 'Objetivos do paciente',
     example: ['Perda de peso', 'Ganho de massa muscular'],
-    required: false,
     type: [String],
   })
   @IsOptional()
@@ -88,10 +96,9 @@ export class CreatePatientDto {
   @IsString({ each: true })
   goals?: string[];
 
-  @ApiProperty({
+  @ApiPropertyOptional({
     description: 'Alergias do paciente',
     example: ['Amendoim', 'Leite'],
-    required: false,
     type: [String],
   })
   @IsOptional()
@@ -99,10 +106,9 @@ export class CreatePatientDto {
   @IsString({ each: true })
   allergies?: string[];
 
-  @ApiProperty({
+  @ApiPropertyOptional({
     description: 'Condições de saúde do paciente',
     example: ['Diabetes tipo 2', 'Hipertensão'],
-    required: false,
     type: [String],
   })
   @IsOptional()
@@ -110,10 +116,9 @@ export class CreatePatientDto {
   @IsString({ each: true })
   healthConditions?: string[];
 
-  @ApiProperty({
+  @ApiPropertyOptional({
     description: 'Medicamentos em uso',
     example: ['Metformina', 'Losartana'],
-    required: false,
     type: [String],
   })
   @IsOptional()
@@ -121,10 +126,9 @@ export class CreatePatientDto {
   @IsString({ each: true })
   medications?: string[];
 
-  @ApiProperty({
+  @ApiPropertyOptional({
     description: 'Observações gerais sobre o paciente',
     example: 'Paciente com histórico familiar de diabetes',
-    required: false,
   })
   @IsOptional()
   @IsString()

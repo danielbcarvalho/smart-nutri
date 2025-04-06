@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, ILike } from 'typeorm';
 import { MealPlan } from './entities/meal-plan.entity';
 import { Meal } from './entities/meal.entity';
 import { MealFood } from './entities/meal-food.entity';
@@ -180,5 +180,13 @@ export class MealPlansService {
   async getMeals(id: string): Promise<Meal[]> {
     const mealPlan = await this.findOne(id);
     return mealPlan.meals;
+  }
+
+  async search(query: string): Promise<MealPlan[]> {
+    return this.mealPlanRepository.find({
+      where: [{ name: ILike(`%${query}%`) }],
+      relations: ['patient'],
+      take: 5, // Limita a 5 resultados
+    });
   }
 }
