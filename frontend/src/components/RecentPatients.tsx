@@ -313,7 +313,9 @@ export function RecentPatients() {
                             variant="outlined"
                             onClick={(e) => {
                               e.stopPropagation();
-                              navigate(`/patient/${patient.id}/meal-plans/new`);
+                              navigate(
+                                `/patient/${patient.id}/meal-plans?new=true`
+                              );
                             }}
                             startIcon={<RestaurantMenuIcon />}
                             sx={{

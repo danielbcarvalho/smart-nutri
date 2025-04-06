@@ -311,10 +311,15 @@ export function Patients() {
                         <Button
                           size="small"
                           variant="outlined"
+                          onClick={() =>
+                            navigate(
+                              `/patient/${patient.id}/meal-plans?new=true`
+                            )
+                          }
                           startIcon={<RestaurantMenuIcon />}
                           sx={{
-                            fontSize: "0.75rem",
-                            py: 0.5,
+                            borderRadius: 20,
+                            textTransform: "none",
                             borderColor: "info.main",
                             color: "info.main",
                             "&:hover": {
@@ -322,9 +327,6 @@ export function Patients() {
                               bgcolor: "info.lighter",
                             },
                           }}
-                          onClick={() =>
-                            navigate(`/patient/${patient.id}/meal-plans/new`)
-                          }
                         >
                           Novo Plano
                         </Button>
