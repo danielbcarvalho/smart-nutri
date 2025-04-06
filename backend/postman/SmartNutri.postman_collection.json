@@ -1,0 +1,467 @@
+{
+  "info": {
+    "_postman_id": "f4b0e8d0-5f1a-4b0e-8b0a-5f1a4b0e8b0a",
+    "name": "SmartNutri API",
+    "description": "API do sistema SmartNutri",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Foods",
+      "description": "Endpoints relacionados ao módulo de Foods",
+      "item": [
+        {
+          "name": "Listar Alimentos",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/foods",
+              "host": ["{{baseUrl}}"],
+              "path": ["foods"]
+            }
+          }
+        },
+        {
+          "name": "Salvar Alimento da API",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"externalId\": \"123456789\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/foods/save-from-api",
+              "host": ["{{baseUrl}}"],
+              "path": ["foods", "save-from-api"]
+            }
+          }
+        },
+        {
+          "name": "Buscar Alimentos",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code é 200', function() {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test('Resposta é um array', function() {",
+                  "    const response = pm.response.json();",
+                  "    pm.expect(response).to.be.an('array');",
+                  "    if (response.length > 0) {",
+                  "        pm.collectionVariables.set('foodId', response[0].id);",
+                  "    }",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/foods/search?query=arroz&page=0&pageSize=20",
+              "host": ["{{baseUrl}}"],
+              "path": ["foods", "search"],
+              "query": [
+                {
+                  "key": "query",
+                  "value": "arroz"
+                },
+                {
+                  "key": "page",
+                  "value": "0"
+                },
+                {
+                  "key": "pageSize",
+                  "value": "20"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Criar Alimento",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Arroz Branco\",\n  \"servingSize\": 100,\n  \"servingUnit\": \"g\",\n  \"calories\": 130,\n  \"protein\": 2.7,\n  \"carbohydrates\": 28.2,\n  \"fat\": 0.3,\n  \"fiber\": 0.4,\n  \"sugar\": 0.1,\n  \"sodium\": 1,\n  \"categories\": [\"Cereais\", \"Básicos\"]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/foods",
+              "host": ["{{baseUrl}}"],
+              "path": ["foods"]
+            }
+          }
+        },
+        {
+          "name": "Buscar Alimento por ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/foods/:id",
+              "host": ["{{baseUrl}}"],
+              "path": ["foods", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "",
+                  "description": "ID do alimento"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Atualizar Alimento",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Arroz Integral\",\n  \"servingSize\": 100,\n  \"calories\": 111,\n  \"protein\": 2.6,\n  \"carbohydrates\": 23,\n  \"fat\": 0.9,\n  \"fiber\": 1.8\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/foods/:id",
+              "host": ["{{baseUrl}}"],
+              "path": ["foods", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "",
+                  "description": "ID do alimento"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Deletar Alimento",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/foods/:id",
+              "host": ["{{baseUrl}}"],
+              "path": ["foods", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "",
+                  "description": "ID do alimento"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Listar Favoritos",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/foods/favorites",
+              "host": ["{{baseUrl}}"],
+              "path": ["foods", "favorites"]
+            }
+          }
+        },
+        {
+          "name": "Alternar Favorito",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/foods/:id/favorite",
+              "host": ["{{baseUrl}}"],
+              "path": ["foods", ":id", "favorite"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "",
+                  "description": "ID do alimento"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Meal Plans",
+      "description": "Endpoints relacionados ao módulo de Planos Alimentares",
+      "item": [
+        {
+          "name": "Listar Planos Alimentares",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/meal-plans",
+              "host": ["{{baseUrl}}"],
+              "path": ["meal-plans"]
+            }
+          }
+        },
+        {
+          "name": "Buscar Plano Alimentar",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/meal-plans/{{mealPlanId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["meal-plans", "{{mealPlanId}}"]
+            }
+          }
+        },
+        {
+          "name": "Criar Plano Alimentar",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code é 201', function() {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "pm.test('Resposta contém ID', function() {",
+                  "    const response = pm.response.json();",
+                  "    pm.expect(response.id).to.exist;",
+                  "    pm.collectionVariables.set('mealPlanId', response.id);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Plano Semanal\",\n  \"startDate\": \"2025-04-05\",\n  \"endDate\": \"2025-04-12\",\n  \"meals\": [\n    {\n      \"name\": \"Café da Manhã\",\n      \"time\": \"08:00\",\n      \"mealFoods\": [\n        {\n          \"foodId\": \"123\",\n          \"amount\": 100,\n          \"unit\": \"g\"\n        }\n      ]\n    }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/meal-plans",
+              "host": ["{{baseUrl}}"],
+              "path": ["meal-plans"]
+            }
+          }
+        },
+        {
+          "name": "Atualizar Plano Alimentar",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Novo Nome do Plano\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/meal-plans/{{mealPlanId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["meal-plans", "{{mealPlanId}}"]
+            }
+          }
+        },
+        {
+          "name": "Remover Plano Alimentar",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/meal-plans/{{mealPlanId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["meal-plans", "{{mealPlanId}}"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Patients",
+      "description": "Endpoints relacionados ao módulo de Pacientes",
+      "item": [
+        {
+          "name": "Listar Pacientes",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/patients",
+              "host": ["{{baseUrl}}"],
+              "path": ["patients"]
+            }
+          }
+        },
+        {
+          "name": "Buscar Paciente",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/patients/{{patientId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["patients", "{{patientId}}"]
+            }
+          }
+        },
+        {
+          "name": "Criar Paciente",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code é 201', function() {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "pm.test('Resposta contém ID', function() {",
+                  "    const response = pm.response.json();",
+                  "    pm.expect(response.id).to.exist;",
+                  "    pm.collectionVariables.set('patientId', response.id);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"João Silva\",\n  \"email\": \"joao@email.com\",\n  \"birthDate\": \"1990-01-01\",\n  \"gender\": \"M\",\n  \"phone\": \"11999999999\",\n  \"height\": 175,\n  \"weight\": 70,\n  \"goals\": [\"Perda de peso\", \"Ganho de massa muscular\"],\n  \"healthConditions\": [\"Hipertensão\"],\n  \"allergies\": [\"Amendoim\"],\n  \"medications\": [\"Losartana\"]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/patients",
+              "host": ["{{baseUrl}}"],
+              "path": ["patients"]
+            }
+          }
+        },
+        {
+          "name": "Atualizar Paciente",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"weight\": 68.5,\n  \"goals\": [\"Manutenção de peso\"]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/patients/{{patientId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["patients", "{{patientId}}"]
+            }
+          }
+        },
+        {
+          "name": "Remover Paciente",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/patients/{{patientId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["patients", "{{patientId}}"]
+            }
+          }
+        },
+        {
+          "name": "Adicionar Medidas",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"date\": \"2025-04-05\",\n  \"weight\": 68.5,\n  \"bodyFat\": 15,\n  \"muscleMass\": 30,\n  \"bodyWater\": 60,\n  \"visceralFat\": 5,\n  \"measurements\": {\n    \"chest\": 95,\n    \"waist\": 80,\n    \"hip\": 100,\n    \"arm\": 32,\n    \"thigh\": 55\n  }\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/patients/{{patientId}}/measurements",
+              "host": ["{{baseUrl}}"],
+              "path": ["patients", "{{patientId}}", "measurements"]
+            }
+          }
+        },
+        {
+          "name": "Listar Medidas",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/patients/{{patientId}}/measurements",
+              "host": ["{{baseUrl}}"],
+              "path": ["patients", "{{patientId}}", "measurements"]
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3000",
+      "type": "string"
+    },
+    {
+      "key": "mealPlanId",
+      "value": "seu-id-aqui",
+      "type": "string"
+    },
+    {
+      "key": "patientId",
+      "value": "seu-id-aqui",
+      "type": "string"
+    }
+  ]
+}
