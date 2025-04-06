@@ -36,28 +36,60 @@ export function FoodSearch({ onSelectFood }: FoodSearchProps) {
         sx={{ mb: 2 }}
       />
 
-      <Paper variant="outlined" sx={{ maxHeight: 300, overflow: "auto" }}>
+      <Paper
+        variant="outlined"
+        sx={{
+          maxHeight: 300,
+          overflow: "auto",
+          bgcolor: "background.paper",
+          borderColor: "divider",
+        }}
+      >
         <List>
           {isLoading && (
             <ListItem>
-              <ListItemText primary="Buscando..." />
+              <ListItemText
+                primary="Buscando..."
+                primaryTypographyProps={{
+                  color: "text.secondary",
+                  fontStyle: "italic",
+                }}
+              />
             </ListItem>
           )}
 
           {!isLoading && foods?.length === 0 && (
             <ListItem>
-              <ListItemText primary="Nenhum alimento encontrado" />
+              <ListItemText
+                primary="Nenhum alimento encontrado"
+                primaryTypographyProps={{
+                  color: "text.secondary",
+                  fontStyle: "italic",
+                }}
+              />
             </ListItem>
           )}
 
           {foods?.map((food) => (
             <ListItem
               key={food.id}
+              sx={{
+                "&:hover": {
+                  bgcolor: "custom.lightest",
+                },
+              }}
               secondaryAction={
                 <IconButton
                   edge="end"
                   aria-label="adicionar"
                   onClick={() => onSelectFood(food)}
+                  sx={{
+                    color: "text.secondary",
+                    "&:hover": {
+                      color: "custom.main",
+                      bgcolor: "custom.lightest",
+                    },
+                  }}
                 >
                   <AddIcon />
                 </IconButton>
@@ -71,6 +103,9 @@ export function FoodSearch({ onSelectFood }: FoodSearchProps) {
                     {food.carbohydrates}g | G: {food.fat}g
                   </Typography>
                 }
+                primaryTypographyProps={{
+                  color: "text.primary",
+                }}
               />
             </ListItem>
           ))}

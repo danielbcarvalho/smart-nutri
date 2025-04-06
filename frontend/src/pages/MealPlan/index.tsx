@@ -1,31 +1,362 @@
-import React from "react";
-import { Box, Paper, Typography } from "@mui/material";
-import { MealPlan as MealPlanComponent } from "../../components/MealPlan";
+import React, { useState, useEffect } from "react";
+import {
+  useNavigate,
+  useParams,
+  useLocation,
+  useSearchParams,
+} from "react-router-dom";
+import {
+  Box,
+  Typography,
+  Button,
+  Card,
+  CardContent,
+  Stack,
+  TextField,
+  ToggleButtonGroup,
+  ToggleButton,
+} from "@mui/material";
+import { Add as AddIcon } from "@mui/icons-material";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { mealPlanService, type MealPlan } from "../../services/mealPlanService";
+import { patientService } from "../../services/patientService";
 
 export function MealPlan() {
-  return (
-    <Box sx={{ height: "100%", width: "100%", p: { xs: 1, sm: 3 } }}>
-      {/* Header */}
-      <Paper
-        elevation={0}
-        sx={{
-          p: 3,
-          mb: 3,
-          bgcolor: "primary.main",
-          color: "primary.contrastText",
-          borderRadius: 2,
-        }}
-      >
-        <Typography variant="h4" component="h1" gutterBottom>
-          Plano Alimentar
-        </Typography>
-        <Typography variant="subtitle1">
-          Crie e gerencie planos alimentares para seus pacientes.
-        </Typography>
-      </Paper>
+  const navigate = useNavigate();
+  const location = useLocation();
+  const [searchParams] = useSearchParams();
+  const { patientId } = useParams<{ patientId: string }>();
+  const queryPatientId = searchParams.get("patientId");
 
-      {/* Conteúdo */}
-      <MealPlanComponent />
+  // Redirect effect to handle old URL format
+  useEffect(() => {
+    if (queryPatientId && !patientId) {
+      navigate(
+        `/patient/${queryPatientId}/meal-plans${
+          location.search.includes("new=true") ? "?new=true" : ""
+        }`,
+        { replace: true }
+      );
+    }
+  }, [queryPatientId, patientId, navigate, location.search]);
+
+  const showNewPlanForm = location.search === "?new=true";
+  const [newPlanName, setNewPlanName] = useState("");
+  const [selectedType, setSelectedType] = useState<
+    "alimentos" | "equivalentes" | "qualitativa"
+  >("alimentos");
+  const [startDate, setStartDate] = useState(
+    new Date().toISOString().split("T")[0]
+  );
+  const [endDate, setEndDate] = useState(
+    new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split("T")[0]
+  );
+
+  // Buscar dados do paciente
+  const { data: patient, isLoading: isLoadingPatient } = useQuery({
+    queryKey: ["patient", patientId],
+    queryFn: () => patientService.getById(patientId as string),
+    enabled: !!patientId,
+  });
+
+  const queryClient = useQueryClient();
+
+  const createPlanMutation = useMutation({
+    mutationFn: mealPlanService.createPlan,
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ["mealPlans", patientId] });
+      navigate(`/patient/${patientId}/meal-plans/${data.id}`);
+    },
+  });
+
+  // Buscar planos existentes do paciente
+  const { data: existingPlans = [], isLoading: isLoadingPlans } = useQuery({
+    queryKey: ["mealPlans", patientId],
+    queryFn: () => mealPlanService.getPatientPlans(patientId as string),
+    enabled: !!patientId,
+  });
+
+  // Ordenar planos por data de criação (mais recentes primeiro)
+  const sortedPlans = [...(existingPlans || [])].sort((a, b) => {
+    return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+  });
+
+  const handleTypeChange = (
+    event: React.MouseEvent<HTMLElement>,
+    newType: "alimentos" | "equivalentes" | "qualitativa"
+  ) => {
+    if (newType !== null) {
+      setSelectedType(newType);
+    }
+  };
+
+  const handleCreatePlan = () => {
+    if (!patientId) return;
+
+    const planName = newPlanName.trim() || "Cardápio personalizado";
+    createPlanMutation.mutate({
+      name: planName,
+      type: selectedType,
+      patientId,
+      status: "draft",
+      startDate,
+      endDate,
+      meals: [],
+    });
+  };
+
+  if (!patientId) {
+    return (
+      <Box sx={{ maxWidth: 600, mx: "auto", p: 3 }}>
+        <Typography variant="h6" sx={{ color: "error.main" }}>
+          ID do paciente não encontrado
+        </Typography>
+      </Box>
+    );
+  }
+
+  if (isLoadingPatient || isLoadingPlans) {
+    return (
+      <Box sx={{ maxWidth: 600, mx: "auto", p: 3 }}>
+        <Typography variant="h6" color="text.secondary">
+          Carregando...
+        </Typography>
+      </Box>
+    );
+  }
+
+  if (!patient) {
+    return (
+      <Box sx={{ maxWidth: 600, mx: "auto", p: 3 }}>
+        <Typography variant="h6" sx={{ color: "error.main" }}>
+          Paciente não encontrado
+        </Typography>
+      </Box>
+    );
+  }
+
+  if (showNewPlanForm) {
+    return (
+      <Box sx={{ maxWidth: 600, mx: "auto", p: 3 }}>
+        <Typography variant="h5" gutterBottom color="text.primary">
+          Novo Plano Alimentar
+        </Typography>
+
+        <Card
+          sx={{
+            mb: 3,
+            bgcolor: "background.paper",
+          }}
+        >
+          <CardContent>
+            <Stack spacing={3}>
+              <TextField
+                fullWidth
+                label="Nome do plano"
+                value={newPlanName}
+                onChange={(e) => setNewPlanName(e.target.value)}
+                placeholder="Cardápio personalizado"
+                helperText="Se não informado, será usado 'Cardápio personalizado'"
+              />
+
+              <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
+                <TextField
+                  fullWidth
+                  label="Data de início"
+                  type="date"
+                  value={startDate}
+                  onChange={(e) => setStartDate(e.target.value)}
+                  InputLabelProps={{ shrink: true }}
+                />
+                <TextField
+                  fullWidth
+                  label="Data de término"
+                  type="date"
+                  value={endDate}
+                  onChange={(e) => setEndDate(e.target.value)}
+                  InputLabelProps={{ shrink: true }}
+                />
+              </Stack>
+
+              <Box>
+                <Typography
+                  variant="subtitle2"
+                  gutterBottom
+                  color="text.primary"
+                >
+                  Tipo de prescrição
+                </Typography>
+                <ToggleButtonGroup
+                  value={selectedType}
+                  exclusive
+                  onChange={handleTypeChange}
+                  aria-label="tipo de prescrição"
+                >
+                  <ToggleButton
+                    value="alimentos"
+                    sx={{
+                      "&.Mui-selected": {
+                        bgcolor: "custom.lightest",
+                        color: "custom.main",
+                        "&:hover": {
+                          bgcolor: "custom.lightest",
+                        },
+                      },
+                    }}
+                  >
+                    Por alimentos
+                  </ToggleButton>
+                  <ToggleButton
+                    value="equivalentes"
+                    disabled
+                    sx={{
+                      opacity: 0.5,
+                      "&.Mui-disabled": {
+                        color: "text.secondary",
+                      },
+                    }}
+                  >
+                    Por equivalentes (em breve)
+                  </ToggleButton>
+                  <ToggleButton
+                    value="qualitativa"
+                    disabled
+                    sx={{
+                      opacity: 0.5,
+                      "&.Mui-disabled": {
+                        color: "text.secondary",
+                      },
+                    }}
+                  >
+                    Qualitativa (em breve)
+                  </ToggleButton>
+                </ToggleButtonGroup>
+              </Box>
+
+              <Box>
+                <Typography
+                  variant="subtitle2"
+                  gutterBottom
+                  color="text.primary"
+                >
+                  Metodologia selecionada:
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  {selectedType === "alimentos" && (
+                    <>
+                      Prescrição detalhada com alimentos específicos,
+                      quantidades e informações nutricionais.
+                    </>
+                  )}
+                  {selectedType === "equivalentes" && (
+                    <>
+                      Prescrição baseada em porções e grupos alimentares
+                      equivalentes.
+                    </>
+                  )}
+                  {selectedType === "qualitativa" && (
+                    <>
+                      Prescrição com orientações gerais e sugestões de
+                      alimentos.
+                    </>
+                  )}
+                </Typography>
+              </Box>
+            </Stack>
+          </CardContent>
+        </Card>
+
+        <Stack direction="row" spacing={2} justifyContent="flex-end">
+          <Button
+            variant="outlined"
+            onClick={() => navigate(`/patient/${patientId}/meal-plans`)}
+            sx={{
+              borderColor: "custom.main",
+              color: "custom.main",
+              "&:hover": {
+                borderColor: "custom.dark",
+                bgcolor: "transparent",
+              },
+            }}
+          >
+            Cancelar
+          </Button>
+          <Button
+            variant="contained"
+            onClick={handleCreatePlan}
+            disabled={createPlanMutation.isPending}
+            sx={{
+              bgcolor: "custom.main",
+              color: "common.white",
+              "&:hover": {
+                bgcolor: "custom.dark",
+              },
+            }}
+          >
+            Criar plano
+          </Button>
+        </Stack>
+      </Box>
+    );
+  }
+
+  return (
+    <Box sx={{ maxWidth: 600, mx: "auto", p: 3 }}>
+      {!showNewPlanForm && (
+        <>
+          <Typography variant="h5" gutterBottom color="text.primary">
+            Planos Alimentares
+          </Typography>
+
+          <Button
+            variant="contained"
+            startIcon={<AddIcon />}
+            onClick={() =>
+              navigate(`/patient/${patientId}/meal-plans?new=true`)
+            }
+            sx={{
+              mb: 3,
+              bgcolor: "custom.main",
+              color: "common.white",
+              "&:hover": {
+                bgcolor: "custom.dark",
+              },
+            }}
+          >
+            Criar Novo Plano
+          </Button>
+
+          <Stack spacing={2}>
+            {sortedPlans.map((plan) => (
+              <Card
+                key={plan.id}
+                onClick={() =>
+                  navigate(`/patient/${patientId}/meal-plans/${plan.id}`)
+                }
+                sx={{
+                  bgcolor: "background.paper",
+                  cursor: "pointer",
+                  "&:hover": {
+                    boxShadow: 3,
+                  },
+                }}
+              >
+                <CardContent>
+                  <Typography variant="h6" gutterBottom>
+                    {plan.name}
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    Tipo: {plan.type}
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    Status: {plan.status}
+                  </Typography>
+                </CardContent>
+              </Card>
+            ))}
+          </Stack>
+        </>
+      )}
     </Box>
   );
 }

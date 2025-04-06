@@ -125,7 +125,7 @@ export function MealPlan() {
   if (showMealRoutine) {
     return (
       <Box sx={{ p: 2 }}>
-        <Typography variant="h6" sx={{ mb: 3 }}>
+        <Typography variant="h6" sx={{ mb: 3, color: "text.primary" }}>
           Plano Alimentar
         </Typography>
 
@@ -137,7 +137,11 @@ export function MealPlan() {
             alignItems="center"
             sx={{ mb: 2 }}
           >
-            <Typography variant="subtitle1" fontWeight={500}>
+            <Typography
+              variant="subtitle1"
+              fontWeight={500}
+              color="text.primary"
+            >
               Rotina do paciente
             </Typography>
             <Stack direction="row" spacing={1}>
@@ -145,12 +149,11 @@ export function MealPlan() {
                 variant="outlined"
                 size="small"
                 sx={{
-                  borderColor: "primary.main",
-                  color: "primary.main",
+                  borderColor: "custom.main",
+                  color: "custom.main",
                   "&:hover": {
-                    borderColor: "primary.dark",
-                    bgcolor: "primary.light",
-                    color: "white",
+                    borderColor: "custom.dark",
+                    bgcolor: "custom.lightest",
                   },
                 }}
               >
@@ -160,12 +163,11 @@ export function MealPlan() {
                 variant="outlined"
                 size="small"
                 sx={{
-                  borderColor: "primary.main",
-                  color: "primary.main",
+                  borderColor: "custom.main",
+                  color: "custom.main",
                   "&:hover": {
-                    borderColor: "primary.dark",
-                    bgcolor: "primary.light",
-                    color: "white",
+                    borderColor: "custom.dark",
+                    bgcolor: "custom.lightest",
                   },
                 }}
               >
@@ -185,7 +187,7 @@ export function MealPlan() {
                   border: "1px solid",
                   borderColor: "divider",
                   "&:hover": {
-                    bgcolor: "action.hover",
+                    bgcolor: "custom.lightest",
                   },
                 }}
               >
@@ -194,30 +196,19 @@ export function MealPlan() {
                     size="small"
                     sx={{
                       color: "text.secondary",
-                      "&:hover": { color: "primary.main" },
+                      "&:hover": { color: "custom.main" },
                     }}
                   >
                     <ExpandMoreIcon fontSize="small" />
                   </IconButton>
-
                   <TextField
                     size="small"
                     type="time"
                     value={meal.time}
-                    sx={{
-                      width: 85,
-                      "& .MuiOutlinedInput-root": {
-                        "& fieldset": {
-                          borderColor: "divider",
-                        },
-                        "&:hover fieldset": {
-                          borderColor: "primary.main",
-                        },
-                      },
-                    }}
+                    sx={{ width: 100 }}
                   />
-
                   <Typography
+                    variant="subtitle1"
                     sx={{
                       flex: 1,
                       color: "text.primary",
@@ -226,68 +217,34 @@ export function MealPlan() {
                   >
                     {meal.name}
                   </Typography>
-
-                  <Stack direction="row" spacing={2} alignItems="center">
-                    <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-                      <Typography variant="body2" color="error.main">
-                        P: {meal.macros.protein}g
-                      </Typography>
-                      <Typography variant="body2" color="warning.main">
-                        C: {meal.macros.carbs}g
-                      </Typography>
-                      <Typography variant="body2" color="info.main">
-                        G: {meal.macros.fat}g
-                      </Typography>
-                      <Typography variant="body2" color="text.secondary">
-                        {meal.calories} Kcal
-                      </Typography>
-                    </Box>
-
-                    <Button
-                      variant="outlined"
+                  <Stack direction="row" spacing={1}>
+                    <IconButton
                       size="small"
                       sx={{
-                        borderColor: "primary.main",
-                        color: "primary.main",
-                        "&:hover": {
-                          borderColor: "primary.dark",
-                          bgcolor: "primary.light",
-                          color: "white",
-                        },
+                        color: "text.secondary",
+                        "&:hover": { color: "custom.main" },
                       }}
                     >
-                      ver alimentos
-                    </Button>
-
-                    <Stack direction="row" spacing={0.5}>
-                      <IconButton
-                        size="small"
-                        sx={{
-                          color: "text.secondary",
-                          "&:hover": { color: "primary.main" },
-                        }}
-                      >
-                        <EditIcon fontSize="small" />
-                      </IconButton>
-                      <IconButton
-                        size="small"
-                        sx={{
-                          color: "text.secondary",
-                          "&:hover": { color: "warning.main" },
-                        }}
-                      >
-                        <StarIcon fontSize="small" />
-                      </IconButton>
-                      <IconButton
-                        size="small"
-                        sx={{
-                          color: "text.secondary",
-                          "&:hover": { color: "error.main" },
-                        }}
-                      >
-                        <DeleteIcon fontSize="small" />
-                      </IconButton>
-                    </Stack>
+                      <EditIcon fontSize="small" />
+                    </IconButton>
+                    <IconButton
+                      size="small"
+                      sx={{
+                        color: "text.secondary",
+                        "&:hover": { color: "custom.main" },
+                      }}
+                    >
+                      <CopyIcon fontSize="small" />
+                    </IconButton>
+                    <IconButton
+                      size="small"
+                      sx={{
+                        color: "text.secondary",
+                        "&:hover": { color: "error.main" },
+                      }}
+                    >
+                      <DeleteIcon fontSize="small" />
+                    </IconButton>
                   </Stack>
                 </Stack>
               </Box>
@@ -300,17 +257,15 @@ export function MealPlan() {
             onClick={handleAddMeal}
             sx={{
               mt: 2,
-              width: "100%",
-              borderStyle: "dashed",
-              color: "primary.main",
+              borderColor: "custom.main",
+              color: "custom.main",
               "&:hover": {
-                borderStyle: "dashed",
-                bgcolor: "primary.light",
-                color: "white",
+                borderColor: "custom.dark",
+                bgcolor: "custom.lightest",
               },
             }}
           >
-            Adicionar Refeição
+            Adicionar refeição
           </Button>
         </Box>
       </Box>
@@ -319,104 +274,95 @@ export function MealPlan() {
 
   if (plans.length === 0 || showNewPlanForm) {
     return (
-      <Box sx={{ p: 3, maxWidth: 600, mx: "auto" }}>
-        <Typography variant="h6" gutterBottom align="center">
-          Escolha um nome e a metodologia
+      <Box sx={{ p: 2 }}>
+        <Typography variant="h6" sx={{ mb: 3, color: "text.primary" }}>
+          Criar novo plano alimentar
         </Typography>
 
-        <Card sx={{ mb: 3 }}>
+        <Card sx={{ mb: 2 }}>
           <CardContent>
-            <TextField
-              fullWidth
-              label="Nome do cardápio"
-              value={newPlanName}
-              onChange={(e) => setNewPlanName(e.target.value)}
-              placeholder="Ex: Cardápio Semanal"
-              helperText="Se não informado, será usado 'Cardápio personalizado'"
-              sx={{ mb: 3 }}
-            />
+            <Stack spacing={3}>
+              <TextField
+                fullWidth
+                label="Nome do plano"
+                value={newPlanName}
+                onChange={(e) => setNewPlanName(e.target.value)}
+                placeholder="Ex: Cardápio personalizado"
+              />
 
-            <ToggleButtonGroup
-              value={selectedType}
-              exclusive
-              onChange={handleTypeChange}
-              aria-label="metodologia de prescrição"
-              fullWidth
-              sx={{ mb: 3 }}
-            >
-              <ToggleButton
-                value="alimentos"
+              <Box>
+                <Typography
+                  variant="subtitle2"
+                  sx={{ mb: 1, color: "text.secondary" }}
+                >
+                  Tipo de plano
+                </Typography>
+                <ToggleButtonGroup
+                  value={selectedType}
+                  exclusive
+                  onChange={handleTypeChange}
+                  aria-label="tipo de plano"
+                  size="small"
+                >
+                  <ToggleButton
+                    value="alimentos"
+                    sx={{
+                      "&.Mui-selected": {
+                        bgcolor: "custom.lightest",
+                        color: "custom.main",
+                        "&:hover": {
+                          bgcolor: "custom.lightest",
+                        },
+                      },
+                    }}
+                  >
+                    Alimentos
+                  </ToggleButton>
+                  <ToggleButton
+                    value="equivalentes"
+                    sx={{
+                      "&.Mui-selected": {
+                        bgcolor: "custom.lightest",
+                        color: "custom.main",
+                        "&:hover": {
+                          bgcolor: "custom.lightest",
+                        },
+                      },
+                    }}
+                  >
+                    Equivalentes
+                  </ToggleButton>
+                  <ToggleButton
+                    value="qualitativa"
+                    sx={{
+                      "&.Mui-selected": {
+                        bgcolor: "custom.lightest",
+                        color: "custom.main",
+                        "&:hover": {
+                          bgcolor: "custom.lightest",
+                        },
+                      },
+                    }}
+                  >
+                    Qualitativa
+                  </ToggleButton>
+                </ToggleButtonGroup>
+              </Box>
+
+              <Button
+                variant="contained"
+                onClick={handleCreatePlan}
                 sx={{
-                  "&.Mui-selected": {
-                    bgcolor: "primary.light",
-                    color: "white",
-                    "&:hover": {
-                      bgcolor: "primary.main",
-                    },
+                  bgcolor: "custom.main",
+                  color: "common.white",
+                  "&:hover": {
+                    bgcolor: "custom.dark",
                   },
                 }}
               >
-                Por alimentos
-              </ToggleButton>
-              <ToggleButton
-                value="equivalentes"
-                disabled
-                sx={{
-                  opacity: 0.7,
-                  "&.Mui-disabled": {
-                    color: "text.secondary",
-                  },
-                }}
-              >
-                Por equivalentes (em breve)
-              </ToggleButton>
-              <ToggleButton
-                value="qualitativa"
-                disabled
-                sx={{
-                  opacity: 0.7,
-                  "&.Mui-disabled": {
-                    color: "text.secondary",
-                  },
-                }}
-              >
-                Qualitativa (em breve)
-              </ToggleButton>
-            </ToggleButtonGroup>
-
-            <Box sx={{ mb: 2 }}>
-              <Typography variant="subtitle2" gutterBottom>
-                {selectedType === "alimentos" && "Prescrição por alimentos:"}
-                {selectedType === "equivalentes" && (
-                  <Box sx={{ color: "warning.main" }}>
-                    Prescrição por equivalentes (Em desenvolvimento)
-                  </Box>
-                )}
-                {selectedType === "qualitativa" && (
-                  <Box sx={{ color: "warning.main" }}>
-                    Prescrição qualitativa (Em desenvolvimento)
-                  </Box>
-                )}
-              </Typography>
-              <Typography variant="body2" color="text.secondary">
-                {selectedType === "alimentos" &&
-                  "você prescreve o alimento em si, determinando a quantidade e a medida caseira, com precisão no cálculo de macro e micronutrientes."}
-                {selectedType === "equivalentes" &&
-                  "Esta funcionalidade estará disponível em breve. Por enquanto, utilize a prescrição por alimentos."}
-                {selectedType === "qualitativa" &&
-                  "Esta funcionalidade estará disponível em breve. Por enquanto, utilize a prescrição por alimentos."}
-              </Typography>
-            </Box>
-
-            <Button
-              fullWidth
-              variant="contained"
-              onClick={handleCreatePlan}
-              disabled={selectedType !== "alimentos"}
-              sx={{ mt: 2 }}
-            >
-              avançar
-            </Button>
+                Criar plano
+              </Button>
+            </Stack>
           </CardContent>
         </Card>
       </Box>

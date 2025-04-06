@@ -17,12 +17,16 @@ import {
   TableContainer,
   TableHead,
   TableRow,
+  Grid,
+  InputAdornment,
+  DialogActions,
 } from "@mui/material";
 import {
   Close as CloseIcon,
   Add as AddIcon,
   Timeline as TimelineIcon,
   Visibility as VisibilityIcon,
+  Delete as DeleteIcon,
 } from "@mui/icons-material";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
@@ -64,6 +68,8 @@ export function PatientMeasurements({ patient, open = false, onClose }: Props) {
     weight: patient?.weight ? Number(patient.weight) : 0,
     height: patient?.height ? Number(patient.height) : 0,
     date: format(new Date(), "yyyy-MM-dd"),
+    waist: patient?.waist ? Number(patient.waist) : 0,
+    hip: patient?.hip ? Number(patient.hip) : 0,
     measurements: {},
   });
 
@@ -116,6 +122,8 @@ export function PatientMeasurements({ patient, open = false, onClose }: Props) {
         weight: weight,
         height: height,
         date: format(new Date(), "yyyy-MM-dd"),
+        waist: patient?.waist ? Number(patient.waist) : 0,
+        hip: patient?.hip ? Number(patient.hip) : 0,
         measurements: {},
       });
 
@@ -136,6 +144,8 @@ export function PatientMeasurements({ patient, open = false, onClose }: Props) {
         weight: Number(patient.weight) || 0,
         height: Number(patient.height) || 0,
         date: format(new Date(), "yyyy-MM-dd"),
+        waist: patient?.waist ? Number(patient.waist) : 0,
+        hip: patient?.hip ? Number(patient.hip) : 0,
         measurements: {},
       });
     },
@@ -166,6 +176,8 @@ export function PatientMeasurements({ patient, open = false, onClose }: Props) {
       weight: Number(newMeasurement.weight),
       height: Number(newMeasurement.height),
       date: new Date(newMeasurement.date).toISOString(),
+      waist: Number(newMeasurement.waist),
+      hip: Number(newMeasurement.hip),
       bodyFat: newMeasurement.bodyFat
         ? Number(newMeasurement.bodyFat)
         : undefined,
@@ -384,6 +396,42 @@ export function PatientMeasurements({ patient, open = false, onClose }: Props) {
                   max: "300",
                 }}
                 helperText="Altura entre 20cm e 300cm"
+              />
+              <TextField
+                fullWidth
+                type="number"
+                label="Cintura (cm)"
+                value={newMeasurement.waist}
+                onChange={(e) =>
+                  setNewMeasurement({
+                    ...newMeasurement,
+                    waist: Number(e.target.value) || 0,
+                  })
+                }
+                inputProps={{
+                  step: "0.1",
+                  min: "20",
+                  max: "100",
+                }}
+                helperText="Cintura entre 20cm e 100cm"
+              />
+              <TextField
+                fullWidth
+                type="number"
+                label="Quadril (cm)"
+                value={newMeasurement.hip}
+                onChange={(e) =>
+                  setNewMeasurement({
+                    ...newMeasurement,
+                    hip: Number(e.target.value) || 0,
+                  })
+                }
+                inputProps={{
+                  step: "0.1",
+                  min: "20",
+                  max: "100",
+                }}
+                helperText="Quadril entre 20cm e 100cm"
               />
               <TextField
                 fullWidth

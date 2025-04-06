@@ -81,14 +81,14 @@ const scrollbarStyle = {
     background: "transparent",
   },
   "&::-webkit-scrollbar-thumb": {
-    background: "rgba(0,0,0,0.1)",
+    background: "custom.lightest",
     borderRadius: "2px",
   },
   "&::-webkit-scrollbar-thumb:hover": {
-    background: "rgba(0,0,0,0.2)",
+    background: "custom.light",
   },
   scrollbarWidth: "thin",
-  scrollbarColor: "rgba(0,0,0,0.1) transparent",
+  scrollbarColor: "custom.lightest transparent",
 };
 
 export function PatientDetailsModal({
@@ -147,8 +147,8 @@ export function PatientDetailsModal({
           <Box
             sx={{
               p: 3,
-              bgcolor: "primary.main",
-              color: "primary.contrastText",
+              bgcolor: "custom.main",
+              color: "common.white",
             }}
           >
             <Stack direction="row" spacing={2} alignItems="center">
@@ -156,7 +156,7 @@ export function PatientDetailsModal({
                 sx={{
                   width: 64,
                   height: 64,
-                  bgcolor: "primary.dark",
+                  bgcolor: "custom.dark",
                   fontSize: "2rem",
                 }}
               >
@@ -183,46 +183,78 @@ export function PatientDetailsModal({
                 onClick={() => setActiveSection(item.id as MenuSection)}
                 sx={{
                   "&.Mui-selected": {
-                    bgcolor: "primary.light",
+                    bgcolor: "custom.lightest",
                     "&:hover": {
-                      bgcolor: "primary.light",
+                      bgcolor: "custom.lightest",
                     },
+                  },
+                  "&:hover": {
+                    bgcolor: "custom.lightest",
                   },
                 }}
               >
-                <ListItemIcon>{item.icon}</ListItemIcon>
-                <ListItemText primary={item.text} />
+                <ListItemIcon
+                  sx={{
+                    color:
+                      activeSection === item.id
+                        ? "custom.main"
+                        : "text.secondary",
+                  }}
+                >
+                  {item.icon}
+                </ListItemIcon>
+                <ListItemText
+                  primary={item.text}
+                  sx={{
+                    "& .MuiTypography-root": {
+                      color:
+                        activeSection === item.id
+                          ? "custom.main"
+                          : "text.primary",
+                    },
+                  }}
+                />
               </ListItemButton>
             ))}
           </List>
         </Box>
 
         {/* Conteúdo Principal */}
-        <Box sx={{ flex: 1, overflow: "auto", ...scrollbarStyle }}>
-          {/* Barra Superior */}
+        <Box
+          sx={{
+            flexGrow: 1,
+            overflow: "auto",
+            bgcolor: "background.default",
+            ...scrollbarStyle,
+          }}
+        >
           <Box
             sx={{
-              p: 2,
-              borderBottom: 1,
-              borderColor: "divider",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              bgcolor: "background.paper",
               position: "sticky",
               top: 0,
               zIndex: 1,
+              bgcolor: "background.paper",
+              borderBottom: 1,
+              borderColor: "divider",
+              display: "flex",
+              justifyContent: "flex-end",
+              p: 1,
             }}
           >
-            <Typography variant="h6">
-              {menuItems.find((item) => item.id === activeSection)?.text}
-            </Typography>
-            <IconButton onClick={onClose} edge="end">
+            <IconButton
+              onClick={onClose}
+              size="small"
+              sx={{
+                color: "text.secondary",
+                "&:hover": {
+                  color: "custom.main",
+                  bgcolor: "custom.lightest",
+                },
+              }}
+            >
               <CloseIcon />
             </IconButton>
           </Box>
-
-          {/* Conteúdo da Seção */}
           {renderContent()}
         </Box>
       </DialogContent>

@@ -38,12 +38,20 @@ const StatCard = ({
   const theme = useTheme();
 
   return (
-    <Card sx={{ height: "100%" }}>
+    <Card
+      sx={{
+        height: "100%",
+        bgcolor: "background.paper",
+        "&:hover": {
+          bgcolor: "custom.lightest",
+        },
+      }}
+    >
       <CardContent sx={{ height: "100%", p: 3 }}>
         <Box sx={{ display: "flex", alignItems: "center", mb: 3 }}>
           <Box
             sx={{
-              backgroundColor: `${color}15`,
+              backgroundColor: "custom.lightest",
               borderRadius: "12px",
               p: 1.5,
               mr: 2,
@@ -62,7 +70,7 @@ const StatCard = ({
           <Skeleton variant="text" width="60%" height={48} />
         ) : comingSoon ? (
           <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-            <ConstructionIcon sx={{ color: theme.palette.text.secondary }} />
+            <ConstructionIcon sx={{ color: "text.secondary" }} />
             <Typography variant="body1" color="text.secondary">
               Em breve
             </Typography>
@@ -71,7 +79,7 @@ const StatCard = ({
           <Typography
             variant="h3"
             component="div"
-            sx={{ color, fontWeight: "bold" }}
+            sx={{ color: "custom.main", fontWeight: "bold" }}
           >
             {value}
           </Typography>
@@ -92,37 +100,37 @@ export const Dashboard = () => {
 
   // Calcular estatísticas
   const totalPatients = patients?.length || 0;
-  const totalMeasurements = 0; // Será implementado quando tivermos a API
-  const successRate = 0; // Será implementado quando tivermos a métrica
-  const upcomingAppointments = 0; // Será implementado quando tivermos o agendamento
+  const totalMeasurements = 0;
+  const successRate = 0;
+  const upcomingAppointments = 0;
 
   const stats = [
     {
       title: "Total de Pacientes",
       value: totalPatients,
-      icon: <PeopleIcon sx={{ color: theme.palette.primary.main }} />,
-      color: theme.palette.primary.main,
+      icon: <PeopleIcon sx={{ color: "custom.main" }} />,
+      color: "custom.main",
       isLoading: isLoadingPatients,
     },
     {
       title: "Avaliações Realizadas",
       value: totalMeasurements,
-      icon: <AssessmentIcon sx={{ color: theme.palette.primary.light }} />,
-      color: theme.palette.primary.light,
+      icon: <AssessmentIcon sx={{ color: "custom.light" }} />,
+      color: "custom.light",
       comingSoon: true,
     },
     {
       title: "Taxa de Sucesso",
       value: `${successRate}%`,
-      icon: <TrendingUpIcon sx={{ color: theme.palette.primary.dark }} />,
-      color: theme.palette.primary.dark,
+      icon: <TrendingUpIcon sx={{ color: "custom.dark" }} />,
+      color: "custom.dark",
       comingSoon: true,
     },
     {
       title: "Próximas Consultas",
       value: upcomingAppointments,
-      icon: <CalendarIcon sx={{ color: theme.palette.secondary.main }} />,
-      color: theme.palette.secondary.main,
+      icon: <CalendarIcon sx={{ color: "custom.main" }} />,
+      color: "custom.main",
       comingSoon: true,
     },
   ];
@@ -132,11 +140,11 @@ export const Dashboard = () => {
       {/* Header com gradiente */}
       <Box
         sx={{
-          background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.dark} 100%)`,
+          background: `linear-gradient(135deg, ${theme.palette.custom.main} 0%, ${theme.palette.custom.dark} 100%)`,
           borderRadius: 4,
           mb: 4,
           p: 4,
-          color: "white",
+          color: "common.white",
           position: "relative",
           overflow: "hidden",
         }}
@@ -187,60 +195,72 @@ export const Dashboard = () => {
         ))}
 
         <Grid item xs={12} md={8}>
-          <Paper sx={{ p: 3, height: "400px" }}>
+          <Paper
+            sx={{
+              p: 3,
+              height: "400px",
+              bgcolor: "background.paper",
+              "&:hover": {
+                bgcolor: "custom.lightest",
+              },
+            }}
+          >
             <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 3 }}>
               <Typography variant="h6" color="text.primary">
                 Evolução dos Pacientes
               </Typography>
-              <ConstructionIcon sx={{ color: theme.palette.text.secondary }} />
+              <ConstructionIcon sx={{ color: "text.secondary" }} />
               <Typography variant="body2" color="text.secondary">
                 Em breve
               </Typography>
             </Box>
             <Box
               sx={{
-                height: "calc(100% - 48px)",
+                height: "calc(100% - 60px)",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
-                p: 3,
-                backgroundColor: "rgba(0, 135, 95, 0.04)",
-                borderRadius: 2,
+                color: "text.secondary",
               }}
             >
-              <Typography variant="body1" color="text.secondary" align="center">
-                Em breve você poderá visualizar gráficos e estatísticas sobre a
-                evolução dos seus pacientes.
+              <Typography variant="body1">
+                O gráfico de evolução estará disponível em breve
               </Typography>
             </Box>
           </Paper>
         </Grid>
 
         <Grid item xs={12} md={4}>
-          <Paper sx={{ p: 3, height: "400px" }}>
+          <Paper
+            sx={{
+              p: 3,
+              height: "400px",
+              bgcolor: "background.paper",
+              "&:hover": {
+                bgcolor: "custom.lightest",
+              },
+            }}
+          >
             <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 3 }}>
               <Typography variant="h6" color="text.primary">
                 Próximas Consultas
               </Typography>
-              <ConstructionIcon sx={{ color: theme.palette.text.secondary }} />
+              <ConstructionIcon sx={{ color: "text.secondary" }} />
               <Typography variant="body2" color="text.secondary">
                 Em breve
               </Typography>
             </Box>
             <Box
               sx={{
-                height: "calc(100% - 48px)",
+                height: "calc(100% - 60px)",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
-                p: 3,
-                backgroundColor: "rgba(0, 135, 95, 0.04)",
-                borderRadius: 2,
+                color: "text.secondary",
               }}
             >
-              <Typography variant="body1" color="text.secondary" align="center">
-                Em breve você poderá gerenciar suas consultas e ver os próximos
-                agendamentos.
+              <Typography variant="body1">
+                A agenda de consultas estará disponível em breve
               </Typography>
             </Box>
           </Paper>
