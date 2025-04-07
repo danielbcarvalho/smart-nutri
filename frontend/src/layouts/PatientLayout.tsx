@@ -34,7 +34,7 @@ export function PatientLayout() {
     {
       label: "Informações pessoais",
       icon: <Info />,
-      path: `/patient/${patientId}/info`,
+      path: `/patient/${patientId}`,
     },
     {
       label: "Planos Alimentares",
