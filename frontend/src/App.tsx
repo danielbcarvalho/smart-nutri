@@ -8,12 +8,27 @@ import { PatientLayout } from "./layouts/PatientLayout";
 import { Home } from "./pages/Home";
 import { Patients } from "./pages/Patients";
 import { PatientForm } from "./pages/PatientForm";
-import { PatientDetails } from "./pages/PatientDetails";
 import { MealPlan } from "./pages/MealPlan";
 import { MealPlanDetails } from "./pages/MealPlanDetails";
 import { PatientInfo } from "./pages/PatientInfo";
 import { NewAssessment } from "./pages/NewAssessment";
 import { NewMealPlan } from "./pages/NewMealPlan";
+import { Box, Typography } from "@mui/material";
+
+// Placeholder components
+const DocumentsPlaceholder = () => (
+  <Box sx={{ p: 3 }}>
+    <Typography variant="h5">Documentos</Typography>
+    <Typography color="text.secondary">Em desenvolvimento...</Typography>
+  </Box>
+);
+
+const AssessmentsPlaceholder = () => (
+  <Box sx={{ p: 3 }}>
+    <Typography variant="h5">Avaliações</Typography>
+    <Typography color="text.secondary">Em desenvolvimento...</Typography>
+  </Box>
+);
 
 const queryClient = new QueryClient();
 
@@ -40,7 +55,7 @@ const router = createBrowserRouter([
         children: [
           {
             index: true,
-            element: <PatientDetails />,
+            element: <PatientInfo />,
           },
           {
             path: "meal-plans",
@@ -60,19 +75,15 @@ const router = createBrowserRouter([
             ],
           },
           {
-            path: "info",
-            element: <PatientInfo />,
-          },
-          {
             path: "documents",
-            element: <PatientInfo />, // Using PatientInfo as a placeholder until you create a Documents component
+            element: <DocumentsPlaceholder />,
           },
           {
             path: "assessments",
             children: [
               {
                 index: true,
-                element: <PatientInfo />, // Using PatientInfo as a placeholder until you create an Assessments component
+                element: <AssessmentsPlaceholder />,
               },
               {
                 path: "new",

@@ -21,8 +21,14 @@ export class Meal {
   @Column({
     type: 'time',
     transformer: {
-      to: (value: string) => value.split(':').slice(0, 2).join(':'),
-      from: (value: string) => value.split(':').slice(0, 2).join(':'),
+      to: (value: string | null) => {
+        if (!value) return null;
+        return value.split(':').slice(0, 2).join(':');
+      },
+      from: (value: string | null) => {
+        if (!value) return null;
+        return value.split(':').slice(0, 2).join(':');
+      },
     },
   })
   time: string; // Horário da refeição

@@ -9,11 +9,14 @@ export interface Patient {
   birthDate?: string;
   gender: "M" | "F" | "OTHER";
   status: "active" | "inactive";
-  avatar?: string;
+  photoUrl?: string;
   instagram?: string;
   tags?: string[];
   createdAt: string;
   updatedAt: string;
+  lastLoginAt?: string;
+  height?: number;
+  weight?: number;
 }
 
 export interface CreatePatientDto {

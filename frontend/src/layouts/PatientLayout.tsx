@@ -81,15 +81,40 @@ export function PatientLayout() {
             boxSizing: "border-box",
             borderRight: "1px solid",
             borderColor: "divider",
+            mt: "64px",
+            height: `calc(100vh - 64px)`,
+            position: "fixed",
           },
         }}
       >
-        <Box sx={{ p: 2, borderBottom: "1px solid", borderColor: "divider" }}>
-          <Typography variant="h6" noWrap>
-            {patient.name}
+        <Box
+          sx={{
+            p: 3,
+            borderBottom: "1px solid",
+            borderColor: "divider",
+            bgcolor: "custom.lightest",
+          }}
+        >
+          <Typography
+            variant="body2"
+            color="text.secondary"
+            gutterBottom
+            sx={{
+              fontSize: "0.875rem",
+              mb: 1,
+            }}
+          >
+            Paciente:
           </Typography>
-          <Typography variant="body2" color="text.secondary">
-            {patient.email}
+          <Typography
+            variant="h6"
+            noWrap
+            sx={{
+              fontWeight: 600,
+              color: "custom.main",
+            }}
+          >
+            {patient.name.split(" ")[0]}
           </Typography>
         </Box>
         <List>
@@ -116,16 +141,19 @@ export function PatientLayout() {
           flexGrow: 1,
           minHeight: "100vh",
           bgcolor: "background.default",
+          ml: `${DRAWER_WIDTH}px`,
+          mt: "64px", // Altura do header
         }}
       >
         {/* Top Bar */}
         <AppBar
-          position="sticky"
+          position="fixed"
           color="inherit"
           elevation={0}
           sx={{
             borderBottom: "1px solid",
             borderColor: "divider",
+            zIndex: (theme) => theme.zIndex.drawer + 1,
           }}
         >
           <Toolbar>
