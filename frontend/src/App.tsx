@@ -11,7 +11,7 @@ import { PatientForm } from "./pages/PatientForm";
 import { MealPlan } from "./pages/MealPlan";
 import { MealPlanDetails } from "./pages/MealPlanDetails";
 import { PatientInfo } from "./pages/PatientInfo";
-import { NewAssessment } from "./pages/NewAssessment";
+import { NewAssessment } from "./pages/NewAssessment/index";
 import { NewMealPlan } from "./pages/NewMealPlan";
 import { Box, Typography } from "@mui/material";
 
