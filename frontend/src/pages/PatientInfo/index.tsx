@@ -83,7 +83,7 @@ export function PatientInfo() {
             >
               {/* Primeira linha */}
               <Box sx={{ display: "flex", gap: 2 }}>
-                <Box sx={{ width: "60%" }}>
+                <Box sx={{ width: "50%" }}>
                   <Typography
                     variant="caption"
                     color="text.secondary"
@@ -93,16 +93,15 @@ export function PatientInfo() {
                   </Typography>
                   <Typography variant="body1">{patient.name}</Typography>
                 </Box>
-                <Box sx={{ width: "40%" }}>
+                <Box sx={{ width: "50%" }}>
                   <Typography
                     variant="caption"
                     color="text.secondary"
                     display="block"
-                    align="center"
                   >
                     Data de nascimento
                   </Typography>
-                  <Typography variant="body1" align="center">
+                  <Typography variant="body1">
                     {patient.birthDate
                       ? format(new Date(patient.birthDate), "dd/MM/yyyy")
                       : "-"}
@@ -112,7 +111,7 @@ export function PatientInfo() {
 
               {/* Segunda linha */}
               <Box sx={{ display: "flex", gap: 2 }}>
-                <Box sx={{ width: "60%" }}>
+                <Box sx={{ width: "50%" }}>
                   <Typography
                     variant="caption"
                     color="text.secondary"
@@ -120,7 +119,7 @@ export function PatientInfo() {
                   >
                     Telefone com DDD
                   </Typography>
-                  <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+                  <Box sx={{ display: "flex", gap: 0.5 }}>
                     <Typography variant="body1">
                       {patient.phone || "-"}
                     </Typography>
@@ -129,7 +128,7 @@ export function PatientInfo() {
                         <IconButton
                           size="small"
                           onClick={() =>
-                            window.open(`https://wa.me/${patient.phone}`)
+                            window.open(`https://wa.me/55${patient.phone}`)
                           }
                           sx={{ color: "success.main" }}
                         >
@@ -139,16 +138,15 @@ export function PatientInfo() {
                     )}
                   </Box>
                 </Box>
-                <Box sx={{ width: "40%" }}>
+                <Box sx={{ width: "50%" }}>
                   <Typography
                     variant="caption"
                     color="text.secondary"
                     display="block"
-                    align="center"
                   >
                     Email
                   </Typography>
-                  <Typography variant="body1" align="center">
+                  <Typography variant="body1">
                     {patient.email || "-"}
                   </Typography>
                 </Box>
