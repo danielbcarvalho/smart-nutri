@@ -1,174 +1,161 @@
-import React from "react";
-import { Outlet, useParams, useNavigate, Link } from "react-router-dom";
+import React, { useState } from "react";
+import { Outlet, NavLink, useParams } from "react-router-dom";
 import {
   Box,
-  Drawer,
+  Typography,
+  Paper,
+  Divider,
   List,
-  ListItem,
   ListItemButton,
   ListItemIcon,
   ListItemText,
-  Typography,
-  Breadcrumbs,
-  Link as MuiLink,
+  IconButton,
+  Drawer,
+  AppBar,
+  Toolbar,
+  useTheme,
+  useMediaQuery,
 } from "@mui/material";
 import {
-  Restaurant as RestaurantIcon,
-  Assessment as AssessmentIcon,
-  Person as PersonIcon,
-  History as HistoryIcon,
-  Description as DescriptionIcon,
+  Info,
+  RestaurantMenu,
+  Assessment,
+  Description,
+  Menu as MenuIcon,
 } from "@mui/icons-material";
-import { useQuery } from "@tanstack/react-query";
-import { patientService } from "../services/patientService";
-
-const DRAWER_WIDTH = 280;
-
-const menuItems = [
-  {
-    label: "Informações Pessoais",
-    icon: <PersonIcon />,
-    path: "",
-  },
-  {
-    label: "Planos Alimentares",
-    icon: <RestaurantIcon />,
-    path: "/meal-plans",
-  },
-  {
-    label: "Avaliações",
-    icon: <AssessmentIcon />,
-    path: "/assessments",
-  },
-
-  {
-    label: "Documentos",
-    icon: <DescriptionIcon />,
-    path: "/documents",
-  },
-];
 
 export function PatientLayout() {
   const { patientId } = useParams<{ patientId: string }>();
-  const navigate = useNavigate();
+  const theme = useTheme();
+  const mobile = useMediaQuery(theme.breakpoints.down("md"));
+  const [drawerOpen, setDrawerOpen] = useState(false);
 
-  const { data: patient } = useQuery({
-    queryKey: ["patient", patientId],
-    queryFn: () => patientService.getById(patientId!),
-    enabled: !!patientId,
-  });
+  const menuItems = [
+    {
+      label: "Informações pessoais",
+      icon: <Info />,
+      path: `/patient/${patientId}/info`,
+    },
+    {
+      label: "Planos Alimentares",
+      icon: <RestaurantMenu />,
+      path: `/patient/${patientId}/meal-plans`,
+    },
+    {
+      label: "Avaliações",
+      icon: <Assessment />,
+      path: `/patient/${patientId}/assessments`,
+    },
+    {
+      label: "Documentos",
+      icon: <Description />,
+      path: `/patient/${patientId}/documents`,
+    },
+  ];
 
-  if (!patientId || !patient) {
-    return null;
-  }
+  const SidebarContent = (
+    <Box sx={{ width: 250, p: 2 }}>
+      <Typography variant="subtitle1" fontWeight="bold" mb={2}>
+        Paciente:
+        <br />
+        <Typography component="span" color="primary">
+          Dani B
+        </Typography>
+      </Typography>
+      <Divider />
+      <List component="nav" sx={{ mt: 1 }}>
+        {menuItems.map((item) => (
+          <ListItemButton
+            key={item.path}
+            component={NavLink}
+            to={item.path}
+            onClick={() => setDrawerOpen(false)}
+            sx={{
+              "&.active": {
+                bgcolor: theme.palette.primary.main + "15",
+                "& .MuiListItemIcon-root, & .MuiListItemText-root": {
+                  color: theme.palette.primary.main,
+                },
+              },
+            }}
+          >
+            <ListItemIcon>{item.icon}</ListItemIcon>
+            <ListItemText primary={item.label} />
+          </ListItemButton>
+        ))}
+      </List>
+    </Box>
+  );
 
   return (
     <Box sx={{ display: "flex" }}>
-      {/* Side Menu */}
-      <Drawer
-        variant="permanent"
-        sx={{
-          width: DRAWER_WIDTH,
-          flexShrink: 0,
-          "& .MuiDrawer-paper": {
-            width: DRAWER_WIDTH,
-            boxSizing: "border-box",
-            borderRight: "1px solid",
-            borderColor: "divider",
-            mt: "64px",
-            height: `calc(100vh - 64px)`,
-            position: "fixed",
-          },
-        }}
-      >
-        <Box
+      {/* SEU HEADER ORIGINAL AQUI (preservado) */}
+      <AppBar position="fixed" elevation={1}>
+        <Toolbar>
+          {/* Seus botões, notificações e logo atual */}
+          <Typography variant="h6">Header Principal</Typography>
+        </Toolbar>
+      </AppBar>
+
+      {/* SEGUNDO header com botão hamburguer (visível somente no mobile) */}
+      {mobile && (
+        <Paper
           sx={{
-            p: 3,
-            borderBottom: "1px solid",
-            borderColor: "divider",
+            position: "fixed",
+            top: "64px", // altura do header principal
+            left: 0,
+            right: 0,
+            zIndex: theme.zIndex.appBar,
+            height: "48px",
+            display: "flex",
+            alignItems: "center",
+            px: 1,
+            bgcolor: theme.palette.background.paper,
+            boxShadow: theme.shadows[1],
           }}
         >
-          <Typography
-            variant="body2"
-            color="text.secondary"
-            gutterBottom
-            sx={{
-              fontSize: "0.875rem",
-              mb: 1,
-            }}
-          >
-            Paciente:
-          </Typography>
-          <Typography
-            variant="h6"
-            noWrap
-            sx={{
-              fontWeight: 600,
-              color: "custom.main",
-            }}
-          >
-            {patient.name.split(" ")[0]}
-          </Typography>
-        </Box>
-        <List>
-          {menuItems.map((item) => (
-            <ListItem key={item.path} disablePadding>
-              <ListItemButton
-                selected={
-                  location.pathname === `/patient/${patientId}${item.path}`
-                }
-                onClick={() => navigate(`/patient/${patientId}${item.path}`)}
-              >
-                <ListItemIcon>{item.icon}</ListItemIcon>
-                <ListItemText primary={item.label} />
-              </ListItemButton>
-            </ListItem>
-          ))}
-        </List>
+          <IconButton onClick={() => setDrawerOpen(true)}>
+            <MenuIcon />
+          </IconButton>
+          <Typography variant="subtitle1">Menu Paciente</Typography>
+        </Paper>
+      )}
+
+      {/* Drawer no mobile */}
+      <Drawer open={drawerOpen} onClose={() => setDrawerOpen(false)}>
+        {SidebarContent}
       </Drawer>
 
-      {/* Main Content */}
+      {/* Sidebar fixa no desktop */}
+      {!mobile && (
+        <Paper
+          elevation={3}
+          sx={{
+            width: 250,
+            height: "calc(100vh - 64px)",
+            overflowY: "auto",
+            position: "fixed",
+            top: "64px", // altura do header principal
+            left: 0,
+          }}
+        >
+          {SidebarContent}
+        </Paper>
+      )}
+
+      {/* Conteúdo principal */}
       <Box
         component="main"
         sx={{
           flexGrow: 1,
-          minHeight: "100vh",
-          bgcolor: "background.default",
-          ml: `${DRAWER_WIDTH}px`,
+          bgcolor: theme.palette.grey[100],
+          mt: mobile ? "112px" : "64px", // 64px + novo header no mobile
+          ml: { xs: 0, md: "250px" },
+          p: { xs: 2, md: 4 },
+          minHeight: mobile ? "calc(100vh - 112px)" : "calc(100vh - 64px)",
         }}
       >
-        {/* Breadcrumbs */}
-        <Box sx={{ p: 3, pb: 0 }}>
-          <Breadcrumbs aria-label="breadcrumb">
-            <MuiLink
-              component={Link}
-              to="/patients"
-              color="inherit"
-              underline="hover"
-            >
-              Pacientes
-            </MuiLink>
-            <MuiLink
-              component={Link}
-              to={`/patient/${patientId}`}
-              color="inherit"
-              underline="hover"
-            >
-              {patient.name}
-            </MuiLink>
-            <Typography color="text.primary">
-              {menuItems.find(
-                (item) =>
-                  location.pathname === `/patient/${patientId}${item.path}`
-              )?.label || ""}
-            </Typography>
-          </Breadcrumbs>
-        </Box>
-
-        {/* Page Content */}
-        <Box sx={{ p: 3 }}>
-          <Outlet />
-        </Box>
+        <Outlet />
       </Box>
     </Box>
   );
