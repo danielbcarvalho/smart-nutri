@@ -7,7 +7,6 @@ import {
   IconButton,
   Box,
   Modal,
-  Autocomplete,
   TextField,
   Avatar,
   Tooltip,
@@ -47,9 +46,9 @@ export const Header = () => {
   );
 
   const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const value = event.target.value;
-    setSearchValue(value);
-    debouncedSearch(value);
+    const newValue = event.target.value;
+    setSearchValue(newValue);
+    debouncedSearch(newValue);
   };
 
   return (
@@ -165,23 +164,13 @@ export const Header = () => {
           }}
         >
           <Box sx={{ display: "flex", gap: 1, mb: 2 }}>
-            <Autocomplete
-              freeSolo
-              options={searchResults}
-              getOptionLabel={(option) =>
-                typeof option === "string" ? option : option.title
-              }
-              sx={{ flex: 1 }}
-              renderInput={(params) => (
-                <TextField
-                  {...params}
-                  placeholder="Pesquisar..."
-                  variant="outlined"
-                  size="small"
-                  onChange={handleSearchChange}
-                  value={searchValue}
-                />
-              )}
+            <TextField
+              fullWidth
+              placeholder="Pesquisar..."
+              variant="outlined"
+              size="small"
+              value={searchValue}
+              onChange={handleSearchChange}
             />
             <IconButton
               size="small"
