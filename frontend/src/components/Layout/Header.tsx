@@ -47,9 +47,9 @@ export const Header = () => {
   );
 
   const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const term = event.target.value;
-    setSearchValue(term);
-    debouncedSearch(term);
+    const value = event.target.value;
+    setSearchValue(value);
+    debouncedSearch(value);
   };
 
   return (

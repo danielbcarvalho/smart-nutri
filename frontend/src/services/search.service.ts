@@ -29,7 +29,7 @@ export async function searchAll(query: string): Promise<SearchResult[]> {
           : `Plano para ${item.patientName || "paciente"}`),
       link:
         item.type === "patient"
-          ? `/patients/${item.id}`
+          ? `/patient/${item.id}`
           : `/meal-plans/${item.id}`,
       type: item.type,
     }));

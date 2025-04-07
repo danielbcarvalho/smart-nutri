@@ -15,8 +15,19 @@ import {
   TextField,
   ToggleButtonGroup,
   ToggleButton,
+  IconButton,
+  CardActions,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogContentText,
+  DialogActions,
 } from "@mui/material";
-import { Add as AddIcon } from "@mui/icons-material";
+import {
+  Add as AddIcon,
+  Edit as EditIcon,
+  Delete as DeleteIcon,
+} from "@mui/icons-material";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { mealPlanService, type MealPlan } from "../../services/mealPlanService";
 import { patientService } from "../../services/patientService";
@@ -103,6 +114,35 @@ export function MealPlan() {
       endDate,
       meals: [],
     });
+  };
+
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [planToDelete, setPlanToDelete] = useState<MealPlan | null>(null);
+
+  const deletePlanMutation = useMutation({
+    mutationFn: mealPlanService.deletePlan,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["mealPlans", patientId] });
+      setDeleteDialogOpen(false);
+      setPlanToDelete(null);
+    },
+  });
+
+  const handleDeleteClick = (event: React.MouseEvent, plan: MealPlan) => {
+    event.stopPropagation();
+    setPlanToDelete(plan);
+    setDeleteDialogOpen(true);
+  };
+
+  const handleEditClick = (event: React.MouseEvent, planId: string) => {
+    event.stopPropagation();
+    navigate(`/patient/${patientId}/meal-plans/${planId}/edit`);
+  };
+
+  const handleConfirmDelete = () => {
+    if (planToDelete) {
+      deletePlanMutation.mutate(planToDelete.id);
+    }
   };
 
   if (!patientId) {
@@ -352,9 +392,67 @@ export function MealPlan() {
                     Status: {plan.status}
                   </Typography>
                 </CardContent>
+                <CardActions sx={{ justifyContent: "flex-end", p: 1 }}>
+                  <IconButton
+                    size="small"
+                    onClick={(e) => handleEditClick(e, plan.id)}
+                    sx={{
+                      color: "custom.main",
+                      "&:hover": {
+                        bgcolor: "custom.lightest",
+                      },
+                    }}
+                  >
+                    <EditIcon />
+                  </IconButton>
+                  <IconButton
+                    size="small"
+                    onClick={(e) => handleDeleteClick(e, plan)}
+                    sx={{
+                      color: "error.main",
+                      "&:hover": {
+                        bgcolor: "error.lightest",
+                      },
+                    }}
+                  >
+                    <DeleteIcon />
+                  </IconButton>
+                </CardActions>
               </Card>
             ))}
           </Stack>
+
+          {/* Delete Confirmation Dialog */}
+          <Dialog
+            open={deleteDialogOpen}
+            onClose={() => setDeleteDialogOpen(false)}
+          >
+            <DialogTitle>Confirmar exclusão</DialogTitle>
+            <DialogContent>
+              <DialogContentText>
+                Tem certeza que deseja excluir o plano "{planToDelete?.name}"?
+                Esta ação não pode ser desfeita.
+              </DialogContentText>
+            </DialogContent>
+            <DialogActions>
+              <Button
+                onClick={() => setDeleteDialogOpen(false)}
+                sx={{
+                  color: "text.secondary",
+                }}
+              >
+                Cancelar
+              </Button>
+              <Button
+                onClick={handleConfirmDelete}
+                color="error"
+                variant="contained"
+                disabled={deletePlanMutation.isPending}
+              >
+                Excluir
+              </Button>
+            </DialogActions>
+          </Dialog>
         </>
       )}
     </Box>

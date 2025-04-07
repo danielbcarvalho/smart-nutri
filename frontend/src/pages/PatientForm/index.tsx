@@ -16,6 +16,11 @@ import {
   IconButton,
   Avatar,
   Paper,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogContentText,
+  DialogActions,
 } from "@mui/material";
 import {
   Instagram as InstagramIcon,
@@ -54,6 +59,7 @@ export function PatientForm() {
   });
 
   const [photoPreview, setPhotoPreview] = useState<string>("");
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
 
   const { data: patient } = useQuery({
     queryKey: ["patient", patientId],
@@ -94,6 +100,14 @@ export function PatientForm() {
       queryClient.invalidateQueries({ queryKey: ["patients"] });
       queryClient.invalidateQueries({ queryKey: ["patient", patientId] });
       navigate(`/patient/${patientId}`);
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: patientService.delete,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["patients"] });
+      navigate("/patients");
     },
   });
 
@@ -138,6 +152,16 @@ export function PatientForm() {
         setPhotoPreview(reader.result as string);
       };
       reader.readAsDataURL(file);
+    }
+  };
+
+  const handleDeleteClick = () => {
+    setDeleteDialogOpen(true);
+  };
+
+  const handleDeleteConfirm = () => {
+    if (patientId) {
+      deleteMutation.mutate(patientId);
     }
   };
 
@@ -329,6 +353,23 @@ export function PatientForm() {
 
         {/* Action Buttons */}
         <Stack direction="row" spacing={2} justifyContent="flex-end">
+          {isEditing && (
+            <Button
+              variant="outlined"
+              color="error"
+              onClick={handleDeleteClick}
+              sx={{
+                borderColor: "error.main",
+                color: "error.main",
+                "&:hover": {
+                  borderColor: "error.dark",
+                  bgcolor: "error.lightest",
+                },
+              }}
+            >
+              Excluir paciente
+            </Button>
+          )}
           <Button
             variant="outlined"
             onClick={() =>
@@ -361,6 +402,38 @@ export function PatientForm() {
           </Button>
         </Stack>
       </Paper>
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog
+        open={deleteDialogOpen}
+        onClose={() => setDeleteDialogOpen(false)}
+      >
+        <DialogTitle>Confirmar exclusão</DialogTitle>
+        <DialogContent>
+          <DialogContentText>
+            Tem certeza que deseja excluir o paciente "{patient?.name}"? Esta
+            ação não pode ser desfeita.
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button
+            onClick={() => setDeleteDialogOpen(false)}
+            sx={{
+              color: "text.secondary",
+            }}
+          >
+            Cancelar
+          </Button>
+          <Button
+            onClick={handleDeleteConfirm}
+            color="error"
+            variant="contained"
+            disabled={deleteMutation.isPending}
+          >
+            Excluir
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Container>
   );
 }
