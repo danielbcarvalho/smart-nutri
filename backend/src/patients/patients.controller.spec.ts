@@ -49,7 +49,13 @@ describe('PatientsController', () => {
 
       const patient: Patient = {
         id: '1',
-        ...createPatientDto,
+        name: 'John Doe',
+        email: 'john@example.com',
+        phone: '123456789',
+        birthDate: new Date('1990-01-01'),
+        height: 180,
+        weight: 75,
+        gender: Gender.MALE,
         measurements: [],
         createdAt: new Date(),
         updatedAt: new Date(),
@@ -61,11 +67,12 @@ describe('PatientsController', () => {
         mealPlans: [],
       };
 
-      jest.spyOn(service, 'create').mockResolvedValue(patient);
+      const createSpy = jest.spyOn(service, 'create');
+      createSpy.mockResolvedValue(patient);
 
       const result = await controller.create(createPatientDto);
       expect(result).toEqual(patient);
-      expect(service.create).toHaveBeenCalledWith(createPatientDto);
+      expect(createSpy).toHaveBeenCalledWith(createPatientDto);
     });
   });
 
@@ -112,11 +119,12 @@ describe('PatientsController', () => {
         },
       ];
 
-      jest.spyOn(service, 'findAll').mockResolvedValue(patients);
+      const findAllSpy = jest.spyOn(service, 'findAll');
+      findAllSpy.mockResolvedValue(patients);
 
       const result = await controller.findAll();
       expect(result).toEqual(patients);
-      expect(service.findAll).toHaveBeenCalled();
+      expect(findAllSpy).toHaveBeenCalled();
     });
   });
 
@@ -142,11 +150,12 @@ describe('PatientsController', () => {
         mealPlans: [],
       };
 
-      jest.spyOn(service, 'findOne').mockResolvedValue(patient);
+      const findOneSpy = jest.spyOn(service, 'findOne');
+      findOneSpy.mockResolvedValue(patient);
 
       const result = await controller.findOne('1');
       expect(result).toEqual(patient);
-      expect(service.findOne).toHaveBeenCalledWith('1');
+      expect(findOneSpy).toHaveBeenCalledWith('1');
     });
   });
 
@@ -176,20 +185,22 @@ describe('PatientsController', () => {
         mealPlans: [],
       };
 
-      jest.spyOn(service, 'update').mockResolvedValue(patient);
+      const updateSpy = jest.spyOn(service, 'update');
+      updateSpy.mockResolvedValue(patient);
 
       const result = await controller.update('1', updatePatientDto);
       expect(result).toEqual(patient);
-      expect(service.update).toHaveBeenCalledWith('1', updatePatientDto);
+      expect(updateSpy).toHaveBeenCalledWith('1', updatePatientDto);
     });
   });
 
   describe('remove', () => {
     it('should remove a patient', async () => {
-      jest.spyOn(service, 'remove').mockResolvedValue(undefined);
+      const removeSpy = jest.spyOn(service, 'remove');
+      removeSpy.mockResolvedValue(undefined);
 
       await controller.remove('1');
-      expect(service.remove).toHaveBeenCalledWith('1');
+      expect(removeSpy).toHaveBeenCalledWith('1');
     });
   });
 
@@ -242,14 +253,15 @@ describe('PatientsController', () => {
         visceralFat: 8,
       };
 
-      jest.spyOn(service, 'createMeasurement').mockResolvedValue(measurement);
+      const createMeasurementSpy = jest.spyOn(service, 'createMeasurement');
+      createMeasurementSpy.mockResolvedValue(measurement);
 
       const result = await controller.createMeasurement(
         '1',
         createMeasurementDto,
       );
       expect(result).toEqual(measurement);
-      expect(service.createMeasurement).toHaveBeenCalledWith(
+      expect(createMeasurementSpy).toHaveBeenCalledWith(
         '1',
         createMeasurementDto,
       );
@@ -301,11 +313,12 @@ describe('PatientsController', () => {
         },
       ];
 
-      jest.spyOn(service, 'findMeasurements').mockResolvedValue(measurements);
+      const findMeasurementsSpy = jest.spyOn(service, 'findMeasurements');
+      findMeasurementsSpy.mockResolvedValue(measurements);
 
       const result = await controller.findMeasurements('1');
       expect(result).toEqual(measurements);
-      expect(service.findMeasurements).toHaveBeenCalledWith('1');
+      expect(findMeasurementsSpy).toHaveBeenCalledWith('1');
     });
   });
 });

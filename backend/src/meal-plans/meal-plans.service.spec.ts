@@ -6,13 +6,12 @@ import { Meal } from './entities/meal.entity';
 import { MealFood } from './entities/meal-food.entity';
 import { Patient } from '../patients/entities/patient.entity';
 import { Repository } from 'typeorm';
+import { PatientsService } from '../patients/patients.service';
 
 // Test file for MealPlansService
 describe('MealPlansService', () => {
   let service: MealPlansService;
   let mealPlanRepository: Repository<MealPlan>;
-  let mealRepository: Repository<Meal>;
-  let mealFoodRepository: Repository<MealFood>;
   let patientRepository: Repository<Patient>;
 
   const mockRepository = () => ({
@@ -22,6 +21,10 @@ describe('MealPlansService', () => {
     find: jest.fn(),
     delete: jest.fn(),
   });
+
+  const mockPatientsService = {
+    findOne: jest.fn(),
+  };
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -43,16 +46,16 @@ describe('MealPlansService', () => {
           provide: getRepositoryToken(Patient),
           useFactory: mockRepository,
         },
+        {
+          provide: PatientsService,
+          useValue: mockPatientsService,
+        },
       ],
     }).compile();
 
     service = module.get<MealPlansService>(MealPlansService);
     mealPlanRepository = module.get<Repository<MealPlan>>(
       getRepositoryToken(MealPlan),
-    );
-    mealRepository = module.get<Repository<Meal>>(getRepositoryToken(Meal));
-    mealFoodRepository = module.get<Repository<MealFood>>(
-      getRepositoryToken(MealFood),
     );
     patientRepository = module.get<Repository<Patient>>(
       getRepositoryToken(Patient),
@@ -87,27 +90,26 @@ describe('MealPlansService', () => {
         updatedAt: new Date(),
       };
 
-      jest
-        .spyOn(patientRepository, 'findOne')
-        .mockResolvedValue(patient as Patient);
-      jest
-        .spyOn(mealPlanRepository, 'create')
-        .mockReturnValue(mealPlan as MealPlan);
-      jest
-        .spyOn(mealPlanRepository, 'save')
-        .mockResolvedValue(mealPlan as MealPlan);
+      const findOneSpy = jest.spyOn(patientRepository, 'findOne');
+      findOneSpy.mockResolvedValue(patient as Patient);
+
+      const createSpy = jest.spyOn(mealPlanRepository, 'create');
+      createSpy.mockReturnValue(mealPlan as MealPlan);
+
+      const saveSpy = jest.spyOn(mealPlanRepository, 'save');
+      saveSpy.mockResolvedValue(mealPlan as MealPlan);
 
       const result = await service.create(createMealPlanDto);
 
       expect(result).toEqual(mealPlan);
-      expect(patientRepository.findOne).toHaveBeenCalledWith({
+      expect(findOneSpy).toHaveBeenCalledWith({
         where: { id: createMealPlanDto.patientId },
       });
-      expect(mealPlanRepository.create).toHaveBeenCalledWith({
+      expect(createSpy).toHaveBeenCalledWith({
         ...createMealPlanDto,
         patient,
       });
-      expect(mealPlanRepository.save).toHaveBeenCalledWith(mealPlan);
+      expect(saveSpy).toHaveBeenCalledWith(mealPlan);
     });
   });
 
@@ -133,14 +135,13 @@ describe('MealPlansService', () => {
         },
       ];
 
-      jest
-        .spyOn(mealPlanRepository, 'find')
-        .mockResolvedValue(mealPlans as MealPlan[]);
+      const findSpy = jest.spyOn(mealPlanRepository, 'find');
+      findSpy.mockResolvedValue(mealPlans as MealPlan[]);
 
       const result = await service.findAll();
 
       expect(result).toEqual(mealPlans);
-      expect(mealPlanRepository.find).toHaveBeenCalled();
+      expect(findSpy).toHaveBeenCalled();
     });
   });
 
@@ -164,14 +165,13 @@ describe('MealPlansService', () => {
         updatedAt: new Date(),
       };
 
-      jest
-        .spyOn(mealPlanRepository, 'findOne')
-        .mockResolvedValue(mealPlan as MealPlan);
+      const findOneSpy = jest.spyOn(mealPlanRepository, 'findOne');
+      findOneSpy.mockResolvedValue(mealPlan as MealPlan);
 
       const result = await service.findOne('1');
 
       expect(result).toEqual(mealPlan);
-      expect(mealPlanRepository.findOne).toHaveBeenCalledWith({
+      expect(findOneSpy).toHaveBeenCalledWith({
         where: { id: '1' },
         relations: [
           'patient',
