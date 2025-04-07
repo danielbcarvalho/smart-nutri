@@ -8,8 +8,6 @@ import {
   ListItemButton,
   ListItemIcon,
   ListItemText,
-  AppBar,
-  Toolbar,
   Typography,
   Breadcrumbs,
   Link as MuiLink,
@@ -42,11 +40,7 @@ const menuItems = [
     icon: <AssessmentIcon />,
     path: "/assessments",
   },
-  {
-    label: "Histórico",
-    icon: <HistoryIcon />,
-    path: "/history",
-  },
+
   {
     label: "Documentos",
     icon: <DescriptionIcon />,
@@ -92,7 +86,6 @@ export function PatientLayout() {
             p: 3,
             borderBottom: "1px solid",
             borderColor: "divider",
-            bgcolor: "custom.lightest",
           }}
         >
           <Typography
@@ -142,47 +135,35 @@ export function PatientLayout() {
           minHeight: "100vh",
           bgcolor: "background.default",
           ml: `${DRAWER_WIDTH}px`,
-          mt: "64px", // Altura do header
         }}
       >
-        {/* Top Bar */}
-        <AppBar
-          position="fixed"
-          color="inherit"
-          elevation={0}
-          sx={{
-            borderBottom: "1px solid",
-            borderColor: "divider",
-            zIndex: (theme) => theme.zIndex.drawer + 1,
-          }}
-        >
-          <Toolbar>
-            <Breadcrumbs aria-label="breadcrumb">
-              <MuiLink
-                component={Link}
-                to="/patients"
-                color="inherit"
-                underline="hover"
-              >
-                Pacientes
-              </MuiLink>
-              <MuiLink
-                component={Link}
-                to={`/patient/${patientId}`}
-                color="inherit"
-                underline="hover"
-              >
-                {patient.name}
-              </MuiLink>
-              <Typography color="text.primary">
-                {menuItems.find(
-                  (item) =>
-                    location.pathname === `/patient/${patientId}${item.path}`
-                )?.label || ""}
-              </Typography>
-            </Breadcrumbs>
-          </Toolbar>
-        </AppBar>
+        {/* Breadcrumbs */}
+        <Box sx={{ p: 3, pb: 0 }}>
+          <Breadcrumbs aria-label="breadcrumb">
+            <MuiLink
+              component={Link}
+              to="/patients"
+              color="inherit"
+              underline="hover"
+            >
+              Pacientes
+            </MuiLink>
+            <MuiLink
+              component={Link}
+              to={`/patient/${patientId}`}
+              color="inherit"
+              underline="hover"
+            >
+              {patient.name}
+            </MuiLink>
+            <Typography color="text.primary">
+              {menuItems.find(
+                (item) =>
+                  location.pathname === `/patient/${patientId}${item.path}`
+              )?.label || ""}
+            </Typography>
+          </Breadcrumbs>
+        </Box>
 
         {/* Page Content */}
         <Box sx={{ p: 3 }}>
