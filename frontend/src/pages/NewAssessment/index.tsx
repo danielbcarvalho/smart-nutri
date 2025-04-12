@@ -12,7 +12,6 @@ import {
   Accordion,
   AccordionSummary,
   AccordionDetails,
-  Link,
   ToggleButtonGroup,
   ToggleButton,
   Modal,
@@ -24,14 +23,14 @@ import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
 import { ptBR } from "date-fns/locale";
 import { format } from "date-fns";
-import {
-  ExpandMore as ExpandMoreIcon,
-  Help as HelpIcon,
-} from "@mui/icons-material";
+import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
+import HelpIcon from "@mui/icons-material/Help";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { patientService } from "../../services/patientService";
 import { CreateMeasurementDto } from "../../services/patientService";
 import { calculateAnthropometricResults } from "./utils/anthropometricCalculations";
+import { bodyDensityFormulas } from "./utils/formulas";
+import { SkinfoldType } from "./utils/formulas/types";
 
 export function NewAssessment() {
   const { patientId, measurementId } = useParams<{
@@ -430,47 +429,59 @@ export function NewAssessment() {
     };
 
   const handleSaveAssessment = () => {
-    if (!patientId || !assessmentDate) {
-      setSnackbar({
-        open: true,
-        message: "Data da avaliação e ID do paciente são obrigatórios",
-        severity: "error",
-      });
-      return;
-    }
+    if (!patientId) return;
 
-    if (!basicData.weight) {
-      setSnackbar({
-        open: true,
-        message: "O peso é obrigatório",
-        severity: "error",
-      });
-      return;
-    }
+    // Calcula os resultados antropométricos
+    const results = calculateAnthropometricResults(
+      {
+        weight: basicData.weight,
+        height: basicData.height,
+        sittingHeight: basicData.sittingHeight,
+        kneeHeight: basicData.kneeHeight,
+      },
+      circumferences,
+      skinfolds,
+      boneDiameters,
+      bioimpedance,
+      patient?.gender as "M" | "F",
+      patient?.birthDate
+        ? new Date().getFullYear() - new Date(patient.birthDate).getFullYear()
+        : 30,
+      skinfoldFormula
+    );
 
-    const parseNumericValue = (value: string) => {
-      return value ? parseFloat(value) : undefined;
-    };
-
-    // Preparar os dados para enviar ao servidor
     const measurementData = {
-      date: format(assessmentDate, "yyyy-MM-dd"),
+      date: format(assessmentDate || new Date(), "yyyy-MM-dd"),
       weight: parseFloat(basicData.weight),
-      height: parseNumericValue(basicData.height),
-      sittingHeight: parseNumericValue(basicData.sittingHeight),
-      kneeHeight: parseNumericValue(basicData.kneeHeight),
-      bodyFat: parseNumericValue(bioimpedance.fatPercentage),
-      fatMass: parseNumericValue(bioimpedance.fatMass),
-      muscleMassPercentage: parseNumericValue(
-        bioimpedance.muscleMassPercentage
-      ),
-      muscleMass: parseNumericValue(bioimpedance.muscleMass),
-      fatFreeMass: parseNumericValue(bioimpedance.fatFreeMass),
-      boneMass: parseNumericValue(bioimpedance.boneMass),
-      bodyWater: parseNumericValue(bioimpedance.bodyWater),
-      visceralFat: parseNumericValue(bioimpedance.visceralFat),
-      metabolicAge: bioimpedance.metabolicAge
-        ? parseInt(bioimpedance.metabolicAge)
+      height: basicData.height ? parseFloat(basicData.height) : undefined,
+      sittingHeight: basicData.sittingHeight
+        ? parseFloat(basicData.sittingHeight)
+        : undefined,
+      kneeHeight: basicData.kneeHeight
+        ? parseFloat(basicData.kneeHeight)
+        : undefined,
+      bodyFat: results.bodyFatPercentage
+        ? parseFloat(results.bodyFatPercentage)
+        : undefined,
+      fatMass: results.fatMass ? parseFloat(results.fatMass) : undefined,
+      muscleMassPercentage: results.bioimpedanceMuscleMassPercentage
+        ? parseFloat(results.bioimpedanceMuscleMassPercentage)
+        : undefined,
+      muscleMass: results.muscleMass
+        ? parseFloat(results.muscleMass)
+        : undefined,
+      fatFreeMass: results.fatFreeMass
+        ? parseFloat(results.fatFreeMass)
+        : undefined,
+      boneMass: results.boneMass ? parseFloat(results.boneMass) : undefined,
+      bodyWater: results.bioimpedanceBodyWater
+        ? parseFloat(results.bioimpedanceBodyWater)
+        : undefined,
+      visceralFat: results.bioimpedanceVisceralFat
+        ? parseFloat(results.bioimpedanceVisceralFat)
+        : undefined,
+      metabolicAge: results.bioimpedanceMetabolicAge
+        ? parseInt(results.bioimpedanceMetabolicAge)
         : undefined,
       skinfoldFormula: skinfoldFormula !== "none" ? skinfoldFormula : undefined,
       measurements:
@@ -785,7 +796,7 @@ export function NewAssessment() {
               <Typography variant="h6">Dobras cutâneas (mm)</Typography>
             </AccordionSummary>
             <AccordionDetails>
-              <Box sx={{ bgcolor: "grey.100", p: 2, mb: 3, borderRadius: 1 }}>
+              <Box sx={{ p: 1, mb: 3, borderRadius: 1 }}>
                 <Typography variant="body2" gutterBottom>
                   Escolha a fórmula para cálculo:
                 </Typography>
@@ -798,153 +809,134 @@ export function NewAssessment() {
                     }
                   }}
                   size="small"
-                  sx={{ flexWrap: "wrap", gap: 1 }}
-                >
-                  <ToggleButton
-                    value="pollock3"
-                    sx={{
+                  sx={{
+                    flexWrap: "wrap",
+                    gap: 1,
+                    "& .MuiToggleButton-root": {
+                      border: "1px solid",
+                      borderColor: "grey.300",
+                      borderRadius: "8px !important",
+                      color: "text.secondary",
+                      textTransform: "none",
+                      px: 2,
+                      py: 1,
+                      "&:hover": {
+                        borderColor: "primary.main",
+                      },
                       "&.Mui-selected": {
-                        color: "error.main",
-                        borderColor: "error.main",
+                        backgroundColor: "primary.main",
+                        color: "white",
+                        borderColor: "primary.main",
                         "&:hover": {
-                          bgcolor: "error.lighter",
+                          backgroundColor: "primary.dark",
                         },
                       },
-                    }}
-                  >
-                    Pollock 3
-                  </ToggleButton>
+                      "&.Mui-disabled": {
+                        opacity: 0.6,
+                        color: "grey.500",
+                        borderColor: "grey.300",
+                        backgroundColor: "transparent",
+                      },
+                    },
+                  }}
+                >
+                  <ToggleButton value="pollock3">Pollock 3</ToggleButton>
                   <ToggleButton value="pollock7">Pollock 7</ToggleButton>
-                  <ToggleButton value="petroski">Petroski</ToggleButton>
-                  <ToggleButton value="guedes">Guedes</ToggleButton>
-                  <ToggleButton value="durnin">Durnin</ToggleButton>
-                  <ToggleButton value="faulkner">Faulkner</ToggleButton>
+                  <ToggleButton value="petroski" disabled>
+                    Petroski (Em breve)
+                  </ToggleButton>
+                  <ToggleButton value="guedes" disabled>
+                    Guedes (Em breve)
+                  </ToggleButton>
+                  <ToggleButton value="durnin" disabled>
+                    Durnin (Em breve)
+                  </ToggleButton>
+                  <ToggleButton value="faulkner" disabled>
+                    Faulkner (Em breve)
+                  </ToggleButton>
                   <ToggleButton value="none">Nenhuma</ToggleButton>
                 </ToggleButtonGroup>
               </Box>
 
               {/* @ts-ignore */}
               <Grid container spacing={2}>
-                {/* @ts-ignore */}
-                <Grid item xs={12} sm={6}>
-                  <TextField
-                    fullWidth
-                    label="Dobra Tricipital (mm)"
-                    value={skinfolds.tricipital}
-                    onChange={handleSkinfoldChange("tricipital")}
-                    InputProps={{
-                      sx: { bgcolor: "background.paper" },
-                    }}
-                  />
-                </Grid>
-                {/* @ts-ignore */}
-                <Grid item xs={12} sm={6}>
-                  <TextField
-                    fullWidth
-                    label="Dobra Bicipital (mm)"
-                    value={skinfolds.bicipital}
-                    onChange={handleSkinfoldChange("bicipital")}
-                    InputProps={{
-                      sx: { bgcolor: "background.paper" },
-                    }}
-                  />
-                </Grid>
-                {/* @ts-ignore */}
-                <Grid item xs={12} sm={6}>
-                  <TextField
-                    fullWidth
-                    label="Dobra Abdominal (mm)"
-                    value={skinfolds.abdominal}
-                    onChange={handleSkinfoldChange("abdominal")}
-                    InputProps={{
-                      sx: { bgcolor: "background.paper" },
-                    }}
-                  />
-                </Grid>
-                {/* @ts-ignore */}
-                <Grid item xs={12} sm={6}>
-                  <TextField
-                    fullWidth
-                    label="Dobra Subescapular (mm)"
-                    value={skinfolds.subscapular}
-                    onChange={handleSkinfoldChange("subscapular")}
-                    InputProps={{
-                      sx: { bgcolor: "background.paper" },
-                    }}
-                  />
-                </Grid>
-                {/* @ts-ignore */}
-                <Grid item xs={12} sm={6}>
-                  <TextField
-                    fullWidth
-                    label="Dobra Axilar Média (mm)"
-                    value={skinfolds.axillaryMedian}
-                    onChange={handleSkinfoldChange("axillaryMedian")}
-                    InputProps={{
-                      sx: { bgcolor: "background.paper" },
-                    }}
-                  />
-                </Grid>
-                {/* @ts-ignore */}
-                <Grid item xs={12} sm={6}>
-                  <TextField
-                    fullWidth
-                    label="Dobra Coxa (mm)"
-                    value={skinfolds.thigh}
-                    onChange={handleSkinfoldChange("thigh")}
-                    InputProps={{
-                      sx: { bgcolor: "background.paper" },
-                    }}
-                  />
-                </Grid>
-                {/* @ts-ignore */}
-                <Grid item xs={12} sm={6}>
-                  <TextField
-                    fullWidth
-                    label="Dobra Torácica (mm)"
-                    value={skinfolds.thoracic}
-                    onChange={handleSkinfoldChange("thoracic")}
-                    InputProps={{
-                      sx: { bgcolor: "background.paper" },
-                    }}
-                  />
-                </Grid>
-                {/* @ts-ignore */}
-                <Grid item xs={12} sm={6}>
-                  <TextField
-                    fullWidth
-                    label="Dobra Suprailíaca (mm)"
-                    value={skinfolds.suprailiac}
-                    onChange={handleSkinfoldChange("suprailiac")}
-                    InputProps={{
-                      sx: { bgcolor: "background.paper" },
-                    }}
-                  />
-                </Grid>
-                {/* @ts-ignore */}
-                <Grid item xs={12} sm={6}>
-                  <TextField
-                    fullWidth
-                    label="Dobra Panturrilha (mm)"
-                    value={skinfolds.calf}
-                    onChange={handleSkinfoldChange("calf")}
-                    InputProps={{
-                      sx: { bgcolor: "background.paper" },
-                    }}
-                  />
-                </Grid>
-                {/* @ts-ignore */}
-                <Grid item xs={12} sm={6}>
-                  <TextField
-                    fullWidth
-                    label="Dobra Supraespinhal (mm)"
-                    value={skinfolds.supraspinal}
-                    onChange={handleSkinfoldChange("supraspinal")}
-                    InputProps={{
-                      sx: { bgcolor: "background.paper" },
-                    }}
-                  />
-                </Grid>
+                {Object.entries(skinfolds).map(([key, value]) => {
+                  const skinfoldLabels: Record<string, string> = {
+                    tricipital: "Dobra Tricipital",
+                    bicipital: "Dobra Bicipital",
+                    abdominal: "Dobra Abdominal",
+                    subscapular: "Dobra Subescapular",
+                    axillaryMedian: "Dobra Axilar Média",
+                    thigh: "Dobra da Coxa",
+                    thoracic: "Dobra Torácica",
+                    suprailiac: "Dobra Suprailíaca",
+                    calf: "Dobra da Panturrilha",
+                    supraspinal: "Dobra Supraespinhal",
+                  };
+
+                  const formula = bodyDensityFormulas.find(
+                    (f) => f.id === skinfoldFormula
+                  );
+                  const isRequired =
+                    formula &&
+                    formula.requiredSkinfolds.includes(key as SkinfoldType) &&
+                    (skinfoldFormula === "pollock3"
+                      ? patient?.gender === "M" ||
+                        String(patient?.gender) === "MALE"
+                        ? ["thoracic", "abdominal", "thigh"].includes(key)
+                        : ["tricipital", "suprailiac", "thigh"].includes(key)
+                      : skinfoldFormula === "pollock7"
+                      ? [
+                          "thoracic",
+                          "axillaryMedian",
+                          "tricipital",
+                          "subscapular",
+                          "abdominal",
+                          "suprailiac",
+                          "thigh",
+                        ].includes(key)
+                      : false);
+
+                  return (
+                    <Grid item xs={12} sm={6} key={key}>
+                      <TextField
+                        fullWidth
+                        label={
+                          <Typography
+                            component="span"
+                            sx={{
+                              fontWeight: isRequired ? 700 : 400,
+                              color: isRequired ? "primary.main" : "inherit",
+                            }}
+                          >
+                            {`${skinfoldLabels[key]} (mm)`}
+                          </Typography>
+                        }
+                        value={value}
+                        onChange={handleSkinfoldChange(
+                          key as keyof typeof skinfolds
+                        )}
+                        InputProps={{
+                          sx: {
+                            bgcolor: "background.paper",
+                            ...(skinfoldFormula !== "none" && {
+                              "& .MuiOutlinedInput-notchedOutline": {
+                                borderColor: isRequired
+                                  ? "primary.main"
+                                  : "grey.300",
+                              },
+                              "&:hover .MuiOutlinedInput-notchedOutline": {
+                                borderColor: isRequired
+                                  ? "primary.main"
+                                  : "grey.300",
+                              },
+                            }),
+                          },
+                        }}
+                      />
+                    </Grid>
+                  );
+                })}
               </Grid>
             </AccordionDetails>
           </Accordion>

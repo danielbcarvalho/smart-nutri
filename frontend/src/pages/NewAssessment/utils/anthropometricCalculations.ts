@@ -1,3 +1,5 @@
+import { bodyDensityFormulas, validateFormula } from "./formulas";
+
 // Tipos para dados antropométricos
 export interface BasicData {
   weight: string;
@@ -304,49 +306,46 @@ export const getCMBClassification = (
 };
 
 /**
- * Calcula a densidade corporal usando a equação de Pollock 3 dobras
- * Fonte: Pollock ML, Schmidt DH, Jackson AS. Measurement of cardiorespiratory fitness and body composition in the clinical setting. Compr Ther. 1980;6(9):12-27.
- * Fórmulas:
- * Homens: D = 1.10938 - 0.0008267(X) + 0.0000016(X²) - 0.0002574(idade)
- * Mulheres: D = 1.0994921 - 0.0009929(X) + 0.0000023(X²) - 0.0001392(idade)
- * Onde X é a soma das dobras cutâneas (peitoral, abdominal e coxa para homens; tríceps, suprailíaca e coxa para mulheres)
+ * Calcula a densidade corporal usando a fórmula selecionada
+ * Fonte: Múltiplas fórmulas disponíveis (Pollock 3 dobras, Guedes, etc)
+ * Retorna 0 se a fórmula não for válida ou não houver dados suficientes
  */
 export const calculateBodyDensity = (
   skinfolds: Partial<Skinfolds>,
   gender: "M" | "F",
   age: number,
-  formula: string = "pollock3"
-): number => {
-  // Implementação para Pollock 3 dobras
-  if (formula === "pollock3") {
-    const chest = parseFloat(skinfolds.thoracic || "0");
-    const abdomen = parseFloat(skinfolds.abdominal || "0");
-    const thigh = parseFloat(skinfolds.thigh || "0");
-    const triceps = parseFloat(skinfolds.tricipital || "0");
-    const suprailiac = parseFloat(skinfolds.suprailiac || "0");
+  formulaId: string = "pollock3"
+): { density: number; referenceUsed: string } => {
+  console.log("Debug - Inputs:", { skinfolds, gender, age, formulaId });
 
-    const sumSkinfolds =
-      gender === "M" ? chest + abdomen + thigh : triceps + suprailiac + thigh;
+  const formula = bodyDensityFormulas.find((f) => f.id === formulaId);
+  console.log("Debug - Selected formula:", formula);
 
-    if (gender === "M") {
-      return (
-        1.10938 -
-        0.0008267 * sumSkinfolds +
-        0.0000016 * sumSkinfolds * sumSkinfolds -
-        0.0002574 * age
-      );
-    } else {
-      return (
-        1.0994921 -
-        0.0009929 * sumSkinfolds +
-        0.0000023 * sumSkinfolds * sumSkinfolds -
-        0.0001392 * age
-      );
-    }
+  if (!formula) {
+    console.log("Debug - No formula found");
+    return { density: 0, referenceUsed: "-" };
   }
 
-  // Implemente outras fórmulas conforme necessário
-  return 0;
+  const validationError = validateFormula(
+    formula,
+    skinfolds as Skinfolds,
+    gender,
+    age
+  );
+  console.log("Debug - Validation error:", validationError);
+
+  if (validationError) {
+    console.log("Debug - Validation failed");
+    return { density: 0, referenceUsed: "-" };
+  }
+
+  const density = formula.calculate(skinfolds as Skinfolds, gender, age);
+  console.log("Debug - Calculated density:", density);
+
+  return {
+    density,
+    referenceUsed: `${formula.name}`,
+  };
 };
 
 /**
@@ -456,6 +455,14 @@ export const calculateAnthropometricResults = (
   age: number = 30,
   skinfoldFormula: string = "pollock3"
 ): AnthropometricResults => {
+  console.log("Debug - Starting anthropometric calculations with:", {
+    skinfolds,
+    boneDiameters,
+    gender,
+    age,
+    skinfoldFormula,
+  });
+
   // Valores padrão para resultados
   const results: AnthropometricResults = {
     currentWeight: "-",
@@ -541,17 +548,25 @@ export const calculateAnthropometricResults = (
   // Análises por dobras cutâneas
   // Cálculo da densidade corporal e percentual de gordura
   if (Object.values(skinfolds).some((value) => value !== "")) {
-    const density = calculateBodyDensity(
+    console.log("Debug - Has skinfold values");
+    const { density, referenceUsed } = calculateBodyDensity(
       skinfolds,
       gender,
       age,
       skinfoldFormula
     );
+    console.log("Debug - Density calculation result:", {
+      density,
+      referenceUsed,
+    });
 
     if (density > 0) {
       results.bodyDensity = density.toFixed(4);
+      results.referenceUsed = referenceUsed;
 
       const bodyFatPercentage = calculateBodyFatPercentage(density);
+      console.log("Debug - Body fat percentage:", bodyFatPercentage);
+
       results.bodyFatPercentage = `${bodyFatPercentage.toFixed(1)}%`;
       results.bodyFatClassification = getBodyFatClassification(
         bodyFatPercentage,
@@ -559,16 +574,31 @@ export const calculateAnthropometricResults = (
       );
 
       // Valores ideais de percentual de gordura
-      results.idealFatPercentage = gender === "M" ? "12% a 18%" : "18% a 25%";
+      results.idealFatPercentage = gender === "M" ? "10% a 18%" : "18% a 25%";
 
       // Cálculo das massas
       if (!isNaN(weight)) {
         const fatMass = calculateFatMass(weight, bodyFatPercentage);
+        console.log("Debug - Fat mass:", fatMass);
         results.fatMass = `${fatMass.toFixed(1)} kg`;
+
+        // Massa livre de gordura (deve ser calculada logo após a massa gorda)
+        const fatFreeMass = weight - fatMass;
+        console.log("Debug - Fat free mass:", fatFreeMass);
+        results.fatFreeMass = `${fatFreeMass.toFixed(1)} kg`;
+
+        // Peso residual (deve ser calculado antes da massa muscular)
+        const residualWeight = calculateResidualWeight(weight, gender);
+        console.log("Debug - Residual weight:", residualWeight);
+        results.residualWeight = `${residualWeight.toFixed(1)} kg`;
 
         // Cálculo da massa óssea se tiver diâmetros
         const wristDiameter = parseFloat(boneDiameters.wrist);
         const femurDiameter = parseFloat(boneDiameters.femur);
+        console.log("Debug - Bone diameters:", {
+          wristDiameter,
+          femurDiameter,
+        });
 
         if (!isNaN(wristDiameter) && !isNaN(femurDiameter) && !isNaN(height)) {
           const boneMass = calculateBoneMass(
@@ -576,36 +606,61 @@ export const calculateAnthropometricResults = (
             wristDiameter,
             femurDiameter
           );
+          console.log("Debug - Bone mass:", boneMass);
           results.boneMass = `${boneMass.toFixed(1)} kg`;
 
-          // Peso residual
-          const residualWeight = calculateResidualWeight(weight, gender);
-          results.residualWeight = `${residualWeight.toFixed(1)} kg`;
-
-          // Massa muscular
+          // Massa muscular (calculada por último pois depende de todas as outras massas)
           const muscleMass = calculateMuscleMass(
             weight,
             fatMass,
             boneMass,
             residualWeight
           );
+          console.log("Debug - Muscle mass:", muscleMass);
           results.muscleMass = `${muscleMass.toFixed(1)} kg`;
-
-          // Massa livre de gordura
-          const fatFreeMass = weight - fatMass;
-          results.fatFreeMass = `${fatFreeMass.toFixed(1)} kg`;
+        } else {
+          console.log("Debug - Missing or invalid bone diameters");
         }
+      } else {
+        console.log("Debug - Invalid weight");
       }
 
       // Somatório de dobras
-      const validSkinfolds = Object.values(skinfolds)
-        .filter((v) => v !== "")
-        .map((v) => parseFloat(v));
-      if (validSkinfolds.length > 0) {
-        const sum = validSkinfolds.reduce((acc, curr) => acc + curr, 0);
-        results.skinfoldsSum = `${sum.toFixed(1)} mm`;
+      const formula = bodyDensityFormulas.find((f) => f.id === skinfoldFormula);
+      if (formula) {
+        // Pega apenas as dobras do protocolo selecionado
+        const protocolSkinfolds = formula.requiredSkinfolds
+          .map((fold) => parseFloat(skinfolds[fold] || "0"))
+          .filter((value) => !isNaN(value) && value > 0);
+
+        console.log("Dobras do protocolo:", formula.requiredSkinfolds);
+        console.log("Valores das dobras do protocolo:", protocolSkinfolds);
+
+        if (protocolSkinfolds.length > 0) {
+          const sum = protocolSkinfolds.reduce((acc, curr) => acc + curr, 0);
+          console.log("Somatório das dobras do protocolo:", sum, "mm");
+          results.skinfoldsSum = `${sum.toFixed(1)} mm`;
+        }
+      } else {
+        // Se não encontrar a fórmula, mantém o comportamento anterior
+        const validSkinfolds = Object.values(skinfolds)
+          .filter((v) => v !== "")
+          .map((v) => parseFloat(v));
+
+        console.log("Todas as dobras disponíveis:", skinfolds);
+        console.log("Dobras válidas para soma:", validSkinfolds);
+
+        if (validSkinfolds.length > 0) {
+          const sum = validSkinfolds.reduce((acc, curr) => acc + curr, 0);
+          console.log("Somatório total de todas as dobras:", sum, "mm");
+          results.skinfoldsSum = `${sum.toFixed(1)} mm`;
+        }
       }
+    } else {
+      console.log("Debug - Invalid density (0 or negative)");
     }
+  } else {
+    console.log("Debug - No skinfold values provided");
   }
 
   // Análises por bioimpedância

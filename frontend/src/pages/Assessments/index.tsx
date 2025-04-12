@@ -160,12 +160,16 @@ export function Assessments() {
                 <TableCell>Altura (cm)</TableCell>
                 <TableCell>IMC</TableCell>
                 <TableCell>% Gordura</TableCell>
-                <TableCell>Gordura Visceral</TableCell>
+                <TableCell>Massa Magra (kg)</TableCell>
                 <TableCell>Ações</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
               {measurements.map((measurement) => {
+                console.log(
+                  "🚀 ~ index.tsx:169 ~ measurement 🚀🚀🚀:",
+                  measurement
+                );
                 // Calcula o IMC se tiver altura e peso
                 const height = Number(measurement.height);
                 const weight = Number(measurement.weight);
@@ -187,7 +191,11 @@ export function Assessments() {
                     <TableCell>
                       {measurement.bodyFat ? `${measurement.bodyFat}%` : "-"}
                     </TableCell>
-                    <TableCell>{measurement.visceralFat || "-"}</TableCell>
+                    <TableCell>
+                      {measurement.muscleMass
+                        ? `${measurement.muscleMass} kg`
+                        : "-"}
+                    </TableCell>
                     <TableCell>
                       <Stack direction="row" spacing={1}>
                         <IconButton
