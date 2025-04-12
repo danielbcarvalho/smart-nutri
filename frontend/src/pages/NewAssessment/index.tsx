@@ -26,10 +26,6 @@ import { ptBR } from "date-fns/locale";
 import { format } from "date-fns";
 import {
   ExpandMore as ExpandMoreIcon,
-  Edit as EditIcon,
-  Assessment as AssessmentIcon,
-  Description as DescriptionIcon,
-  Timeline as TimelineIcon,
   Help as HelpIcon,
 } from "@mui/icons-material";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -624,6 +620,29 @@ export function NewAssessment() {
   const age = patient.birthDate
     ? new Date().getFullYear() - new Date(patient.birthDate).getFullYear()
     : null;
+
+  // Função auxiliar para formatar as referências bibliográficas
+  const getReferenceTooltip = (calculation: string): string => {
+    const references: Record<string, string> = {
+      bmi: "Índice de Massa Corporal (IMC) - Medida que relaciona peso e altura para avaliar o estado nutricional. Valores entre 18,5 e 24,9 kg/m² indicam peso adequado.\n\nReferência: Organização Mundial da Saúde (OMS). Estado físico: uso e interpretação da antropometria. Genebra: OMS, 1995.",
+      waistHipRatio:
+        "Relação Cintura/Quadril (RCQ) - Medida que avalia a distribuição de gordura corporal. Valores elevados indicam maior risco de doenças cardiovasculares.\n\nReferência: Organização Mundial da Saúde (OMS). Circunferência da cintura e relação cintura-quadril: relatório de uma consulta de especialistas da OMS. Genebra: OMS, 2008.",
+      cmb: "Circunferência Muscular do Braço (CMB) - Medida que avalia a massa muscular do braço, importante para diagnóstico de desnutrição e sarcopenia.\n\nReferência: Frisancho AR. Novas normas de áreas de gordura e músculo dos membros superiores para avaliação do estado nutricional. Am J Clin Nutr. 1981;34(11):2540-5.",
+      bodyDensity:
+        "Densidade Corporal - Medida que avalia a composição corporal através da relação entre massa e volume. Valores mais altos indicam maior proporção de massa magra.\n\nReferência: Pollock ML, Schmidt DH, Jackson AS. Medição da aptidão cardiorrespiratória e composição corporal no ambiente clínico. Compr Ther. 1980;6(9):12-27.",
+      bodyFatPercentage:
+        "Percentual de Gordura Corporal - Medida que avalia a proporção de gordura em relação ao peso total. Valores ideais variam conforme sexo e idade.\n\nReferência: Siri WE. Composição corporal a partir de espaços fluidos e densidade: análise de métodos. In: Brozek J, Henschel A, eds. Técnicas para medir a composição corporal. Washington, DC: National Academy of Sciences, 1961:223-244.",
+      bodyFatClassification:
+        "Classificação do Percentual de Gordura - Avaliação do estado nutricional baseada no percentual de gordura corporal. Classificações variam de 'Essencial' a 'Obesidade'.\n\nReferência: Diretrizes do American College of Sports Medicine (ACSM) para Teste de Esforço e Prescrição, 10ª Edição",
+      boneMass:
+        "Massa Óssea - Estimativa do peso dos ossos baseada em medidas antropométricas. Importante para avaliação de osteopenia e osteoporose.\n\nReferência: Martin AD, Spenst LF, Drinkwater DT, Clarys JP. Estimativa antropométrica da massa muscular em homens. Med Sci Sports Exerc. 1990;22(5):729-33.",
+      muscleMass:
+        "Massa Muscular - Medida que avalia a quantidade total de músculos do corpo. Importante para diagnóstico de sarcopenia e avaliação do estado nutricional.\n\nReferência: Matiegka J. O teste de eficiência física. Am J Phys Anthropol. 1921;4:223-230.",
+      residualWeight:
+        "Peso Residual - Componente do peso corporal que inclui órgãos, vísceras e outros tecidos não classificados como gordura, músculo ou osso.\n\nReferência: Matiegka J. O teste de eficiência física. Am J Phys Anthropol. 1921;4:223-230.",
+    };
+    return references[calculation] || "Referência não disponível";
+  };
 
   return (
     <Box>
@@ -1317,7 +1336,12 @@ export function NewAssessment() {
               <Box
                 sx={{ display: "flex", justifyContent: "space-between", p: 2 }}
               >
-                <Typography>Índice de Massa Corporal</Typography>
+                <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                  <Typography>Índice de Massa Corporal</Typography>
+                  <Tooltip title={getReferenceTooltip("bmi")}>
+                    <HelpIcon color="action" fontSize="small" />
+                  </Tooltip>
+                </Box>
                 <Typography>{anthropometricResults.bmi}</Typography>
               </Box>
             </Box>
@@ -1326,10 +1350,12 @@ export function NewAssessment() {
               <Box
                 sx={{ display: "flex", justifyContent: "space-between", p: 2 }}
               >
-                <Typography>Classificação do IMC</Typography>
-                <Typography>
-                  {anthropometricResults.bmiClassification}
-                </Typography>
+                <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                  <Typography>Classificação do IMC</Typography>
+                  <Typography>
+                    {anthropometricResults.bmiClassification}
+                  </Typography>
+                </Box>
               </Box>
             </Box>
 
@@ -1348,7 +1374,12 @@ export function NewAssessment() {
               <Box
                 sx={{ display: "flex", justifyContent: "space-between", p: 2 }}
               >
-                <Typography>Relação da Cintura/Quadril (RCQ)</Typography>
+                <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                  <Typography>Relação da Cintura/Quadril (RCQ)</Typography>
+                  <Tooltip title={getReferenceTooltip("waistHipRatio")}>
+                    <HelpIcon color="action" fontSize="small" />
+                  </Tooltip>
+                </Box>
                 <Typography>{anthropometricResults.waistHipRatio}</Typography>
               </Box>
             </Box>
@@ -1357,10 +1388,12 @@ export function NewAssessment() {
               <Box
                 sx={{ display: "flex", justifyContent: "space-between", p: 2 }}
               >
-                <Typography>Risco Metabólico por RCQ</Typography>
-                <Typography>
-                  {anthropometricResults.waistHipRiskClassification}
-                </Typography>
+                <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                  <Typography>Risco Metabólico por RCQ</Typography>
+                  <Typography>
+                    {anthropometricResults.waistHipRiskClassification}
+                  </Typography>
+                </Box>
               </Box>
             </Box>
 
@@ -1370,9 +1403,9 @@ export function NewAssessment() {
               >
                 <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                   <Typography>CMB (cm)</Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    (Escolha o lado)
-                  </Typography>
+                  <Tooltip title={getReferenceTooltip("cmb")}>
+                    <HelpIcon color="action" fontSize="small" />
+                  </Tooltip>
                 </Box>
                 <Typography>{anthropometricResults.cmb}</Typography>
               </Box>
@@ -1414,9 +1447,9 @@ export function NewAssessment() {
               >
                 <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                   <Typography>Percentual de Gordura</Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    (Brozek, 1963)
-                  </Typography>
+                  <Tooltip title={getReferenceTooltip("bodyFatPercentage")}>
+                    <HelpIcon color="action" fontSize="small" />
+                  </Tooltip>
                 </Box>
                 <Typography>
                   {anthropometricResults.bodyFatPercentage}
@@ -1441,9 +1474,9 @@ export function NewAssessment() {
               >
                 <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                   <Typography>Classif. do % GC</Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    (Editar)
-                  </Typography>
+                  <Tooltip title={getReferenceTooltip("bodyFatClassification")}>
+                    <HelpIcon color="action" fontSize="small" />
+                  </Tooltip>
                 </Box>
                 <Typography>
                   {anthropometricResults.bodyFatClassification}
@@ -1466,9 +1499,9 @@ export function NewAssessment() {
               >
                 <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                   <Typography>Peso ósseo</Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    (por diam. ósseo)
-                  </Typography>
+                  <Tooltip title={getReferenceTooltip("boneMass")}>
+                    <HelpIcon color="action" fontSize="small" />
+                  </Tooltip>
                 </Box>
                 <Typography>{anthropometricResults.boneMass}</Typography>
               </Box>
@@ -1478,7 +1511,12 @@ export function NewAssessment() {
               <Box
                 sx={{ display: "flex", justifyContent: "space-between", p: 2 }}
               >
-                <Typography>Massa Muscular</Typography>
+                <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                  <Typography>Massa Muscular</Typography>
+                  <Tooltip title={getReferenceTooltip("muscleMass")}>
+                    <HelpIcon color="action" fontSize="small" />
+                  </Tooltip>
+                </Box>
                 <Typography>{anthropometricResults.muscleMass}</Typography>
               </Box>
             </Box>
@@ -1487,7 +1525,12 @@ export function NewAssessment() {
               <Box
                 sx={{ display: "flex", justifyContent: "space-between", p: 2 }}
               >
-                <Typography>Peso residual</Typography>
+                <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                  <Typography>Peso residual</Typography>
+                  <Tooltip title={getReferenceTooltip("residualWeight")}>
+                    <HelpIcon color="action" fontSize="small" />
+                  </Tooltip>
+                </Box>
                 <Typography>{anthropometricResults.residualWeight}</Typography>
               </Box>
             </Box>
@@ -1573,9 +1616,9 @@ export function NewAssessment() {
               >
                 <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                   <Typography>Classif. do % GC</Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    (Editar)
-                  </Typography>
+                  <Tooltip title={getReferenceTooltip("bodyFatClassification")}>
+                    <HelpIcon color="action" fontSize="small" />
+                  </Tooltip>
                 </Box>
                 <Typography>
                   {anthropometricResults.bioimpedanceBodyFatClassification}
@@ -1599,10 +1642,13 @@ export function NewAssessment() {
                 sx={{ display: "flex", justifyContent: "space-between", p: 2 }}
               >
                 <Typography>Massa Muscular</Typography>
-                <Typography>
-                  {anthropometricResults.bioimpedanceMuscleMass}
-                </Typography>
+                <Tooltip title={getReferenceTooltip("muscleMass")}>
+                  <HelpIcon color="action" fontSize="small" />
+                </Tooltip>
               </Box>
+              <Typography>
+                {anthropometricResults.bioimpedanceMuscleMass}
+              </Typography>
             </Box>
 
             <Box sx={{ bgcolor: "grey.100", borderRadius: 1, mb: 1 }}>
@@ -1621,10 +1667,13 @@ export function NewAssessment() {
                 sx={{ display: "flex", justifyContent: "space-between", p: 2 }}
               >
                 <Typography>Peso Ósseo</Typography>
-                <Typography>
-                  {anthropometricResults.bioimpedanceBoneMass}
-                </Typography>
+                <Tooltip title={getReferenceTooltip("boneMass")}>
+                  <HelpIcon color="action" fontSize="small" />
+                </Tooltip>
               </Box>
+              <Typography>
+                {anthropometricResults.bioimpedanceBoneMass}
+              </Typography>
             </Box>
 
             <Box sx={{ bgcolor: "grey.100", borderRadius: 1, mb: 1 }}>

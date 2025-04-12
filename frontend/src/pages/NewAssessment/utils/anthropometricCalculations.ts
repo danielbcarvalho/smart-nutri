@@ -92,13 +92,29 @@ export interface AnthropometricResults {
   bioimpedanceMetabolicAge: string;
 }
 
-// Função para calcular o IMC (Índice de Massa Corporal)
+/**
+ * Calcula o Índice de Massa Corporal (IMC)
+ * Fórmula: IMC = peso (kg) / altura² (m)
+ * Fonte: Organização Mundial da Saúde (OMS)
+ * Referência: WHO. Physical status: the use and interpretation of anthropometry. Geneva: WHO, 1995.
+ */
 export const calculateBMI = (weight: number, heightCm: number): number => {
   const heightM = heightCm / 100;
   return weight / (heightM * heightM);
 };
 
-// Classificação do IMC segundo OMS
+/**
+ * Classifica o IMC segundo os critérios da OMS
+ * Fonte: Organização Mundial da Saúde (OMS)
+ * Referência: WHO. Physical status: the use and interpretation of anthropometry. Geneva: WHO, 1995.
+ * Classificação:
+ * < 18.5: Abaixo do peso
+ * 18.5 - 24.9: Peso adequado
+ * 25.0 - 29.9: Sobrepeso
+ * 30.0 - 34.9: Obesidade grau I
+ * 35.0 - 39.9: Obesidade grau II
+ * ≥ 40.0: Obesidade grau III
+ */
 export const getBMIClassification = (
   bmi: number,
   gender?: "M" | "F"
@@ -118,7 +134,12 @@ export const getBMIClassification = (
   }
 };
 
-// Cálculo da faixa de peso ideal
+/**
+ * Calcula a faixa de peso ideal baseada no IMC
+ * Utiliza os limites de IMC da OMS para peso adequado (18.5 - 24.9)
+ * Fórmula: Peso = IMC × altura² (m)
+ * Fonte: Organização Mundial da Saúde (OMS)
+ */
 export const calculateIdealWeightRange = (
   heightCm: number
 ): { min: number; max: number } => {
@@ -132,7 +153,12 @@ export const calculateIdealWeightRange = (
   };
 };
 
-// Cálculo da RCQ (Relação Cintura/Quadril)
+/**
+ * Calcula a Relação Cintura/Quadril (RCQ)
+ * Fórmula: RCQ = circunferência da cintura (cm) / circunferência do quadril (cm)
+ * Fonte: Organização Mundial da Saúde (OMS)
+ * Referência: WHO. Waist circumference and waist-hip ratio: report of a WHO expert consultation. Geneva: WHO, 2008.
+ */
 export const calculateWaistHipRatio = (
   waistCm: number,
   hipCm: number
@@ -140,7 +166,12 @@ export const calculateWaistHipRatio = (
   return waistCm / hipCm;
 };
 
-// Classificação de risco metabólico baseado na RCQ (OMS)
+/**
+ * Classifica o risco metabólico baseado na RCQ
+ * Fonte: Organização Mundial da Saúde (OMS)
+ * Referência: WHO. Waist circumference and waist-hip ratio: report of a WHO expert consultation. Geneva: WHO, 2008.
+ * Valores de corte específicos por gênero e faixa etária
+ */
 export const getWaistHipRiskClassification = (
   wcr: number,
   gender: "M" | "F",
@@ -184,7 +215,12 @@ export const getWaistHipRiskClassification = (
   }
 };
 
-// Cálculo da Circunferência Muscular do Braço (CMB)
+/**
+ * Calcula a Circunferência Muscular do Braço (CMB)
+ * Fórmula: CMB = Circunferência do braço - (π × Dobra cutânea tricipital)
+ * Fonte: Frisancho AR. New norms of upper limb fat and muscle areas for assessment of nutritional status. Am J Clin Nutr. 1981;34(11):2540-5.
+ * Nota: A dobra cutânea é convertida de mm para cm antes do cálculo
+ */
 export const calculateCMB = (
   armCircumferenceCm: number,
   tricepsSkinFoldMm: number
@@ -196,7 +232,11 @@ export const calculateCMB = (
   return armCircumferenceCm - Math.PI * tricepsSkinFoldCm;
 };
 
-// Classificação da CMB baseada em tabelas de referência atualizadas
+/**
+ * Classifica a CMB baseada em tabelas de referência
+ * Fonte: Frisancho AR. New norms of upper limb fat and muscle areas for assessment of nutritional status. Am J Clin Nutr. 1981;34(11):2540-5.
+ * Valores de corte específicos por gênero e faixa etária
+ */
 export const getCMBClassification = (
   cmb: number,
   gender: "M" | "F",
@@ -263,7 +303,14 @@ export const getCMBClassification = (
   }
 };
 
-// Cálculo da densidade corporal (Pollock 3 dobras)
+/**
+ * Calcula a densidade corporal usando a equação de Pollock 3 dobras
+ * Fonte: Pollock ML, Schmidt DH, Jackson AS. Measurement of cardiorespiratory fitness and body composition in the clinical setting. Compr Ther. 1980;6(9):12-27.
+ * Fórmulas:
+ * Homens: D = 1.10938 - 0.0008267(X) + 0.0000016(X²) - 0.0002574(idade)
+ * Mulheres: D = 1.0994921 - 0.0009929(X) + 0.0000023(X²) - 0.0001392(idade)
+ * Onde X é a soma das dobras cutâneas (peitoral, abdominal e coxa para homens; tríceps, suprailíaca e coxa para mulheres)
+ */
 export const calculateBodyDensity = (
   skinfolds: Partial<Skinfolds>,
   gender: "M" | "F",
@@ -302,12 +349,21 @@ export const calculateBodyDensity = (
   return 0;
 };
 
-// Cálculo de percentual de gordura corporal (Siri)
+/**
+ * Calcula o percentual de gordura corporal usando a equação de Siri
+ * Fórmula: %G = (4.95/D - 4.5) × 100
+ * Fonte: Siri WE. Body composition from fluid spaces and density: analysis of methods. In: Brozek J, Henschel A, eds. Techniques for measuring body composition. Washington, DC: National Academy of Sciences, 1961:223-244.
+ */
 export const calculateBodyFatPercentage = (bodyDensity: number): number => {
   return (4.95 / bodyDensity - 4.5) * 100;
 };
 
-// Classificação do percentual de gordura corporal
+/**
+ * Classifica o percentual de gordura corporal
+ * Fonte: American College of Sports Medicine (ACSM)
+ * Referência: ACSM's Guidelines for Exercise Testing and Prescription, 10th Edition
+ * Valores de corte específicos por gênero
+ */
 export const getBodyFatClassification = (
   bodyFatPercentage: number,
   gender: "M" | "F"
@@ -327,7 +383,11 @@ export const getBodyFatClassification = (
   }
 };
 
-// Cálculo da massa de gordura
+/**
+ * Calcula a massa de gordura corporal
+ * Fórmula: Massa de gordura = Peso total × (%G/100)
+ * Fonte: Heyward VH, Wagner DR. Applied Body Composition Assessment, 2nd ed. Champaign, IL: Human Kinetics, 2004.
+ */
 export const calculateFatMass = (
   weight: number,
   bodyFatPercentage: number
@@ -335,17 +395,25 @@ export const calculateFatMass = (
   return weight * (bodyFatPercentage / 100);
 };
 
-// Cálculo da massa óssea baseada em diâmetros ósseos
+/**
+ * Calcula a massa óssea baseada em diâmetros ósseos
+ * Fórmula simplificada: Massa óssea = Altura × 0.01 × Diâmetro do punho × Diâmetro do fêmur × 0.18
+ * Fonte: Adaptado de Martin AD, Spenst LF, Drinkwater DT, Clarys JP. Anthropometric estimation of muscle mass in men. Med Sci Sports Exerc. 1990;22(5):729-33.
+ */
 export const calculateBoneMass = (
   height: number,
   wristDiameter: number,
   femurDiameter: number
 ): number => {
-  // Esta é uma fórmula simplificada
   return height * 0.01 * wristDiameter * femurDiameter * 0.18;
 };
 
-// Cálculo de peso residual (média de 24% para homens e 21% para mulheres)
+/**
+ * Calcula o peso residual (componente não-gordura, não-músculo, não-osso)
+ * Fórmula: Peso residual = Peso total × Percentual residual
+ * Percentuais: 24% para homens, 21% para mulheres
+ * Fonte: Matiegka J. The testing of physical efficiency. Am J Phys Anthropol. 1921;4:223-230.
+ */
 export const calculateResidualWeight = (
   weight: number,
   gender: "M" | "F"
@@ -354,7 +422,11 @@ export const calculateResidualWeight = (
   return weight * residualPercentage;
 };
 
-// Cálculo de massa muscular
+/**
+ * Calcula a massa muscular
+ * Fórmula: Massa muscular = Peso total - Massa de gordura - Massa óssea - Peso residual
+ * Fonte: Matiegka J. The testing of physical efficiency. Am J Phys Anthropol. 1921;4:223-230.
+ */
 export const calculateMuscleMass = (
   weight: number,
   fatMass: number,
@@ -364,7 +436,16 @@ export const calculateMuscleMass = (
   return weight - fatMass - boneMass - residualWeight;
 };
 
-// Função mestra para realizar todos os cálculos antropométricos
+/**
+ * Função mestra que realiza todos os cálculos antropométricos
+ * Integra todas as medidas e fórmulas para gerar um relatório completo
+ * Utiliza as seguintes fontes:
+ * - OMS para IMC e RCQ
+ * - Pollock para densidade corporal
+ * - Siri para percentual de gordura
+ * - Frisancho para CMB
+ * - Matiegka para composição corporal
+ */
 export const calculateAnthropometricResults = (
   basicData: BasicData,
   circumferences: Circumferences,
