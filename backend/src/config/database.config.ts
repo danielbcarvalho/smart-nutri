@@ -1,19 +1,34 @@
 import { registerAs } from '@nestjs/config';
 import { TypeOrmModuleOptions } from '@nestjs/typeorm';
+import { join } from 'path';
 
 export const databaseConfig = registerAs(
   'database',
-  (): TypeOrmModuleOptions => ({
-    type: 'postgres',
-    host: process.env.DATABASE_HOST || 'localhost',
-    port: parseInt(process.env.DATABASE_PORT || '5432', 10),
-    username: process.env.DATABASE_USERNAME || 'postgres',
-    password: process.env.DATABASE_PASSWORD || 'postgres',
-    database: process.env.DATABASE_NAME || 'smartnutri_db',
-    entities: [__dirname + '/../**/*.entity{.ts,.js}'],
-    synchronize: process.env.NODE_ENV !== 'production',
-    autoLoadEntities: true,
-    migrations: [__dirname + '/../migrations/*{.ts,.js}'],
-    migrationsRun: true,
-  }),
+  (): TypeOrmModuleOptions => {
+    const host = process.env.DB_HOST;
+    const port = process.env.DB_PORT;
+    const username = process.env.DB_USERNAME;
+    const password = process.env.DB_PASSWORD;
+    const database = process.env.DB_DATABASE;
+
+    if (!host || !port || !username || !password || !database) {
+      throw new Error('Missing database configuration');
+    }
+
+    return {
+      type: 'postgres',
+      host,
+      port: parseInt(port, 10),
+      username,
+      password,
+      database,
+      entities: [join(__dirname, '..', '**', '*.entity.{ts,js}')],
+      migrations: [
+        join(__dirname, '..', 'database', 'migrations', '*.{ts,js}'),
+      ],
+      migrationsRun: true,
+      synchronize: false,
+      logging: true,
+    };
+  },
 );

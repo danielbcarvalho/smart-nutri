@@ -27,10 +27,7 @@ import {
   PhotoCamera as PhotoCameraIcon,
 } from "@mui/icons-material";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import {
-  patientService,
-  CreatePatientDto,
-} from "../../services/patientService";
+import { patientService, Patient } from "../../services/patientService";
 
 // Função para validar o nome (apenas letras e espaços)
 const validateName = (name: string) => {
@@ -43,7 +40,9 @@ export function PatientForm() {
   const queryClient = useQueryClient();
   const isEditing = Boolean(patientId);
 
-  const [formData, setFormData] = useState<CreatePatientDto>({
+  const [formData, setFormData] = useState<
+    Omit<Patient, "id" | "createdAt" | "updatedAt">
+  >({
     name: "",
     email: "",
     phone: "",
@@ -52,6 +51,9 @@ export function PatientForm() {
     gender: "OTHER",
     instagram: "",
     status: "active",
+    monitoringStatus: "in_progress",
+    consultationFrequency: "monthly",
+    photoUrl: "",
   });
 
   const [errors, setErrors] = useState({
@@ -78,15 +80,22 @@ export function PatientForm() {
         gender: patient.gender,
         instagram: patient.instagram || "",
         status: patient.status,
+        monitoringStatus: patient.monitoringStatus,
+        consultationFrequency: patient.consultationFrequency,
+        customConsultationDays: patient.customConsultationDays,
+        lastConsultationAt: patient.lastConsultationAt,
+        nextConsultationAt: patient.nextConsultationAt,
+        photoUrl: patient.photoUrl || "",
       });
-      if (patient.avatar) {
-        setPhotoPreview(patient.avatar);
+      if (patient.photoUrl) {
+        setPhotoPreview(patient.photoUrl);
       }
     }
   }, [patient]);
 
   const createMutation = useMutation({
-    mutationFn: patientService.create,
+    mutationFn: (data: Omit<Patient, "id" | "createdAt" | "updatedAt">) =>
+      patientService.create(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["patients"] });
       navigate("/patients");
@@ -94,8 +103,13 @@ export function PatientForm() {
   });
 
   const updateMutation = useMutation({
-    mutationFn: ({ id, data }: { id: string; data: CreatePatientDto }) =>
-      patientService.update(id, data),
+    mutationFn: ({
+      id,
+      data,
+    }: {
+      id: string;
+      data: Omit<Patient, "id" | "createdAt" | "updatedAt">;
+    }) => patientService.update(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["patients"] });
       queryClient.invalidateQueries({ queryKey: ["patient", patientId] });

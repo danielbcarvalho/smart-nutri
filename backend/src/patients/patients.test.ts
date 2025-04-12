@@ -12,8 +12,12 @@ import { Measurement } from './entities/measurement.entity';
 describe('PatientsController (e2e)', () => {
   let app: INestApplication;
   let patientsService: PatientsService;
+  let patientId: string;
+
+  const mockNutritionistId = '123e4567-e89b-12d3-a456-426614174000';
 
   beforeAll(async () => {
+    jest.setTimeout(10000);
     const moduleFixture: TestingModule = await Test.createTestingModule({
       imports: [AppModule],
     }).compile();
@@ -21,7 +25,7 @@ describe('PatientsController (e2e)', () => {
     app = moduleFixture.createNestApplication();
     await app.init();
     patientsService = app.get<PatientsService>(PatientsService);
-  }, 10000); // Aumentando o timeout para 10 segundos
+  });
 
   afterAll(async () => {
     if (app) {
@@ -45,7 +49,7 @@ describe('PatientsController (e2e)', () => {
         name: 'Test Patient',
         email: 'test@example.com',
         phone: '1234567890',
-        birthDate: new Date('1990-01-01'),
+        birthDate: '1990-01-01',
         gender: Gender.MALE,
         height: 170,
         weight: 70,
@@ -54,6 +58,8 @@ describe('PatientsController (e2e)', () => {
         healthConditions: ['none'],
         medications: ['none'],
         observations: 'Test observations',
+        cpf: '12345678900',
+        nutritionistId: mockNutritionistId,
       };
 
       const response = await request(app.getHttpServer())
@@ -65,18 +71,30 @@ describe('PatientsController (e2e)', () => {
       expect(patient).toHaveProperty('id');
       expect(patient.name).toBe(createPatientDto.name);
       expect(patient.email).toBe(createPatientDto.email);
+      expect(patient.phone).toBe(createPatientDto.phone);
+      expect(patient.birthDate).toBe(createPatientDto.birthDate);
+      expect(patient.gender).toBe(createPatientDto.gender);
+      expect(patient.height).toBe(createPatientDto.height);
+      expect(patient.weight).toBe(createPatientDto.weight);
+      expect(patient.goals).toEqual(createPatientDto.goals);
+      expect(patient.allergies).toEqual(createPatientDto.allergies);
+      expect(patient.healthConditions).toEqual(
+        createPatientDto.healthConditions,
+      );
+      expect(patient.medications).toEqual(createPatientDto.medications);
+      expect(patient.observations).toBe(createPatientDto.observations);
+      expect(patient.cpf).toBe(createPatientDto.cpf);
+      expect(patient.nutritionistId).toBe(mockNutritionistId);
     });
   });
 
   describe('GET /patients/:id', () => {
-    let patientId: string;
-
     beforeEach(async () => {
       const createPatientDto: CreatePatientDto = {
         name: 'Test Patient for Get',
         email: 'get@example.com',
         phone: '1234567890',
-        birthDate: new Date('1990-01-01'),
+        birthDate: '1990-01-01',
         gender: Gender.MALE,
         height: 170,
         weight: 70,
@@ -85,9 +103,14 @@ describe('PatientsController (e2e)', () => {
         healthConditions: ['none'],
         medications: ['none'],
         observations: 'Test observations',
+        cpf: '12345678900',
+        nutritionistId: mockNutritionistId,
       };
 
-      const patient = await patientsService.create(createPatientDto);
+      const patient = await patientsService.create(
+        createPatientDto,
+        mockNutritionistId,
+      );
       patientId = patient.id;
     });
 
@@ -99,6 +122,8 @@ describe('PatientsController (e2e)', () => {
       const patient = response.body as Patient;
       expect(patient).toHaveProperty('id', patientId);
       expect(patient.name).toBe('Test Patient for Get');
+      expect(patient.cpf).toBe('12345678900');
+      expect(patient.nutritionistId).toBe(mockNutritionistId);
     });
   });
 
@@ -109,14 +134,12 @@ describe('PatientsController (e2e)', () => {
   });
 
   describe('PATCH /patients/:id', () => {
-    let patientId: string;
-
     beforeEach(async () => {
       const createPatientDto: CreatePatientDto = {
         name: 'Test Patient for Update',
         email: 'update@example.com',
         phone: '1234567890',
-        birthDate: new Date('1990-01-01'),
+        birthDate: '1990-01-01',
         gender: Gender.MALE,
         height: 170,
         weight: 70,
@@ -125,9 +148,14 @@ describe('PatientsController (e2e)', () => {
         healthConditions: ['none'],
         medications: ['none'],
         observations: 'Test observations',
+        cpf: '12345678900',
+        nutritionistId: mockNutritionistId,
       };
 
-      const patient = await patientsService.create(createPatientDto);
+      const patient = await patientsService.create(
+        createPatientDto,
+        mockNutritionistId,
+      );
       patientId = patient.id;
     });
 
@@ -145,18 +173,18 @@ describe('PatientsController (e2e)', () => {
       const patient = response.body as Patient;
       expect(patient.name).toBe(updatePatientDto.name);
       expect(patient.weight).toBe(updatePatientDto.weight);
+      expect(patient.cpf).toBe('12345678900');
+      expect(patient.nutritionistId).toBe(mockNutritionistId);
     });
   });
 
   describe('DELETE /patients/:id', () => {
-    let patientId: string;
-
     beforeEach(async () => {
       const createPatientDto: CreatePatientDto = {
         name: 'Test Patient for Delete',
         email: 'delete@example.com',
         phone: '1234567890',
-        birthDate: new Date('1990-01-01'),
+        birthDate: '1990-01-01',
         gender: Gender.MALE,
         height: 170,
         weight: 70,
@@ -165,9 +193,14 @@ describe('PatientsController (e2e)', () => {
         healthConditions: ['none'],
         medications: ['none'],
         observations: 'Test observations',
+        cpf: '12345678900',
+        nutritionistId: mockNutritionistId,
       };
 
-      const patient = await patientsService.create(createPatientDto);
+      const patient = await patientsService.create(
+        createPatientDto,
+        mockNutritionistId,
+      );
       patientId = patient.id;
     });
 
@@ -184,14 +217,12 @@ describe('PatientsController (e2e)', () => {
   });
 
   describe('POST /patients/:id/measurements', () => {
-    let patientId: string;
-
     beforeEach(async () => {
       const createPatientDto: CreatePatientDto = {
         name: 'Test Patient for Measurements',
         email: 'measurements@example.com',
         phone: '1234567890',
-        birthDate: new Date('1990-01-01'),
+        birthDate: '1990-01-01',
         gender: Gender.MALE,
         height: 170,
         weight: 70,
@@ -200,15 +231,20 @@ describe('PatientsController (e2e)', () => {
         healthConditions: ['none'],
         medications: ['none'],
         observations: 'Test observations',
+        cpf: '12345678900',
+        nutritionistId: mockNutritionistId,
       };
 
-      const patient = await patientsService.create(createPatientDto);
+      const patient = await patientsService.create(
+        createPatientDto,
+        mockNutritionistId,
+      );
       patientId = patient.id;
     });
 
     it('should create a new measurement', async () => {
       const createMeasurementDto: CreateMeasurementDto = {
-        date: new Date('2024-04-06'),
+        date: '2024-04-06',
         weight: 70,
         bodyFat: 20,
         muscleMass: 50,
@@ -221,6 +257,8 @@ describe('PatientsController (e2e)', () => {
           arm: 30,
           thigh: 50,
         },
+        patientId: patientId,
+        nutritionistId: mockNutritionistId,
       };
 
       const response = await request(app.getHttpServer())
@@ -232,18 +270,24 @@ describe('PatientsController (e2e)', () => {
       expect(measurement).toHaveProperty('id');
       expect(measurement.weight).toBe(createMeasurementDto.weight);
       expect(measurement.bodyFat).toBe(createMeasurementDto.bodyFat);
+      expect(measurement.muscleMass).toBe(createMeasurementDto.muscleMass);
+      expect(measurement.bodyWater).toBe(createMeasurementDto.bodyWater);
+      expect(measurement.visceralFat).toBe(createMeasurementDto.visceralFat);
+      expect(measurement.measurements).toEqual(
+        createMeasurementDto.measurements,
+      );
+      expect(measurement.patientId).toBe(patientId);
+      expect(measurement.nutritionistId).toBe(mockNutritionistId);
     });
   });
 
   describe('GET /patients/:id/measurements', () => {
-    let patientId: string;
-
     beforeEach(async () => {
       const createPatientDto: CreatePatientDto = {
         name: 'Test Patient for Get Measurements',
         email: 'getmeasurements@example.com',
         phone: '1234567890',
-        birthDate: new Date('1990-01-01'),
+        birthDate: '1990-01-01',
         gender: Gender.MALE,
         height: 170,
         weight: 70,
@@ -252,13 +296,18 @@ describe('PatientsController (e2e)', () => {
         healthConditions: ['none'],
         medications: ['none'],
         observations: 'Test observations',
+        cpf: '12345678900',
+        nutritionistId: mockNutritionistId,
       };
 
-      const patient = await patientsService.create(createPatientDto);
+      const patient = await patientsService.create(
+        createPatientDto,
+        mockNutritionistId,
+      );
       patientId = patient.id;
 
       const createMeasurementDto: CreateMeasurementDto = {
-        date: new Date('2024-04-06'),
+        date: '2024-04-06',
         weight: 70,
         bodyFat: 20,
         muscleMass: 50,
@@ -271,9 +320,15 @@ describe('PatientsController (e2e)', () => {
           arm: 30,
           thigh: 50,
         },
+        patientId: patientId,
+        nutritionistId: mockNutritionistId,
       };
 
-      await patientsService.createMeasurement(patientId, createMeasurementDto);
+      await patientsService.createMeasurement(
+        patientId,
+        createMeasurementDto,
+        mockNutritionistId,
+      );
     });
 
     it('should return an array of measurements', async () => {
@@ -283,8 +338,11 @@ describe('PatientsController (e2e)', () => {
 
       interface MeasurementResponse {
         id: string;
-        weight: string;
-        bodyFat: string;
+        weight: number;
+        bodyFat: number;
+        muscleMass: number;
+        bodyWater: number;
+        visceralFat: number;
         measurements: {
           chest: number;
           waist: number;
@@ -292,6 +350,10 @@ describe('PatientsController (e2e)', () => {
           arm: number;
           thigh: number;
         };
+        patientId: string;
+        nutritionistId: string;
+        createdAt: string;
+        updatedAt: string;
       }
 
       expect(response.status).toBe(200);
@@ -301,8 +363,15 @@ describe('PatientsController (e2e)', () => {
 
       const measurement = measurements[0];
       expect(measurement).toHaveProperty('id');
-      expect(parseFloat(measurement.weight)).toBe(70);
-      expect(parseFloat(measurement.bodyFat)).toBe(20);
+      expect(measurement.weight).toBe(70);
+      expect(measurement.bodyFat).toBe(20);
+      expect(measurement.measurements.chest).toBe(100);
+      expect(measurement.measurements.waist).toBe(80);
+      expect(measurement.measurements.hip).toBe(90);
+      expect(measurement.measurements.arm).toBe(30);
+      expect(measurement.measurements.thigh).toBe(50);
+      expect(measurement.patientId).toBe(patientId);
+      expect(measurement.nutritionistId).toBe(mockNutritionistId);
     });
   });
 });

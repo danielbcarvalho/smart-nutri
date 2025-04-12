@@ -5,12 +5,31 @@ import { CreatePatientDto } from './dto/create-patient.dto';
 import { UpdatePatientDto } from './dto/update-patient.dto';
 import { CreateMeasurementDto } from './dto/create-measurement.dto';
 import { Gender } from './enums/gender.enum';
-import { Patient } from './entities/patient.entity';
+import {
+  Patient,
+  PatientStatus,
+  MonitoringStatus,
+  ConsultationFrequency,
+} from './entities/patient.entity';
 import { Measurement } from './entities/measurement.entity';
+import { Request } from '@nestjs/common';
+import { Nutritionist } from '../nutritionists/entities/nutritionist.entity';
+
+interface RequestWithUser extends Request {
+  user: {
+    id: string;
+  };
+}
 
 describe('PatientsController', () => {
   let controller: PatientsController;
   let service: PatientsService;
+
+  const mockRequest: RequestWithUser = {
+    user: {
+      id: '123e4567-e89b-12d3-a456-426614174000',
+    },
+  } as RequestWithUser;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -41,10 +60,13 @@ describe('PatientsController', () => {
         name: 'John Doe',
         email: 'john@example.com',
         phone: '123456789',
-        birthDate: new Date('1990-01-01'),
+        birthDate: '1990-01-01',
         height: 180,
         weight: 75,
         gender: Gender.MALE,
+        cpf: '12345678900',
+        status: PatientStatus.ACTIVE,
+        nutritionistId: '123e4567-e89b-12d3-a456-426614174000',
       };
 
       const patient: Patient = {
@@ -52,7 +74,7 @@ describe('PatientsController', () => {
         name: 'John Doe',
         email: 'john@example.com',
         phone: '123456789',
-        birthDate: new Date('1990-01-01'),
+        birthDate: '1990-01-01',
         height: 180,
         weight: 75,
         gender: Gender.MALE,
@@ -65,14 +87,27 @@ describe('PatientsController', () => {
         medications: [],
         observations: '',
         mealPlans: [],
+        cpf: '12345678900',
+        status: PatientStatus.ACTIVE,
+        nutritionistId: '123e4567-e89b-12d3-a456-426614174000',
+        nutritionist: {} as Nutritionist,
+        lastConsultationAt: new Date(),
+        nextConsultationAt: new Date(),
+        monitoringStatus: MonitoringStatus.IN_PROGRESS,
+        consultationFrequency: ConsultationFrequency.MONTHLY,
+        customConsultationDays: 0,
+        address: '123 Main St',
       };
 
       const createSpy = jest.spyOn(service, 'create');
       createSpy.mockResolvedValue(patient);
 
-      const result = await controller.create(createPatientDto);
+      const result = await controller.create(createPatientDto, mockRequest);
       expect(result).toEqual(patient);
-      expect(createSpy).toHaveBeenCalledWith(createPatientDto);
+      expect(createSpy).toHaveBeenCalledWith(
+        createPatientDto,
+        mockRequest.user.id,
+      );
     });
   });
 
@@ -84,7 +119,7 @@ describe('PatientsController', () => {
           name: 'John Doe',
           email: 'john@example.com',
           phone: '123456789',
-          birthDate: new Date('1990-01-01'),
+          birthDate: '1990-01-01',
           height: 180,
           weight: 75,
           gender: Gender.MALE,
@@ -97,13 +132,23 @@ describe('PatientsController', () => {
           medications: [],
           observations: '',
           mealPlans: [],
+          cpf: '12345678900',
+          status: PatientStatus.ACTIVE,
+          nutritionistId: '123e4567-e89b-12d3-a456-426614174000',
+          nutritionist: {} as Nutritionist,
+          lastConsultationAt: new Date(),
+          nextConsultationAt: new Date(),
+          monitoringStatus: MonitoringStatus.IN_PROGRESS,
+          consultationFrequency: ConsultationFrequency.MONTHLY,
+          customConsultationDays: 0,
+          address: '123 Main St',
         },
         {
           id: '2',
           name: 'Jane Doe',
           email: 'jane@example.com',
           phone: '987654321',
-          birthDate: new Date('1995-01-01'),
+          birthDate: '1995-01-01',
           height: 165,
           weight: 60,
           gender: Gender.FEMALE,
@@ -116,15 +161,25 @@ describe('PatientsController', () => {
           medications: [],
           observations: '',
           mealPlans: [],
+          cpf: '98765432100',
+          status: PatientStatus.ACTIVE,
+          nutritionistId: '123e4567-e89b-12d3-a456-426614174000',
+          nutritionist: {} as Nutritionist,
+          lastConsultationAt: new Date(),
+          nextConsultationAt: new Date(),
+          monitoringStatus: MonitoringStatus.IN_PROGRESS,
+          consultationFrequency: ConsultationFrequency.MONTHLY,
+          customConsultationDays: 0,
+          address: '456 Main St',
         },
       ];
 
       const findAllSpy = jest.spyOn(service, 'findAll');
       findAllSpy.mockResolvedValue(patients);
 
-      const result = await controller.findAll();
+      const result = await controller.findAll(mockRequest);
       expect(result).toEqual(patients);
-      expect(findAllSpy).toHaveBeenCalled();
+      expect(findAllSpy).toHaveBeenCalledWith(mockRequest.user.id);
     });
   });
 
@@ -135,7 +190,7 @@ describe('PatientsController', () => {
         name: 'John Doe',
         email: 'john@example.com',
         phone: '123456789',
-        birthDate: new Date('1990-01-01'),
+        birthDate: '1990-01-01',
         height: 180,
         weight: 75,
         gender: Gender.MALE,
@@ -148,14 +203,24 @@ describe('PatientsController', () => {
         medications: [],
         observations: '',
         mealPlans: [],
+        cpf: '12345678900',
+        status: PatientStatus.ACTIVE,
+        nutritionistId: '123e4567-e89b-12d3-a456-426614174000',
+        nutritionist: {} as Nutritionist,
+        lastConsultationAt: new Date(),
+        nextConsultationAt: new Date(),
+        monitoringStatus: MonitoringStatus.IN_PROGRESS,
+        consultationFrequency: ConsultationFrequency.MONTHLY,
+        customConsultationDays: 0,
+        address: '123 Main St',
       };
 
       const findOneSpy = jest.spyOn(service, 'findOne');
       findOneSpy.mockResolvedValue(patient);
 
-      const result = await controller.findOne('1');
+      const result = await controller.findOne('1', mockRequest);
       expect(result).toEqual(patient);
-      expect(findOneSpy).toHaveBeenCalledWith('1');
+      expect(findOneSpy).toHaveBeenCalledWith('1', mockRequest.user.id);
     });
   });
 
@@ -170,7 +235,7 @@ describe('PatientsController', () => {
         name: 'John Doe Updated',
         email: 'john@example.com',
         phone: '123456789',
-        birthDate: new Date('1990-01-01'),
+        birthDate: '1990-01-01',
         height: 180,
         weight: 75,
         gender: Gender.MALE,
@@ -183,14 +248,32 @@ describe('PatientsController', () => {
         medications: [],
         observations: '',
         mealPlans: [],
+        cpf: '12345678900',
+        status: PatientStatus.ACTIVE,
+        nutritionistId: '123e4567-e89b-12d3-a456-426614174000',
+        nutritionist: {} as Nutritionist,
+        lastConsultationAt: new Date(),
+        nextConsultationAt: new Date(),
+        monitoringStatus: MonitoringStatus.IN_PROGRESS,
+        consultationFrequency: ConsultationFrequency.MONTHLY,
+        customConsultationDays: 0,
+        address: '123 Main St',
       };
 
       const updateSpy = jest.spyOn(service, 'update');
       updateSpy.mockResolvedValue(patient);
 
-      const result = await controller.update('1', updatePatientDto);
+      const result = await controller.update(
+        '1',
+        updatePatientDto,
+        mockRequest,
+      );
       expect(result).toEqual(patient);
-      expect(updateSpy).toHaveBeenCalledWith('1', updatePatientDto);
+      expect(updateSpy).toHaveBeenCalledWith(
+        '1',
+        updatePatientDto,
+        mockRequest.user.id,
+      );
     });
   });
 
@@ -199,8 +282,8 @@ describe('PatientsController', () => {
       const removeSpy = jest.spyOn(service, 'remove');
       removeSpy.mockResolvedValue(undefined);
 
-      await controller.remove('1');
-      expect(removeSpy).toHaveBeenCalledWith('1');
+      await controller.remove('1', mockRequest);
+      expect(removeSpy).toHaveBeenCalledWith('1', mockRequest.user.id);
     });
   });
 
@@ -211,7 +294,7 @@ describe('PatientsController', () => {
         name: 'John Doe',
         email: 'john@example.com',
         phone: '123456789',
-        birthDate: new Date('1990-01-01'),
+        birthDate: '1990-01-01',
         height: 180,
         weight: 75,
         gender: Gender.MALE,
@@ -224,10 +307,20 @@ describe('PatientsController', () => {
         medications: [],
         observations: '',
         mealPlans: [],
+        cpf: '12345678900',
+        status: PatientStatus.ACTIVE,
+        nutritionistId: '123e4567-e89b-12d3-a456-426614174000',
+        nutritionist: {} as Nutritionist,
+        lastConsultationAt: new Date(),
+        nextConsultationAt: new Date(),
+        monitoringStatus: MonitoringStatus.IN_PROGRESS,
+        consultationFrequency: ConsultationFrequency.MONTHLY,
+        customConsultationDays: 0,
+        address: '123 Main St',
       };
 
       const createMeasurementDto: CreateMeasurementDto = {
-        date: new Date(),
+        date: new Date().toISOString(),
         weight: 75,
         measurements: {
           chest: 95,
@@ -236,11 +329,13 @@ describe('PatientsController', () => {
           arm: 32,
           thigh: 55,
         },
+        patientId: '1',
+        nutritionistId: '123e4567-e89b-12d3-a456-426614174000',
       };
 
       const measurement: Measurement = {
         id: '1',
-        date: createMeasurementDto.date,
+        date: new Date(createMeasurementDto.date),
         weight: createMeasurementDto.weight,
         measurements: createMeasurementDto.measurements,
         patientId: '1',
@@ -251,6 +346,8 @@ describe('PatientsController', () => {
         muscleMass: 35,
         bodyWater: 60,
         visceralFat: 8,
+        nutritionist: {} as Nutritionist,
+        nutritionistId: '123e4567-e89b-12d3-a456-426614174000',
       };
 
       const createMeasurementSpy = jest.spyOn(service, 'createMeasurement');
@@ -259,11 +356,13 @@ describe('PatientsController', () => {
       const result = await controller.createMeasurement(
         '1',
         createMeasurementDto,
+        mockRequest,
       );
       expect(result).toEqual(measurement);
       expect(createMeasurementSpy).toHaveBeenCalledWith(
         '1',
         createMeasurementDto,
+        mockRequest.user.id,
       );
     });
   });
@@ -275,7 +374,7 @@ describe('PatientsController', () => {
         name: 'John Doe',
         email: 'john@example.com',
         phone: '123456789',
-        birthDate: new Date('1990-01-01'),
+        birthDate: '1990-01-01',
         height: 180,
         weight: 75,
         gender: Gender.MALE,
@@ -288,6 +387,16 @@ describe('PatientsController', () => {
         medications: [],
         observations: '',
         mealPlans: [],
+        cpf: '12345678900',
+        status: PatientStatus.ACTIVE,
+        nutritionistId: '123e4567-e89b-12d3-a456-426614174000',
+        nutritionist: {} as Nutritionist,
+        lastConsultationAt: new Date(),
+        nextConsultationAt: new Date(),
+        monitoringStatus: MonitoringStatus.IN_PROGRESS,
+        consultationFrequency: ConsultationFrequency.MONTHLY,
+        customConsultationDays: 0,
+        address: '123 Main St',
       };
 
       const measurements: Measurement[] = [
@@ -310,15 +419,20 @@ describe('PatientsController', () => {
           muscleMass: 35,
           bodyWater: 60,
           visceralFat: 8,
+          nutritionist: {} as Nutritionist,
+          nutritionistId: '123e4567-e89b-12d3-a456-426614174000',
         },
       ];
 
       const findMeasurementsSpy = jest.spyOn(service, 'findMeasurements');
       findMeasurementsSpy.mockResolvedValue(measurements);
 
-      const result = await controller.findMeasurements('1');
+      const result = await controller.findMeasurements('1', mockRequest);
       expect(result).toEqual(measurements);
-      expect(findMeasurementsSpy).toHaveBeenCalledWith('1');
+      expect(findMeasurementsSpy).toHaveBeenCalledWith(
+        '1',
+        mockRequest.user.id,
+      );
     });
   });
 });

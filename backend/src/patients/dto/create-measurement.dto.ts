@@ -6,6 +6,10 @@ import {
   Min,
   Max,
   ValidateNested,
+  IsNotEmpty,
+  IsDateString,
+  IsUUID,
+  IsString,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
@@ -68,87 +72,418 @@ export class BodyMeasurements {
   @IsOptional()
   @IsNumber({}, { message: 'A medida da coxa deve ser um número' })
   @Min(20, { message: 'Medida mínima da coxa: 20cm' })
-  @Max(120, { message: 'Medida máxima da coxa: 120cm' })
+  @Max(100, { message: 'Medida máxima da coxa: 100cm' })
   thigh?: number;
-}
 
-export class CreateMeasurementDto {
-  @ApiProperty({
-    description: 'Data da medição',
-    example: '2024-04-05',
-    type: Date,
-  })
-  @Type(() => Date)
-  @IsDate()
-  date: Date;
-
-  @ApiProperty({
-    description: 'Peso em quilogramas',
-    example: 70.5,
-    type: Number,
-  })
-  @IsNumber({}, { message: 'O peso deve ser um número' })
-  @Min(0.1, { message: 'Peso mínimo: 0.1kg' })
-  @Max(500, { message: 'Peso máximo: 500kg' })
-  weight: number;
-
-  @ApiProperty({
-    description: 'Percentual de gordura corporal',
-    example: 20.5,
-    required: false,
+  // Medidas adicionais
+  @ApiPropertyOptional({
+    description: 'Medida do pescoço em centímetros',
+    example: 38,
     type: Number,
   })
   @IsOptional()
-  @IsNumber({}, { message: 'O percentual de gordura deve ser um número' })
-  @Min(1, { message: 'Percentual mínimo de gordura: 1%' })
-  @Max(70, { message: 'Percentual máximo de gordura: 70%' })
-  bodyFat?: number;
+  @IsNumber({}, { message: 'A medida do pescoço deve ser um número' })
+  neck?: number;
 
-  @ApiProperty({
-    description: 'Percentual de massa muscular',
-    example: 35.2,
-    required: false,
+  @ApiPropertyOptional({
+    description: 'Medida do ombro em centímetros',
+    example: 110,
+    type: Number,
+  })
+  @IsOptional()
+  @IsNumber({}, { message: 'A medida do ombro deve ser um número' })
+  shoulder?: number;
+
+  @ApiPropertyOptional({
+    description: 'Medida do abdômen em centímetros',
+    example: 90,
+    type: Number,
+  })
+  @IsOptional()
+  @IsNumber({}, { message: 'A medida do abdômen deve ser um número' })
+  abdomen?: number;
+
+  @ApiPropertyOptional({
+    description: 'Medida do braço relaxado em centímetros',
+    example: 30,
+    type: Number,
+  })
+  @IsOptional()
+  @IsNumber({}, { message: 'A medida do braço relaxado deve ser um número' })
+  relaxedArm?: number;
+
+  @ApiPropertyOptional({
+    description: 'Medida do braço contraído em centímetros',
+    example: 33,
+    type: Number,
+  })
+  @IsOptional()
+  @IsNumber({}, { message: 'A medida do braço contraído deve ser um número' })
+  contractedArm?: number;
+
+  @ApiPropertyOptional({
+    description: 'Medida do antebraço em centímetros',
+    example: 28,
+    type: Number,
+  })
+  @IsOptional()
+  @IsNumber({}, { message: 'A medida do antebraço deve ser um número' })
+  forearm?: number;
+
+  @ApiPropertyOptional({
+    description: 'Medida da coxa proximal em centímetros',
+    example: 58,
+    type: Number,
+  })
+  @IsOptional()
+  @IsNumber({}, { message: 'A medida da coxa proximal deve ser um número' })
+  proximalThigh?: number;
+
+  @ApiPropertyOptional({
+    description: 'Medida da coxa medial em centímetros',
+    example: 50,
+    type: Number,
+  })
+  @IsOptional()
+  @IsNumber({}, { message: 'A medida da coxa medial deve ser um número' })
+  medialThigh?: number;
+
+  @ApiPropertyOptional({
+    description: 'Medida da coxa distal em centímetros',
+    example: 40,
+    type: Number,
+  })
+  @IsOptional()
+  @IsNumber({}, { message: 'A medida da coxa distal deve ser um número' })
+  distalThigh?: number;
+
+  @ApiPropertyOptional({
+    description: 'Medida da panturrilha em centímetros',
+    example: 38,
+    type: Number,
+  })
+  @IsOptional()
+  @IsNumber({}, { message: 'A medida da panturrilha deve ser um número' })
+  calf?: number;
+}
+
+export class Skinfolds {
+  @ApiPropertyOptional({
+    description: 'Dobra cutânea tricipital em mm',
+    example: 15,
+    type: Number,
+  })
+  @IsOptional()
+  @IsNumber({}, { message: 'A dobra cutânea tricipital deve ser um número' })
+  tricipital?: number;
+
+  @ApiPropertyOptional({
+    description: 'Dobra cutânea bicipital em mm',
+    example: 10,
+    type: Number,
+  })
+  @IsOptional()
+  @IsNumber({}, { message: 'A dobra cutânea bicipital deve ser um número' })
+  bicipital?: number;
+
+  @ApiPropertyOptional({
+    description: 'Dobra cutânea abdominal em mm',
+    example: 25,
+    type: Number,
+  })
+  @IsOptional()
+  @IsNumber({}, { message: 'A dobra cutânea abdominal deve ser um número' })
+  abdominal?: number;
+
+  @ApiPropertyOptional({
+    description: 'Dobra cutânea subescapular em mm',
+    example: 18,
+    type: Number,
+  })
+  @IsOptional()
+  @IsNumber({}, { message: 'A dobra cutânea subescapular deve ser um número' })
+  subscapular?: number;
+
+  @ApiPropertyOptional({
+    description: 'Dobra cutânea axilar média em mm',
+    example: 12,
+    type: Number,
+  })
+  @IsOptional()
+  @IsNumber({}, { message: 'A dobra cutânea axilar média deve ser um número' })
+  axillaryMedian?: number;
+
+  @ApiPropertyOptional({
+    description: 'Dobra cutânea da coxa em mm',
+    example: 28,
+    type: Number,
+  })
+  @IsOptional()
+  @IsNumber({}, { message: 'A dobra cutânea da coxa deve ser um número' })
+  thigh?: number;
+
+  @ApiPropertyOptional({
+    description: 'Dobra cutânea torácica em mm',
+    example: 14,
+    type: Number,
+  })
+  @IsOptional()
+  @IsNumber({}, { message: 'A dobra cutânea torácica deve ser um número' })
+  thoracic?: number;
+
+  @ApiPropertyOptional({
+    description: 'Dobra cutânea suprailíaca em mm',
+    example: 22,
+    type: Number,
+  })
+  @IsOptional()
+  @IsNumber({}, { message: 'A dobra cutânea suprailíaca deve ser um número' })
+  suprailiac?: number;
+
+  @ApiPropertyOptional({
+    description: 'Dobra cutânea da panturrilha em mm',
+    example: 16,
     type: Number,
   })
   @IsOptional()
   @IsNumber(
     {},
-    { message: 'O percentual de massa muscular deve ser um número' },
+    { message: 'A dobra cutânea da panturrilha deve ser um número' },
   )
-  @Min(10, { message: 'Percentual mínimo de massa muscular: 10%' })
-  @Max(80, { message: 'Percentual máximo de massa muscular: 80%' })
+  calf?: number;
+
+  @ApiPropertyOptional({
+    description: 'Dobra cutânea supraespinhal em mm',
+    example: 15,
+    type: Number,
+  })
+  @IsOptional()
+  @IsNumber({}, { message: 'A dobra cutânea supraespinhal deve ser um número' })
+  supraspinal?: number;
+}
+
+export class BoneDiameters {
+  @ApiPropertyOptional({
+    description: 'Diâmetro do úmero em cm',
+    example: 6.8,
+    type: Number,
+  })
+  @IsOptional()
+  @IsNumber({}, { message: 'O diâmetro do úmero deve ser um número' })
+  humerus?: number;
+
+  @ApiPropertyOptional({
+    description: 'Diâmetro do punho em cm',
+    example: 5.5,
+    type: Number,
+  })
+  @IsOptional()
+  @IsNumber({}, { message: 'O diâmetro do punho deve ser um número' })
+  wrist?: number;
+
+  @ApiPropertyOptional({
+    description: 'Diâmetro do fêmur em cm',
+    example: 9.2,
+    type: Number,
+  })
+  @IsOptional()
+  @IsNumber({}, { message: 'O diâmetro do fêmur deve ser um número' })
+  femur?: number;
+}
+
+export class CreateMeasurementDto {
+  @ApiProperty({
+    description: 'Data da medição',
+    example: '2024-03-20',
+  })
+  @IsDateString()
+  @IsNotEmpty()
+  date: string;
+
+  @ApiProperty({
+    description: 'Peso em quilogramas',
+    example: 70.5,
+  })
+  @IsNumber()
+  @IsNotEmpty()
+  @Type(() => Number)
+  weight: number;
+
+  @ApiPropertyOptional({
+    description: 'Altura em centímetros',
+    example: 170,
+  })
+  @IsNumber()
+  @IsOptional()
+  @Type(() => Number)
+  height?: number;
+
+  @ApiPropertyOptional({
+    description: 'Altura sentado em centímetros',
+    example: 90,
+  })
+  @IsNumber()
+  @IsOptional()
+  @Type(() => Number)
+  sittingHeight?: number;
+
+  @ApiPropertyOptional({
+    description: 'Altura do joelho em centímetros',
+    example: 50,
+  })
+  @IsNumber()
+  @IsOptional()
+  @Type(() => Number)
+  kneeHeight?: number;
+
+  @ApiPropertyOptional({
+    description: 'Percentual de gordura corporal',
+    example: 15.5,
+  })
+  @IsNumber()
+  @IsOptional()
+  @Type(() => Number)
+  bodyFat?: number;
+
+  @ApiPropertyOptional({
+    description: 'Massa gorda em kg',
+    example: 12.5,
+  })
+  @IsNumber()
+  @IsOptional()
+  @Type(() => Number)
+  fatMass?: number;
+
+  @ApiPropertyOptional({
+    description: 'Percentual de massa muscular',
+    example: 45.2,
+  })
+  @IsNumber()
+  @IsOptional()
+  @Type(() => Number)
+  muscleMassPercentage?: number;
+
+  @ApiPropertyOptional({
+    description: 'Massa muscular em quilogramas',
+    example: 35.2,
+  })
+  @IsNumber()
+  @IsOptional()
+  @Type(() => Number)
   muscleMass?: number;
 
-  @ApiProperty({
+  @ApiPropertyOptional({
+    description: 'Massa livre de gordura em kg',
+    example: 58.0,
+  })
+  @IsNumber()
+  @IsOptional()
+  @Type(() => Number)
+  fatFreeMass?: number;
+
+  @ApiPropertyOptional({
+    description: 'Massa óssea em kg',
+    example: 3.1,
+  })
+  @IsNumber()
+  @IsOptional()
+  @Type(() => Number)
+  boneMass?: number;
+
+  @ApiPropertyOptional({
     description: 'Percentual de água corporal',
     example: 60.5,
-    required: false,
-    type: Number,
   })
+  @IsNumber()
   @IsOptional()
-  @IsNumber({}, { message: 'O percentual de água deve ser um número' })
-  @Min(20, { message: 'Percentual mínimo de água: 20%' })
-  @Max(80, { message: 'Percentual máximo de água: 80%' })
+  @Type(() => Number)
   bodyWater?: number;
 
-  @ApiProperty({
-    description: 'Nível de gordura visceral',
-    example: 8,
-    required: false,
-    type: Number,
+  @ApiPropertyOptional({
+    description: 'Gordura visceral',
+    example: 8.5,
   })
+  @IsNumber()
   @IsOptional()
-  @IsNumber({}, { message: 'O nível de gordura visceral deve ser um número' })
-  @Min(1, { message: 'Nível mínimo de gordura visceral: 1' })
-  @Max(59, { message: 'Nível máximo de gordura visceral: 59' })
+  @Type(() => Number)
   visceralFat?: number;
+
+  @ApiPropertyOptional({
+    description: 'Idade metabólica',
+    example: 34,
+  })
+  @IsNumber()
+  @IsOptional()
+  @Type(() => Number)
+  metabolicAge?: number;
 
   @ApiProperty({
     description: 'Medidas corporais',
-    type: BodyMeasurements,
+    example: {
+      chest: 95,
+      waist: 80,
+      hip: 100,
+      arm: 32,
+      thigh: 55,
+    },
   })
   @IsObject()
   @ValidateNested()
   @Type(() => BodyMeasurements)
   measurements: BodyMeasurements;
+
+  @ApiPropertyOptional({
+    description: 'Dobras cutâneas',
+    example: {
+      tricipital: 15,
+      bicipital: 10,
+      abdominal: 25,
+      subscapular: 18,
+    },
+  })
+  @IsObject()
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => Skinfolds)
+  skinfolds?: Skinfolds;
+
+  @ApiPropertyOptional({
+    description: 'Diâmetros ósseos',
+    example: {
+      humerus: 6.8,
+      wrist: 5.5,
+      femur: 9.2,
+    },
+  })
+  @IsObject()
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => BoneDiameters)
+  boneDiameters?: BoneDiameters;
+
+  @ApiPropertyOptional({
+    description: 'Fórmula de dobras cutâneas usada',
+    example: 'pollock3',
+  })
+  @IsString()
+  @IsOptional()
+  skinfoldFormula?: string;
+
+  @ApiProperty({
+    description: 'ID do paciente',
+    example: '123e4567-e89b-12d3-a456-426614174000',
+  })
+  @IsNotEmpty()
+  @IsUUID('4')
+  patientId: string;
+
+  @ApiProperty({
+    description:
+      'ID do nutricionista responsável (opcional, obtido automaticamente do token JWT)',
+    example: '123e4567-e89b-12d3-a456-426614174000',
+    required: false,
+  })
+  @IsOptional()
+  @IsUUID('4', { message: 'ID do nutricionista inválido' })
+  nutritionistId?: string;
 }

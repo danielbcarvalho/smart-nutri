@@ -41,7 +41,8 @@ export class FoodsService {
     food.fiber = product.nutriments.fiber_100g || 0;
     food.sugar = product.nutriments.sugars_100g || 0;
     food.sodium = product.nutriments.sodium_100g || 0;
-    food.categories = product.categories_tags?.map(c => c.replace('en:', '')) || [];
+    food.categories =
+      product.categories_tags?.map((c) => c.replace('en:', '')) || [];
 
     // Salva no banco de dados
     return this.foodsRepository.save(food);
@@ -83,7 +84,9 @@ export class FoodsService {
       );
 
       if (!openFoodResponse?.products?.length) {
-        console.log('Sem resultados do Open Food Facts, retornando apenas cache local');
+        console.log(
+          'Sem resultados do Open Food Facts, retornando apenas cache local',
+        );
         return localFoods;
       }
 
@@ -99,18 +102,25 @@ export class FoodsService {
         food.fiber = product.nutriments.fiber_100g || 0;
         food.sugar = product.nutriments.sugars_100g || 0;
         food.sodium = product.nutriments.sodium_100g || 0;
-        food.categories = product.categories_tags?.map(c => c.replace('en:', '')) || [];
+        food.categories =
+          product.categories_tags?.map((c) => c.replace('en:', '')) || [];
         return food;
       });
 
-      console.log('Resultados do Open Food Facts transformados:', openFoodFoods.length);
+      console.log(
+        'Resultados do Open Food Facts transformados:',
+        openFoodFoods.length,
+      );
 
       // Combina os resultados
       const results = [...localFoods, ...openFoodFoods];
       console.log('Total de resultados:', results.length);
       return results;
     } catch (error) {
-      console.error('Erro na busca:', error instanceof Error ? error.message : error);
+      console.error(
+        'Erro na busca:',
+        error instanceof Error ? error.message : error,
+      );
       // Se houver erro na API externa, retorna ao menos os resultados locais
       return localFoods;
     }
@@ -124,7 +134,7 @@ export class FoodsService {
   async findAll(): Promise<Food[]> {
     return await this.foodsRepository.find({
       order: {
-        usageCount: 'DESC',
+        usageCountMealPlans: 'DESC',
         name: 'ASC',
       },
     });

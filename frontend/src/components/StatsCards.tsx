@@ -3,15 +3,17 @@ import {
   Box,
   Card,
   CardContent,
-  Grid as MuiGrid,
+  Grid,
   Typography,
   useTheme,
+  Skeleton,
 } from "@mui/material";
 import {
   TrendingUp as TrendingUpIcon,
   TrendingDown as TrendingDownIcon,
 } from "@mui/icons-material";
-import { api } from "../lib/axios";
+import { useQuery } from "@tanstack/react-query";
+import { api } from "../services/api";
 
 interface Stats {
   totalPatients: number;
@@ -26,22 +28,37 @@ interface Stats {
   };
 }
 
+const statsService = {
+  getStats: async (): Promise<Stats> => {
+    const response = await api.get("/stats");
+    return response.data;
+  },
+};
+
 export function StatsCards() {
   const theme = useTheme();
-  const [stats, setStats] = React.useState<Stats | null>(null);
+  const { data: stats, isLoading } = useQuery({
+    queryKey: ["stats"],
+    queryFn: statsService.getStats,
+  });
 
-  React.useEffect(() => {
-    async function loadStats() {
-      try {
-        const response = await api.get("/stats");
-        setStats(response.data);
-      } catch (error) {
-        console.error("Erro ao carregar estatísticas:", error);
-      }
-    }
-
-    loadStats();
-  }, []);
+  if (isLoading) {
+    return (
+      <Grid container spacing={3}>
+        {[...Array(4)].map((_, index) => (
+          <Grid item xs={12} sm={6} md={3} key={index}>
+            <Card>
+              <CardContent>
+                <Skeleton variant="text" width="60%" />
+                <Skeleton variant="text" height={40} />
+                <Skeleton variant="text" width="40%" />
+              </CardContent>
+            </Card>
+          </Grid>
+        ))}
+      </Grid>
+    );
+  }
 
   if (!stats) return null;
 
@@ -73,9 +90,9 @@ export function StatsCards() {
   ];
 
   return (
-    <MuiGrid container spacing={3}>
+    <Grid container spacing={3}>
       {cards.map((card) => (
-        <MuiGrid item xs={12} sm={6} md={3} key={card.title}>
+        <Grid item xs={12} sm={6} md={3} key={card.title}>
           <Card
             sx={{
               height: "100%",
@@ -127,8 +144,8 @@ export function StatsCards() {
               </Box>
             </CardContent>
           </Card>
-        </MuiGrid>
+        </Grid>
       ))}
-    </MuiGrid>
+    </Grid>
   );
 }

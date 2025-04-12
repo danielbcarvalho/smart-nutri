@@ -8,6 +8,8 @@ import {
   JoinColumn,
 } from 'typeorm';
 import { Patient } from './patient.entity';
+import { Nutritionist } from '../../nutritionists/entities/nutritionist.entity';
+import { Consultation } from './consultation.entity';
 
 @Entity('measurements')
 export class Measurement {
@@ -17,21 +19,48 @@ export class Measurement {
   @Column({ type: 'date' })
   date: Date;
 
+  // Dados básicos
   @Column({ type: 'decimal', precision: 5, scale: 2 })
   weight: number;
 
   @Column({ type: 'decimal', precision: 5, scale: 2, nullable: true })
+  height: number;
+
+  @Column({ type: 'decimal', precision: 5, scale: 2, nullable: true })
+  sittingHeight: number;
+
+  @Column({ type: 'decimal', precision: 5, scale: 2, nullable: true })
+  kneeHeight: number;
+
+  // Bioimpedância
+  @Column({ type: 'decimal', precision: 5, scale: 2, nullable: true })
   bodyFat: number;
+
+  @Column({ type: 'decimal', precision: 5, scale: 2, nullable: true })
+  fatMass: number;
+
+  @Column({ type: 'decimal', precision: 5, scale: 2, nullable: true })
+  muscleMassPercentage: number;
 
   @Column({ type: 'decimal', precision: 5, scale: 2, nullable: true })
   muscleMass: number;
 
   @Column({ type: 'decimal', precision: 5, scale: 2, nullable: true })
-  bodyWater: number;
+  fatFreeMass: number;
+
+  @Column({ type: 'decimal', precision: 5, scale: 2, nullable: true })
+  boneMass: number;
 
   @Column({ type: 'decimal', precision: 5, scale: 2, nullable: true })
   visceralFat: number;
 
+  @Column({ type: 'decimal', precision: 5, scale: 2, nullable: true })
+  bodyWater: number;
+
+  @Column({ type: 'integer', nullable: true })
+  metabolicAge: number;
+
+  // Circunferências corporais estendidas
   @Column({ type: 'jsonb' })
   measurements: {
     chest?: number;
@@ -39,7 +68,44 @@ export class Measurement {
     hip?: number;
     arm?: number;
     thigh?: number;
+    neck?: number;
+    shoulder?: number;
+    abdomen?: number;
+    relaxedArm?: number;
+    contractedArm?: number;
+    forearm?: number;
+    proximalThigh?: number;
+    medialThigh?: number;
+    distalThigh?: number;
+    calf?: number;
   };
+
+  // Dobras cutâneas
+  @Column({ type: 'jsonb', nullable: true })
+  skinfolds: {
+    tricipital?: number;
+    bicipital?: number;
+    abdominal?: number;
+    subscapular?: number;
+    axillaryMedian?: number;
+    thigh?: number;
+    thoracic?: number;
+    suprailiac?: number;
+    calf?: number;
+    supraspinal?: number;
+  };
+
+  // Diâmetro ósseo
+  @Column({ type: 'jsonb', nullable: true })
+  boneDiameters: {
+    humerus?: number;
+    wrist?: number;
+    femur?: number;
+  };
+
+  // Fórmula de dobras cutâneas usada
+  @Column({ type: 'varchar', length: 50, nullable: true })
+  skinfoldFormula: string;
 
   @ManyToOne(() => Patient, (patient) => patient.measurements, {
     onDelete: 'CASCADE',
@@ -49,6 +115,24 @@ export class Measurement {
 
   @Column({ name: 'patient_id' })
   patientId: string;
+
+  @ManyToOne(() => Nutritionist, (nutritionist) => nutritionist.measurements, {
+    nullable: false,
+  })
+  @JoinColumn({ name: 'nutritionist_id' })
+  nutritionist: Nutritionist;
+
+  @Column({ name: 'nutritionist_id', type: 'uuid' })
+  nutritionistId: string;
+
+  @ManyToOne(() => Consultation, (consultation) => consultation.measurements, {
+    nullable: true,
+  })
+  @JoinColumn({ name: 'consultation_id' })
+  consultation: Consultation;
+
+  @Column({ name: 'consultation_id', type: 'uuid', nullable: true })
+  consultationId: string;
 
   @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;

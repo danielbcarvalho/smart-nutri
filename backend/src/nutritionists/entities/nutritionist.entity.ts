@@ -4,7 +4,13 @@ import {
   Column,
   CreateDateColumn,
   UpdateDateColumn,
+  OneToMany,
 } from 'typeorm';
+import { Patient } from '../../patients/entities/patient.entity';
+import { MealPlan } from '../../meal-plans/entities/meal-plan.entity';
+import { Measurement } from '../../patients/entities/measurement.entity';
+import { Consultation } from '../../patients/entities/consultation.entity';
+import { MealPlanTemplate } from '../../meal-plans/entities/meal-plan-template.entity';
 
 @Entity('nutritionists')
 export class Nutritionist {
@@ -23,7 +29,7 @@ export class Nutritionist {
   @Column({ nullable: true })
   phone: string;
 
-  @Column({ nullable: true })
+  @Column({ nullable: true, unique: true })
   crn: string;
 
   @Column({ type: 'jsonb', nullable: true })
@@ -31,6 +37,21 @@ export class Nutritionist {
 
   @Column({ nullable: true })
   clinicName: string;
+
+  @OneToMany(() => Patient, (patient) => patient.nutritionist)
+  patients: Patient[];
+
+  @OneToMany(() => MealPlan, (mealPlan) => mealPlan.nutritionist)
+  mealPlans: MealPlan[];
+
+  @OneToMany(() => MealPlanTemplate, (template) => template.nutritionist)
+  mealPlanTemplates: MealPlanTemplate[];
+
+  @OneToMany(() => Measurement, (measurement) => measurement.nutritionist)
+  measurements: Measurement[];
+
+  @OneToMany(() => Consultation, (consultation) => consultation.nutritionist)
+  consultations: Consultation[];
 
   @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;

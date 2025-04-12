@@ -344,27 +344,35 @@ export function MealPlan() {
     <Box sx={{ maxWidth: 600, mx: "auto", p: 3 }}>
       {!showNewPlanForm && (
         <>
-          <Typography variant="h5" gutterBottom color="text.primary">
-            Planos Alimentares
-          </Typography>
-
-          <Button
-            variant="contained"
-            startIcon={<AddIcon />}
-            onClick={() =>
-              navigate(`/patient/${patientId}/meal-plans?new=true`)
-            }
+          <Box
             sx={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
               mb: 3,
-              bgcolor: "custom.main",
-              color: "common.white",
-              "&:hover": {
-                bgcolor: "custom.dark",
-              },
             }}
           >
-            Criar Novo Plano
-          </Button>
+            <Typography variant="h5" gutterBottom color="text.primary">
+              Planos Alimentares
+            </Typography>{" "}
+            <Button
+              variant="contained"
+              startIcon={<AddIcon />}
+              onClick={() =>
+                navigate(`/patient/${patientId}/meal-plans?new=true`)
+              }
+              sx={{
+                mb: 3,
+                bgcolor: "custom.main",
+                color: "common.white",
+                "&:hover": {
+                  bgcolor: "custom.dark",
+                },
+              }}
+            >
+              Criar Novo Plano
+            </Button>
+          </Box>
 
           <Stack spacing={2}>
             {sortedPlans.map((plan) => (

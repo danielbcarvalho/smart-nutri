@@ -9,16 +9,14 @@
           "200": {
             "description": ""
           }
-        },
-        "tags": [
-          "App"
-        ]
+        }
       }
     },
     "/patients": {
       "post": {
-        "description": "Cria um novo paciente com todas as informações necessárias.",
         "operationId": "PatientsController_create",
+        "summary": "Criar novo paciente",
+        "description": "Cria um novo paciente com todas as informações necessárias.",
         "parameters": [],
         "requestBody": {
           "required": true,
@@ -48,14 +46,19 @@
             "description": "Paciente já existe com o mesmo CPF ou email"
           }
         },
-        "summary": "Criar novo paciente",
         "tags": [
           "patients"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
         ]
       },
       "get": {
-        "description": "Retorna uma lista de todos os pacientes cadastrados.",
         "operationId": "PatientsController_findAll",
+        "summary": "Listar todos os pacientes",
+        "description": "Retorna uma lista de todos os pacientes cadastrados.",
         "parameters": [],
         "responses": {
           "200": {
@@ -72,16 +75,21 @@
             }
           }
         },
-        "summary": "Listar todos os pacientes",
         "tags": [
           "patients"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
         ]
       }
     },
     "/patients/{id}": {
       "get": {
-        "description": "Retorna os detalhes de um paciente específico",
         "operationId": "PatientsController_findOne",
+        "summary": "Buscar paciente por ID",
+        "description": "Retorna os detalhes de um paciente específico",
         "parameters": [
           {
             "name": "id",
@@ -109,14 +117,19 @@
             "description": "Paciente não encontrado"
           }
         },
-        "summary": "Buscar paciente por ID",
         "tags": [
           "patients"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
         ]
       },
       "patch": {
-        "description": "Atualiza as informações de um paciente existente",
         "operationId": "PatientsController_update",
+        "summary": "Atualizar paciente",
+        "description": "Atualiza as informações de um paciente existente",
         "parameters": [
           {
             "name": "id",
@@ -160,14 +173,19 @@
             "description": "Conflito com outro paciente (CPF ou email já existente)"
           }
         },
-        "summary": "Atualizar paciente",
         "tags": [
           "patients"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
         ]
       },
       "delete": {
-        "description": "Remove um paciente do sistema",
         "operationId": "PatientsController_remove",
+        "summary": "Remover paciente",
+        "description": "Remove um paciente do sistema",
         "parameters": [
           {
             "name": "id",
@@ -188,16 +206,21 @@
             "description": "Paciente não encontrado"
           }
         },
-        "summary": "Remover paciente",
         "tags": [
           "patients"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
         ]
       }
     },
     "/patients/{id}/measurements": {
       "post": {
-        "description": "Adiciona uma nova medição para um paciente específico",
         "operationId": "PatientsController_createMeasurement",
+        "summary": "Adicionar medição",
+        "description": "Adiciona uma nova medição para um paciente específico",
         "parameters": [
           {
             "name": "id",
@@ -238,14 +261,19 @@
             "description": "Paciente não encontrado"
           }
         },
-        "summary": "Adicionar medição",
         "tags": [
           "patients"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
         ]
       },
       "get": {
-        "description": "Retorna todas as medições de um paciente específico",
         "operationId": "PatientsController_findMeasurements",
+        "summary": "Listar medições",
+        "description": "Retorna todas as medições de um paciente específico",
         "parameters": [
           {
             "name": "id",
@@ -276,163 +304,68 @@
             "description": "Paciente não encontrado"
           }
         },
-        "summary": "Listar medições",
         "tags": [
           "patients"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
         ]
       }
     },
-    "/meal-plans": {
-      "post": {
-        "description": "Cria um novo plano alimentar para um paciente com suas refeições",
-        "operationId": "MealPlansController_create",
-        "parameters": [],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/CreateMealPlanDto"
-              }
-            }
-          }
-        },
-        "responses": {
-          "201": {
-            "description": "Plano alimentar criado com sucesso",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/MealPlan"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Dados inválidos fornecidos"
-          },
-          "404": {
-            "description": "Paciente não encontrado"
-          }
-        },
-        "summary": "Criar um novo plano alimentar",
-        "tags": [
-          "meal-plans"
-        ]
-      },
+    "/patients/search": {
       "get": {
-        "description": "Retorna uma lista de todos os planos alimentares cadastrados",
-        "operationId": "MealPlansController_findAll",
-        "parameters": [],
+        "operationId": "PatientsController_search",
+        "summary": "Buscar pacientes",
+        "description": "Busca pacientes por nome ou email",
+        "parameters": [
+          {
+            "name": "query",
+            "required": true,
+            "in": "query",
+            "description": "Termo de busca (nome ou email)",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
         "responses": {
           "200": {
-            "description": "Lista de planos alimentares retornada com sucesso",
+            "description": "Lista de pacientes encontrados",
             "content": {
               "application/json": {
                 "schema": {
                   "type": "array",
                   "items": {
-                    "$ref": "#/components/schemas/MealPlan"
+                    "$ref": "#/components/schemas/Patient"
                   }
                 }
               }
             }
           }
         },
-        "summary": "Listar todos os planos alimentares",
         "tags": [
-          "meal-plans"
+          "patients"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
         ]
       }
     },
-    "/meal-plans/patient/{patientId}": {
-      "get": {
-        "description": "Retorna todos os planos alimentares de um paciente específico",
-        "operationId": "MealPlansController_findByPatient",
+    "/patients/{patientId}/photos": {
+      "post": {
+        "operationId": "PatientPhotosController_create",
+        "summary": "Create a new patient photo",
         "parameters": [
           {
             "name": "patientId",
             "required": true,
             "in": "path",
-            "description": "ID do paciente",
             "schema": {
-              "type": "string",
-              "format": "uuid"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Lista de planos alimentares retornada com sucesso",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/MealPlan"
-                  }
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Paciente não encontrado"
-          }
-        },
-        "summary": "Buscar planos por paciente",
-        "tags": [
-          "meal-plans"
-        ]
-      }
-    },
-    "/meal-plans/{id}": {
-      "get": {
-        "description": "Retorna os detalhes de um plano alimentar específico",
-        "operationId": "MealPlansController_findOne",
-        "parameters": [
-          {
-            "name": "id",
-            "required": true,
-            "in": "path",
-            "description": "ID do plano alimentar",
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Plano alimentar encontrado",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/MealPlan"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Plano alimentar não encontrado"
-          }
-        },
-        "summary": "Buscar plano alimentar por ID",
-        "tags": [
-          "meal-plans"
-        ]
-      },
-      "patch": {
-        "description": "Atualiza as informações de um plano alimentar existente",
-        "operationId": "MealPlansController_update",
-        "parameters": [
-          {
-            "name": "id",
-            "required": true,
-            "in": "path",
-            "description": "ID do plano alimentar",
-            "schema": {
-              "type": "string",
-              "format": "uuid"
+              "type": "string"
             }
           }
         ],
@@ -441,155 +374,475 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/UpdateMealPlanDto"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Plano alimentar atualizado com sucesso",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/MealPlan"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Dados inválidos fornecidos"
-          },
-          "404": {
-            "description": "Plano alimentar não encontrado"
-          }
-        },
-        "summary": "Atualizar plano alimentar",
-        "tags": [
-          "meal-plans"
-        ]
-      },
-      "delete": {
-        "description": "Remove um plano alimentar do sistema",
-        "operationId": "MealPlansController_remove",
-        "parameters": [
-          {
-            "name": "id",
-            "required": true,
-            "in": "path",
-            "description": "ID do plano alimentar",
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            }
-          }
-        ],
-        "responses": {
-          "204": {
-            "description": "Plano alimentar removido com sucesso"
-          },
-          "404": {
-            "description": "Plano alimentar não encontrado"
-          }
-        },
-        "summary": "Remover plano alimentar",
-        "tags": [
-          "meal-plans"
-        ]
-      }
-    },
-    "/meal-plans/{id}/meals": {
-      "post": {
-        "description": "Adiciona uma nova refeição a um plano alimentar existente",
-        "operationId": "MealPlansController_addMeal",
-        "parameters": [
-          {
-            "name": "id",
-            "required": true,
-            "in": "path",
-            "description": "ID do plano alimentar",
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/CreateMealDto"
+                "$ref": "#/components/schemas/CreatePatientPhotoDto"
               }
             }
           }
         },
         "responses": {
           "201": {
-            "description": "Refeição adicionada com sucesso",
+            "description": "The photo has been successfully created.",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Meal"
+                  "$ref": "#/components/schemas/PatientPhoto"
                 }
               }
             }
-          },
-          "400": {
-            "description": "Dados inválidos fornecidos"
-          },
-          "404": {
-            "description": "Plano alimentar não encontrado"
           }
         },
-        "summary": "Adicionar refeição",
         "tags": [
-          "meal-plans"
+          "patient-photos"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
         ]
       },
       "get": {
-        "description": "Retorna uma lista de refeições de um plano alimentar específico",
-        "operationId": "MealPlansController_getMeals",
+        "operationId": "PatientPhotosController_findAll",
+        "summary": "Get all photos for a patient",
         "parameters": [
           {
-            "name": "id",
+            "name": "patientId",
             "required": true,
             "in": "path",
-            "description": "ID do plano alimentar",
             "schema": {
-              "type": "string",
-              "format": "uuid"
+              "type": "string"
             }
           }
         ],
         "responses": {
           "200": {
-            "description": "Lista de refeições retornada com sucesso",
+            "description": "List of patient photos",
             "content": {
               "application/json": {
                 "schema": {
                   "type": "array",
                   "items": {
-                    "$ref": "#/components/schemas/Meal"
+                    "$ref": "#/components/schemas/PatientPhoto"
                   }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "patient-photos"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/patients/{patientId}/photos/type/{type}": {
+      "get": {
+        "operationId": "PatientPhotosController_findByType",
+        "summary": "Get photos by type for a patient",
+        "parameters": [
+          {
+            "name": "patientId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "type",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of patient photos of a specific type",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PatientPhoto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "patient-photos"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/patients/{patientId}/photos/date-range": {
+      "get": {
+        "operationId": "PatientPhotosController_findByDateRange",
+        "summary": "Get photos within a date range",
+        "parameters": [
+          {
+            "name": "patientId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "startDate",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "format": "date-time",
+              "type": "string"
+            }
+          },
+          {
+            "name": "endDate",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "format": "date-time",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of patient photos within the specified date range",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PatientPhoto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "patient-photos"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/patients/{patientId}/photos/{id}": {
+      "get": {
+        "operationId": "PatientPhotosController_findOne",
+        "summary": "Get a specific photo",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The found photo",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PatientPhoto"
                 }
               }
             }
           },
           "404": {
-            "description": "Plano alimentar não encontrado"
+            "description": "Photo not found"
           }
         },
-        "summary": "Listar refeições do plano",
         "tags": [
-          "meal-plans"
+          "patient-photos"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      },
+      "patch": {
+        "operationId": "PatientPhotosController_update",
+        "summary": "Update a photo",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdatePatientPhotoDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The photo has been successfully updated.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PatientPhoto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Photo not found"
+          }
+        },
+        "tags": [
+          "patient-photos"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      },
+      "delete": {
+        "operationId": "PatientPhotosController_remove",
+        "summary": "Delete a photo",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The photo has been successfully deleted."
+          },
+          "404": {
+            "description": "Photo not found"
+          }
+        },
+        "tags": [
+          "patient-photos"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/consultations": {
+      "post": {
+        "operationId": "ConsultationsController_create",
+        "summary": "Create a new consultation",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateConsultationDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "The consultation has been successfully created.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Consultation"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "consultations"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      },
+      "get": {
+        "operationId": "ConsultationsController_findAll",
+        "summary": "Get all consultations or filter by patient",
+        "parameters": [
+          {
+            "name": "patientId",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Return all consultations or filtered by patient.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Consultation"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "consultations"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/consultations/{id}": {
+      "get": {
+        "operationId": "ConsultationsController_findOne",
+        "summary": "Get a consultation by ID",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Return the consultation.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Consultation"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Consultation not found."
+          }
+        },
+        "tags": [
+          "consultations"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      },
+      "put": {
+        "operationId": "ConsultationsController_update",
+        "summary": "Update a consultation",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The consultation has been successfully updated.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Consultation"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Consultation not found."
+          }
+        },
+        "tags": [
+          "consultations"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      },
+      "delete": {
+        "operationId": "ConsultationsController_remove",
+        "summary": "Delete a consultation",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The consultation has been successfully deleted."
+          },
+          "404": {
+            "description": "Consultation not found."
+          }
+        },
+        "tags": [
+          "consultations"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
         ]
       }
     },
     "/foods": {
       "post": {
-        "description": "Cria um novo alimento no banco de dados local com informações nutricionais detalhadas",
         "operationId": "FoodsController_create",
+        "summary": "Criar um novo alimento manualmente",
+        "description": "Cria um novo alimento no banco de dados local com informações nutricionais detalhadas",
         "parameters": [],
         "requestBody": {
           "required": true,
@@ -616,14 +869,14 @@
             "description": "Dados inválidos fornecidos"
           }
         },
-        "summary": "Criar um novo alimento manualmente",
         "tags": [
           "foods"
         ]
       },
       "get": {
-        "description": "Retorna uma lista paginada de todos os alimentos cadastrados",
         "operationId": "FoodsController_findAll",
+        "summary": "Listar todos os alimentos",
+        "description": "Retorna uma lista paginada de todos os alimentos cadastrados",
         "parameters": [],
         "responses": {
           "200": {
@@ -640,7 +893,6 @@
             }
           }
         },
-        "summary": "Listar todos os alimentos",
         "tags": [
           "foods"
         ]
@@ -648,8 +900,9 @@
     },
     "/foods/save-from-api": {
       "post": {
-        "description": "Importa um alimento da API externa e salva no banco de dados local",
         "operationId": "FoodsController_saveFromApi",
+        "summary": "Salvar um alimento da API no banco de dados local",
+        "description": "Importa um alimento da API externa e salva no banco de dados local",
         "parameters": [],
         "requestBody": {
           "required": true,
@@ -676,7 +929,6 @@
             "description": "Alimento não encontrado na API externa"
           }
         },
-        "summary": "Salvar um alimento da API no banco de dados local",
         "tags": [
           "foods"
         ]
@@ -684,8 +936,9 @@
     },
     "/foods/search": {
       "get": {
-        "description": "Pesquisa alimentos por nome ou descrição",
         "operationId": "FoodsController_search",
+        "summary": "Pesquisar alimentos",
+        "description": "Pesquisa alimentos por nome ou descrição",
         "parameters": [
           {
             "name": "query",
@@ -740,7 +993,6 @@
             }
           }
         },
-        "summary": "Pesquisar alimentos",
         "tags": [
           "foods"
         ]
@@ -748,8 +1000,9 @@
     },
     "/foods/favorites": {
       "get": {
-        "description": "Retorna a lista de alimentos marcados como favoritos",
         "operationId": "FoodsController_getFavorites",
+        "summary": "Listar alimentos favoritos",
+        "description": "Retorna a lista de alimentos marcados como favoritos",
         "parameters": [],
         "responses": {
           "200": {
@@ -766,7 +1019,6 @@
             }
           }
         },
-        "summary": "Listar alimentos favoritos",
         "tags": [
           "foods"
         ]
@@ -774,8 +1026,9 @@
     },
     "/foods/{id}": {
       "get": {
-        "description": "Retorna os detalhes de um alimento específico",
         "operationId": "FoodsController_findOne",
+        "summary": "Buscar alimento por ID",
+        "description": "Retorna os detalhes de um alimento específico",
         "parameters": [
           {
             "name": "id",
@@ -803,14 +1056,14 @@
             "description": "Alimento não encontrado"
           }
         },
-        "summary": "Buscar alimento por ID",
         "tags": [
           "foods"
         ]
       },
       "patch": {
-        "description": "Atualiza as informações de um alimento existente",
         "operationId": "FoodsController_update",
+        "summary": "Atualizar alimento",
+        "description": "Atualiza as informações de um alimento existente",
         "parameters": [
           {
             "name": "id",
@@ -848,14 +1101,14 @@
             "description": "Alimento não encontrado"
           }
         },
-        "summary": "Atualizar alimento",
         "tags": [
           "foods"
         ]
       },
       "delete": {
-        "description": "Remove um alimento do banco de dados",
         "operationId": "FoodsController_remove",
+        "summary": "Remover alimento",
+        "description": "Remove um alimento do banco de dados",
         "parameters": [
           {
             "name": "id",
@@ -876,7 +1129,6 @@
             "description": "Alimento não encontrado"
           }
         },
-        "summary": "Remover alimento",
         "tags": [
           "foods"
         ]
@@ -884,8 +1136,9 @@
     },
     "/foods/{id}/favorite": {
       "post": {
-        "description": "Marca ou desmarca um alimento como favorito",
         "operationId": "FoodsController_toggleFavorite",
+        "summary": "Alternar favorito",
+        "description": "Marca ou desmarca um alimento como favorito",
         "parameters": [
           {
             "name": "id",
@@ -913,9 +1166,648 @@
             "description": "Alimento não encontrado"
           }
         },
-        "summary": "Alternar favorito",
         "tags": [
           "foods"
+        ]
+      }
+    },
+    "/meal-plans": {
+      "post": {
+        "operationId": "MealPlansController_create",
+        "summary": "Criar um novo plano alimentar",
+        "description": "Cria um novo plano alimentar para um paciente com suas refeições",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateMealPlanDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Plano alimentar criado com sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MealPlan"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Dados inválidos fornecidos"
+          },
+          "404": {
+            "description": "Paciente não encontrado"
+          }
+        },
+        "tags": [
+          "meal-plans"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      },
+      "get": {
+        "operationId": "MealPlansController_findAll",
+        "summary": "Listar todos os planos alimentares",
+        "description": "Retorna uma lista de todos os planos alimentares cadastrados",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Lista de planos alimentares retornada com sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/MealPlan"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "meal-plans"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/meal-plans/patient/{patientId}": {
+      "get": {
+        "operationId": "MealPlansController_findByPatient",
+        "summary": "Buscar planos por paciente",
+        "description": "Retorna todos os planos alimentares de um paciente específico",
+        "parameters": [
+          {
+            "name": "patientId",
+            "required": true,
+            "in": "path",
+            "description": "ID do paciente",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lista de planos alimentares retornada com sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/MealPlan"
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Paciente não encontrado"
+          }
+        },
+        "tags": [
+          "meal-plans"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/meal-plans/{id}": {
+      "get": {
+        "operationId": "MealPlansController_findOne",
+        "summary": "Buscar plano alimentar por ID",
+        "description": "Retorna os detalhes de um plano alimentar específico",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "ID do plano alimentar",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Plano alimentar encontrado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MealPlan"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Plano alimentar não encontrado"
+          }
+        },
+        "tags": [
+          "meal-plans"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      },
+      "patch": {
+        "operationId": "MealPlansController_update",
+        "summary": "Atualizar plano alimentar",
+        "description": "Atualiza as informações de um plano alimentar existente",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "ID do plano alimentar",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateMealPlanDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Plano alimentar atualizado com sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MealPlan"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Dados inválidos fornecidos"
+          },
+          "404": {
+            "description": "Plano alimentar não encontrado"
+          }
+        },
+        "tags": [
+          "meal-plans"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      },
+      "delete": {
+        "operationId": "MealPlansController_remove",
+        "summary": "Remover plano alimentar",
+        "description": "Remove um plano alimentar do sistema",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "ID do plano alimentar",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Plano alimentar removido com sucesso"
+          },
+          "404": {
+            "description": "Plano alimentar não encontrado"
+          }
+        },
+        "tags": [
+          "meal-plans"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/meal-plans/{id}/meals": {
+      "post": {
+        "operationId": "MealPlansController_addMeal",
+        "summary": "Adicionar refeição",
+        "description": "Adiciona uma nova refeição a um plano alimentar existente",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "ID do plano alimentar",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateMealDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Refeição adicionada com sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Meal"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Dados inválidos fornecidos"
+          },
+          "404": {
+            "description": "Plano alimentar não encontrado"
+          }
+        },
+        "tags": [
+          "meal-plans"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      },
+      "get": {
+        "operationId": "MealPlansController_getMeals",
+        "summary": "Listar refeições do plano",
+        "description": "Retorna uma lista de refeições de um plano alimentar específico",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "ID do plano alimentar",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lista de refeições retornada com sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Meal"
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Plano alimentar não encontrado"
+          }
+        },
+        "tags": [
+          "meal-plans"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/meal-plans/search": {
+      "get": {
+        "operationId": "MealPlansController_search",
+        "summary": "Buscar planos de alimentação",
+        "description": "Busca planos de alimentação por nome",
+        "parameters": [
+          {
+            "name": "q",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "query",
+            "required": true,
+            "in": "query",
+            "description": "Termo de busca (nome do plano)",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lista de planos encontrados",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/MealPlan"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "meal-plans"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/search": {
+      "get": {
+        "operationId": "SearchController_search",
+        "summary": "Busca global por pacientes e planos alimentares",
+        "parameters": [
+          {
+            "name": "q",
+            "required": true,
+            "in": "query",
+            "description": "Termo de busca (mínimo 3 caracteres)",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Retorna uma lista combinada de pacientes e planos alimentares"
+          }
+        },
+        "tags": [
+          "Search"
+        ]
+      }
+    },
+    "/stats": {
+      "get": {
+        "operationId": "StatsController_getStats",
+        "summary": "Obter estatísticas",
+        "description": "Retorna estatísticas gerais do sistema",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Estatísticas retornadas com sucesso"
+          }
+        },
+        "tags": [
+          "stats"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/nutritionists": {
+      "post": {
+        "operationId": "NutritionistsController_create",
+        "summary": "Criar nutricionista",
+        "description": "Cria um novo nutricionista no sistema",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateNutritionistDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Nutricionista criado com sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Nutritionist"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Email já cadastrado"
+          }
+        },
+        "tags": [
+          "nutritionists"
+        ]
+      },
+      "get": {
+        "operationId": "NutritionistsController_findAll",
+        "summary": "Listar nutricionistas",
+        "description": "Retorna a lista de todos os nutricionistas",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Lista de nutricionistas",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Nutritionist"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "nutritionists"
+        ]
+      }
+    },
+    "/nutritionists/{id}": {
+      "get": {
+        "operationId": "NutritionistsController_findOne",
+        "summary": "Buscar nutricionista",
+        "description": "Retorna os detalhes de um nutricionista específico",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "ID do nutricionista",
+            "schema": {
+              "example": "123e4567-e89b-12d3-a456-426614174000",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Nutricionista encontrado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Nutritionist"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Nutricionista não encontrado"
+          }
+        },
+        "tags": [
+          "nutritionists"
+        ]
+      },
+      "patch": {
+        "operationId": "NutritionistsController_update",
+        "summary": "Atualizar nutricionista",
+        "description": "Atualiza os dados de um nutricionista específico",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "ID do nutricionista",
+            "schema": {
+              "example": "123e4567-e89b-12d3-a456-426614174000",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateNutritionistDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Nutricionista atualizado com sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Nutritionist"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Nutricionista não encontrado"
+          },
+          "409": {
+            "description": "Email já cadastrado"
+          }
+        },
+        "tags": [
+          "nutritionists"
+        ]
+      },
+      "delete": {
+        "operationId": "NutritionistsController_remove",
+        "summary": "Remover nutricionista",
+        "description": "Remove um nutricionista do sistema",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "ID do nutricionista",
+            "schema": {
+              "example": "123e4567-e89b-12d3-a456-426614174000",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Nutricionista removido com sucesso"
+          },
+          "404": {
+            "description": "Nutricionista não encontrado"
+          }
+        },
+        "tags": [
+          "nutritionists"
+        ]
+      }
+    },
+    "/auth/login": {
+      "post": {
+        "operationId": "AuthController_login",
+        "summary": "Login do nutricionista",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LoginDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Login realizado com sucesso"
+          },
+          "401": {
+            "description": "Credenciais inválidas"
+          }
+        },
+        "tags": [
+          "auth"
         ]
       }
     }
@@ -963,6 +1855,10 @@
             "description": "Nome completo do paciente",
             "example": "João da Silva"
           },
+          "cpf": {
+            "type": "string",
+            "description": "CPF do paciente"
+          },
           "email": {
             "type": "string",
             "description": "Email do paciente",
@@ -974,7 +1870,6 @@
             "example": "(11) 98765-4321"
           },
           "birthDate": {
-            "format": "date-time",
             "type": "string",
             "description": "Data de nascimento do paciente",
             "example": "1990-01-01"
@@ -989,15 +1884,24 @@
             ],
             "example": "M"
           },
+          "status": {
+            "type": "string",
+            "description": "Status do paciente",
+            "enum": [
+              "active",
+              "inactive"
+            ],
+            "example": "active"
+          },
           "height": {
             "type": "number",
-            "description": "Altura do paciente em metros",
-            "example": 1.75
+            "description": "Altura do paciente em centímetros",
+            "example": 170
           },
           "weight": {
             "type": "number",
             "description": "Peso do paciente em quilogramas",
-            "example": 70.5
+            "example": 70
           },
           "goals": {
             "description": "Objetivos do paciente",
@@ -1014,7 +1918,7 @@
             "description": "Alergias do paciente",
             "example": [
               "Amendoim",
-              "Leite"
+              "Lactose"
             ],
             "type": "array",
             "items": {
@@ -1024,7 +1928,7 @@
           "healthConditions": {
             "description": "Condições de saúde do paciente",
             "example": [
-              "Diabetes tipo 2",
+              "Diabetes",
               "Hipertensão"
             ],
             "type": "array",
@@ -1045,146 +1949,83 @@
           },
           "observations": {
             "type": "string",
-            "description": "Observações gerais sobre o paciente",
+            "description": "Observações gerais",
             "example": "Paciente com histórico familiar de diabetes"
+          },
+          "nutritionistId": {
+            "type": "string",
+            "description": "ID do nutricionista responsável",
+            "example": "123e4567-e89b-12d3-a456-426614174000"
           }
         },
         "required": [
-          "name",
-          "email",
-          "phone",
-          "birthDate",
-          "gender",
-          "height",
-          "weight"
+          "name"
         ]
       },
       "Patient": {
         "type": "object",
-        "properties": {}
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "ID do paciente"
+          },
+          "name": {
+            "type": "string",
+            "description": "Nome do paciente"
+          },
+          "email": {
+            "type": "string",
+            "description": "Email do paciente"
+          },
+          "cpf": {
+            "type": "string",
+            "description": "CPF do paciente"
+          },
+          "phone": {
+            "type": "string",
+            "description": "Telefone do paciente"
+          },
+          "address": {
+            "type": "string",
+            "description": "Endereço do paciente"
+          },
+          "nutritionistId": {
+            "type": "string",
+            "description": "ID do nutricionista"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "email",
+          "cpf",
+          "phone",
+          "address",
+          "nutritionistId"
+        ]
       },
       "UpdatePatientDto": {
         "type": "object",
         "properties": {
           "name": {
             "type": "string",
-            "description": "Nome completo do paciente",
-            "example": "João da Silva"
+            "description": "Nome do paciente"
           },
           "email": {
             "type": "string",
-            "description": "Email do paciente",
-            "example": "joao.silva@email.com"
+            "description": "Email do paciente"
+          },
+          "cpf": {
+            "type": "string",
+            "description": "CPF do paciente"
           },
           "phone": {
             "type": "string",
-            "description": "Telefone do paciente",
-            "example": "(11) 98765-4321"
+            "description": "Telefone do paciente"
           },
-          "birthDate": {
-            "format": "date-time",
+          "address": {
             "type": "string",
-            "description": "Data de nascimento do paciente",
-            "example": "1990-01-01"
-          },
-          "gender": {
-            "type": "string",
-            "description": "Gênero do paciente",
-            "enum": [
-              "M",
-              "F",
-              "OTHER"
-            ],
-            "example": "M"
-          },
-          "height": {
-            "type": "number",
-            "description": "Altura do paciente em metros",
-            "example": 1.75
-          },
-          "weight": {
-            "type": "number",
-            "description": "Peso do paciente em quilogramas",
-            "example": 70.5
-          },
-          "goals": {
-            "description": "Objetivos do paciente",
-            "example": [
-              "Perda de peso",
-              "Ganho de massa muscular"
-            ],
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
-          },
-          "allergies": {
-            "description": "Alergias do paciente",
-            "example": [
-              "Amendoim",
-              "Leite"
-            ],
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
-          },
-          "healthConditions": {
-            "description": "Condições de saúde do paciente",
-            "example": [
-              "Diabetes tipo 2",
-              "Hipertensão"
-            ],
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
-          },
-          "medications": {
-            "description": "Medicamentos em uso",
-            "example": [
-              "Metformina",
-              "Losartana"
-            ],
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
-          },
-          "observations": {
-            "type": "string",
-            "description": "Observações gerais sobre o paciente",
-            "example": "Paciente com histórico familiar de diabetes"
-          }
-        }
-      },
-      "BodyMeasurements": {
-        "type": "object",
-        "properties": {
-          "chest": {
-            "type": "number",
-            "description": "Medida do peito em centímetros",
-            "example": 95
-          },
-          "waist": {
-            "type": "number",
-            "description": "Medida da cintura em centímetros",
-            "example": 80
-          },
-          "hip": {
-            "type": "number",
-            "description": "Medida do quadril em centímetros",
-            "example": 100
-          },
-          "arm": {
-            "type": "number",
-            "description": "Medida do braço em centímetros",
-            "example": 32
-          },
-          "thigh": {
-            "type": "number",
-            "description": "Medida da coxa em centímetros",
-            "example": 55
+            "description": "Endereço do paciente"
           }
         }
       },
@@ -1192,10 +2033,9 @@
         "type": "object",
         "properties": {
           "date": {
-            "format": "date-time",
             "type": "string",
             "description": "Data da medição",
-            "example": "2024-04-05"
+            "example": "2024-03-20"
           },
           "weight": {
             "type": "number",
@@ -1205,11 +2045,11 @@
           "bodyFat": {
             "type": "number",
             "description": "Percentual de gordura corporal",
-            "example": 20.5
+            "example": 15.5
           },
           "muscleMass": {
             "type": "number",
-            "description": "Percentual de massa muscular",
+            "description": "Massa muscular em quilogramas",
             "example": 35.2
           },
           "bodyWater": {
@@ -1219,85 +2059,44 @@
           },
           "visceralFat": {
             "type": "number",
-            "description": "Nível de gordura visceral",
-            "example": 8
+            "description": "Gordura visceral",
+            "example": 8.5
           },
           "measurements": {
+            "type": "object",
             "description": "Medidas corporais",
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/BodyMeasurements"
-              }
-            ]
+            "example": {
+              "chest": 95,
+              "waist": 80,
+              "hip": 100,
+              "arm": 32,
+              "thigh": 55
+            }
+          },
+          "patientId": {
+            "type": "string",
+            "description": "ID do paciente",
+            "example": "123e4567-e89b-12d3-a456-426614174000"
+          },
+          "nutritionistId": {
+            "type": "string",
+            "description": "ID do nutricionista responsável",
+            "example": "123e4567-e89b-12d3-a456-426614174000"
           }
         },
         "required": [
           "date",
           "weight",
-          "measurements"
+          "measurements",
+          "patientId",
+          "nutritionistId"
         ]
       },
       "Measurement": {
         "type": "object",
         "properties": {}
       },
-      "CreateMealFoodDto": {
-        "type": "object",
-        "properties": {
-          "foodId": {
-            "type": "string",
-            "description": "ID do alimento",
-            "example": "123e4567-e89b-12d3-a456-426614174000"
-          },
-          "amount": {
-            "type": "number",
-            "description": "Quantidade do alimento",
-            "example": 100
-          },
-          "unit": {
-            "type": "string",
-            "description": "Unidade de medida",
-            "example": "g"
-          }
-        },
-        "required": [
-          "foodId",
-          "amount",
-          "unit"
-        ]
-      },
-      "CreateMealDto": {
-        "type": "object",
-        "properties": {
-          "name": {
-            "type": "string",
-            "description": "Nome da refeição",
-            "example": "Café da manhã"
-          },
-          "time": {
-            "type": "string",
-            "description": "Horário da refeição",
-            "example": "08:00"
-          },
-          "notes": {
-            "type": "string",
-            "description": "Observações sobre a refeição"
-          },
-          "mealFoods": {
-            "description": "Lista de alimentos da refeição",
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/CreateMealFoodDto"
-            }
-          }
-        },
-        "required": [
-          "name",
-          "time",
-          "mealFoods"
-        ]
-      },
-      "CreateMealPlanDto": {
+      "CreatePatientPhotoDto": {
         "type": "object",
         "properties": {
           "patientId": {
@@ -1305,141 +2104,259 @@
             "description": "ID do paciente",
             "example": "123e4567-e89b-12d3-a456-426614174000"
           },
-          "name": {
+          "photoUrl": {
             "type": "string",
-            "description": "Nome do plano alimentar",
-            "example": "Plano Semanal"
+            "description": "URL da foto",
+            "example": "https://storage.example.com/photos/patient123-front.jpg"
           },
-          "startDate": {
+          "photoType": {
+            "type": "string",
+            "description": "Tipo da foto",
+            "enum": [
+              "front",
+              "back",
+              "left_side",
+              "right_side",
+              "other"
+            ],
+            "example": "front"
+          },
+          "photoDate": {
             "format": "date-time",
             "type": "string",
-            "description": "Data de início do plano",
-            "example": "2025-04-05"
-          },
-          "endDate": {
-            "format": "date-time",
-            "type": "string",
-            "description": "Data de término do plano",
-            "example": "2025-04-12"
+            "description": "Data da foto",
+            "example": "2024-04-01"
           },
           "notes": {
             "type": "string",
-            "description": "Observações sobre o plano"
-          },
-          "meals": {
-            "description": "Lista de refeições do plano",
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/CreateMealDto"
-            }
+            "description": "Observações sobre a foto",
+            "example": "Foto tirada após 3 meses de dieta"
           }
         },
         "required": [
           "patientId",
-          "name",
-          "startDate",
-          "endDate",
-          "meals"
+          "photoUrl",
+          "photoType",
+          "photoDate"
         ]
       },
-      "Meal": {
-        "type": "object",
-        "properties": {}
-      },
-      "MealPlan": {
+      "PatientPhoto": {
         "type": "object",
         "properties": {
           "id": {
             "type": "string",
-            "example": "123e4567-e89b-12d3-a456-426614174000"
-          },
-          "name": {
-            "type": "string",
-            "example": "Plano Alimentar Semanal"
-          },
-          "notes": {
-            "type": "string",
-            "example": "Plano alimentar para perda de peso"
-          },
-          "startDate": {
-            "format": "date-time",
-            "type": "string",
-            "example": "2024-03-20"
-          },
-          "endDate": {
-            "format": "date-time",
-            "type": "string",
-            "example": "2024-03-27"
-          },
-          "patient": {
-            "$ref": "#/components/schemas/Patient"
+            "description": "ID da foto"
           },
           "patientId": {
             "type": "string",
-            "example": "123e4567-e89b-12d3-a456-426614174000"
+            "description": "ID do paciente"
           },
-          "meals": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/Meal"
-            }
+          "nutritionistId": {
+            "type": "string",
+            "description": "ID do nutricionista"
+          },
+          "photoUrl": {
+            "type": "string",
+            "description": "URL da foto"
+          },
+          "photoType": {
+            "type": "string",
+            "description": "Tipo da foto",
+            "enum": [
+              "front",
+              "back",
+              "left_side",
+              "right_side",
+              "other"
+            ],
+            "example": "front"
+          },
+          "photoDate": {
+            "format": "date-time",
+            "type": "string",
+            "description": "Data da foto"
+          },
+          "notes": {
+            "type": "string",
+            "description": "Observações sobre a foto"
           },
           "createdAt": {
             "format": "date-time",
             "type": "string",
-            "example": "2024-03-20T10:00:00Z"
+            "description": "Data de criação do registro"
           },
           "updatedAt": {
             "format": "date-time",
             "type": "string",
-            "example": "2024-03-20T10:00:00Z"
+            "description": "Data da última atualização do registro"
           }
         },
         "required": [
           "id",
-          "name",
-          "notes",
-          "startDate",
-          "endDate",
-          "patient",
           "patientId",
-          "meals",
+          "nutritionistId",
+          "photoUrl",
+          "photoType",
+          "photoDate",
+          "notes",
           "createdAt",
           "updatedAt"
         ]
       },
-      "UpdateMealPlanDto": {
+      "UpdatePatientPhotoDto": {
         "type": "object",
         "properties": {
-          "name": {
+          "photoUrl": {
             "type": "string",
-            "description": "Nome do plano alimentar",
-            "example": "Plano Semanal"
+            "description": "URL da foto",
+            "example": "https://storage.example.com/photos/patient123-front-updated.jpg"
           },
-          "startDate": {
+          "photoType": {
+            "type": "string",
+            "description": "Tipo da foto",
+            "enum": [
+              "front",
+              "back",
+              "left_side",
+              "right_side",
+              "other"
+            ],
+            "example": "front"
+          },
+          "photoDate": {
             "format": "date-time",
             "type": "string",
-            "description": "Data de início do plano",
-            "example": "2025-04-05"
-          },
-          "endDate": {
-            "format": "date-time",
-            "type": "string",
-            "description": "Data de término do plano",
-            "example": "2025-04-12"
+            "description": "Data da foto",
+            "example": "2024-04-01"
           },
           "notes": {
             "type": "string",
-            "description": "Observações sobre o plano"
-          },
-          "meals": {
-            "description": "Lista de refeições do plano",
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/CreateMealDto"
-            }
+            "description": "Observações sobre a foto",
+            "example": "Foto tirada após 3 meses de dieta"
           }
         }
+      },
+      "CreateConsultationDto": {
+        "type": "object",
+        "properties": {
+          "date": {
+            "format": "date-time",
+            "type": "string",
+            "description": "Data da consulta",
+            "example": "2024-04-15T14:00:00Z"
+          },
+          "patientId": {
+            "type": "string",
+            "description": "ID do paciente",
+            "example": "123e4567-e89b-12d3-a456-426614174000"
+          },
+          "notes": {
+            "type": "string",
+            "description": "Anotações da consulta",
+            "example": "Paciente relatou melhora nos sintomas digestivos após ajustes na dieta."
+          },
+          "status": {
+            "type": "string",
+            "description": "Status da consulta",
+            "enum": [
+              "scheduled",
+              "completed",
+              "cancelled",
+              "rescheduled"
+            ],
+            "example": "scheduled",
+            "default": "scheduled"
+          },
+          "type": {
+            "type": "string",
+            "description": "Tipo da consulta",
+            "enum": [
+              "initial",
+              "follow_up",
+              "assessment",
+              "meal_plan_review",
+              "other"
+            ],
+            "example": "follow_up",
+            "default": "follow_up"
+          }
+        },
+        "required": [
+          "date",
+          "patientId",
+          "status",
+          "type"
+        ]
+      },
+      "Consultation": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "ID da consulta"
+          },
+          "date": {
+            "format": "date-time",
+            "type": "string",
+            "description": "Data da consulta"
+          },
+          "patientId": {
+            "type": "string",
+            "description": "ID do paciente"
+          },
+          "nutritionistId": {
+            "type": "string",
+            "description": "ID do nutricionista"
+          },
+          "notes": {
+            "type": "string",
+            "description": "Anotações da consulta"
+          },
+          "status": {
+            "type": "string",
+            "description": "Status da consulta",
+            "enum": [
+              "scheduled",
+              "completed",
+              "cancelled",
+              "rescheduled"
+            ],
+            "example": "scheduled"
+          },
+          "type": {
+            "type": "string",
+            "description": "Tipo da consulta",
+            "enum": [
+              "initial",
+              "follow_up",
+              "assessment",
+              "meal_plan_review",
+              "other"
+            ],
+            "example": "follow_up"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string",
+            "description": "Data de criação do registro"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "type": "string",
+            "description": "Data da última atualização do registro"
+          }
+        },
+        "required": [
+          "id",
+          "date",
+          "patientId",
+          "nutritionistId",
+          "notes",
+          "status",
+          "type",
+          "createdAt",
+          "updatedAt"
+        ]
       },
       "CreateFoodDto": {
         "type": "object",
@@ -1665,11 +2582,69 @@
             "example": false,
             "default": false
           },
-          "usageCount": {
+          "version": {
+            "type": "number",
+            "description": "Versão do alimento",
+            "example": 1,
+            "default": 1
+          },
+          "isVerified": {
+            "type": "boolean",
+            "description": "Indica se o alimento foi verificado por um nutricionista",
+            "example": false,
+            "default": false
+          },
+          "source": {
+            "type": "string",
+            "description": "Fonte do alimento (ex: TACO, FatSecret, manual)",
+            "example": "FatSecret",
+            "nullable": true
+          },
+          "sourceId": {
+            "type": "string",
+            "description": "ID do alimento na fonte original",
+            "example": "12345",
+            "nullable": true
+          },
+          "usageCountMealPlans": {
             "type": "number",
             "description": "Número de vezes que o alimento foi usado em planos alimentares",
             "example": 0,
             "default": 0
+          },
+          "usageCountFavorites": {
+            "type": "number",
+            "description": "Número de vezes que o alimento foi marcado como favorito",
+            "example": 0,
+            "default": 0
+          },
+          "usageCountSearches": {
+            "type": "number",
+            "description": "Número de vezes que o alimento apareceu em resultados de busca",
+            "example": 0,
+            "default": 0
+          },
+          "categoryHierarchy": {
+            "description": "Hierarquia de categorias do alimento",
+            "example": [
+              {
+                "id": 1,
+                "name": "Frutas"
+              },
+              {
+                "id": 2,
+                "name": "Frutas frescas"
+              },
+              {
+                "id": 3,
+                "name": "Maçãs"
+              }
+            ],
+            "nullable": true,
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
           },
           "createdAt": {
             "format": "date-time",
@@ -1700,7 +2675,14 @@
           "additionalNutrients",
           "categories",
           "isFavorite",
-          "usageCount",
+          "version",
+          "isVerified",
+          "source",
+          "sourceId",
+          "usageCountMealPlans",
+          "usageCountFavorites",
+          "usageCountSearches",
+          "categoryHierarchy",
           "createdAt",
           "updatedAt"
         ]
@@ -1822,6 +2804,379 @@
             "default": false
           }
         }
+      },
+      "CreateMealFoodDto": {
+        "type": "object",
+        "properties": {
+          "foodId": {
+            "type": "string",
+            "description": "ID do alimento",
+            "example": "123e4567-e89b-12d3-a456-426614174000"
+          },
+          "amount": {
+            "type": "number",
+            "description": "Quantidade do alimento",
+            "example": 100
+          },
+          "unit": {
+            "type": "string",
+            "description": "Unidade de medida",
+            "example": "g"
+          }
+        },
+        "required": [
+          "foodId",
+          "amount",
+          "unit"
+        ]
+      },
+      "CreateMealDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Nome da refeição",
+            "example": "Café da manhã"
+          },
+          "time": {
+            "type": "string",
+            "description": "Horário da refeição",
+            "example": "08:00"
+          },
+          "notes": {
+            "type": "string",
+            "description": "Observações sobre a refeição"
+          },
+          "mealFoods": {
+            "description": "Lista de alimentos da refeição",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CreateMealFoodDto"
+            }
+          }
+        },
+        "required": [
+          "name",
+          "time",
+          "mealFoods"
+        ]
+      },
+      "CreateMealPlanDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Nome do plano alimentar",
+            "example": "Plano Alimentar Semanal"
+          },
+          "notes": {
+            "type": "string",
+            "description": "Observações sobre o plano alimentar",
+            "example": "Plano alimentar para perda de peso"
+          },
+          "startDate": {
+            "type": "string",
+            "description": "Data de início do plano",
+            "example": "2024-03-20"
+          },
+          "endDate": {
+            "type": "string",
+            "description": "Data de término do plano",
+            "example": "2024-03-27"
+          },
+          "patientId": {
+            "type": "string",
+            "description": "ID do paciente",
+            "example": "123e4567-e89b-12d3-a456-426614174000"
+          },
+          "nutritionistId": {
+            "type": "string",
+            "description": "ID do nutricionista responsável",
+            "example": "123e4567-e89b-12d3-a456-426614174000"
+          },
+          "meals": {
+            "description": "Lista de refeições do plano",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CreateMealDto"
+            }
+          }
+        },
+        "required": [
+          "name",
+          "startDate",
+          "endDate",
+          "patientId",
+          "nutritionistId",
+          "meals"
+        ]
+      },
+      "Nutritionist": {
+        "type": "object",
+        "properties": {}
+      },
+      "Meal": {
+        "type": "object",
+        "properties": {
+          "totalCalories": {
+            "type": "number",
+            "example": 500.25
+          },
+          "totalProtein": {
+            "type": "number",
+            "example": 30.5
+          },
+          "totalCarbs": {
+            "type": "number",
+            "example": 60.75
+          },
+          "totalFat": {
+            "type": "number",
+            "example": 20.3
+          }
+        },
+        "required": [
+          "totalCalories",
+          "totalProtein",
+          "totalCarbs",
+          "totalFat"
+        ]
+      },
+      "MealPlan": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "123e4567-e89b-12d3-a456-426614174000"
+          },
+          "name": {
+            "type": "string",
+            "example": "Plano Alimentar Semanal"
+          },
+          "notes": {
+            "type": "string",
+            "example": "Plano alimentar para perda de peso"
+          },
+          "startDate": {
+            "format": "date-time",
+            "type": "string",
+            "example": "2024-03-20"
+          },
+          "endDate": {
+            "format": "date-time",
+            "type": "string",
+            "example": "2024-03-27"
+          },
+          "patient": {
+            "$ref": "#/components/schemas/Patient"
+          },
+          "patientId": {
+            "type": "string",
+            "example": "123e4567-e89b-12d3-a456-426614174000"
+          },
+          "nutritionist": {
+            "$ref": "#/components/schemas/Nutritionist"
+          },
+          "nutritionistId": {
+            "type": "string",
+            "example": "123e4567-e89b-12d3-a456-426614174000"
+          },
+          "meals": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Meal"
+            }
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string",
+            "example": "2024-03-20T10:00:00Z"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "type": "string",
+            "example": "2024-03-20T10:00:00Z"
+          },
+          "dailyCalories": {
+            "type": "number",
+            "example": 2000.5
+          },
+          "dailyProtein": {
+            "type": "number",
+            "example": 150.75
+          },
+          "dailyCarbs": {
+            "type": "number",
+            "example": 250.3
+          },
+          "dailyFat": {
+            "type": "number",
+            "example": 80.2
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "notes",
+          "startDate",
+          "endDate",
+          "patient",
+          "patientId",
+          "nutritionist",
+          "nutritionistId",
+          "meals",
+          "createdAt",
+          "updatedAt",
+          "dailyCalories",
+          "dailyProtein",
+          "dailyCarbs",
+          "dailyFat"
+        ]
+      },
+      "UpdateMealPlanDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Nome do plano alimentar",
+            "example": "Plano Semanal"
+          },
+          "startDate": {
+            "format": "date-time",
+            "type": "string",
+            "description": "Data de início do plano",
+            "example": "2025-04-05"
+          },
+          "endDate": {
+            "format": "date-time",
+            "type": "string",
+            "description": "Data de término do plano",
+            "example": "2025-04-12"
+          },
+          "notes": {
+            "type": "string",
+            "description": "Observações sobre o plano"
+          },
+          "meals": {
+            "description": "Lista de refeições do plano",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CreateMealDto"
+            }
+          }
+        }
+      },
+      "CreateNutritionistDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "example": "João Silva",
+            "description": "Nome completo do nutricionista"
+          },
+          "email": {
+            "type": "string",
+            "example": "joao@email.com",
+            "description": "Email do nutricionista"
+          },
+          "password": {
+            "type": "string",
+            "example": "senha123",
+            "description": "Senha do nutricionista",
+            "minLength": 6
+          },
+          "phone": {
+            "type": "string",
+            "example": "11999999999",
+            "description": "Telefone do nutricionista"
+          },
+          "crn": {
+            "type": "string",
+            "example": "CRN/SP 12345",
+            "description": "Número de registro profissional"
+          },
+          "specialties": {
+            "example": [
+              "Esportiva",
+              "Clínica"
+            ],
+            "description": "Especialidades do nutricionista",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "clinicName": {
+            "type": "string",
+            "example": "Clínica Nutri Saúde",
+            "description": "Nome da clínica"
+          }
+        },
+        "required": [
+          "name",
+          "email",
+          "password"
+        ]
+      },
+      "UpdateNutritionistDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "example": "João Silva",
+            "description": "Nome completo do nutricionista"
+          },
+          "email": {
+            "type": "string",
+            "example": "joao@email.com",
+            "description": "Email do nutricionista"
+          },
+          "phone": {
+            "type": "string",
+            "example": "11999999999",
+            "description": "Telefone do nutricionista"
+          },
+          "crn": {
+            "type": "string",
+            "example": "CRN/SP 12345",
+            "description": "Número de registro profissional"
+          },
+          "specialties": {
+            "example": [
+              "Esportiva",
+              "Clínica"
+            ],
+            "description": "Especialidades do nutricionista",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "clinicName": {
+            "type": "string",
+            "example": "Clínica Nutri Saúde",
+            "description": "Nome da clínica"
+          }
+        }
+      },
+      "LoginDto": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "example": "nutricionista@email.com",
+            "description": "Email do nutricionista"
+          },
+          "password": {
+            "type": "string",
+            "example": "senha123",
+            "description": "Senha do nutricionista"
+          }
+        },
+        "required": [
+          "email",
+          "password"
+        ]
       }
     }
   }

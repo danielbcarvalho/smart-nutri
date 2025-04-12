@@ -1,41 +1,42 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { TypeOrmModule, TypeOrmModuleOptions } from '@nestjs/typeorm';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { AuthModule } from './auth/auth.module';
+import { NutritionistsModule } from './nutritionists/nutritionists.module';
+import { PatientsModule } from './patients/patients.module';
+import { MealPlansModule } from './meal-plans/meal-plans.module';
+import { StatsModule } from './stats/stats.module';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
-import { PatientsModule } from './patients/patients.module';
-import { FoodsModule } from './foods/foods.module';
-import { MealPlansModule } from './meal-plans/meal-plans.module';
-import { SearchModule } from './search/search.module';
-import { StatsModule } from './stats/stats.module';
-import { NutritionistsModule } from './nutritionists/nutritionists.module';
-import { databaseConfig } from './config/database.config';
+import { join } from 'path';
 
 @Module({
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
-      load: [databaseConfig],
     }),
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
+      useFactory: (configService: ConfigService) => ({
+        type: 'postgres',
+        host: configService.get('DB_HOST'),
+        port: +configService.get('DB_PORT'),
+        username: configService.get('DB_USERNAME'),
+        password: configService.get('DB_PASSWORD'),
+        database: configService.get('DB_DATABASE'),
+        entities: [join(__dirname, '**', '*.entity.{ts,js}')],
+        migrations: [join(__dirname, 'database', 'migrations', '*.{ts,js}')],
+        migrationsRun: true,
+        synchronize: false,
+        logging: true,
+      }),
       inject: [ConfigService],
-      useFactory: async (
-        configService: ConfigService,
-      ): Promise<TypeOrmModuleOptions> => {
-        const config = configService.get<TypeOrmModuleOptions>('database');
-        if (!config) {
-          throw new Error('Database configuration not found');
-        }
-        return config;
-      },
     }),
-    PatientsModule,
-    FoodsModule,
-    MealPlansModule,
-    SearchModule,
-    StatsModule,
+    AuthModule,
     NutritionistsModule,
+    PatientsModule,
+    MealPlansModule,
+    StatsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

@@ -1,7 +1,7 @@
 import React from "react";
 import { Box, Container, Typography } from "@mui/material";
 import { StatsCards } from "../components/StatsCards";
-import { RecentPatients } from "../components/RecentPatients";
+import { PatientList } from "../components/RecentPatients";
 
 export function Home() {
   return (
@@ -21,7 +21,7 @@ export function Home() {
       </Box>
 
       <Box sx={{ width: { xs: "100%", md: "50%" } }}>
-        <RecentPatients />
+        <PatientList />
       </Box>
     </Container>
   );

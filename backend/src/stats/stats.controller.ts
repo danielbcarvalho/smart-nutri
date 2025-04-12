@@ -1,9 +1,23 @@
-import { Controller, Get } from '@nestjs/common';
-import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { Controller, Get, UseGuards, Request } from '@nestjs/common';
+import {
+  ApiOperation,
+  ApiResponse,
+  ApiTags,
+  ApiBearerAuth,
+} from '@nestjs/swagger';
 import { StatsService } from './stats.service';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+
+interface RequestWithUser extends Request {
+  user: {
+    id: string;
+  };
+}
 
 @ApiTags('stats')
 @Controller('stats')
+@UseGuards(JwtAuthGuard)
+@ApiBearerAuth()
 export class StatsController {
   constructor(private readonly statsService: StatsService) {}
 
@@ -16,7 +30,7 @@ export class StatsController {
     status: 200,
     description: 'Estatísticas retornadas com sucesso',
   })
-  getStats() {
-    return this.statsService.getStats();
+  getStats(@Request() req: RequestWithUser) {
+    return this.statsService.getStats(req.user.id);
   }
 }

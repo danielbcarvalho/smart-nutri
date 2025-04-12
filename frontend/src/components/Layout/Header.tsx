@@ -8,30 +8,45 @@ import {
   Box,
   Modal,
   TextField,
-  Avatar,
   Tooltip,
   Paper,
+  Avatar,
+  Divider,
 } from "@mui/material";
 import {
   Notifications as NotificationsIcon,
-  Settings as SettingsIcon,
   Search as SearchIcon,
   Close as CloseIcon,
   Groups as GroupsIcon,
-  NotificationsNone as EmptyNotificationsIcon,
-  Palette as PaletteIcon,
+  ExitToApp as LogoutIcon,
+  Person as PersonIcon,
 } from "@mui/icons-material";
 import { searchAll } from "../../services/search.service";
 import { SearchResult } from "../../types/search";
+import { authService } from "../../services/authService";
 import debounce from "lodash/debounce";
 
 export const Header = () => {
   const navigate = useNavigate();
   const [searchOpen, setSearchOpen] = useState(false);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
-  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [profileOpen, setProfileOpen] = useState(false);
   const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
   const [searchValue, setSearchValue] = useState("");
+
+  const user = authService.getUser();
+
+  const getInitials = (name: string) => {
+    return name
+      .split(" ")
+      .map((n) => n[0])
+      .join("")
+      .toUpperCase();
+  };
+
+  const handleLogout = () => {
+    authService.logout();
+  };
 
   const debouncedSearch = useCallback(
     debounce(async (term: string) => {
@@ -115,65 +130,61 @@ export const Header = () => {
               </IconButton>
             </Tooltip>
 
-            <Tooltip title="Configurações">
+            <Tooltip title="Perfil">
               <IconButton
-                onClick={() => setSettingsOpen(true)}
+                onClick={() => setProfileOpen(true)}
                 sx={{
                   color: "text.secondary",
                   "&:hover": { color: "text.primary" },
                 }}
               >
-                <SettingsIcon />
+                <Avatar
+                  sx={{
+                    width: 32,
+                    height: 32,
+                    bgcolor: "primary.main",
+                    fontSize: "0.875rem",
+                  }}
+                >
+                  {user ? getInitials(user.name) : <PersonIcon />}
+                </Avatar>
               </IconButton>
             </Tooltip>
-
-            <Avatar
-              sx={{
-                width: 32,
-                height: 32,
-                bgcolor: "primary.main",
-                cursor: "pointer",
-              }}
-            >
-              N
-            </Avatar>
           </Box>
         </Toolbar>
       </AppBar>
 
-      {/* Modal de Pesquisa */}
+      {/* Modal de pesquisa */}
       <Modal
         open={searchOpen}
         onClose={() => setSearchOpen(false)}
-        sx={{
-          display: "flex",
-          alignItems: "flex-start",
-          justifyContent: "center",
-          pt: 8,
-        }}
+        aria-labelledby="search-modal"
       >
         <Box
           sx={{
-            width: "100%",
+            position: "absolute",
+            top: "50%",
+            left: "50%",
+            transform: "translate(-50%, -50%)",
+            width: "80%",
             maxWidth: 600,
             bgcolor: "background.paper",
-            borderRadius: 1,
             boxShadow: 24,
-            p: 2,
-            mx: 2,
+            p: 4,
+            borderRadius: 1,
           }}
         >
-          <Box sx={{ display: "flex", gap: 1, mb: 2 }}>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 2, mb: 2 }}>
+            <SearchIcon sx={{ color: "text.secondary" }} />
             <TextField
               fullWidth
               placeholder="Pesquisar..."
-              variant="outlined"
-              size="small"
+              variant="standard"
               value={searchValue}
               onChange={handleSearchChange}
+              autoFocus
             />
             <IconButton
-              size="small"
               onClick={() => setSearchOpen(false)}
               sx={{ color: "text.secondary" }}
             >
@@ -183,7 +194,7 @@ export const Header = () => {
 
           {/* Resultados da pesquisa */}
           {searchResults.length > 0 && (
-            <Box sx={{ maxHeight: 400, overflow: "auto" }}>
+            <Paper sx={{ mt: 2, maxHeight: 400, overflow: "auto" }}>
               {searchResults.map((result, index) => (
                 <Box
                   key={index}
@@ -203,7 +214,7 @@ export const Header = () => {
                   </Typography>
                 </Box>
               ))}
-            </Box>
+            </Paper>
           )}
         </Box>
       </Modal>
@@ -262,7 +273,7 @@ export const Header = () => {
               color: "text.secondary",
             }}
           >
-            <EmptyNotificationsIcon sx={{ fontSize: 48 }} />
+            <NotificationsIcon sx={{ fontSize: 48 }} />
             <Typography variant="body1">
               Nenhuma notificação no momento
             </Typography>
@@ -270,15 +281,15 @@ export const Header = () => {
         </Paper>
       </Modal>
 
-      {/* Modal de Configurações */}
+      {/* Modal de Perfil */}
       <Modal
-        open={settingsOpen}
-        onClose={() => setSettingsOpen(false)}
+        open={profileOpen}
+        onClose={() => setProfileOpen(false)}
         sx={{
           display: "flex",
           alignItems: "flex-start",
           justifyContent: "flex-end",
-          pt: 8,
+          mt: "64px", // Altura do header
           pr: 2,
         }}
       >
@@ -303,31 +314,77 @@ export const Header = () => {
               justifyContent: "space-between",
             }}
           >
-            <Typography variant="h6">Configurações</Typography>
-            <IconButton
-              size="small"
-              onClick={() => setSettingsOpen(false)}
-              sx={{ color: "text.secondary" }}
-            >
-              <CloseIcon />
-            </IconButton>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+              <Typography variant="h6">Meu Perfil</Typography>
+            </Box>
+            <Box sx={{ display: "flex", gap: 1 }}>
+              <Tooltip title="Logout">
+                <IconButton
+                  onClick={handleLogout}
+                  size="small"
+                  sx={{ color: "text.secondary" }}
+                >
+                  <LogoutIcon />
+                </IconButton>
+              </Tooltip>
+              <IconButton
+                size="small"
+                onClick={() => setProfileOpen(false)}
+                sx={{ color: "text.secondary" }}
+              >
+                <CloseIcon />
+              </IconButton>
+            </Box>
           </Box>
 
-          {/* Conteúdo - Em Breve */}
-          <Box
-            sx={{
-              p: 4,
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
-              gap: 2,
-              color: "text.secondary",
-            }}
-          >
-            <PaletteIcon sx={{ fontSize: 48 }} />
-            <Typography variant="body1" textAlign="center">
-              Em breve, modifique o tema do site e muito mais
-            </Typography>
+          {/* Conteúdo do Perfil */}
+          <Box sx={{ p: 3 }}>
+            <Box
+              sx={{
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                gap: 2,
+                mb: 3,
+              }}
+            >
+              <Avatar
+                sx={{
+                  width: 100,
+                  height: 100,
+                  bgcolor: "primary.main",
+                  fontSize: "2rem",
+                }}
+              >
+                {user ? getInitials(user.name) : <PersonIcon />}
+              </Avatar>
+              <Typography variant="h6">{user?.name}</Typography>
+              <Typography variant="body2" color="text.secondary">
+                {user?.email}
+              </Typography>
+            </Box>
+
+            <Divider sx={{ my: 2 }} />
+
+            <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+              {user?.crn && (
+                <Box>
+                  <Typography variant="subtitle2" color="text.secondary">
+                    CRN
+                  </Typography>
+                  <Typography variant="body1">{user.crn}</Typography>
+                </Box>
+              )}
+
+              {user?.clinicName && (
+                <Box>
+                  <Typography variant="subtitle2" color="text.secondary">
+                    Clínica
+                  </Typography>
+                  <Typography variant="body1">{user.clinicName}</Typography>
+                </Box>
+              )}
+            </Box>
           </Box>
         </Paper>
       </Modal>

@@ -10,130 +10,74 @@ import {
   ListItemAvatar,
   Avatar,
   Typography,
-  Chip,
   Button,
   TextField,
   InputAdornment,
+  Link,
 } from "@mui/material";
 import {
   Add as AddIcon,
   Search as SearchIcon,
   PersonAdd as PersonAddIcon,
-  Assessment as AssessmentIcon,
-  RestaurantMenu as RestaurantMenuIcon,
+  ArrowForward as ArrowForwardIcon,
 } from "@mui/icons-material";
 import { useNavigate } from "react-router-dom";
-import { api } from "../lib/axios";
+import { useQuery } from "@tanstack/react-query";
+import { patientService, Patient } from "../services/patientService";
 
-interface Patient {
-  id: string;
-  name: string;
-  email: string;
-  updatedAt: string;
-  status?: "active" | "inactive";
-}
-
-export function RecentPatients() {
+export function PatientList() {
   const navigate = useNavigate();
-  const [patients, setPatients] = React.useState<Patient[]>([]);
   const [searchTerm, setSearchTerm] = React.useState("");
-  const [filteredPatients, setFilteredPatients] = React.useState<Patient[]>([]);
 
-  React.useEffect(() => {
-    async function loadPatients() {
-      try {
-        const response = await api.get("/patients");
-        const sortedPatients = response.data.sort(
-          (a: Patient, b: Patient) =>
-            new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
-        );
-        setPatients(sortedPatients);
-        setFilteredPatients(sortedPatients);
-      } catch (error) {
-        console.error("Erro ao carregar pacientes:", error);
-      }
-    }
+  const { data: patients = [] } = useQuery<Patient[]>({
+    queryKey: ["patients"],
+    queryFn: patientService.getAll,
+  });
 
-    loadPatients();
-  }, []);
-
-  React.useEffect(() => {
-    const filtered = patients.filter((patient) =>
-      patient.name.toLowerCase().includes(searchTerm.toLowerCase())
+  const sortedPatients = React.useMemo(() => {
+    return [...patients].sort(
+      (a, b) =>
+        new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
     );
-    setFilteredPatients(filtered);
-  }, [searchTerm, patients]);
+  }, [patients]);
 
-  const getInitials = (name: string) => {
-    return name
-      .split(" ")
-      .map((word) => word[0])
-      .join("")
-      .toUpperCase()
-      .slice(0, 2);
-  };
-
-  const formatLastUpdate = (date: string) => {
-    const updateDate = new Date(date);
-    const day = updateDate.getDate().toString().padStart(2, "0");
-    const month = (updateDate.getMonth() + 1).toString().padStart(2, "0");
-    const year = updateDate.getFullYear();
-    const hours = updateDate.getHours().toString().padStart(2, "0");
-    const minutes = updateDate.getMinutes().toString().padStart(2, "0");
-
-    return `Atualizado em ${day}/${month}/${year} às ${hours}:${minutes}`;
-  };
+  const filteredPatients = sortedPatients.filter((patient) =>
+    patient.name.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
   const EmptyState = () => (
     <Box
       sx={{
-        py: 8,
         display: "flex",
         flexDirection: "column",
         alignItems: "center",
-        gap: 2,
+        justifyContent: "center",
+        py: 4,
+        textAlign: "center",
       }}
     >
-      <PersonAddIcon
-        sx={{
-          fontSize: 48,
-          color: "text.disabled",
-        }}
-      />
-      <Typography
-        variant="body1"
-        color="text.secondary"
-        align="center"
-        sx={{ maxWidth: 300 }}
-      >
-        {searchTerm
-          ? "Ops! Não encontramos nenhum paciente com esse nome."
-          : "Está vazio por aqui. Cadastre seu primeiro paciente!"}
+      <Typography variant="h6" color="text.secondary" gutterBottom>
+        Nenhum paciente encontrado
       </Typography>
-      {!searchTerm && (
-        <Button
-          variant="contained"
-          startIcon={<AddIcon />}
-          onClick={() => navigate("/patients/new")}
-          sx={{
-            borderRadius: 20,
-            textTransform: "none",
-            boxShadow: "none",
-            px: 3,
-            "&:hover": {
-              boxShadow: "none",
-            },
-          }}
-        >
-          Adicionar paciente
-        </Button>
-      )}
+      <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+        {searchTerm
+          ? "Tente buscar com outro termo"
+          : "Adicione seu primeiro paciente"}
+      </Typography>
+      <Button
+        variant="contained"
+        startIcon={<PersonAddIcon />}
+        onClick={() => navigate("/patients/new")}
+        sx={{ borderRadius: 20 }}
+      >
+        Adicionar Paciente
+      </Button>
     </Box>
   );
 
   return (
     <Card>
-      <Box sx={{ p: 2 }}>
+      <CardContent>
         <Box
           sx={{
             display: "flex",
@@ -143,205 +87,102 @@ export function RecentPatients() {
           }}
         >
           <Box>
-            <Typography
-              variant="h6"
-              component="h2"
+            <Typography variant="h6" gutterBottom>
+              Seus Pacientes
+            </Typography>
+            <Link
+              component="button"
+              variant="body2"
               onClick={() => navigate("/patients")}
               sx={{
-                cursor: "pointer",
+                display: "flex",
+                alignItems: "center",
+                gap: 0.5,
+                color: "primary.main",
+                textDecoration: "none",
                 "&:hover": {
-                  color: "primary.main",
                   textDecoration: "underline",
                 },
               }}
             >
-              Seus pacientes
-            </Typography>
-            <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
-              Para adicionar uma avaliação ou plano alimentar, selecione um
-              paciente
-            </Typography>
+              Ver todos os pacientes
+              <ArrowForwardIcon sx={{ fontSize: 16 }} />
+            </Link>
           </Box>
           <Button
             variant="contained"
             startIcon={<AddIcon />}
             onClick={() => navigate("/patients/new")}
-            sx={{
-              borderRadius: 20,
-              textTransform: "none",
-              boxShadow: "none",
-              px: 2,
-              "&:hover": {
-                boxShadow: "none",
-              },
-            }}
+            sx={{ borderRadius: 20 }}
           >
-            Novo
+            Novo Paciente
           </Button>
         </Box>
+
         <TextField
           fullWidth
-          size="small"
-          placeholder="Pesquisar pacientes..."
+          variant="outlined"
+          placeholder="Buscar pacientes..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
+          sx={{ mb: 2 }}
           InputProps={{
             startAdornment: (
               <InputAdornment position="start">
-                <SearchIcon color="action" />
+                <SearchIcon />
               </InputAdornment>
             ),
-            sx: {
-              borderRadius: 2,
-              bgcolor: "background.paper",
-              "& .MuiOutlinedInput-notchedOutline": {
-                borderColor: "divider",
-              },
-            },
           }}
         />
-      </Box>
-      <Divider />
-      <CardContent sx={{ p: 0 }}>
-        {filteredPatients.length > 0 ? (
-          <List
-            sx={{
-              width: "100%",
-              maxHeight: "calc(100vh - 400px)",
-              minHeight: 400,
-              overflow: "auto",
-              "&::-webkit-scrollbar": {
-                width: "8px",
-                backgroundColor: "transparent",
-              },
-              "&::-webkit-scrollbar-thumb": {
-                backgroundColor: "rgba(0, 0, 0, 0.1)",
-                borderRadius: "4px",
-                "&:hover": {
-                  backgroundColor: "rgba(0, 0, 0, 0.2)",
-                },
-              },
-              "&::-webkit-scrollbar-track": {
-                backgroundColor: "transparent",
-              },
-              "& .MuiListItem-root": {
-                px: 3,
-                py: 2,
-                transition: "background-color 0.2s ease",
-                "&:hover": {
-                  bgcolor: "action.hover",
-                  cursor: "pointer",
-                },
-              },
-            }}
-          >
+
+        <Divider sx={{ mb: 2 }} />
+
+        {filteredPatients.length === 0 ? (
+          <EmptyState />
+        ) : (
+          <List>
             {filteredPatients.map((patient) => (
-              <React.Fragment key={patient.id}>
-                <ListItem onClick={() => navigate(`/patient/${patient.id}`)}>
-                  <ListItemAvatar>
-                    <Avatar
-                      sx={{
-                        bgcolor: "primary.main",
-                        color: "primary.contrastText",
-                      }}
-                    >
-                      {getInitials(patient.name)}
-                    </Avatar>
-                  </ListItemAvatar>
-                  <ListItemText
-                    primary={patient.name}
-                    secondary={
-                      <Box>
-                        <Box
-                          sx={{
-                            display: "flex",
-                            alignItems: "center",
-                            gap: 1,
-                            mt: 0.5,
-                          }}
-                        >
-                          <Typography
-                            variant="caption"
-                            color="text.secondary"
-                            component="span"
-                          >
-                            {formatLastUpdate(patient.updatedAt)}
-                          </Typography>
-                          {patient.status && (
-                            <Chip
-                              label={
-                                patient.status === "active"
-                                  ? "Ativo"
-                                  : "Inativo"
-                              }
-                              size="small"
-                              color={
-                                patient.status === "active"
-                                  ? "success"
-                                  : "default"
-                              }
-                              sx={{ height: 20 }}
-                            />
-                          )}
-                        </Box>
-                        <Box sx={{ mt: 1, display: "flex", gap: 1 }}>
-                          <Button
-                            size="small"
-                            variant="outlined"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              navigate(
-                                `/patient/${patient.id}/assessments/new`
-                              );
-                            }}
-                            startIcon={<AssessmentIcon />}
-                            sx={{
-                              borderRadius: 20,
-                              textTransform: "none",
-                              borderColor: "success.main",
-                              color: "success.main",
-                              "&:hover": {
-                                borderColor: "success.dark",
-                                bgcolor: "success.lighter",
-                              },
-                            }}
-                          >
-                            Nova Avaliação
-                          </Button>
-                          <Button
-                            size="small"
-                            variant="outlined"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              navigate(
-                                `/patient/${patient.id}/meal-plans?new=true`
-                              );
-                            }}
-                            startIcon={<RestaurantMenuIcon />}
-                            sx={{
-                              borderRadius: 20,
-                              textTransform: "none",
-                              borderColor: "info.main",
-                              color: "info.main",
-                              "&:hover": {
-                                borderColor: "info.dark",
-                                bgcolor: "info.lighter",
-                              },
-                            }}
-                          >
-                            Novo Plano
-                          </Button>
-                        </Box>
-                      </Box>
-                    }
-                  />
-                </ListItem>
-                <Divider component="li" />
-              </React.Fragment>
+              <ListItem
+                key={patient.id}
+                component="div"
+                onClick={() => navigate(`/patient/${patient.id}`)}
+                sx={{
+                  borderRadius: 1,
+                  mb: 1,
+                  cursor: "pointer",
+                  "&:hover": {
+                    bgcolor: "action.hover",
+                  },
+                }}
+              >
+                <ListItemAvatar>
+                  <Avatar>{patient.name.charAt(0)}</Avatar>
+                </ListItemAvatar>
+                <ListItemText
+                  primary={patient.name}
+                  secondary={
+                    <Box component="span">
+                      <Typography
+                        variant="body2"
+                        color="text.secondary"
+                        component="span"
+                      >
+                        Última atualização:{" "}
+                        {new Date(patient.updatedAt).toLocaleDateString(
+                          "pt-BR",
+                          {
+                            day: "2-digit",
+                            month: "2-digit",
+                            year: "numeric",
+                          }
+                        )}
+                      </Typography>
+                    </Box>
+                  }
+                />
+              </ListItem>
             ))}
           </List>
-        ) : (
-          <EmptyState />
         )}
       </CardContent>
     </Card>

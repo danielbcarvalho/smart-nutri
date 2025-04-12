@@ -1,4 +1,4 @@
-import { useState } from "react";
+import React, { useState, useMemo, useEffect, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import {
   Box,
@@ -16,11 +16,14 @@ import {
   ToggleButtonGroup,
   ToggleButton,
   Modal,
+  Snackbar,
+  Alert,
 } from "@mui/material";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
 import { ptBR } from "date-fns/locale";
+import { format } from "date-fns";
 import {
   ExpandMore as ExpandMoreIcon,
   Edit as EditIcon,
@@ -29,26 +32,32 @@ import {
   Timeline as TimelineIcon,
   Help as HelpIcon,
 } from "@mui/icons-material";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { patientService } from "../../services/patientService";
+import { CreateMeasurementDto } from "../../services/patientService";
+import { calculateAnthropometricResults } from "./utils/anthropometricCalculations";
 
 export function NewAssessment() {
-  const { patientId } = useParams<{ patientId: string }>();
+  const { patientId, measurementId } = useParams<{
+    patientId: string;
+    measurementId: string;
+  }>();
   const navigate = useNavigate();
   const [sharePhotos, setSharePhotos] = useState(false);
   const [assessmentDate, setAssessmentDate] = useState<Date | null>(new Date());
   const [openGraphsModal, setOpenGraphsModal] = useState(false);
-
-  const { data: patient } = useQuery({
-    queryKey: ["patient", patientId],
-    queryFn: () => patientService.getById(patientId!),
-    enabled: !!patientId,
+  const [snackbar, setSnackbar] = useState({
+    open: false,
+    message: "",
+    severity: "success" as "success" | "error",
   });
+  const queryClient = useQueryClient();
+  const isEditMode = !!measurementId;
 
   // Dados básicos
   const [basicData, setBasicData] = useState({
     weight: "",
-    height: "170",
+    height: "",
     sittingHeight: "",
     kneeHeight: "",
   });
@@ -106,6 +115,259 @@ export function NewAssessment() {
     visceralFat: "",
     bodyWater: "",
     metabolicAge: "",
+  });
+
+  // Criar ref para controlar se já preenchemos dados
+  const hasFilledDataRef = useRef(false);
+
+  // Buscar dados do paciente
+  const { data: patient } = useQuery({
+    queryKey: ["patient", patientId],
+    queryFn: () => patientService.getById(patientId!),
+    enabled: !!patientId,
+  });
+
+  // Buscar avaliações anteriores do paciente
+  const { data: previousMeasurements } = useQuery({
+    queryKey: ["measurements", patientId],
+    queryFn: () => patientService.findMeasurements(patientId!),
+    enabled: !!patientId,
+  });
+
+  // Buscar a avaliação específica para edição, se estiver no modo de edição
+  const { data: measurementToEdit } = useQuery({
+    queryKey: ["measurement", patientId, measurementId],
+    queryFn: () => {
+      if (previousMeasurements) {
+        return previousMeasurements.find((m) => m.id === measurementId);
+      }
+      return undefined;
+    },
+    enabled: !!patientId && !!measurementId && !!previousMeasurements,
+  });
+
+  // Este useEffect preenche os dados quando estamos editando
+  useEffect(() => {
+    if (isEditMode && measurementToEdit && !hasFilledDataRef.current) {
+      // Converter para string para os inputs
+      const toString = (value: number | string | null | undefined): string =>
+        value !== null && value !== undefined ? String(value) : "";
+
+      // Preencher data
+      if (measurementToEdit.date) {
+        setAssessmentDate(new Date(measurementToEdit.date));
+      }
+
+      // Preencher dados básicos
+      setBasicData({
+        weight: toString(measurementToEdit.weight),
+        height: toString(measurementToEdit.height),
+        sittingHeight: toString(measurementToEdit.sittingHeight),
+        kneeHeight: toString(measurementToEdit.kneeHeight),
+      });
+
+      // Preencher dados de bioimpedância
+      setBioimpedance({
+        fatPercentage: toString(measurementToEdit.bodyFat),
+        fatMass: toString(measurementToEdit.fatMass),
+        muscleMassPercentage: toString(measurementToEdit.muscleMassPercentage),
+        muscleMass: toString(measurementToEdit.muscleMass),
+        fatFreeMass: toString(measurementToEdit.fatFreeMass),
+        boneMass: toString(measurementToEdit.boneMass),
+        visceralFat: toString(measurementToEdit.visceralFat),
+        bodyWater: toString(measurementToEdit.bodyWater),
+        metabolicAge: toString(measurementToEdit.metabolicAge),
+      });
+
+      // Preencher fórmula de dobras cutâneas
+      if (measurementToEdit.skinfoldFormula) {
+        setSkinfoldFormula(measurementToEdit.skinfoldFormula);
+      }
+
+      // Preencher dobras cutâneas
+      if (measurementToEdit.skinfolds) {
+        setSkinfolds({
+          tricipital: toString(measurementToEdit.skinfolds.tricipital),
+          bicipital: toString(measurementToEdit.skinfolds.bicipital),
+          abdominal: toString(measurementToEdit.skinfolds.abdominal),
+          subscapular: toString(measurementToEdit.skinfolds.subscapular),
+          axillaryMedian: toString(measurementToEdit.skinfolds.axillaryMedian),
+          thigh: toString(measurementToEdit.skinfolds.thigh),
+          thoracic: toString(measurementToEdit.skinfolds.thoracic),
+          suprailiac: toString(measurementToEdit.skinfolds.suprailiac),
+          calf: toString(measurementToEdit.skinfolds.calf),
+          supraspinal: toString(measurementToEdit.skinfolds.supraspinal),
+        });
+      }
+
+      // Preencher circunferências
+      if (measurementToEdit.measurements) {
+        setCircumferences({
+          neck: toString(measurementToEdit.measurements.neck),
+          shoulder: toString(measurementToEdit.measurements.shoulder),
+          chest: toString(measurementToEdit.measurements.chest),
+          waist: toString(measurementToEdit.measurements.waist),
+          abdomen: toString(measurementToEdit.measurements.abdomen),
+          hip: toString(measurementToEdit.measurements.hip),
+          relaxedArm: toString(measurementToEdit.measurements.relaxedArm),
+          contractedArm: toString(measurementToEdit.measurements.contractedArm),
+          forearm: toString(measurementToEdit.measurements.forearm),
+          proximalThigh: toString(measurementToEdit.measurements.proximalThigh),
+          medialThigh: toString(measurementToEdit.measurements.medialThigh),
+          distalThigh: toString(measurementToEdit.measurements.distalThigh),
+          calf: toString(measurementToEdit.measurements.calf),
+        });
+      }
+
+      // Preencher diâmetros ósseos
+      if (measurementToEdit.boneDiameters) {
+        setBoneDiameters({
+          humerus: toString(measurementToEdit.boneDiameters.humerus),
+          wrist: toString(measurementToEdit.boneDiameters.wrist),
+          femur: toString(measurementToEdit.boneDiameters.femur),
+        });
+      }
+
+      hasFilledDataRef.current = true;
+    }
+  }, [isEditMode, measurementToEdit]);
+
+  // Este useEffect preenche a altura inicial da última avaliação (apenas em novo modo)
+  useEffect(() => {
+    // Este efeito só deve rodar uma vez quando o componente montar
+    // e os dados do paciente e medições estiverem disponíveis
+    // e não estamos no modo de edição
+    if (
+      !isEditMode &&
+      !hasFilledDataRef.current &&
+      previousMeasurements &&
+      previousMeasurements.length > 0
+    ) {
+      try {
+        console.log("Todas as medições:", previousMeasurements);
+
+        // Função para converter seguramente qualquer formato de data para timestamp
+        const getTimestamp = (
+          dateValue: Date | string | null | undefined
+        ): number => {
+          if (!dateValue) return 0;
+
+          try {
+            // Tentar converter para data se for string ou outro formato
+            const date = new Date(dateValue);
+            // Verificar se a data é válida
+            if (isNaN(date.getTime())) {
+              console.warn(`Data inválida: ${dateValue}`);
+              return 0;
+            }
+            return date.getTime();
+          } catch (e) {
+            console.warn(`Erro ao converter data: ${dateValue}`, e);
+            return 0;
+          }
+        };
+
+        // Encontrar a medição mais recente manualmente
+        let mostRecentMeasurement = previousMeasurements[0];
+        let mostRecentTimestamp = getTimestamp(mostRecentMeasurement.date);
+
+        // Log detalhado para cada medição
+        previousMeasurements.forEach((measurement, index) => {
+          const timestamp = getTimestamp(measurement.date);
+
+          console.log(`Medição ${index}:`, {
+            id: measurement.id,
+            date: measurement.date,
+            dateOriginal: String(measurement.date),
+            timestamp,
+            formattedDate: new Date(timestamp).toISOString(),
+            height: measurement.height,
+          });
+
+          // Verificar se esta medição é mais recente
+          if (timestamp > mostRecentTimestamp) {
+            console.log(
+              `Nova medição mais recente encontrada: ${
+                measurement.id
+              } com data ${String(measurement.date)}`
+            );
+            mostRecentMeasurement = measurement;
+            mostRecentTimestamp = timestamp;
+          }
+        });
+
+        console.log("Medição mais recente identificada:", {
+          id: mostRecentMeasurement.id,
+          date: mostRecentMeasurement.date,
+          formattedDate: new Date(mostRecentTimestamp).toISOString(),
+          height: mostRecentMeasurement.height,
+        });
+
+        // Verificar se a medição mais recente tem altura
+        if (mostRecentMeasurement && mostRecentMeasurement.height) {
+          // Atualiza apenas a altura
+          const heightValue = mostRecentMeasurement.height
+            ? typeof mostRecentMeasurement.height === "number"
+              ? mostRecentMeasurement.height.toString()
+              : mostRecentMeasurement.height
+            : "";
+
+          console.log(
+            "Preenchendo altura com:",
+            heightValue,
+            "da medição:",
+            mostRecentMeasurement.id
+          );
+
+          setBasicData((prev) => ({
+            ...prev,
+            height: heightValue,
+          }));
+
+          // Marca a ref para indicar que já preenchemos os dados
+          hasFilledDataRef.current = true;
+        }
+      } catch (error) {
+        console.error("Erro ao preencher altura do paciente:", error);
+      }
+    }
+  }, [previousMeasurements, isEditMode]);
+
+  // Mutation para criar ou atualizar avaliação
+  const createMeasurementMutation = useMutation({
+    mutationFn: (data: CreateMeasurementDto) => {
+      if (isEditMode) {
+        return patientService.updateMeasurement(
+          patientId!,
+          measurementId!,
+          data
+        );
+      } else {
+        return patientService.createMeasurement(patientId!, data);
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["patient", patientId] });
+      queryClient.invalidateQueries({ queryKey: ["measurements", patientId] });
+      setSnackbar({
+        open: true,
+        message: isEditMode
+          ? "Avaliação antropométrica atualizada com sucesso!"
+          : "Avaliação antropométrica salva com sucesso!",
+        severity: "success",
+      });
+      navigate(`/patient/${patientId}/assessments`);
+    },
+    onError: (error) => {
+      console.error("Erro ao salvar avaliação", error);
+      setSnackbar({
+        open: true,
+        message: isEditMode
+          ? "Erro ao atualizar avaliação antropométrica"
+          : "Erro ao salvar avaliação antropométrica",
+        severity: "error",
+      });
+    },
   });
 
   const handleAccordionChange =
@@ -173,45 +435,237 @@ export function NewAssessment() {
       }
     };
 
+  const handleSaveAssessment = () => {
+    if (!patientId || !assessmentDate) {
+      setSnackbar({
+        open: true,
+        message: "Data da avaliação e ID do paciente são obrigatórios",
+        severity: "error",
+      });
+      return;
+    }
+
+    if (!basicData.weight) {
+      setSnackbar({
+        open: true,
+        message: "O peso é obrigatório",
+        severity: "error",
+      });
+      return;
+    }
+
+    const parseNumericValue = (value: string) => {
+      return value ? parseFloat(value) : undefined;
+    };
+
+    // Preparar os dados para enviar ao servidor
+    const measurementData = {
+      date: format(assessmentDate, "yyyy-MM-dd"),
+      weight: parseFloat(basicData.weight),
+      height: parseNumericValue(basicData.height),
+      sittingHeight: parseNumericValue(basicData.sittingHeight),
+      kneeHeight: parseNumericValue(basicData.kneeHeight),
+      bodyFat: parseNumericValue(bioimpedance.fatPercentage),
+      fatMass: parseNumericValue(bioimpedance.fatMass),
+      muscleMassPercentage: parseNumericValue(
+        bioimpedance.muscleMassPercentage
+      ),
+      muscleMass: parseNumericValue(bioimpedance.muscleMass),
+      fatFreeMass: parseNumericValue(bioimpedance.fatFreeMass),
+      boneMass: parseNumericValue(bioimpedance.boneMass),
+      bodyWater: parseNumericValue(bioimpedance.bodyWater),
+      visceralFat: parseNumericValue(bioimpedance.visceralFat),
+      metabolicAge: bioimpedance.metabolicAge
+        ? parseInt(bioimpedance.metabolicAge)
+        : undefined,
+      skinfoldFormula: skinfoldFormula !== "none" ? skinfoldFormula : undefined,
+      measurements:
+        Object.keys(circumferences).length > 0
+          ? {
+              ...(circumferences.chest
+                ? { chest: parseFloat(circumferences.chest) }
+                : {}),
+              ...(circumferences.waist
+                ? { waist: parseFloat(circumferences.waist) }
+                : {}),
+              ...(circumferences.hip
+                ? { hip: parseFloat(circumferences.hip) }
+                : {}),
+              ...(circumferences.relaxedArm
+                ? { relaxedArm: parseFloat(circumferences.relaxedArm) }
+                : {}),
+              ...(circumferences.contractedArm
+                ? { contractedArm: parseFloat(circumferences.contractedArm) }
+                : {}),
+              ...(circumferences.forearm
+                ? { forearm: parseFloat(circumferences.forearm) }
+                : {}),
+              ...(circumferences.neck
+                ? { neck: parseFloat(circumferences.neck) }
+                : {}),
+              ...(circumferences.shoulder
+                ? { shoulder: parseFloat(circumferences.shoulder) }
+                : {}),
+              ...(circumferences.abdomen
+                ? { abdomen: parseFloat(circumferences.abdomen) }
+                : {}),
+              ...(circumferences.proximalThigh
+                ? { proximalThigh: parseFloat(circumferences.proximalThigh) }
+                : {}),
+              ...(circumferences.medialThigh
+                ? { medialThigh: parseFloat(circumferences.medialThigh) }
+                : {}),
+              ...(circumferences.distalThigh
+                ? { distalThigh: parseFloat(circumferences.distalThigh) }
+                : {}),
+              ...(circumferences.calf
+                ? { calf: parseFloat(circumferences.calf) }
+                : {}),
+            }
+          : Object.entries(circumferences).reduce((acc, [key, value]) => {
+              if (value) {
+                acc[key] = parseFloat(value);
+              }
+              return acc;
+            }, {} as Record<string, number>),
+      skinfolds:
+        Object.keys(skinfolds).length > 0
+          ? {
+              ...(skinfolds.tricipital
+                ? { tricipital: parseFloat(skinfolds.tricipital) }
+                : {}),
+              ...(skinfolds.bicipital
+                ? { bicipital: parseFloat(skinfolds.bicipital) }
+                : {}),
+              ...(skinfolds.abdominal
+                ? { abdominal: parseFloat(skinfolds.abdominal) }
+                : {}),
+              ...(skinfolds.subscapular
+                ? { subscapular: parseFloat(skinfolds.subscapular) }
+                : {}),
+              ...(skinfolds.axillaryMedian
+                ? { axillaryMedian: parseFloat(skinfolds.axillaryMedian) }
+                : {}),
+              ...(skinfolds.thigh
+                ? { thigh: parseFloat(skinfolds.thigh) }
+                : {}),
+              ...(skinfolds.thoracic
+                ? { thoracic: parseFloat(skinfolds.thoracic) }
+                : {}),
+              ...(skinfolds.suprailiac
+                ? { suprailiac: parseFloat(skinfolds.suprailiac) }
+                : {}),
+              ...(skinfolds.calf ? { calf: parseFloat(skinfolds.calf) } : {}),
+              ...(skinfolds.supraspinal
+                ? { supraspinal: parseFloat(skinfolds.supraspinal) }
+                : {}),
+            }
+          : undefined,
+      boneDiameters:
+        Object.keys(boneDiameters).length > 0
+          ? {
+              ...(boneDiameters.humerus
+                ? { humerus: parseFloat(boneDiameters.humerus) }
+                : {}),
+              ...(boneDiameters.wrist
+                ? { wrist: parseFloat(boneDiameters.wrist) }
+                : {}),
+              ...(boneDiameters.femur
+                ? { femur: parseFloat(boneDiameters.femur) }
+                : {}),
+            }
+          : undefined,
+      patientId,
+    };
+
+    console.log("Enviando dados para o servidor:", measurementData);
+    createMeasurementMutation.mutate(measurementData);
+  };
+
+  const handleCloseSnackbar = () => {
+    setSnackbar({ ...snackbar, open: false });
+  };
+
+  // Calcular resultados antropométricos
+  const anthropometricResults = useMemo(() => {
+    // Determinar o gênero para os cálculos (M ou F)
+    let calculationGender: "M" | "F" = "M";
+    if (patient?.gender === "F" || String(patient?.gender) === "FEMALE") {
+      calculationGender = "F";
+    }
+
+    // Determinar a idade do paciente
+    const calculationAge = patient?.birthDate
+      ? new Date().getFullYear() - new Date(patient.birthDate).getFullYear()
+      : 30;
+
+    // Calcular e atualizar os resultados
+    return calculateAnthropometricResults(
+      basicData,
+      circumferences,
+      skinfolds,
+      boneDiameters,
+      bioimpedance,
+      calculationGender,
+      calculationAge,
+      skinfoldFormula
+    );
+  }, [
+    basicData,
+    circumferences,
+    skinfolds,
+    boneDiameters,
+    bioimpedance,
+    patient,
+    skinfoldFormula,
+  ]);
+
   if (!patient) return null;
 
+  // Cálculo da idade do paciente para exibição
   const age = patient.birthDate
     ? new Date().getFullYear() - new Date(patient.birthDate).getFullYear()
     : null;
 
   return (
     <Box>
-      {/* Cabeçalho */}
-      <Box sx={{ mb: 3 }}>
+      <Paper
+        elevation={3}
+        sx={{
+          p: { xs: 2, md: 4 },
+          mb: 3,
+        }}
+      >
         <Typography variant="h5" component="h1" sx={{ mb: 3 }}>
-          Avaliação antropométrica
+          {isEditMode
+            ? "Editar Avaliação Antropométrica"
+            : "Nova Avaliação Antropométrica"}
         </Typography>
-        <Box sx={{ display: "flex", alignItems: "center", gap: 2, mb: 2 }}>
+
+        {patient && (
+          <Typography variant="subtitle1" color="text.secondary" sx={{ mb: 3 }}>
+            Paciente: {patient.name}
+            {age && `, Idade: ${age} anos`}
+          </Typography>
+        )}
+
+        {/* Campo de Data */}
+        <Box sx={{ mb: 3 }}>
           <LocalizationProvider
             dateAdapter={AdapterDateFns}
             adapterLocale={ptBR}
           >
             <DatePicker
-              label="Data da avaliação"
+              label="Data da Avaliação"
               value={assessmentDate}
-              onChange={(newValue: Date | null) => setAssessmentDate(newValue)}
-              slotProps={{
-                textField: {
-                  sx: { width: 200 },
-                },
-                openPickerButton: {
-                  sx: { color: "success.main" },
-                },
-              }}
+              onChange={(newValue) => setAssessmentDate(newValue)}
+              format="dd/MM/yyyy"
+              sx={{ width: "100%" }}
             />
           </LocalizationProvider>
-          <Typography color="text.secondary">
-            Paciente: {patient.name}
-            {age && `, Idade: ${age} anos`}
-          </Typography>
         </Box>
 
-        {/* Botões de ação */}
+        {/* Botões de ação 
         <Box sx={{ display: "flex", gap: 2, mt: 2 }}>
           <Button
             variant="contained"
@@ -245,8 +699,8 @@ export function NewAssessment() {
           >
             editar data
           </Button>
-        </Box>
-      </Box>
+        </Box>*/}
+      </Paper>
 
       <Box sx={{ display: "flex", gap: 3 }}>
         {/* Coluna da esquerda - Formulários */}
@@ -278,6 +732,7 @@ export function NewAssessment() {
                     label="Peso (Kg)"
                     value={basicData.weight}
                     onChange={handleBasicDataChange("weight")}
+                    required
                   />
                 </Grid>
                 {/* @ts-ignore */}
@@ -808,9 +1263,14 @@ export function NewAssessment() {
               fullWidth
               color="primary"
               size="large"
-              onClick={() => navigate(`/patients/${patientId}`)}
+              onClick={handleSaveAssessment}
+              disabled={createMeasurementMutation.isPending}
             >
-              salvar alterações
+              {createMeasurementMutation.isPending
+                ? "Salvando..."
+                : isEditMode
+                ? "Atualizar Avaliação"
+                : "Salvar Avaliação"}
             </Button>
           </Box>
         </Box>
@@ -842,7 +1302,7 @@ export function NewAssessment() {
                 sx={{ display: "flex", justifyContent: "space-between", p: 2 }}
               >
                 <Typography>Peso atual</Typography>
-                <Typography>-</Typography>
+                <Typography>{anthropometricResults.currentWeight}</Typography>
               </Box>
             </Box>
 
@@ -851,7 +1311,7 @@ export function NewAssessment() {
                 sx={{ display: "flex", justifyContent: "space-between", p: 2 }}
               >
                 <Typography>Altura atual</Typography>
-                <Typography>170 cm</Typography>
+                <Typography>{anthropometricResults.currentHeight}</Typography>
               </Box>
             </Box>
 
@@ -860,7 +1320,7 @@ export function NewAssessment() {
                 sx={{ display: "flex", justifyContent: "space-between", p: 2 }}
               >
                 <Typography>Índice de Massa Corporal</Typography>
-                <Typography>-</Typography>
+                <Typography>{anthropometricResults.bmi}</Typography>
               </Box>
             </Box>
 
@@ -869,7 +1329,9 @@ export function NewAssessment() {
                 sx={{ display: "flex", justifyContent: "space-between", p: 2 }}
               >
                 <Typography>Classificação do IMC</Typography>
-                <Typography>-</Typography>
+                <Typography>
+                  {anthropometricResults.bmiClassification}
+                </Typography>
               </Box>
             </Box>
 
@@ -878,7 +1340,9 @@ export function NewAssessment() {
                 sx={{ display: "flex", justifyContent: "space-between", p: 2 }}
               >
                 <Typography>Faixa de peso ideal</Typography>
-                <Typography>53.5 a 72.0Kg</Typography>
+                <Typography>
+                  {anthropometricResults.idealWeightRange}
+                </Typography>
               </Box>
             </Box>
 
@@ -887,7 +1351,7 @@ export function NewAssessment() {
                 sx={{ display: "flex", justifyContent: "space-between", p: 2 }}
               >
                 <Typography>Relação da Cintura/Quadril (RCQ)</Typography>
-                <Typography>-</Typography>
+                <Typography>{anthropometricResults.waistHipRatio}</Typography>
               </Box>
             </Box>
 
@@ -896,7 +1360,9 @@ export function NewAssessment() {
                 sx={{ display: "flex", justifyContent: "space-between", p: 2 }}
               >
                 <Typography>Risco Metabólico por RCQ</Typography>
-                <Typography>-</Typography>
+                <Typography>
+                  {anthropometricResults.waistHipRiskClassification}
+                </Typography>
               </Box>
             </Box>
 
@@ -910,7 +1376,7 @@ export function NewAssessment() {
                     (Escolha o lado)
                   </Typography>
                 </Box>
-                <Typography>-</Typography>
+                <Typography>{anthropometricResults.cmb}</Typography>
               </Box>
             </Box>
 
@@ -919,7 +1385,9 @@ export function NewAssessment() {
                 sx={{ display: "flex", justifyContent: "space-between", p: 2 }}
               >
                 <Typography>Classificação CMB</Typography>
-                <Typography>-</Typography>
+                <Typography>
+                  {anthropometricResults.cmbClassification}
+                </Typography>
               </Box>
             </Box>
 
@@ -952,7 +1420,9 @@ export function NewAssessment() {
                     (Brozek, 1963)
                   </Typography>
                 </Box>
-                <Typography>-</Typography>
+                <Typography>
+                  {anthropometricResults.bodyFatPercentage}
+                </Typography>
               </Box>
             </Box>
 
@@ -961,7 +1431,9 @@ export function NewAssessment() {
                 sx={{ display: "flex", justifyContent: "space-between", p: 2 }}
               >
                 <Typography>Percentual Ideal</Typography>
-                <Typography>-</Typography>
+                <Typography>
+                  {anthropometricResults.idealFatPercentage}
+                </Typography>
               </Box>
             </Box>
 
@@ -975,7 +1447,9 @@ export function NewAssessment() {
                     (Editar)
                   </Typography>
                 </Box>
-                <Typography>-</Typography>
+                <Typography>
+                  {anthropometricResults.bodyFatClassification}
+                </Typography>
               </Box>
             </Box>
 
@@ -984,7 +1458,7 @@ export function NewAssessment() {
                 sx={{ display: "flex", justifyContent: "space-between", p: 2 }}
               >
                 <Typography>Peso de gordura</Typography>
-                <Typography>-</Typography>
+                <Typography>{anthropometricResults.fatMass}</Typography>
               </Box>
             </Box>
 
@@ -998,7 +1472,7 @@ export function NewAssessment() {
                     (por diam. ósseo)
                   </Typography>
                 </Box>
-                <Typography>-</Typography>
+                <Typography>{anthropometricResults.boneMass}</Typography>
               </Box>
             </Box>
 
@@ -1007,7 +1481,7 @@ export function NewAssessment() {
                 sx={{ display: "flex", justifyContent: "space-between", p: 2 }}
               >
                 <Typography>Massa Muscular</Typography>
-                <Typography>-</Typography>
+                <Typography>{anthropometricResults.muscleMass}</Typography>
               </Box>
             </Box>
 
@@ -1016,7 +1490,7 @@ export function NewAssessment() {
                 sx={{ display: "flex", justifyContent: "space-between", p: 2 }}
               >
                 <Typography>Peso residual</Typography>
-                <Typography>-</Typography>
+                <Typography>{anthropometricResults.residualWeight}</Typography>
               </Box>
             </Box>
 
@@ -1025,7 +1499,7 @@ export function NewAssessment() {
                 sx={{ display: "flex", justifyContent: "space-between", p: 2 }}
               >
                 <Typography>Massa Livre de Gordura</Typography>
-                <Typography>-</Typography>
+                <Typography>{anthropometricResults.fatFreeMass}</Typography>
               </Box>
             </Box>
 
@@ -1034,7 +1508,7 @@ export function NewAssessment() {
                 sx={{ display: "flex", justifyContent: "space-between", p: 2 }}
               >
                 <Typography>Somatório de Dobras</Typography>
-                <Typography>-</Typography>
+                <Typography>{anthropometricResults.skinfoldsSum}</Typography>
               </Box>
             </Box>
 
@@ -1043,7 +1517,7 @@ export function NewAssessment() {
                 sx={{ display: "flex", justifyContent: "space-between", p: 2 }}
               >
                 <Typography>Densidade Corporal</Typography>
-                <Typography>-</Typography>
+                <Typography>{anthropometricResults.bodyDensity}</Typography>
               </Box>
             </Box>
 
@@ -1052,7 +1526,7 @@ export function NewAssessment() {
                 sx={{ display: "flex", justifyContent: "space-between", p: 2 }}
               >
                 <Typography>Referência usada</Typography>
-                <Typography>Pollock 3, 1978</Typography>
+                <Typography>{anthropometricResults.referenceUsed}</Typography>
               </Box>
             </Box>
 
@@ -1078,7 +1552,9 @@ export function NewAssessment() {
                 sx={{ display: "flex", justifyContent: "space-between", p: 2 }}
               >
                 <Typography>Percentual de Gordura</Typography>
-                <Typography>-</Typography>
+                <Typography>
+                  {anthropometricResults.bioimpedanceBodyFatPercentage}
+                </Typography>
               </Box>
             </Box>
 
@@ -1087,7 +1563,9 @@ export function NewAssessment() {
                 sx={{ display: "flex", justifyContent: "space-between", p: 2 }}
               >
                 <Typography>Percentual Ideal</Typography>
-                <Typography>-</Typography>
+                <Typography>
+                  {anthropometricResults.bioimpedanceIdealFatPercentage}
+                </Typography>
               </Box>
             </Box>
 
@@ -1101,7 +1579,9 @@ export function NewAssessment() {
                     (Editar)
                   </Typography>
                 </Box>
-                <Typography>-</Typography>
+                <Typography>
+                  {anthropometricResults.bioimpedanceBodyFatClassification}
+                </Typography>
               </Box>
             </Box>
 
@@ -1110,7 +1590,9 @@ export function NewAssessment() {
                 sx={{ display: "flex", justifyContent: "space-between", p: 2 }}
               >
                 <Typography>Percentual de Massa Muscular</Typography>
-                <Typography>-</Typography>
+                <Typography>
+                  {anthropometricResults.bioimpedanceMuscleMassPercentage}
+                </Typography>
               </Box>
             </Box>
 
@@ -1119,7 +1601,9 @@ export function NewAssessment() {
                 sx={{ display: "flex", justifyContent: "space-between", p: 2 }}
               >
                 <Typography>Massa Muscular</Typography>
-                <Typography>-</Typography>
+                <Typography>
+                  {anthropometricResults.bioimpedanceMuscleMass}
+                </Typography>
               </Box>
             </Box>
 
@@ -1128,7 +1612,9 @@ export function NewAssessment() {
                 sx={{ display: "flex", justifyContent: "space-between", p: 2 }}
               >
                 <Typography>Água Corporal Total</Typography>
-                <Typography>-</Typography>
+                <Typography>
+                  {anthropometricResults.bioimpedanceBodyWater}
+                </Typography>
               </Box>
             </Box>
 
@@ -1137,7 +1623,9 @@ export function NewAssessment() {
                 sx={{ display: "flex", justifyContent: "space-between", p: 2 }}
               >
                 <Typography>Peso Ósseo</Typography>
-                <Typography>-</Typography>
+                <Typography>
+                  {anthropometricResults.bioimpedanceBoneMass}
+                </Typography>
               </Box>
             </Box>
 
@@ -1146,7 +1634,9 @@ export function NewAssessment() {
                 sx={{ display: "flex", justifyContent: "space-between", p: 2 }}
               >
                 <Typography>Massa de gordura</Typography>
-                <Typography>-</Typography>
+                <Typography>
+                  {anthropometricResults.bioimpedanceFatMass}
+                </Typography>
               </Box>
             </Box>
 
@@ -1155,7 +1645,9 @@ export function NewAssessment() {
                 sx={{ display: "flex", justifyContent: "space-between", p: 2 }}
               >
                 <Typography>Massa Livre de Gordura</Typography>
-                <Typography>-</Typography>
+                <Typography>
+                  {anthropometricResults.bioimpedanceFatFreeMass}
+                </Typography>
               </Box>
             </Box>
 
@@ -1164,7 +1656,9 @@ export function NewAssessment() {
                 sx={{ display: "flex", justifyContent: "space-between", p: 2 }}
               >
                 <Typography>Índice de Gordura Visceral</Typography>
-                <Typography>-</Typography>
+                <Typography>
+                  {anthropometricResults.bioimpedanceVisceralFat}
+                </Typography>
               </Box>
             </Box>
 
@@ -1173,7 +1667,9 @@ export function NewAssessment() {
                 sx={{ display: "flex", justifyContent: "space-between", p: 2 }}
               >
                 <Typography>Idade Metabólica</Typography>
-                <Typography>-</Typography>
+                <Typography>
+                  {anthropometricResults.bioimpedanceMetabolicAge}
+                </Typography>
               </Box>
             </Box>
 
@@ -1215,6 +1711,21 @@ export function NewAssessment() {
           </Paper>
         </Box>
       </Box>
+
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={6000}
+        onClose={handleCloseSnackbar}
+        anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+      >
+        <Alert
+          onClose={handleCloseSnackbar}
+          severity={snackbar.severity}
+          sx={{ width: "100%" }}
+        >
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
     </Box>
   );
 }

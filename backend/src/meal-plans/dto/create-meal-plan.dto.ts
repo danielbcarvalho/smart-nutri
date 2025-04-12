@@ -1,4 +1,4 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
   IsString,
   IsDate,
@@ -8,6 +8,7 @@ import {
   IsNotEmpty,
   IsUUID,
   MinDate,
+  IsDateString,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 
@@ -69,47 +70,52 @@ export class CreateMealDto {
 
 export class CreateMealPlanDto {
   @ApiProperty({
-    description: 'ID do paciente',
-    example: '123e4567-e89b-12d3-a456-426614174000',
-  })
-  @IsUUID()
-  @IsNotEmpty()
-  patientId: string;
-
-  @ApiProperty({
     description: 'Nome do plano alimentar',
-    example: 'Plano Semanal',
+    example: 'Plano Alimentar Semanal',
   })
   @IsString()
   @IsNotEmpty()
   name: string;
 
+  @ApiPropertyOptional({
+    description: 'Observações sobre o plano alimentar',
+    example: 'Plano alimentar para perda de peso',
+  })
+  @IsString()
+  @IsOptional()
+  notes?: string;
+
   @ApiProperty({
     description: 'Data de início do plano',
-    example: '2025-04-05',
+    example: '2024-03-20',
   })
-  @IsDate()
-  @Type(() => Date)
-  startDate: Date;
+  @IsDateString()
+  @IsNotEmpty()
+  startDate: string;
 
   @ApiProperty({
     description: 'Data de término do plano',
-    example: '2025-04-12',
+    example: '2024-03-27',
   })
-  @IsDate()
-  @Type(() => Date)
-  @MinDate(() => new Date(), {
-    message: 'A data final não pode ser anterior à data inicial',
-  })
-  endDate: Date;
+  @IsDateString()
+  @IsNotEmpty()
+  endDate: string;
 
   @ApiProperty({
-    description: 'Observações sobre o plano',
-    required: false,
+    description: 'ID do paciente',
+    example: '123e4567-e89b-12d3-a456-426614174000',
   })
-  @IsOptional()
-  @IsString()
-  notes?: string;
+  @IsNotEmpty()
+  @IsUUID('4')
+  patientId: string;
+
+  @ApiProperty({
+    description: 'ID do nutricionista responsável',
+    example: '123e4567-e89b-12d3-a456-426614174000',
+  })
+  @IsNotEmpty()
+  @IsUUID('4')
+  nutritionistId: string;
 
   @ApiProperty({
     description: 'Lista de refeições do plano',

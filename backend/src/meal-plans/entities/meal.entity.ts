@@ -7,6 +7,7 @@ import {
   CreateDateColumn,
   UpdateDateColumn,
 } from 'typeorm';
+import { ApiProperty } from '@nestjs/swagger';
 import { MealPlan } from './meal-plan.entity';
 import { MealFood } from './meal-food.entity';
 
@@ -52,4 +53,20 @@ export class Meal {
 
   @UpdateDateColumn()
   updatedAt: Date;
+
+  @Column({ type: 'decimal', precision: 10, scale: 2, default: 0 })
+  @ApiProperty({ example: 500.25 })
+  totalCalories: number;
+
+  @Column({ type: 'decimal', precision: 10, scale: 2, default: 0 })
+  @ApiProperty({ example: 30.5 })
+  totalProtein: number;
+
+  @Column({ type: 'decimal', precision: 10, scale: 2, default: 0 })
+  @ApiProperty({ example: 60.75 })
+  totalCarbs: number;
+
+  @Column({ type: 'decimal', precision: 10, scale: 2, default: 0 })
+  @ApiProperty({ example: 20.3 })
+  totalFat: number;
 }

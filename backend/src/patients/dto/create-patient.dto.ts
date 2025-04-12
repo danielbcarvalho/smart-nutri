@@ -7,11 +7,12 @@ import {
   Matches,
   MinLength,
   MaxLength,
+  IsUUID,
 } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { Type } from 'class-transformer';
-import { Gender } from '../enums/gender.enum';
 import { Transform } from 'class-transformer';
+import { Gender } from '../enums/gender.enum';
+import { PatientStatus } from '../entities/patient.entity';
 
 export class CreatePatientDto {
   @ApiProperty({
@@ -25,6 +26,11 @@ export class CreatePatientDto {
     message: 'O nome deve conter apenas letras e espaços',
   })
   name: string;
+
+  @ApiPropertyOptional({ description: 'CPF do paciente' })
+  @IsString()
+  @IsOptional()
+  cpf?: string;
 
   @ApiPropertyOptional({
     description: 'Email do paciente',
@@ -46,16 +52,14 @@ export class CreatePatientDto {
   @ApiPropertyOptional({
     description: 'Data de nascimento do paciente',
     example: '1990-01-01',
-    type: Date,
+    type: String,
   })
   @IsOptional()
-  @Transform(({ value }) => {
+  @Transform(({ value }): string | null => {
     if (!value || value === '') return null;
-    const date = new Date(value);
-    return isNaN(date.getTime()) ? null : date;
+    return value;
   })
-  @Type(() => Date)
-  birthDate?: Date;
+  birthDate?: string;
 
   @ApiPropertyOptional({
     description: 'Gênero do paciente',
@@ -69,21 +73,30 @@ export class CreatePatientDto {
   gender?: Gender;
 
   @ApiPropertyOptional({
-    description: 'Altura do paciente em metros',
-    example: 1.75,
-    type: Number,
+    description: 'Status do paciente',
+    enum: PatientStatus,
+    example: PatientStatus.ACTIVE,
   })
   @IsOptional()
-  @Transform(({ value }) => (value === '' ? null : Number(value)))
+  @IsEnum(PatientStatus, {
+    message: 'Status deve ser active ou inactive',
+  })
+  status?: PatientStatus;
+
+  @ApiPropertyOptional({
+    description: 'Altura do paciente em centímetros',
+    example: 170,
+  })
+  @IsOptional()
+  @Transform(({ value }): number | null => (value ? Number(value) : null))
   height?: number;
 
   @ApiPropertyOptional({
     description: 'Peso do paciente em quilogramas',
-    example: 70.5,
-    type: Number,
+    example: 70,
   })
   @IsOptional()
-  @Transform(({ value }) => (value === '' ? null : Number(value)))
+  @Transform(({ value }): number | null => (value ? Number(value) : null))
   weight?: number;
 
   @ApiPropertyOptional({
@@ -93,27 +106,27 @@ export class CreatePatientDto {
   })
   @IsOptional()
   @IsArray()
-  @IsString({ each: true })
+  @Transform(({ value }): string[] => (value ? value : []))
   goals?: string[];
 
   @ApiPropertyOptional({
     description: 'Alergias do paciente',
-    example: ['Amendoim', 'Leite'],
+    example: ['Amendoim', 'Lactose'],
     type: [String],
   })
   @IsOptional()
   @IsArray()
-  @IsString({ each: true })
+  @Transform(({ value }): string[] => (value ? value : []))
   allergies?: string[];
 
   @ApiPropertyOptional({
     description: 'Condições de saúde do paciente',
-    example: ['Diabetes tipo 2', 'Hipertensão'],
+    example: ['Diabetes', 'Hipertensão'],
     type: [String],
   })
   @IsOptional()
   @IsArray()
-  @IsString({ each: true })
+  @Transform(({ value }): string[] => (value ? value : []))
   healthConditions?: string[];
 
   @ApiPropertyOptional({
@@ -123,14 +136,22 @@ export class CreatePatientDto {
   })
   @IsOptional()
   @IsArray()
-  @IsString({ each: true })
+  @Transform(({ value }): string[] => (value ? value : []))
   medications?: string[];
 
   @ApiPropertyOptional({
-    description: 'Observações gerais sobre o paciente',
+    description: 'Observações gerais',
     example: 'Paciente com histórico familiar de diabetes',
   })
   @IsOptional()
-  @IsString()
+  @Transform(({ value }): string | null => (value === '' ? null : value))
   observations?: string;
+
+  @ApiPropertyOptional({
+    description: 'ID do nutricionista responsável',
+    example: '123e4567-e89b-12d3-a456-426614174000',
+  })
+  @IsOptional()
+  @IsUUID('4', { message: 'ID do nutricionista inválido' })
+  nutritionistId?: string;
 }

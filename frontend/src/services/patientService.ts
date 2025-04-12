@@ -1,5 +1,12 @@
 import { api } from "./api";
 
+export type MonitoringStatus = "in_progress" | "paused" | "completed";
+export type ConsultationFrequency =
+  | "weekly"
+  | "biweekly"
+  | "monthly"
+  | "custom";
+
 export interface Patient {
   id: string;
   name: string;
@@ -17,6 +24,11 @@ export interface Patient {
   lastLoginAt?: string;
   height?: number;
   weight?: number;
+  lastConsultationAt?: string;
+  nextConsultationAt?: string;
+  monitoringStatus: MonitoringStatus;
+  consultationFrequency: ConsultationFrequency;
+  customConsultationDays?: number;
 }
 
 export interface CreatePatientDto {
@@ -35,6 +47,11 @@ export interface CreatePatientDto {
   healthConditions?: string[];
   medications?: string[];
   observations?: string;
+  monitoringStatus?: MonitoringStatus;
+  consultationFrequency?: ConsultationFrequency;
+  customConsultationDays?: number;
+  lastConsultationAt?: string;
+  nextConsultationAt?: string;
 }
 
 export type UpdatePatientDto = Partial<CreatePatientDto>;
@@ -45,6 +62,35 @@ export interface BodyMeasurements {
   hip?: number;
   arm?: number;
   thigh?: number;
+  neck?: number;
+  shoulder?: number;
+  abdomen?: number;
+  relaxedArm?: number;
+  contractedArm?: number;
+  forearm?: number;
+  proximalThigh?: number;
+  medialThigh?: number;
+  distalThigh?: number;
+  calf?: number;
+}
+
+export interface Skinfolds {
+  tricipital?: number;
+  bicipital?: number;
+  abdominal?: number;
+  subscapular?: number;
+  axillaryMedian?: number;
+  thigh?: number;
+  thoracic?: number;
+  suprailiac?: number;
+  calf?: number;
+  supraspinal?: number;
+}
+
+export interface BoneDiameters {
+  humerus?: number;
+  wrist?: number;
+  femur?: number;
 }
 
 export interface Measurement {
@@ -52,25 +98,48 @@ export interface Measurement {
   patientId: string;
   date: string;
   weight: string | number;
+  height?: string | number;
+  sittingHeight?: string | number;
+  kneeHeight?: string | number;
   bodyFat?: string | number | null;
+  fatMass?: string | number | null;
+  muscleMassPercentage?: string | number | null;
   muscleMass?: string | number | null;
+  fatFreeMass?: string | number | null;
+  boneMass?: string | number | null;
   bodyWater?: string | number | null;
   visceralFat?: string | number | null;
+  metabolicAge?: string | number | null;
+  skinfolds?: Skinfolds;
   measurements: BodyMeasurements;
+  boneDiameters?: BoneDiameters;
+  skinfoldFormula?: string;
   createdAt: string;
   updatedAt: string;
+  notes?: string;
 }
 
 export interface CreateMeasurementDto {
   weight: number;
-  height: number;
+  height?: number;
+  sittingHeight?: number;
+  kneeHeight?: number;
   bodyFat?: number;
+  fatMass?: number;
+  muscleMassPercentage?: number;
   muscleMass?: number;
+  fatFreeMass?: number;
+  boneMass?: number;
   bodyWater?: number;
   visceralFat?: number;
+  metabolicAge?: number;
   notes?: string;
   date: string;
-  measurements: BodyMeasurements;
+  measurements?: BodyMeasurements;
+  skinfolds?: Skinfolds;
+  boneDiameters?: BoneDiameters;
+  skinfoldFormula?: string;
+  patientId?: string;
 }
 
 export const patientService = {
@@ -113,12 +182,39 @@ export const patientService = {
     return response.data;
   },
 
+  // Alias para getMeasurements, para compatibilidade com código existente
+  findMeasurements: async (patientId: string): Promise<Measurement[]> => {
+    const response = await api.get(`/patients/${patientId}/measurements`);
+    return response.data;
+  },
+
   createMeasurement: async (
     patientId: string,
     measurement: CreateMeasurementDto
   ): Promise<Measurement> => {
     const response = await api.post(
       `/patients/${patientId}/measurements`,
+      measurement
+    );
+    return response.data;
+  },
+
+  // Excluir uma medição/avaliação
+  deleteMeasurement: async (
+    patientId: string,
+    measurementId: string
+  ): Promise<void> => {
+    await api.delete(`/patients/${patientId}/measurements/${measurementId}`);
+  },
+
+  // Atualizar uma medição/avaliação
+  updateMeasurement: async (
+    patientId: string,
+    measurementId: string,
+    measurement: Partial<CreateMeasurementDto>
+  ): Promise<Measurement> => {
+    const response = await api.patch(
+      `/patients/${patientId}/measurements/${measurementId}`,
       measurement
     );
     return response.data;

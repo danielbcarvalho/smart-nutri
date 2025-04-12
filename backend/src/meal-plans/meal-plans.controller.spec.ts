@@ -7,10 +7,16 @@ import { CreateMealDto } from './dto/create-meal.dto';
 import { Patient } from '../patients/entities/patient.entity';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+import { Request } from '@nestjs/common';
+
+interface RequestWithUser extends Request {
+  user: {
+    id: string;
+  };
+}
 
 describe('MealPlansController', () => {
   let controller: MealPlansController;
-  let service: MealPlansService;
   let patientRepository: Repository<Patient>;
 
   const mockMealPlansService = {
@@ -21,6 +27,12 @@ describe('MealPlansController', () => {
     remove: jest.fn(),
     addMeal: jest.fn(),
   };
+
+  const mockRequest: RequestWithUser = {
+    user: {
+      id: '123e4567-e89b-12d3-a456-426614174000',
+    },
+  } as RequestWithUser;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -42,7 +54,6 @@ describe('MealPlansController', () => {
     }).compile();
 
     controller = module.get<MealPlansController>(MealPlansController);
-    service = module.get<MealPlansService>(MealPlansService);
     patientRepository = module.get(getRepositoryToken(Patient));
   });
 
@@ -55,8 +66,9 @@ describe('MealPlansController', () => {
       const createMealPlanDto: CreateMealPlanDto = {
         name: 'Test Meal Plan',
         patientId: '123e4567-e89b-12d3-a456-426614174000',
-        startDate: new Date(),
-        endDate: new Date(),
+        nutritionistId: '123e4567-e89b-12d3-a456-426614174000',
+        startDate: new Date().toISOString(),
+        endDate: new Date().toISOString(),
         meals: [],
       };
 
@@ -69,9 +81,12 @@ describe('MealPlansController', () => {
       const result = { id: '1', ...createMealPlanDto };
       mockMealPlansService.create.mockResolvedValue(result);
 
-      expect(await controller.create(createMealPlanDto)).toBe(result);
+      expect(await controller.create(createMealPlanDto, mockRequest)).toBe(
+        result,
+      );
       expect(mockMealPlansService.create).toHaveBeenCalledWith(
         createMealPlanDto,
+        mockRequest.user.id,
       );
     });
   });
@@ -81,8 +96,10 @@ describe('MealPlansController', () => {
       const result = [{ id: '1', name: 'Test Meal Plan' }];
       mockMealPlansService.findAll.mockResolvedValue(result);
 
-      expect(await controller.findAll()).toBe(result);
-      expect(mockMealPlansService.findAll).toHaveBeenCalled();
+      expect(await controller.findAll(mockRequest)).toBe(result);
+      expect(mockMealPlansService.findAll).toHaveBeenCalledWith(
+        mockRequest.user.id,
+      );
     });
   });
 
@@ -91,8 +108,11 @@ describe('MealPlansController', () => {
       const result = { id: '1', name: 'Test Meal Plan' };
       mockMealPlansService.findOne.mockResolvedValue(result);
 
-      expect(await controller.findOne('1')).toBe(result);
-      expect(mockMealPlansService.findOne).toHaveBeenCalledWith('1');
+      expect(await controller.findOne('1', mockRequest)).toBe(result);
+      expect(mockMealPlansService.findOne).toHaveBeenCalledWith(
+        '1',
+        mockRequest.user.id,
+      );
     });
   });
 
@@ -105,10 +125,13 @@ describe('MealPlansController', () => {
       const result = { id: '1', ...updateMealPlanDto };
       mockMealPlansService.update.mockResolvedValue(result);
 
-      expect(await controller.update('1', updateMealPlanDto)).toBe(result);
+      expect(await controller.update('1', updateMealPlanDto, mockRequest)).toBe(
+        result,
+      );
       expect(mockMealPlansService.update).toHaveBeenCalledWith(
         '1',
         updateMealPlanDto,
+        mockRequest.user.id,
       );
     });
   });
@@ -118,8 +141,11 @@ describe('MealPlansController', () => {
       const result = { id: '1', name: 'Test Meal Plan' };
       mockMealPlansService.remove.mockResolvedValue(result);
 
-      expect(await controller.remove('1')).toBe(result);
-      expect(mockMealPlansService.remove).toHaveBeenCalledWith('1');
+      expect(await controller.remove('1', mockRequest)).toBe(result);
+      expect(mockMealPlansService.remove).toHaveBeenCalledWith(
+        '1',
+        mockRequest.user.id,
+      );
     });
   });
 
@@ -135,10 +161,13 @@ describe('MealPlansController', () => {
       const result = { id: '1', name: 'Test Meal Plan', meals: [addMealDto] };
       mockMealPlansService.addMeal.mockResolvedValue(result);
 
-      expect(await controller.addMeal('1', addMealDto)).toBe(result);
+      expect(await controller.addMeal('1', addMealDto, mockRequest)).toBe(
+        result,
+      );
       expect(mockMealPlansService.addMeal).toHaveBeenCalledWith(
         '1',
         addMealDto,
+        mockRequest.user.id,
       );
     });
   });

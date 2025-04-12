@@ -13,7 +13,12 @@ import { MealPlanDetails } from "./pages/MealPlanDetails";
 import { PatientInfo } from "./pages/PatientInfo";
 import { NewAssessment } from "./pages/NewAssessment/index";
 import { NewMealPlan } from "./pages/NewMealPlan";
+import { Login } from "./pages/Login";
+import { Register } from "./pages/Register";
+import { PrivateRoute } from "./components/PrivateRoute";
 import { Box, Typography } from "@mui/material";
+import { Assessments } from "./pages/Assessments/index";
+import { ViewAssessment } from "./pages/ViewAssessment";
 
 // Placeholder components
 const DocumentsPlaceholder = () => (
@@ -23,19 +28,24 @@ const DocumentsPlaceholder = () => (
   </Box>
 );
 
-const AssessmentsPlaceholder = () => (
-  <Box sx={{ p: 3 }}>
-    <Typography variant="h5">Avaliações</Typography>
-    <Typography color="text.secondary">Em desenvolvimento...</Typography>
-  </Box>
-);
-
 const queryClient = new QueryClient();
 
 const router = createBrowserRouter([
   {
+    path: "/login",
+    element: <Login />,
+  },
+  {
+    path: "/register",
+    element: <Register />,
+  },
+  {
     path: "/",
-    element: <Layout />,
+    element: (
+      <PrivateRoute>
+        <Layout />
+      </PrivateRoute>
+    ),
     children: [
       {
         index: true,
@@ -83,11 +93,19 @@ const router = createBrowserRouter([
             children: [
               {
                 index: true,
-                element: <AssessmentsPlaceholder />,
+                element: <Assessments />,
               },
               {
                 path: "new",
                 element: <NewAssessment />,
+              },
+              {
+                path: "edit/:measurementId",
+                element: <NewAssessment />,
+              },
+              {
+                path: "view/:measurementId",
+                element: <ViewAssessment />,
               },
             ],
           },

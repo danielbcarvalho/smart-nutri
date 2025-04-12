@@ -1,83 +1,22 @@
-import { Injectable } from '@nestjs/common';
+import { DataSource } from 'typeorm';
 import { ConfigService } from '@nestjs/config';
-import { TypeOrmModuleOptions } from '@nestjs/typeorm';
+import { config } from 'dotenv';
+import { join } from 'path';
 
-@Injectable()
-export class TypeOrmConfigService {
-  constructor(private configService: ConfigService) {}
+config();
 
-  createTypeOrmOptions(): TypeOrmModuleOptions {
-    const isTestEnvironment = process.env.NODE_ENV === 'test';
-    console.log(
-      'Creating TypeORM options for environment:',
-      process.env.NODE_ENV,
-    );
-    console.log('Is test environment:', isTestEnvironment);
+const configService = new ConfigService();
 
-    // Verificar se as variáveis de ambiente estão definidas
-    const host = this.configService.get('DATABASE_HOST');
-    const port = +this.configService.get('DATABASE_PORT');
-    const username = this.configService.get('DATABASE_USERNAME');
-    const password = this.configService.get('DATABASE_PASSWORD');
-    const database = this.configService.get('DATABASE_NAME');
-
-    console.log('Database configuration:');
-    console.log(`Host: ${host}`);
-    console.log(`Port: ${port}`);
-    console.log(`Username: ${username}`);
-    console.log(`Database: ${database}`);
-
-    if (!host || !port || !username || !password || !database) {
-      console.error('Missing database configuration:', {
-        host: !!host,
-        port: !!port,
-        username: !!username,
-        password: !!password,
-        database: !!database,
-      });
-      throw new Error('Missing database configuration');
-    }
-
-    const options: TypeOrmModuleOptions = {
-      type: 'postgres',
-      host,
-      port,
-      username,
-      password,
-      database,
-      entities: [__dirname + '/../**/*.entity{.ts,.js}'],
-      synchronize: false,
-      dropSchema: isTestEnvironment,
-      migrationsRun: true,
-      migrations: [__dirname + '/../migrations/*{.ts,.js}'],
-      logging: true,
-      // Adicionar opções específicas para o ambiente de teste
-      ...(isTestEnvironment && {
-        dropSchema: true,
-        synchronize: true,
-        logging: true,
-        // Forçar recriação do schema
-        extra: {
-          // Desabilitar restrições de chave estrangeira durante a sincronização
-          statement_timeout: 0,
-          idle_in_transaction_session_timeout: 0,
-        },
-        // Desabilitar cache de entidades
-        cache: false,
-        // Desabilitar cache de queries
-        queryCache: false,
-        // Desabilitar cache de resultados
-        resultCache: false,
-        // Desabilitar cache de metadados
-        metadataCache: false,
-      }),
-    };
-
-    console.log('TypeORM options:', {
-      ...options,
-      password: '******', // Hide password in logs
-    });
-
-    return options;
-  }
-}
+export default new DataSource({
+  type: 'postgres',
+  host: configService.get('DB_HOST'),
+  port: +configService.get('DB_PORT'),
+  username: configService.get('DB_USERNAME'),
+  password: configService.get('DB_PASSWORD'),
+  database: configService.get('DB_DATABASE'),
+  entities: [join(__dirname, '..', '**', '*.entity.{ts,js}')],
+  migrations: [join(__dirname, '..', 'database', 'migrations', '*.{ts,js}')],
+  migrationsRun: true,
+  synchronize: false,
+  logging: true,
+});

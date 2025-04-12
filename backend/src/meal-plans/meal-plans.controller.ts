@@ -9,6 +9,8 @@ import {
   HttpCode,
   HttpStatus,
   Query,
+  UseGuards,
+  Request,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -17,6 +19,7 @@ import {
   ApiParam,
   ApiBody,
   ApiQuery,
+  ApiBearerAuth,
 } from '@nestjs/swagger';
 import { MealPlansService } from './meal-plans.service';
 import { CreateMealPlanDto } from './dto/create-meal-plan.dto';
@@ -24,9 +27,20 @@ import { UpdateMealPlanDto } from './dto/update-meal-plan.dto';
 import { CreateMealDto } from './dto/create-meal.dto';
 import { MealPlan } from './entities/meal-plan.entity';
 import { Meal } from './entities/meal.entity';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { CurrentUser } from '../auth/decorators/current-user.decorator';
+import { AuthenticatedUser } from '../auth/interfaces/authenticated-user.interface';
+
+interface RequestWithUser extends Request {
+  user: {
+    id: string;
+  };
+}
 
 @ApiTags('meal-plans')
 @Controller('meal-plans')
+@UseGuards(JwtAuthGuard)
+@ApiBearerAuth()
 export class MealPlansController {
   constructor(private readonly mealPlansService: MealPlansService) {}
 
@@ -50,8 +64,11 @@ export class MealPlansController {
     status: 404,
     description: 'Paciente não encontrado',
   })
-  create(@Body() createMealPlanDto: CreateMealPlanDto) {
-    return this.mealPlansService.create(createMealPlanDto);
+  create(
+    @Body() createMealPlanDto: CreateMealPlanDto,
+    @Request() req: RequestWithUser,
+  ) {
+    return this.mealPlansService.create(createMealPlanDto, req.user.id);
   }
 
   @Get()
@@ -64,8 +81,20 @@ export class MealPlansController {
     description: 'Lista de planos alimentares retornada com sucesso',
     type: [MealPlan],
   })
-  findAll() {
-    return this.mealPlansService.findAll();
+  @ApiQuery({
+    name: 'patientId',
+    required: false,
+    type: String,
+    description: 'ID do paciente para filtrar os planos',
+  })
+  findAll(
+    @Request() req: RequestWithUser,
+    @Query('patientId') patientId?: string,
+  ) {
+    if (patientId) {
+      return this.mealPlansService.findByPatient(patientId, req.user.id);
+    }
+    return this.mealPlansService.findAll(req.user.id);
   }
 
   @Get('patient/:patientId')
@@ -92,8 +121,11 @@ export class MealPlansController {
     status: 404,
     description: 'Paciente não encontrado',
   })
-  findByPatient(@Param('patientId') patientId: string) {
-    return this.mealPlansService.findByPatient(patientId);
+  findByPatient(
+    @Param('patientId') patientId: string,
+    @Request() req: RequestWithUser,
+  ) {
+    return this.mealPlansService.findByPatient(patientId, req.user.id);
   }
 
   @Get(':id')
@@ -119,8 +151,8 @@ export class MealPlansController {
     status: 404,
     description: 'Plano alimentar não encontrado',
   })
-  findOne(@Param('id') id: string) {
-    return this.mealPlansService.findOne(id);
+  findOne(@Param('id') id: string, @Request() req: RequestWithUser) {
+    return this.mealPlansService.findOne(id, req.user.id);
   }
 
   @Patch(':id')
@@ -154,8 +186,9 @@ export class MealPlansController {
   update(
     @Param('id') id: string,
     @Body() updateMealPlanDto: UpdateMealPlanDto,
+    @Request() req: RequestWithUser,
   ) {
-    return this.mealPlansService.update(id, updateMealPlanDto);
+    return this.mealPlansService.update(id, updateMealPlanDto, req.user.id);
   }
 
   @Delete(':id')
@@ -181,8 +214,8 @@ export class MealPlansController {
     status: 404,
     description: 'Plano alimentar não encontrado',
   })
-  remove(@Param('id') id: string) {
-    return this.mealPlansService.remove(id);
+  remove(@Param('id') id: string, @Request() req: RequestWithUser) {
+    return this.mealPlansService.remove(id, req.user.id);
   }
 
   @Post(':id/meals')
@@ -213,8 +246,12 @@ export class MealPlansController {
     status: 404,
     description: 'Plano alimentar não encontrado',
   })
-  async addMeal(@Param('id') id: string, @Body() createMealDto: CreateMealDto) {
-    return this.mealPlansService.addMeal(id, createMealDto);
+  addMeal(
+    @Param('id') id: string,
+    @Body() createMealDto: CreateMealDto,
+    @Request() req: RequestWithUser,
+  ) {
+    return this.mealPlansService.addMeal(id, createMealDto, req.user.id);
   }
 
   @Get(':id/meals')
@@ -241,8 +278,8 @@ export class MealPlansController {
     status: 404,
     description: 'Plano alimentar não encontrado',
   })
-  getMeals(@Param('id') id: string) {
-    return this.mealPlansService.getMeals(id);
+  getMeals(@Param('id') id: string, @Request() req: RequestWithUser) {
+    return this.mealPlansService.getMeals(id, req.user.id);
   }
 
   @Get('search')
@@ -261,7 +298,7 @@ export class MealPlansController {
     description: 'Lista de planos encontrados',
     type: [MealPlan],
   })
-  async search(@Query('query') query: string) {
-    return this.mealPlansService.search(query);
+  search(@Query('q') query: string, @CurrentUser() user: AuthenticatedUser) {
+    return this.mealPlansService.search(query, user.id);
   }
 }

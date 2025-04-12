@@ -1,96 +1,91 @@
-# SmartNutri
+# SmartNutri API
 
-Sistema de gestão para nutricionistas, permitindo o acompanhamento de pacientes, avaliações nutricionais e planos alimentares.
+## Descrição
 
-## Estrutura do Projeto
+API do SmartNutri, um sistema para gerenciamento de pacientes e planos alimentares para nutricionistas.
 
-```
-smartnutri/
-├── backend/     # API em NestJS
-└── frontend/    # Interface em React + Material UI
-```
+## Funcionalidades
 
-## Requisitos
+- Autenticação de nutricionistas
+- Gerenciamento de pacientes
+- Gerenciamento de planos alimentares
+- Templates de planos alimentares
+- Busca avançada de alimentos
+- Acompanhamento de medidas e progresso
+- Geração de relatórios
 
-- Node.js 20.x
-- PostgreSQL 15+
-- npm ou yarn
+## Tecnologias
 
-## Configuração do Ambiente
+- Node.js
+- NestJS
+- TypeScript
+- PostgreSQL
+- TypeORM
+- JWT
+- Swagger
 
-### Backend (NestJS)
-
-1. Entre no diretório do backend:
-
-```bash
-cd backend
-```
-
-2. Instale as dependências:
+## Instalação
 
 ```bash
+# Instalar dependências
 npm install
-```
 
-3. Configure as variáveis de ambiente:
-
-```bash
+# Configurar variáveis de ambiente
 cp .env.example .env
-# Edite o arquivo .env com suas configurações
-```
+# Editar .env com suas configurações
 
-4. Execute o script de configuração do banco de dados:
+# Executar migrations
+npm run migration:run
 
-```bash
-./setup-db.sh
-```
-
-5. Inicie o servidor de desenvolvimento:
-
-```bash
+# Iniciar em modo desenvolvimento
 npm run start:dev
 ```
 
-O backend estará disponível em `http://localhost:8000`
+## Documentação da API
 
-### Frontend (React + Material UI)
+A documentação da API está disponível através do Swagger UI em `/api/docs` quando a aplicação está em execução.
 
-1. Entre no diretório do frontend:
+### Endpoints Principais
 
-```bash
-cd frontend
-```
+#### Autenticação
 
-2. Instale as dependências:
+- POST /auth/login - Login de nutricionista
+- POST /auth/register - Registro de nutricionista
 
-```bash
-npm install
-```
+#### Pacientes
 
-3. Inicie o servidor de desenvolvimento:
+- GET /patients - Listar pacientes
+- POST /patients - Criar paciente
+- GET /patients/:id - Buscar paciente
+- PATCH /patients/:id - Atualizar paciente
+- DELETE /patients/:id - Remover paciente
 
-```bash
-npm run dev
-```
+#### Planos Alimentares
 
-O frontend estará disponível em `http://localhost:3000`
+- GET /meal-plans - Listar planos alimentares
+- POST /meal-plans - Criar plano alimentar
+- GET /meal-plans/:id - Buscar plano alimentar
+- PATCH /meal-plans/:id - Atualizar plano alimentar
+- DELETE /meal-plans/:id - Remover plano alimentar
 
-## Documentação
+#### Templates de Planos Alimentares
 
-- Backend API: `http://localhost:8000/api`
-- Swagger UI: `http://localhost:8000/api-docs`
+- GET /meal-plan-templates - Listar templates
+- POST /meal-plan-templates - Criar template
+- GET /meal-plan-templates/:id - Buscar template
+- PATCH /meal-plan-templates/:id - Atualizar template
+- DELETE /meal-plan-templates/:id - Remover template
+- GET /meal-plan-templates/search/foods - Buscar alimentos
+- POST /meal-plan-templates/:id/create-plan/:patientId - Criar plano a partir de template
 
-## Scripts Disponíveis
+## Contribuição
 
-### Backend
+1. Faça o fork do projeto
+2. Crie uma branch para sua feature (`git checkout -b feature/nova-feature`)
+3. Faça commit das suas alterações (`git commit -m 'Adiciona nova feature'`)
+4. Faça push para a branch (`git push origin feature/nova-feature`)
+5. Abra um Pull Request
 
-- `npm run start:dev` - Inicia o servidor em modo de desenvolvimento
-- `npm run test` - Executa os testes
-- `npm run build` - Compila o projeto
-- `npm run start:prod` - Inicia o servidor em modo de produção
+## Licença
 
-### Frontend
-
-- `npm run dev` - Inicia o servidor de desenvolvimento
-- `npm run build` - Compila o projeto para produção
-- `npm run preview` - Visualiza a build de produção localmente
+Este projeto está sob a licença MIT. Veja o arquivo [LICENSE](LICENSE) para mais detalhes.

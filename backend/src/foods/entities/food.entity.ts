@@ -4,6 +4,7 @@ import {
   Column,
   CreateDateColumn,
   UpdateDateColumn,
+  Index,
 } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
 
@@ -137,13 +138,80 @@ export class Food {
   isFavorite: boolean;
 
   @ApiProperty({
+    description: 'Versão do alimento',
+    example: 1,
+    default: 1,
+  })
+  @Column({ default: 1 })
+  version: number;
+
+  @ApiProperty({
+    description: 'Indica se o alimento foi verificado por um nutricionista',
+    example: false,
+    default: false,
+  })
+  @Index()
+  @Column({ name: 'is_verified', default: false })
+  isVerified: boolean;
+
+  @ApiProperty({
+    description: 'Fonte do alimento (ex: TACO, FatSecret, manual)',
+    example: 'FatSecret',
+    nullable: true,
+  })
+  @Index()
+  @Column({ nullable: true })
+  source: string;
+
+  @ApiProperty({
+    description: 'ID do alimento na fonte original',
+    example: '12345',
+    nullable: true,
+  })
+  @Index()
+  @Column({ name: 'source_id', nullable: true })
+  sourceId: string;
+
+  @ApiProperty({
     description:
       'Número de vezes que o alimento foi usado em planos alimentares',
     example: 0,
     default: 0,
   })
-  @Column({ default: 0 })
-  usageCount: number;
+  @Index()
+  @Column({ name: 'usage_count_meal_plans', default: 0 })
+  usageCountMealPlans: number;
+
+  @ApiProperty({
+    description: 'Número de vezes que o alimento foi marcado como favorito',
+    example: 0,
+    default: 0,
+  })
+  @Index()
+  @Column({ name: 'usage_count_favorites', default: 0 })
+  usageCountFavorites: number;
+
+  @ApiProperty({
+    description:
+      'Número de vezes que o alimento apareceu em resultados de busca',
+    example: 0,
+    default: 0,
+  })
+  @Index()
+  @Column({ name: 'usage_count_searches', default: 0 })
+  usageCountSearches: number;
+
+  @ApiProperty({
+    description: 'Hierarquia de categorias do alimento',
+    example: [
+      { id: 1, name: 'Frutas' },
+      { id: 2, name: 'Frutas frescas' },
+      { id: 3, name: 'Maçãs' },
+    ],
+    nullable: true,
+  })
+  @Column('jsonb', { name: 'category_hierarchy', nullable: true })
+  categoryHierarchy: { id: number; name: string }[];
 
   @ApiProperty({
     description: 'Data de criação do registro',

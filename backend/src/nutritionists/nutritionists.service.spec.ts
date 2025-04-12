@@ -13,6 +13,10 @@ jest.mock('bcrypt', () => ({
   compare: jest.fn().mockResolvedValue(true),
 }));
 
+type MockType<T> = {
+  [P in keyof T]: jest.Mock<any>;
+};
+
 describe('NutritionistsService', () => {
   let service: NutritionistsService;
 
@@ -23,7 +27,7 @@ describe('NutritionistsService', () => {
     findOne: jest.fn(),
     update: jest.fn(),
     delete: jest.fn(),
-  };
+  } as MockType<Repository<Nutritionist>>;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -56,7 +60,7 @@ describe('NutritionistsService', () => {
 
     it('should create a new nutritionist', async () => {
       const hashedPassword = 'hashed_password';
-      const expectedNutritionist = {
+      const savedNutritionist = {
         id: 'uuid',
         ...createDto,
         passwordHash: hashedPassword,
@@ -64,19 +68,38 @@ describe('NutritionistsService', () => {
         updatedAt: new Date(),
       };
 
-      mockRepository.findOne.mockResolvedValue(null);
-      mockRepository.create.mockReturnValue(expectedNutritionist);
-      mockRepository.save.mockResolvedValue(expectedNutritionist);
+      // Mock initial findOne for email check
+      mockRepository.findOne.mockResolvedValueOnce(null);
+      // Mock create
+      mockRepository.create.mockReturnValue(savedNutritionist);
+      // Mock save
+      mockRepository.save.mockResolvedValue(savedNutritionist);
+      // Mock findOne after save
+      mockRepository.findOne.mockResolvedValueOnce(savedNutritionist);
 
       const result = await service.create(createDto);
 
-      expect(result).toEqual(expectedNutritionist);
+      expect(result).toEqual(savedNutritionist);
       expect(bcrypt.hash).toHaveBeenCalledWith(createDto.password, 10);
       expect(mockRepository.create).toHaveBeenCalledWith({
         ...createDto,
         passwordHash: hashedPassword,
       });
-      expect(mockRepository.save).toHaveBeenCalledWith(expectedNutritionist);
+      expect(mockRepository.save).toHaveBeenCalledWith(savedNutritionist);
+      expect(mockRepository.findOne).toHaveBeenCalledWith({
+        where: { id: savedNutritionist.id },
+        select: [
+          'id',
+          'name',
+          'email',
+          'phone',
+          'crn',
+          'specialties',
+          'clinicName',
+          'createdAt',
+          'updatedAt',
+        ],
+      });
     });
 
     it('should throw ConflictException if email already exists', async () => {

@@ -1,35 +1,28 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { INestApplication, ValidationPipe } from '@nestjs/common';
+import { INestApplication } from '@nestjs/common';
 import * as request from 'supertest';
-import { AppModule } from '../src/app.module';
-import { TypeOrmModule } from '@nestjs/typeorm';
-import { MealPlan } from '../src/meal-plans/entities/meal-plan.entity';
-import { Meal } from '../src/meal-plans/entities/meal.entity';
-import { MealFood } from '../src/meal-plans/entities/meal-food.entity';
-import { Patient } from '../src/patients/entities/patient.entity';
-import { Food } from '../src/foods/entities/food.entity';
-import { Repository } from 'typeorm';
-import { getRepositoryToken } from '@nestjs/typeorm';
-import {
-  describe,
-  it,
-  expect,
-  beforeAll,
-  beforeEach,
-  afterAll,
-} from '@jest/globals';
-import { Gender } from '../src/patients/enums/gender.enum';
-import { v4 as uuidv4 } from 'uuid';
+import { AppModule } from './../src/app.module';
 
-// Define response types
-interface MealPlanResponse {
+interface AuthResponse {
+  access_token: string;
+  id: string;
+}
+
+interface PatientResponse {
   id: string;
   name: string;
-  patientId: string;
-  startDate: string;
-  endDate: string;
-  notes?: string;
-  meals: MealResponse[];
+  email: string;
+  cpf: string;
+  nutritionistId: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+interface MealFoodResponse {
+  id: string;
+  foodId: string;
+  quantity: number;
+  unit: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -38,324 +31,305 @@ interface MealResponse {
   id: string;
   name: string;
   time: string;
-  notes?: string;
-  mealPlan: {
-    id: string;
-  };
+  notes: string;
   mealFoods: MealFoodResponse[];
+  mealPlanId: string;
   createdAt: string;
   updatedAt: string;
 }
 
-interface MealFoodResponse {
+interface MealPlanResponse {
   id: string;
-  food: {
-    id: string;
-    name: string;
-    servingSize: number;
-    servingUnit: string;
-    calories: number;
-    protein: number;
-    carbohydrates: number;
-    fat: number;
-  };
-  amount: number;
-  unit: string;
+  name: string;
+  startDate: string;
+  endDate: string;
+  notes: string;
+  patientId: string;
+  nutritionistId: string;
+  meals: MealResponse[];
   createdAt: string;
   updatedAt: string;
 }
 
-describe('MealPlansController (e2e)', () => {
+interface MealFood {
+  foodId: string;
+  quantity: number;
+  unit: string;
+}
+
+interface Meal {
+  name: string;
+  time: string;
+  notes: string;
+  mealFoods: MealFood[];
+}
+
+interface MealPlan {
+  name: string;
+  startDate: string;
+  endDate: string;
+  notes: string;
+  patientId: string;
+  nutritionistId: string;
+  meals: Meal[];
+}
+
+describe('MealPlans (e2e)', () => {
   let app: INestApplication;
-  let mealPlanRepository: Repository<MealPlan>;
-  let mealRepository: Repository<Meal>;
-  let mealFoodRepository: Repository<MealFood>;
-  let patientRepository: Repository<Patient>;
-  let foodRepository: Repository<Food>;
+  let authToken: string;
+  let nutritionistId: string;
+  let patientId: string;
+
+  const mockNutritionist = {
+    name: 'Test Nutritionist',
+    email: 'test@nutritionist.com',
+    password: 'test123',
+    crn: '12345',
+  };
 
   const mockPatient = {
     name: 'Test Patient',
-    email: 'test@example.com',
-    phone: '1234567890',
-    birthDate: new Date('1990-01-01'),
-    gender: Gender.MALE,
-    height: 1.75,
-    weight: 70,
+    email: 'test@patient.com',
+    cpf: '12345678901',
+    nutritionistId: '',
   };
 
-  const mockFood = {
-    name: 'Test Food',
-    externalId: '123456',
-    servingSize: 100,
-    servingUnit: 'g',
-    calories: 100,
-    protein: 10,
-    carbohydrates: 20,
-    fat: 5,
-    categories: ['Test'],
-  };
-
-  const createMockMealPlan = (patient: Patient): Partial<MealPlan> => {
-    const mealFoods = [
+  const mockMealPlan: MealPlan = {
+    name: 'Test Meal Plan',
+    startDate: '2024-04-07',
+    endDate: '2024-04-14',
+    notes: 'Test notes',
+    patientId: '',
+    nutritionistId: '',
+    meals: [
       {
-        food: mockFood,
-        amount: 100,
-        unit: 'g',
-      },
-    ];
-
-    const meals = [
-      {
-        id: uuidv4(),
-        name: 'Test Meal',
+        name: 'Breakfast',
         time: '08:00',
         notes: 'Test meal notes',
-        mealFoods,
-        mealPlan: null,
-        createdAt: new Date(),
-        updatedAt: new Date(),
+        mealFoods: [
+          {
+            foodId: '123e4567-e89b-12d3-a456-426614174000',
+            quantity: 100,
+            unit: 'g',
+          },
+        ],
       },
-    ];
-
-    return {
-      name: 'Test Plan',
-      startDate: new Date('2024-03-20'),
-      endDate: new Date('2024-03-27'),
-      notes: 'Test notes',
-      patient,
-      patientId: patient.id,
-      meals,
-    };
+    ],
   };
 
   beforeAll(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
-      imports: [
-        AppModule,
-        TypeOrmModule.forFeature([MealPlan, Meal, MealFood, Patient, Food]),
-      ],
+      imports: [AppModule],
     }).compile();
 
     app = moduleFixture.createNestApplication();
-    app.useGlobalPipes(new ValidationPipe());
-    mealPlanRepository = moduleFixture.get<Repository<MealPlan>>(
-      getRepositoryToken(MealPlan),
-    );
-    mealRepository = moduleFixture.get<Repository<Meal>>(
-      getRepositoryToken(Meal),
-    );
-    mealFoodRepository = moduleFixture.get<Repository<MealFood>>(
-      getRepositoryToken(MealFood),
-    );
-    patientRepository = moduleFixture.get<Repository<Patient>>(
-      getRepositoryToken(Patient),
-    );
-    foodRepository = moduleFixture.get<Repository<Food>>(
-      getRepositoryToken(Food),
-    );
-
     await app.init();
-  });
 
-  beforeEach(async () => {
-    await mealFoodRepository.delete({});
-    await mealRepository.delete({});
-    await mealPlanRepository.delete({});
-    await patientRepository.delete({});
-    await foodRepository.delete({});
+    // Create nutritionist
+    const nutritionistResponse = await request(app.getHttpServer())
+      .post('/auth/register')
+      .send(mockNutritionist)
+      .expect(201);
+
+    const nutritionistData = nutritionistResponse.body as AuthResponse;
+    nutritionistId = nutritionistData.id;
+
+    // Login
+    const loginResponse = await request(app.getHttpServer())
+      .post('/auth/login')
+      .send({
+        email: mockNutritionist.email,
+        password: mockNutritionist.password,
+      })
+      .expect(200);
+
+    const loginData = loginResponse.body as AuthResponse;
+    authToken = loginData.access_token;
+
+    // Create patient
+    mockPatient.nutritionistId = nutritionistId;
+    const patientResponse = await request(app.getHttpServer())
+      .post('/patients')
+      .set('Authorization', `Bearer ${authToken}`)
+      .send(mockPatient)
+      .expect(201);
+
+    const patientData = patientResponse.body as PatientResponse;
+    patientId = patientData.id;
+    mockMealPlan.patientId = patientId;
+    mockMealPlan.nutritionistId = nutritionistId;
   });
 
   afterAll(async () => {
     await app.close();
   });
 
-  describe('/meal-plans (POST)', () => {
-    it('should create a meal plan', async () => {
-      const patient = await patientRepository.save(mockPatient as Patient);
-      const food = await foodRepository.save(mockFood as Food);
-      const mockMealPlan = createMockMealPlan(patient);
-      mockMealPlan.meals![0].mealFoods[0].food = food;
+  it('/meal-plans (POST) should create a meal plan', async () => {
+    const response = await request(app.getHttpServer())
+      .post('/meal-plans')
+      .set('Authorization', `Bearer ${authToken}`)
+      .send(mockMealPlan)
+      .expect(201);
 
-      const response = await request(app.getHttpServer())
-        .post('/meal-plans')
-        .send({
-          ...mockMealPlan,
-          patientId: patient.id,
-        })
-        .expect(201);
-
-      const responseBody = response.body as MealPlanResponse;
-      expect(responseBody).toHaveProperty('id');
-      expect(responseBody.name).toBe(mockMealPlan.name);
-      expect(responseBody.patientId).toBe(patient.id);
-      expect(responseBody.meals).toHaveLength(1);
-    });
-
-    it('should fail when patient does not exist', async () => {
-      const nonExistentId = uuidv4();
-      const patient = await patientRepository.save(mockPatient as Patient);
-      const food = await foodRepository.save(mockFood as Food);
-      const mockMealPlan = createMockMealPlan(patient);
-      mockMealPlan.meals![0].mealFoods[0].food = food;
-
-      await request(app.getHttpServer())
-        .post('/meal-plans')
-        .send({
-          ...mockMealPlan,
-          patientId: nonExistentId,
-        })
-        .expect(404);
-    });
+    const mealPlan = response.body as MealPlanResponse;
+    expect(mealPlan).toHaveProperty('id');
+    expect(mealPlan.name).toBe(mockMealPlan.name);
+    expect(mealPlan.patientId).toBe(patientId);
+    expect(mealPlan.nutritionistId).toBe(nutritionistId);
   });
 
-  describe('/meal-plans (GET)', () => {
-    it('should return all meal plans', async () => {
-      const patient = await patientRepository.save(mockPatient as Patient);
-      const food = await foodRepository.save(mockFood as Food);
-      const mockMealPlan = createMockMealPlan(patient);
-      mockMealPlan.meals![0].mealFoods[0].food = food;
-      await mealPlanRepository.save(mockMealPlan as MealPlan);
+  it('/meal-plans (POST) should return 404 when patient does not exist', async () => {
+    const invalidMealPlan = {
+      ...mockMealPlan,
+      patientId: '123e4567-e89b-12d3-a456-426614174000',
+    };
 
-      const response = await request(app.getHttpServer())
-        .get('/meal-plans')
-        .expect(200);
-
-      const responseBody = response.body as MealPlanResponse[];
-      expect(Array.isArray(responseBody)).toBe(true);
-      expect(responseBody).toHaveLength(1);
-      expect(responseBody[0].name).toBe(mockMealPlan.name);
-    });
+    await request(app.getHttpServer())
+      .post('/meal-plans')
+      .set('Authorization', `Bearer ${authToken}`)
+      .send(invalidMealPlan)
+      .expect(404);
   });
 
-  describe('/meal-plans/patient/:patientId (GET)', () => {
-    it('should return meal plans for a patient', async () => {
-      const patient = await patientRepository.save(mockPatient as Patient);
-      const food = await foodRepository.save(mockFood as Food);
-      const mockMealPlan = createMockMealPlan(patient);
-      mockMealPlan.meals![0].mealFoods[0].food = food;
-      await mealPlanRepository.save(mockMealPlan as MealPlan);
+  it('/meal-plans (GET) should get all meal plans', async () => {
+    const response = await request(app.getHttpServer())
+      .get('/meal-plans')
+      .set('Authorization', `Bearer ${authToken}`)
+      .expect(200);
 
-      const response = await request(app.getHttpServer())
-        .get(`/meal-plans/patient/${patient.id}`)
-        .expect(200);
-
-      const responseBody = response.body as MealPlanResponse[];
-      expect(Array.isArray(responseBody)).toBe(true);
-      expect(responseBody).toHaveLength(1);
-      expect(responseBody[0].name).toBe(mockMealPlan.name);
-      expect(responseBody[0].patientId).toBe(patient.id);
-    });
-
-    it('should return empty array when patient has no meal plans', async () => {
-      const patient = await patientRepository.save(mockPatient as Patient);
-
-      const response = await request(app.getHttpServer())
-        .get(`/meal-plans/patient/${patient.id}`)
-        .expect(200);
-
-      expect(Array.isArray(response.body)).toBe(true);
-      expect(response.body).toHaveLength(0);
-    });
+    const mealPlans = response.body as MealPlanResponse[];
+    expect(Array.isArray(mealPlans)).toBe(true);
+    expect(mealPlans.length).toBeGreaterThan(0);
   });
 
-  describe('/meal-plans/:id (GET)', () => {
-    it('should return a meal plan', async () => {
-      const patient = await patientRepository.save(mockPatient as Patient);
-      const food = await foodRepository.save(mockFood as Food);
-      const mockMealPlan = createMockMealPlan(patient);
-      mockMealPlan.meals![0].mealFoods[0].food = food;
-      const mealPlan = await mealPlanRepository.save(mockMealPlan as MealPlan);
+  it('/meal-plans/patient/:patientId (GET) should get meal plans by patient', async () => {
+    const response = await request(app.getHttpServer())
+      .get(`/meal-plans/patient/${patientId}`)
+      .set('Authorization', `Bearer ${authToken}`)
+      .expect(200);
 
-      const response = await request(app.getHttpServer())
-        .get(`/meal-plans/${mealPlan.id}`)
-        .expect(200);
-
-      const responseBody = response.body as MealPlanResponse;
-      expect(responseBody.id).toBe(mealPlan.id);
-      expect(responseBody.name).toBe(mockMealPlan.name);
-    });
-
-    it('should return 404 when meal plan does not exist', async () => {
-      const nonExistentId = uuidv4();
-      await request(app.getHttpServer())
-        .get(`/meal-plans/${nonExistentId}`)
-        .expect(404);
-    });
+    const mealPlans = response.body as MealPlanResponse[];
+    expect(Array.isArray(mealPlans)).toBe(true);
+    expect(mealPlans.length).toBeGreaterThan(0);
+    expect(mealPlans[0].patientId).toBe(patientId);
   });
 
-  describe('/meal-plans/:id (PATCH)', () => {
-    it('should update a meal plan', async () => {
-      const patient = await patientRepository.save(mockPatient as Patient);
-      const food = await foodRepository.save(mockFood as Food);
-      const mockMealPlan = createMockMealPlan(patient);
-      mockMealPlan.meals![0].mealFoods[0].food = food;
-      const mealPlan = await mealPlanRepository.save(mockMealPlan as MealPlan);
+  it('/meal-plans/:id (GET) should get a meal plan by id', async () => {
+    // First, create a meal plan
+    const createResponse = await request(app.getHttpServer())
+      .post('/meal-plans')
+      .set('Authorization', `Bearer ${authToken}`)
+      .send(mockMealPlan)
+      .expect(201);
 
-      const updateData = {
-        name: 'Updated Plan',
-      };
+    const createdMealPlan = createResponse.body as MealPlanResponse;
+    const mealPlanId = createdMealPlan.id;
 
-      const response = await request(app.getHttpServer())
-        .patch(`/meal-plans/${mealPlan.id}`)
-        .send(updateData)
-        .expect(200);
+    // Then, get it by id
+    const response = await request(app.getHttpServer())
+      .get(`/meal-plans/${mealPlanId}`)
+      .set('Authorization', `Bearer ${authToken}`)
+      .expect(200);
 
-      const responseBody = response.body as MealPlanResponse;
-      expect(responseBody.id).toBe(mealPlan.id);
-      expect(responseBody.name).toBe(updateData.name);
-    });
+    const mealPlan = response.body as MealPlanResponse;
+    expect(mealPlan.id).toBe(mealPlanId);
+    expect(mealPlan.name).toBe(mockMealPlan.name);
+    expect(mealPlan.patientId).toBe(patientId);
   });
 
-  describe('/meal-plans/:id (DELETE)', () => {
-    it('should delete a meal plan', async () => {
-      const patient = await patientRepository.save(mockPatient as Patient);
-      const food = await foodRepository.save(mockFood as Food);
-      const mockMealPlan = createMockMealPlan(patient);
-      mockMealPlan.meals![0].mealFoods[0].food = food;
-      const mealPlan = await mealPlanRepository.save(mockMealPlan as MealPlan);
+  it('/meal-plans/:id (PATCH) should update a meal plan', async () => {
+    // First, create a meal plan
+    const createResponse = await request(app.getHttpServer())
+      .post('/meal-plans')
+      .set('Authorization', `Bearer ${authToken}`)
+      .send(mockMealPlan)
+      .expect(201);
 
-      await request(app.getHttpServer())
-        .delete(`/meal-plans/${mealPlan.id}`)
-        .expect(204);
+    const createdMealPlan = createResponse.body as MealPlanResponse;
+    const mealPlanId = createdMealPlan.id;
+    const updatedName = 'Updated Meal Plan';
 
-      const deletedMealPlan = await mealPlanRepository.findOne({
-        where: { id: mealPlan.id },
-      });
-      expect(deletedMealPlan).toBeNull();
-    });
+    // Then, update it
+    const response = await request(app.getHttpServer())
+      .patch(`/meal-plans/${mealPlanId}`)
+      .set('Authorization', `Bearer ${authToken}`)
+      .send({ name: updatedName })
+      .expect(200);
+
+    const updatedMealPlan = response.body as MealPlanResponse;
+    expect(updatedMealPlan.id).toBe(mealPlanId);
+    expect(updatedMealPlan.name).toBe(updatedName);
   });
 
-  describe('/meal-plans/:id/meals (POST)', () => {
-    it('should add a meal to a meal plan', async () => {
-      const patient = await patientRepository.save(mockPatient as Patient);
-      const food = await foodRepository.save(mockFood as Food);
-      const mockMealPlan = createMockMealPlan(patient);
-      mockMealPlan.meals![0].mealFoods[0].food = food;
-      const mealPlan = await mealPlanRepository.save(mockMealPlan as MealPlan);
+  it('/meal-plans/:id (DELETE) should delete a meal plan', async () => {
+    // First, create a meal plan
+    const createResponse = await request(app.getHttpServer())
+      .post('/meal-plans')
+      .set('Authorization', `Bearer ${authToken}`)
+      .send(mockMealPlan)
+      .expect(201);
 
-      const response = await request(app.getHttpServer())
-        .post(`/meal-plans/${mealPlan.id}/meals`)
-        .send(mockMealPlan.meals![0])
-        .expect(201);
+    const createdMealPlan = createResponse.body as MealPlanResponse;
+    const mealPlanId = createdMealPlan.id;
 
-      const responseBody = response.body as MealResponse;
-      expect(responseBody).toHaveProperty('id');
-      expect(responseBody.name).toBe(mockMealPlan.meals![0].name);
-      expect(responseBody.time).toBe(mockMealPlan.meals![0].time);
-      expect(responseBody.mealPlan.id).toBe(mealPlan.id);
-    });
+    // Then, delete it
+    await request(app.getHttpServer())
+      .delete(`/meal-plans/${mealPlanId}`)
+      .set('Authorization', `Bearer ${authToken}`)
+      .expect(200);
 
-    it('should fail when meal plan does not exist', async () => {
-      const nonExistentId = uuidv4();
-      const patient = await patientRepository.save(mockPatient as Patient);
-      const food = await foodRepository.save(mockFood as Food);
-      const mockMealPlan = createMockMealPlan(patient);
-      mockMealPlan.meals![0].mealFoods[0].food = food;
+    // Finally, verify it's gone
+    await request(app.getHttpServer())
+      .get(`/meal-plans/${mealPlanId}`)
+      .set('Authorization', `Bearer ${authToken}`)
+      .expect(404);
+  });
 
-      await request(app.getHttpServer())
-        .post(`/meal-plans/${nonExistentId}/meals`)
-        .send(mockMealPlan.meals![0])
-        .expect(404);
-    });
+  it('/meal-plans/:id/meals (POST) should add a meal to a meal plan', async () => {
+    // First, create a meal plan
+    const createResponse = await request(app.getHttpServer())
+      .post('/meal-plans')
+      .set('Authorization', `Bearer ${authToken}`)
+      .send(mockMealPlan)
+      .expect(201);
+
+    const createdMealPlan = createResponse.body as MealPlanResponse;
+    const mealPlanId = createdMealPlan.id;
+
+    // Then, add a meal to it
+    const mockMeal = mockMealPlan.meals[0];
+    const response = await request(app.getHttpServer())
+      .post(`/meal-plans/${mealPlanId}/meals`)
+      .set('Authorization', `Bearer ${authToken}`)
+      .send(mockMeal)
+      .expect(201);
+
+    const meal = response.body as MealResponse;
+    expect(meal).toHaveProperty('id');
+    expect(meal.name).toBe(mockMeal.name);
+    expect(meal.time).toBe(mockMeal.time);
+  });
+
+  it('/meal-plans/:id/meals (GET) should get all meals for a meal plan', async () => {
+    // First, create a meal plan
+    const createResponse = await request(app.getHttpServer())
+      .post('/meal-plans')
+      .set('Authorization', `Bearer ${authToken}`)
+      .send(mockMealPlan)
+      .expect(201);
+
+    const createdMealPlan = createResponse.body as MealPlanResponse;
+    const mealPlanId = createdMealPlan.id;
+
+    // Then, get its meals
+    const response = await request(app.getHttpServer())
+      .get(`/meal-plans/${mealPlanId}/meals`)
+      .set('Authorization', `Bearer ${authToken}`)
+      .expect(200);
+
+    const meals = response.body as MealResponse[];
+    expect(Array.isArray(meals)).toBe(true);
+    expect(meals.length).toBeGreaterThan(0);
+    expect(meals[0].name).toBe(mockMealPlan.meals[0].name);
   });
 });

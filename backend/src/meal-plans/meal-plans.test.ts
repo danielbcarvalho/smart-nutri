@@ -19,6 +19,8 @@ describe('MealPlansController (e2e)', () => {
   let patientId: string;
   let foodId: string;
 
+  const mockNutritionistId = '123e4567-e89b-12d3-a456-426614174000';
+
   beforeAll(async () => {
     jest.setTimeout(10000);
     const moduleFixture: TestingModule = await Test.createTestingModule({
@@ -38,7 +40,7 @@ describe('MealPlansController (e2e)', () => {
       name: 'Test Patient for Meal Plans',
       email: 'mealplans@example.com',
       phone: '1234567890',
-      birthDate: new Date('1990-01-01'),
+      birthDate: '1990-01-01',
       gender: Gender.MALE,
       height: 170,
       weight: 70,
@@ -47,8 +49,13 @@ describe('MealPlansController (e2e)', () => {
       healthConditions: ['none'],
       medications: ['none'],
       observations: 'Test observations',
+      cpf: '12345678900',
+      nutritionistId: mockNutritionistId,
     };
-    const patient = await patientsService.create(createPatientDto);
+    const patient = await patientsService.create(
+      createPatientDto,
+      mockNutritionistId,
+    );
     patientId = patient.id;
 
     // Criar alimento de teste
@@ -65,7 +72,7 @@ describe('MealPlansController (e2e)', () => {
     };
     const food = await foodsService.create(createFoodDto);
     foodId = food.id;
-  }, 30000);
+  });
 
   afterAll(async () => {
     if (app) {
@@ -88,8 +95,9 @@ describe('MealPlansController (e2e)', () => {
       const createMealPlanDto: CreateMealPlanDto = {
         patientId,
         name: 'Plano Semanal',
-        startDate: new Date('2024-04-06'),
-        endDate: new Date('2024-04-12'),
+        startDate: '2024-04-06',
+        endDate: '2024-04-12',
+        nutritionistId: mockNutritionistId,
         meals: [
           {
             name: 'Café da manhã',
@@ -137,8 +145,9 @@ describe('MealPlansController (e2e)', () => {
       const createMealPlanDto: CreateMealPlanDto = {
         patientId,
         name: 'Plano Semanal',
-        startDate: new Date('2024-04-06'),
-        endDate: new Date('2024-04-12'),
+        startDate: '2024-04-06',
+        endDate: '2024-04-12',
+        nutritionistId: mockNutritionistId,
         meals: [
           {
             name: 'Café da manhã',
@@ -154,7 +163,10 @@ describe('MealPlansController (e2e)', () => {
         ],
       };
 
-      const mealPlan = await mealPlansService.create(createMealPlanDto);
+      const mealPlan = await mealPlansService.create(
+        createMealPlanDto,
+        mockNutritionistId,
+      );
       mealPlanId = mealPlan.id;
     });
 
@@ -183,8 +195,9 @@ describe('MealPlansController (e2e)', () => {
       const createMealPlanDto: CreateMealPlanDto = {
         patientId,
         name: 'Plano Semanal',
-        startDate: new Date('2024-04-06'),
-        endDate: new Date('2024-04-12'),
+        startDate: '2024-04-06',
+        endDate: '2024-04-12',
+        nutritionistId: mockNutritionistId,
         meals: [
           {
             name: 'Café da manhã',
@@ -200,7 +213,10 @@ describe('MealPlansController (e2e)', () => {
         ],
       };
 
-      const mealPlan = await mealPlansService.create(createMealPlanDto);
+      const mealPlan = await mealPlansService.create(
+        createMealPlanDto,
+        mockNutritionistId,
+      );
       mealPlanId = mealPlan.id;
     });
 
@@ -240,8 +256,9 @@ describe('MealPlansController (e2e)', () => {
       const createMealPlanDto: CreateMealPlanDto = {
         patientId,
         name: 'Plano Semanal',
-        startDate: new Date('2024-04-06'),
-        endDate: new Date('2024-04-12'),
+        startDate: '2024-04-06',
+        endDate: '2024-04-12',
+        nutritionistId: mockNutritionistId,
         meals: [
           {
             name: 'Café da manhã',
@@ -257,7 +274,10 @@ describe('MealPlansController (e2e)', () => {
         ],
       };
 
-      const mealPlan = await mealPlansService.create(createMealPlanDto);
+      const mealPlan = await mealPlansService.create(
+        createMealPlanDto,
+        mockNutritionistId,
+      );
       mealPlanId = mealPlan.id;
     });
 
@@ -279,8 +299,9 @@ describe('MealPlansController (e2e)', () => {
       const createMealPlanDto1: CreateMealPlanDto = {
         patientId,
         name: 'Plano Semanal 1',
-        startDate: new Date('2024-04-06'),
-        endDate: new Date('2024-04-12'),
+        startDate: '2024-04-06',
+        endDate: '2024-04-12',
+        nutritionistId: mockNutritionistId,
         meals: [
           {
             name: 'Café da manhã',
@@ -299,8 +320,9 @@ describe('MealPlansController (e2e)', () => {
       const createMealPlanDto2: CreateMealPlanDto = {
         patientId,
         name: 'Plano Semanal 2',
-        startDate: new Date('2024-04-13'),
-        endDate: new Date('2024-04-19'),
+        startDate: '2024-04-13',
+        endDate: '2024-04-19',
+        nutritionistId: mockNutritionistId,
         meals: [
           {
             name: 'Café da manhã',
@@ -316,8 +338,8 @@ describe('MealPlansController (e2e)', () => {
         ],
       };
 
-      await mealPlansService.create(createMealPlanDto1);
-      await mealPlansService.create(createMealPlanDto2);
+      await mealPlansService.create(createMealPlanDto1, mockNutritionistId);
+      await mealPlansService.create(createMealPlanDto2, mockNutritionistId);
     });
 
     it('should return all meal plans for a patient', async () => {

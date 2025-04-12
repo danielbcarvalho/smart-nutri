@@ -23,12 +23,21 @@ import {
   Description,
   Menu as MenuIcon,
 } from "@mui/icons-material";
+import { useQuery } from "@tanstack/react-query";
+import { patientService } from "../services/patientService";
 
 export function PatientLayout() {
   const { patientId } = useParams<{ patientId: string }>();
   const theme = useTheme();
   const mobile = useMediaQuery(theme.breakpoints.down("md"));
   const [drawerOpen, setDrawerOpen] = useState(false);
+
+  // Buscar os dados do paciente
+  const { data: patient } = useQuery({
+    queryKey: ["patient", patientId],
+    queryFn: () => patientService.getById(patientId!),
+    enabled: !!patientId,
+  });
 
   const menuItems = [
     {
@@ -59,7 +68,7 @@ export function PatientLayout() {
         Paciente:
         <br />
         <Typography component="span" color="primary">
-          Dani B
+          {patient?.name || "Carregando..."}
         </Typography>
       </Typography>
       <Divider />
