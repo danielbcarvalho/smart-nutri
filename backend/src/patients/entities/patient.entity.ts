@@ -63,12 +63,19 @@ export class Patient {
   @Column({ nullable: true })
   address: string;
 
+  @ApiProperty({ description: 'Data de nascimento do paciente' })
   @Column({ type: 'date', nullable: true })
   birthDate: string;
 
+  @ApiProperty({ description: 'Gênero do paciente' })
   @Column({ type: 'enum', enum: Gender, nullable: true })
   gender: Gender;
 
+  @ApiProperty({ description: 'Instagram do paciente' })
+  @Column({ nullable: true })
+  instagram: string;
+
+  @ApiProperty({ description: 'Status do paciente' })
   @Column({ type: 'enum', enum: PatientStatus, default: PatientStatus.ACTIVE })
   status: PatientStatus;
 

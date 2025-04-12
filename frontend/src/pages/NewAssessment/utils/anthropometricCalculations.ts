@@ -196,20 +196,70 @@ export const calculateCMB = (
   return armCircumferenceCm - Math.PI * tricepsSkinFoldCm;
 };
 
-// Classificação da CMB (simplificada)
+// Classificação da CMB baseada em tabelas de referência atualizadas
 export const getCMBClassification = (
   cmb: number,
-  gender: "M" | "F"
+  gender: "M" | "F",
+  age: number
 ): string => {
-  // Valores de referência variam por idade e gênero, esta é uma simplificação
+  console.log("🚀 ~ anthropometricCalculations.ts:205 ~ age 🚀🚀🚀:", age);
+  // Classificação para homens
   if (gender === "M") {
-    if (cmb < 23.0) return "Abaixo do normal";
-    if (cmb <= 29.3) return "Normal";
-    return "Acima do normal";
-  } else {
-    if (cmb < 18.5) return "Abaixo do normal";
-    if (cmb <= 23.2) return "Normal";
-    return "Acima do normal";
+    if (age >= 20 && age < 30) {
+      if (cmb < 20.0) return "Muito baixo";
+      if (cmb < 24.0) return "Baixo";
+      if (cmb < 28.0) return "Adequado";
+      if (cmb < 32.0) return "Alto";
+      return "Muito alto";
+    } else if (age >= 30 && age < 40) {
+      if (cmb < 19.5) return "Muito baixo";
+      if (cmb < 23.5) return "Baixo";
+      if (cmb < 27.5) return "Adequado";
+      if (cmb < 31.5) return "Alto";
+      return "Muito alto";
+    } else if (age >= 40 && age < 50) {
+      if (cmb < 19.0) return "Muito baixo";
+      if (cmb < 23.0) return "Baixo";
+      if (cmb < 27.0) return "Adequado";
+      if (cmb < 31.0) return "Alto";
+      return "Muito alto";
+    } else if (age >= 50) {
+      if (cmb < 18.5) return "Muito baixo";
+      if (cmb < 22.5) return "Baixo";
+      if (cmb < 26.5) return "Adequado";
+      if (cmb < 30.5) return "Alto";
+      return "Muito alto";
+    }
+  }
+  // Classificação para mulheres
+  else {
+    if (age >= 20 && age < 30) {
+      if (cmb < 15.0) return "Muito baixo";
+      if (cmb < 19.0) return "Baixo";
+      if (cmb < 23.0) return "Adequado";
+      if (cmb < 27.0) return "Alto";
+      return "Muito alto";
+    } else if (age >= 30 && age < 40) {
+      if (cmb < 14.5) return "Muito baixo";
+      if (cmb < 18.5) return "Baixo";
+      if (cmb < 22.5) return "Adequado";
+      if (cmb < 26.5) return "Alto";
+      return "Muito alto";
+    } else if (age >= 40 && age < 50) {
+      if (cmb < 14.0) return "Muito baixo";
+      if (cmb < 18.0) return "Baixo";
+      if (cmb < 22.0) return "Adequado";
+      if (cmb < 26.0) return "Alto";
+      return "Muito alto";
+    } else if (age >= 50) {
+      if (cmb < 13.5) return "Muito baixo";
+      if (cmb < 17.5) return "Baixo";
+      if (cmb < 21.5) return "Adequado";
+      if (cmb < 25.5) return "Alto";
+      return "Muito alto";
+    } else {
+      return "Não se aplica";
+    }
   }
 };
 
@@ -265,7 +315,7 @@ export const getBodyFatClassification = (
   if (gender === "M") {
     if (bodyFatPercentage < 6) return "Essencial";
     if (bodyFatPercentage < 14) return "Atlético";
-    if (bodyFatPercentage < 18) return "Fitness";
+    if (bodyFatPercentage < 18) return "Adequada";
     if (bodyFatPercentage < 25) return "Aceitável";
     return "Obesidade";
   } else {
@@ -404,7 +454,7 @@ export const calculateAnthropometricResults = (
   if (!isNaN(relaxedArm) && !isNaN(triceps)) {
     const cmb = calculateCMB(relaxedArm, triceps);
     results.cmb = `${cmb.toFixed(1)} cm`;
-    results.cmbClassification = getCMBClassification(cmb, gender);
+    results.cmbClassification = getCMBClassification(cmb, gender, age);
   }
 
   // Análises por dobras cutâneas

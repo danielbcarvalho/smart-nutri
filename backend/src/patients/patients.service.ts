@@ -119,7 +119,13 @@ export class PatientsService {
       }
     }
 
-    Object.assign(patient, updatePatientDto);
+    // Processa campos específicos
+    const processedDto = {
+      ...updatePatientDto,
+      instagram: updatePatientDto.instagram || undefined,
+    };
+
+    Object.assign(patient, processedDto);
     return this.patientRepository.save(patient);
   }
 
