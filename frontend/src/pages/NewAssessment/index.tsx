@@ -307,9 +307,7 @@ export function NewAssessment() {
         if (mostRecentMeasurement && mostRecentMeasurement.height) {
           // Atualiza apenas a altura
           const heightValue = mostRecentMeasurement.height
-            ? typeof mostRecentMeasurement.height === "number"
-              ? mostRecentMeasurement.height.toString()
-              : mostRecentMeasurement.height
+            ? Math.floor(Number(mostRecentMeasurement.height)).toString()
             : "";
 
           console.log(

@@ -106,7 +106,7 @@ export const getBMIClassification = (
   if (bmi < 18.5) {
     return "Abaixo do peso";
   } else if (bmi >= 18.5 && bmi < 25) {
-    return "Peso normal";
+    return "Peso adequado";
   } else if (bmi >= 25 && bmi < 30) {
     return "Sobrepeso";
   } else if (bmi >= 30 && bmi < 35) {
