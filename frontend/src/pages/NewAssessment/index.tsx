@@ -728,18 +728,11 @@ export function NewAssessment() {
             onChange={handleAccordionChange("basicData")}
           >
             <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-              <Typography>Dados antropométricos básicos</Typography>
+              <Typography variant="h6">
+                Dados antropométricos básicos
+              </Typography>
             </AccordionSummary>
             <AccordionDetails>
-              <Box sx={{ mb: 2 }}>
-                <Typography variant="body2" color="text.secondary">
-                  Paciente acamado?{" "}
-                  <Link href="#" color="primary">
-                    Clique aqui
-                  </Link>{" "}
-                  para estimar o peso.
-                </Typography>
-              </Box>
               {/* @ts-ignore */}
               <Grid container spacing={2}>
                 {/* @ts-ignore */}
@@ -789,7 +782,7 @@ export function NewAssessment() {
             onChange={handleAccordionChange("skinfolds")}
           >
             <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-              <Typography>Dobras cutâneas (mm)</Typography>
+              <Typography variant="h6">Dobras cutâneas (mm)</Typography>
             </AccordionSummary>
             <AccordionDetails>
               <Box sx={{ bgcolor: "grey.100", p: 2, mb: 3, borderRadius: 1 }}>
@@ -962,7 +955,9 @@ export function NewAssessment() {
             onChange={handleAccordionChange("circumferences")}
           >
             <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-              <Typography>Circunferências corporais (cm)</Typography>
+              <Typography variant="h6">
+                Circunferências corporais (cm)
+              </Typography>
             </AccordionSummary>
             <AccordionDetails>
               <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
@@ -1098,7 +1093,7 @@ export function NewAssessment() {
             onChange={handleAccordionChange("boneDiameter")}
           >
             <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-              <Typography>Diâmetro ósseo (cm)</Typography>
+              <Typography variant="h6">Diâmetro ósseo (cm)</Typography>
             </AccordionSummary>
             <AccordionDetails>
               <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
@@ -1144,7 +1139,7 @@ export function NewAssessment() {
             onChange={handleAccordionChange("bioimpedance")}
           >
             <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-              <Typography>Balança de bioimpedância</Typography>
+              <Typography variant="h6">Balança de bioimpedância</Typography>
             </AccordionSummary>
             <AccordionDetails>
               <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
@@ -1244,7 +1239,7 @@ export function NewAssessment() {
             onChange={handleAccordionChange("photos")}
           >
             <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-              <Typography>Evolução fotográfica</Typography>
+              <Typography variant="h6">Evolução fotográfica</Typography>
             </AccordionSummary>
             <AccordionDetails>
               <Typography variant="body2" color="text.secondary" gutterBottom>
@@ -1299,7 +1294,7 @@ export function NewAssessment() {
               sx={{ display: "flex", justifyContent: "space-between", mb: 2 }}
             >
               <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                <Typography variant="h6">Resultados analíticos</Typography>
+                <Typography variant="h5">Resultados analíticos</Typography>
                 <Tooltip title="Informações sobre os cálculos">
                   <HelpIcon color="action" fontSize="small" />
                 </Tooltip>
@@ -1310,7 +1305,7 @@ export function NewAssessment() {
             </Box>
 
             {/* Análises de pesos e medidas */}
-            <Typography variant="subtitle1" gutterBottom>
+            <Typography variant="h6" gutterBottom>
               Análises de pesos e medidas
             </Typography>
 
@@ -1318,8 +1313,10 @@ export function NewAssessment() {
               <Box
                 sx={{ display: "flex", justifyContent: "space-between", p: 2 }}
               >
-                <Typography>Peso atual</Typography>
-                <Typography>{anthropometricResults.currentWeight}</Typography>
+                <Typography sx={{ fontWeight: "bold" }}>Peso atual</Typography>
+                <Typography color="text.secondary">
+                  {anthropometricResults.currentWeight}
+                </Typography>
               </Box>
             </Box>
 
@@ -1327,8 +1324,12 @@ export function NewAssessment() {
               <Box
                 sx={{ display: "flex", justifyContent: "space-between", p: 2 }}
               >
-                <Typography>Altura atual</Typography>
-                <Typography>{anthropometricResults.currentHeight}</Typography>
+                <Typography sx={{ fontWeight: "bold" }}>
+                  Altura atual
+                </Typography>
+                <Typography color="text.secondary">
+                  {anthropometricResults.currentHeight}
+                </Typography>
               </Box>
             </Box>
 
@@ -1337,12 +1338,16 @@ export function NewAssessment() {
                 sx={{ display: "flex", justifyContent: "space-between", p: 2 }}
               >
                 <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                  <Typography>Índice de Massa Corporal</Typography>
+                  <Typography sx={{ fontWeight: "bold" }}>
+                    Índice de Massa Corporal
+                  </Typography>
                   <Tooltip title={getReferenceTooltip("bmi")}>
                     <HelpIcon color="action" fontSize="small" />
                   </Tooltip>
                 </Box>
-                <Typography>{anthropometricResults.bmi}</Typography>
+                <Typography color="text.secondary">
+                  {anthropometricResults.bmi}
+                </Typography>
               </Box>
             </Box>
 
@@ -1350,12 +1355,12 @@ export function NewAssessment() {
               <Box
                 sx={{ display: "flex", justifyContent: "space-between", p: 2 }}
               >
-                <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                  <Typography>Classificação do IMC</Typography>
-                  <Typography>
-                    {anthropometricResults.bmiClassification}
-                  </Typography>
-                </Box>
+                <Typography sx={{ fontWeight: "bold" }}>
+                  Classificação do IMC
+                </Typography>
+                <Typography color="text.secondary">
+                  {anthropometricResults.bmiClassification}
+                </Typography>
               </Box>
             </Box>
 
@@ -1363,8 +1368,10 @@ export function NewAssessment() {
               <Box
                 sx={{ display: "flex", justifyContent: "space-between", p: 2 }}
               >
-                <Typography>Faixa de peso ideal</Typography>
-                <Typography>
+                <Typography sx={{ fontWeight: "bold" }}>
+                  Faixa de peso ideal
+                </Typography>
+                <Typography color="text.secondary">
                   {anthropometricResults.idealWeightRange}
                 </Typography>
               </Box>
@@ -1375,12 +1382,29 @@ export function NewAssessment() {
                 sx={{ display: "flex", justifyContent: "space-between", p: 2 }}
               >
                 <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                  <Typography>Relação da Cintura/Quadril (RCQ)</Typography>
+                  <Typography sx={{ fontWeight: "bold" }}>
+                    Relação da Cintura/Quadril (RCQ)
+                  </Typography>
                   <Tooltip title={getReferenceTooltip("waistHipRatio")}>
                     <HelpIcon color="action" fontSize="small" />
                   </Tooltip>
                 </Box>
-                <Typography>{anthropometricResults.waistHipRatio}</Typography>
+                <Typography color="text.secondary">
+                  {anthropometricResults.waistHipRatio}
+                </Typography>
+              </Box>
+            </Box>
+
+            <Box sx={{ bgcolor: "grey.100", borderRadius: 1, mb: 1 }}>
+              <Box
+                sx={{ display: "flex", justifyContent: "space-between", p: 2 }}
+              >
+                <Typography sx={{ fontWeight: "bold" }}>
+                  Risco Metabólico por RCQ
+                </Typography>
+                <Typography color="text.secondary">
+                  {anthropometricResults.waistHipRiskClassification}
+                </Typography>
               </Box>
             </Box>
 
@@ -1389,25 +1413,14 @@ export function NewAssessment() {
                 sx={{ display: "flex", justifyContent: "space-between", p: 2 }}
               >
                 <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                  <Typography>Risco Metabólico por RCQ</Typography>
-                  <Typography>
-                    {anthropometricResults.waistHipRiskClassification}
-                  </Typography>
-                </Box>
-              </Box>
-            </Box>
-
-            <Box sx={{ bgcolor: "grey.100", borderRadius: 1, mb: 1 }}>
-              <Box
-                sx={{ display: "flex", justifyContent: "space-between", p: 2 }}
-              >
-                <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                  <Typography>CMB (cm)</Typography>
+                  <Typography sx={{ fontWeight: "bold" }}>CMB (cm)</Typography>
                   <Tooltip title={getReferenceTooltip("cmb")}>
                     <HelpIcon color="action" fontSize="small" />
                   </Tooltip>
                 </Box>
-                <Typography>{anthropometricResults.cmb}</Typography>
+                <Typography color="text.secondary">
+                  {anthropometricResults.cmb}
+                </Typography>
               </Box>
             </Box>
 
@@ -1415,8 +1428,10 @@ export function NewAssessment() {
               <Box
                 sx={{ display: "flex", justifyContent: "space-between", p: 2 }}
               >
-                <Typography>Classificação CMB</Typography>
-                <Typography>
+                <Typography sx={{ fontWeight: "bold" }}>
+                  Classificação CMB
+                </Typography>
+                <Typography color="text.secondary">
                   {anthropometricResults.cmbClassification}
                 </Typography>
               </Box>
@@ -1446,12 +1461,14 @@ export function NewAssessment() {
                 sx={{ display: "flex", justifyContent: "space-between", p: 2 }}
               >
                 <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                  <Typography>Percentual de Gordura</Typography>
+                  <Typography sx={{ fontWeight: "bold" }}>
+                    Percentual de Gordura
+                  </Typography>
                   <Tooltip title={getReferenceTooltip("bodyFatPercentage")}>
                     <HelpIcon color="action" fontSize="small" />
                   </Tooltip>
                 </Box>
-                <Typography>
+                <Typography color="text.secondary">
                   {anthropometricResults.bodyFatPercentage}
                 </Typography>
               </Box>
@@ -1461,8 +1478,10 @@ export function NewAssessment() {
               <Box
                 sx={{ display: "flex", justifyContent: "space-between", p: 2 }}
               >
-                <Typography>Percentual Ideal</Typography>
-                <Typography>
+                <Typography sx={{ fontWeight: "bold" }}>
+                  Percentual Ideal
+                </Typography>
+                <Typography color="text.secondary">
                   {anthropometricResults.idealFatPercentage}
                 </Typography>
               </Box>
@@ -1473,12 +1492,14 @@ export function NewAssessment() {
                 sx={{ display: "flex", justifyContent: "space-between", p: 2 }}
               >
                 <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                  <Typography>Classif. do % GC</Typography>
+                  <Typography sx={{ fontWeight: "bold" }}>
+                    Classif. do % GC
+                  </Typography>
                   <Tooltip title={getReferenceTooltip("bodyFatClassification")}>
                     <HelpIcon color="action" fontSize="small" />
                   </Tooltip>
                 </Box>
-                <Typography>
+                <Typography color="text.secondary">
                   {anthropometricResults.bodyFatClassification}
                 </Typography>
               </Box>
@@ -1488,8 +1509,12 @@ export function NewAssessment() {
               <Box
                 sx={{ display: "flex", justifyContent: "space-between", p: 2 }}
               >
-                <Typography>Peso de gordura</Typography>
-                <Typography>{anthropometricResults.fatMass}</Typography>
+                <Typography sx={{ fontWeight: "bold" }}>
+                  Peso de gordura
+                </Typography>
+                <Typography color="text.secondary">
+                  {anthropometricResults.fatMass}
+                </Typography>
               </Box>
             </Box>
 
@@ -1498,12 +1523,16 @@ export function NewAssessment() {
                 sx={{ display: "flex", justifyContent: "space-between", p: 2 }}
               >
                 <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                  <Typography>Peso ósseo</Typography>
+                  <Typography sx={{ fontWeight: "bold" }}>
+                    Peso ósseo
+                  </Typography>
                   <Tooltip title={getReferenceTooltip("boneMass")}>
                     <HelpIcon color="action" fontSize="small" />
                   </Tooltip>
                 </Box>
-                <Typography>{anthropometricResults.boneMass}</Typography>
+                <Typography color="text.secondary">
+                  {anthropometricResults.boneMass}
+                </Typography>
               </Box>
             </Box>
 
@@ -1512,12 +1541,16 @@ export function NewAssessment() {
                 sx={{ display: "flex", justifyContent: "space-between", p: 2 }}
               >
                 <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                  <Typography>Massa Muscular</Typography>
+                  <Typography sx={{ fontWeight: "bold" }}>
+                    Massa Muscular
+                  </Typography>
                   <Tooltip title={getReferenceTooltip("muscleMass")}>
                     <HelpIcon color="action" fontSize="small" />
                   </Tooltip>
                 </Box>
-                <Typography>{anthropometricResults.muscleMass}</Typography>
+                <Typography color="text.secondary">
+                  {anthropometricResults.muscleMass}
+                </Typography>
               </Box>
             </Box>
 
@@ -1526,12 +1559,16 @@ export function NewAssessment() {
                 sx={{ display: "flex", justifyContent: "space-between", p: 2 }}
               >
                 <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                  <Typography>Peso residual</Typography>
+                  <Typography sx={{ fontWeight: "bold" }}>
+                    Peso residual
+                  </Typography>
                   <Tooltip title={getReferenceTooltip("residualWeight")}>
                     <HelpIcon color="action" fontSize="small" />
                   </Tooltip>
                 </Box>
-                <Typography>{anthropometricResults.residualWeight}</Typography>
+                <Typography color="text.secondary">
+                  {anthropometricResults.residualWeight}
+                </Typography>
               </Box>
             </Box>
 
@@ -1539,8 +1576,12 @@ export function NewAssessment() {
               <Box
                 sx={{ display: "flex", justifyContent: "space-between", p: 2 }}
               >
-                <Typography>Massa Livre de Gordura</Typography>
-                <Typography>{anthropometricResults.fatFreeMass}</Typography>
+                <Typography sx={{ fontWeight: "bold" }}>
+                  Massa Livre de Gordura
+                </Typography>
+                <Typography color="text.secondary">
+                  {anthropometricResults.fatFreeMass}
+                </Typography>
               </Box>
             </Box>
 
@@ -1548,8 +1589,12 @@ export function NewAssessment() {
               <Box
                 sx={{ display: "flex", justifyContent: "space-between", p: 2 }}
               >
-                <Typography>Somatório de Dobras</Typography>
-                <Typography>{anthropometricResults.skinfoldsSum}</Typography>
+                <Typography sx={{ fontWeight: "bold" }}>
+                  Somatório de Dobras
+                </Typography>
+                <Typography color="text.secondary">
+                  {anthropometricResults.skinfoldsSum}
+                </Typography>
               </Box>
             </Box>
 
@@ -1557,8 +1602,12 @@ export function NewAssessment() {
               <Box
                 sx={{ display: "flex", justifyContent: "space-between", p: 2 }}
               >
-                <Typography>Densidade Corporal</Typography>
-                <Typography>{anthropometricResults.bodyDensity}</Typography>
+                <Typography sx={{ fontWeight: "bold" }}>
+                  Densidade Corporal
+                </Typography>
+                <Typography color="text.secondary">
+                  {anthropometricResults.bodyDensity}
+                </Typography>
               </Box>
             </Box>
 
@@ -1566,8 +1615,12 @@ export function NewAssessment() {
               <Box
                 sx={{ display: "flex", justifyContent: "space-between", p: 2 }}
               >
-                <Typography>Referência usada</Typography>
-                <Typography>{anthropometricResults.referenceUsed}</Typography>
+                <Typography sx={{ fontWeight: "bold" }}>
+                  Referência usada
+                </Typography>
+                <Typography color="text.secondary">
+                  {anthropometricResults.referenceUsed}
+                </Typography>
               </Box>
             </Box>
 
@@ -1592,8 +1645,10 @@ export function NewAssessment() {
               <Box
                 sx={{ display: "flex", justifyContent: "space-between", p: 2 }}
               >
-                <Typography>Percentual de Gordura</Typography>
-                <Typography>
+                <Typography sx={{ fontWeight: "bold" }}>
+                  Percentual de Gordura
+                </Typography>
+                <Typography color="text.secondary">
                   {anthropometricResults.bioimpedanceBodyFatPercentage}
                 </Typography>
               </Box>
@@ -1603,8 +1658,10 @@ export function NewAssessment() {
               <Box
                 sx={{ display: "flex", justifyContent: "space-between", p: 2 }}
               >
-                <Typography>Percentual Ideal</Typography>
-                <Typography>
+                <Typography sx={{ fontWeight: "bold" }}>
+                  Percentual Ideal
+                </Typography>
+                <Typography color="text.secondary">
                   {anthropometricResults.bioimpedanceIdealFatPercentage}
                 </Typography>
               </Box>
@@ -1615,12 +1672,14 @@ export function NewAssessment() {
                 sx={{ display: "flex", justifyContent: "space-between", p: 2 }}
               >
                 <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                  <Typography>Classif. do % GC</Typography>
+                  <Typography sx={{ fontWeight: "bold" }}>
+                    Classif. do % GC
+                  </Typography>
                   <Tooltip title={getReferenceTooltip("bodyFatClassification")}>
                     <HelpIcon color="action" fontSize="small" />
                   </Tooltip>
                 </Box>
-                <Typography>
+                <Typography color="text.secondary">
                   {anthropometricResults.bioimpedanceBodyFatClassification}
                 </Typography>
               </Box>
@@ -1630,8 +1689,10 @@ export function NewAssessment() {
               <Box
                 sx={{ display: "flex", justifyContent: "space-between", p: 2 }}
               >
-                <Typography>Percentual de Massa Muscular</Typography>
-                <Typography>
+                <Typography sx={{ fontWeight: "bold" }}>
+                  Percentual de Massa Muscular
+                </Typography>
+                <Typography color="text.secondary">
                   {anthropometricResults.bioimpedanceMuscleMassPercentage}
                 </Typography>
               </Box>
@@ -1641,22 +1702,28 @@ export function NewAssessment() {
               <Box
                 sx={{ display: "flex", justifyContent: "space-between", p: 2 }}
               >
-                <Typography>Massa Muscular</Typography>
-                <Tooltip title={getReferenceTooltip("muscleMass")}>
-                  <HelpIcon color="action" fontSize="small" />
-                </Tooltip>
+                <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                  <Typography sx={{ fontWeight: "bold" }}>
+                    Massa Muscular
+                  </Typography>
+                  <Tooltip title={getReferenceTooltip("muscleMass")}>
+                    <HelpIcon color="action" fontSize="small" />
+                  </Tooltip>
+                </Box>
+                <Typography color="text.secondary">
+                  {anthropometricResults.bioimpedanceMuscleMass}
+                </Typography>
               </Box>
-              <Typography>
-                {anthropometricResults.bioimpedanceMuscleMass}
-              </Typography>
             </Box>
 
             <Box sx={{ bgcolor: "grey.100", borderRadius: 1, mb: 1 }}>
               <Box
                 sx={{ display: "flex", justifyContent: "space-between", p: 2 }}
               >
-                <Typography>Água Corporal Total</Typography>
-                <Typography>
+                <Typography sx={{ fontWeight: "bold" }}>
+                  Água Corporal Total
+                </Typography>
+                <Typography color="text.secondary">
                   {anthropometricResults.bioimpedanceBodyWater}
                 </Typography>
               </Box>
@@ -1666,22 +1733,28 @@ export function NewAssessment() {
               <Box
                 sx={{ display: "flex", justifyContent: "space-between", p: 2 }}
               >
-                <Typography>Peso Ósseo</Typography>
-                <Tooltip title={getReferenceTooltip("boneMass")}>
-                  <HelpIcon color="action" fontSize="small" />
-                </Tooltip>
+                <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                  <Typography sx={{ fontWeight: "bold" }}>
+                    Peso Ósseo
+                  </Typography>
+                  <Tooltip title={getReferenceTooltip("boneMass")}>
+                    <HelpIcon color="action" fontSize="small" />
+                  </Tooltip>
+                </Box>
+                <Typography color="text.secondary">
+                  {anthropometricResults.bioimpedanceBoneMass}
+                </Typography>
               </Box>
-              <Typography>
-                {anthropometricResults.bioimpedanceBoneMass}
-              </Typography>
             </Box>
 
             <Box sx={{ bgcolor: "grey.100", borderRadius: 1, mb: 1 }}>
               <Box
                 sx={{ display: "flex", justifyContent: "space-between", p: 2 }}
               >
-                <Typography>Massa de gordura</Typography>
-                <Typography>
+                <Typography sx={{ fontWeight: "bold" }}>
+                  Massa de gordura
+                </Typography>
+                <Typography color="text.secondary">
                   {anthropometricResults.bioimpedanceFatMass}
                 </Typography>
               </Box>
@@ -1691,8 +1764,10 @@ export function NewAssessment() {
               <Box
                 sx={{ display: "flex", justifyContent: "space-between", p: 2 }}
               >
-                <Typography>Massa Livre de Gordura</Typography>
-                <Typography>
+                <Typography sx={{ fontWeight: "bold" }}>
+                  Massa Livre de Gordura
+                </Typography>
+                <Typography color="text.secondary">
                   {anthropometricResults.bioimpedanceFatFreeMass}
                 </Typography>
               </Box>
@@ -1702,8 +1777,10 @@ export function NewAssessment() {
               <Box
                 sx={{ display: "flex", justifyContent: "space-between", p: 2 }}
               >
-                <Typography>Índice de Gordura Visceral</Typography>
-                <Typography>
+                <Typography sx={{ fontWeight: "bold" }}>
+                  Índice de Gordura Visceral
+                </Typography>
+                <Typography color="text.secondary">
                   {anthropometricResults.bioimpedanceVisceralFat}
                 </Typography>
               </Box>
@@ -1713,8 +1790,10 @@ export function NewAssessment() {
               <Box
                 sx={{ display: "flex", justifyContent: "space-between", p: 2 }}
               >
-                <Typography>Idade Metabólica</Typography>
-                <Typography>
+                <Typography sx={{ fontWeight: "bold" }}>
+                  Idade Metabólica
+                </Typography>
+                <Typography color="text.secondary">
                   {anthropometricResults.bioimpedanceMetabolicAge}
                 </Typography>
               </Box>
