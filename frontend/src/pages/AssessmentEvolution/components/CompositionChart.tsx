@@ -118,6 +118,7 @@ export function CompositionChart({ measurements }: CompositionChartProps) {
           stackId="a"
           fill={theme.palette.warning.light}
           radius={[4, 4, 0, 0]}
+          barSize={Math.min(100, 400 / data.length)}
         />
         <Bar
           dataKey="massaLivre"
@@ -125,6 +126,7 @@ export function CompositionChart({ measurements }: CompositionChartProps) {
           stackId="a"
           fill={theme.palette.success.light}
           radius={[4, 4, 0, 0]}
+          barSize={Math.min(100, 400 / data.length)}
         />
       </ComposedChart>
     </ResponsiveContainer>

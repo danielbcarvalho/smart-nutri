@@ -6,7 +6,6 @@ import {
   TableHead,
   TableRow,
   Typography,
-  Paper,
 } from "@mui/material";
 import { format } from "date-fns";
 import { Measurement } from "../../../services/patientService";
@@ -208,69 +207,82 @@ export function AnalysisTable({ measurements }: AnalysisTableProps) {
   ];
 
   const renderTable = (title: string, parameters: AnalysisParameter[]) => (
-    <>
-      <Typography variant="h6" gutterBottom sx={{ mt: 3 }}>
+    <TableContainer sx={{ mb: 4 }}>
+      <Typography variant="h6" sx={{ p: 2, fontWeight: "bold" }}>
         {title}
       </Typography>
-      <TableContainer>
-        <Table size="small">
-          <TableHead>
-            <TableRow>
-              <TableCell>Parâmetro</TableCell>
-              {sortedMeasurements.map((m) => (
-                <TableCell key={m.id} align="center">
-                  {formatDate(m.date)}
-                </TableCell>
-              ))}
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {parameters.map((param, index) => (
-              <TableRow key={index}>
-                <TableCell component="th" scope="row">
-                  {param.label}
-                </TableCell>
-                {sortedMeasurements.map((measurement, mIndex) => {
-                  const value = param.getValue(measurement);
-                  const previousMeasurement = sortedMeasurements[mIndex - 1];
-                  let variation = "";
-                  if (
-                    previousMeasurement &&
-                    param.getVariation &&
-                    typeof value === "number"
-                  ) {
-                    const previousValue = param.getValue(previousMeasurement);
-                    if (typeof previousValue === "number") {
-                      variation = param.getVariation(value, previousValue);
-                    }
-                  }
-
-                  return (
-                    <TableCell key={measurement.id} align="center">
-                      {value}{" "}
-                      {variation && (
-                        <span style={{ color: "gray" }}>{variation}</span>
-                      )}
-                      {param.getClassification && (
-                        <div style={{ color: "gray", fontSize: "0.8em" }}>
-                          {param.getClassification(value)}
-                        </div>
-                      )}
-                    </TableCell>
-                  );
-                })}
-              </TableRow>
+      <Table>
+        <TableHead>
+          <TableRow>
+            <TableCell sx={{ fontWeight: "bold" }}>Parâmetro</TableCell>
+            {sortedMeasurements.map((m) => (
+              <TableCell key={m.id} align="center" sx={{ fontWeight: "bold" }}>
+                {formatDate(m.date)}
+              </TableCell>
             ))}
-          </TableBody>
-        </Table>
-      </TableContainer>
-    </>
+          </TableRow>
+        </TableHead>
+        <TableBody>
+          {parameters.map((param, index) => (
+            <TableRow key={index}>
+              <TableCell component="th" scope="row" sx={{ fontWeight: "bold" }}>
+                {param.label}
+              </TableCell>
+              {sortedMeasurements.map((measurement, mIndex) => {
+                const value = param.getValue(measurement);
+                const prevValue =
+                  mIndex > 0
+                    ? param.getValue(sortedMeasurements[mIndex - 1])
+                    : null;
+                const variation =
+                  mIndex > 0 &&
+                  param.getVariation &&
+                  !isNaN(Number(value)) &&
+                  !isNaN(Number(prevValue))
+                    ? param.getVariation(Number(value), Number(prevValue))
+                    : "";
+                const classification = param.getClassification?.(value) || "";
+
+                return (
+                  <TableCell key={measurement.id} align="center">
+                    {value}
+                    {variation && (
+                      <Typography
+                        component="span"
+                        color={
+                          variation.includes("+")
+                            ? "success.main"
+                            : "error.main"
+                        }
+                        sx={{ ml: 1, fontSize: "0.8em" }}
+                      >
+                        {variation}
+                      </Typography>
+                    )}
+                    {classification && (
+                      <Typography
+                        component="div"
+                        variant="caption"
+                        color="text.secondary"
+                        sx={{ mt: 0.5 }}
+                      >
+                        {classification}
+                      </Typography>
+                    )}
+                  </TableCell>
+                );
+              })}
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+    </TableContainer>
   );
 
   return (
-    <Paper sx={{ p: 2 }}>
+    <>
       {renderTable("Análises básicas", parameters)}
       {renderTable("Medidas antropométricas", anthropometricParameters)}
-    </Paper>
+    </>
   );
 }
