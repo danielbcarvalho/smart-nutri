@@ -22,7 +22,7 @@ import {
   useTheme,
   Alert,
 } from "@mui/material";
-import { Add, Visibility, Edit, Delete, Timeline } from "@mui/icons-material";
+import { Add, Edit, Delete, Timeline } from "@mui/icons-material";
 import { patientService } from "../../services/patientService";
 import { format } from "date-fns";
 import { LoadingBackdrop } from "../../components/LoadingBackdrop";
@@ -43,12 +43,6 @@ export function Assessments() {
     open: false,
     message: "",
     severity: "success" as "success" | "error",
-  });
-
-  const { data: patient } = useQuery({
-    queryKey: ["patient", patientId],
-    queryFn: () => patientService.getById(patientId!),
-    enabled: !!patientId,
   });
 
   const { data: measurements, isLoading } = useQuery({
@@ -85,11 +79,6 @@ export function Assessments() {
 
   const handleNewAssessment = () => {
     navigate(`/patient/${patientId}/assessments/new`);
-  };
-
-  const handleViewAssessment = (measurementId: string) => {
-    // Navegar para a página de detalhes da avaliação
-    navigate(`/patient/${patientId}/assessments/view/${measurementId}`);
   };
 
   const handleEditAssessment = (measurementId: string) => {
@@ -143,13 +132,24 @@ export function Assessments() {
         }}
       >
         <Typography variant="h5">Avaliações Antropométricas</Typography>
-        <Button
-          variant="contained"
-          startIcon={<Add />}
-          onClick={handleNewAssessment}
-        >
-          Nova Avaliação
-        </Button>
+        <Stack direction="row" spacing={2}>
+          <Button
+            variant="contained"
+            startIcon={<Timeline />}
+            onClick={() =>
+              navigate(`/patient/${patientId}/assessments/evolution`)
+            }
+          >
+            Evolução
+          </Button>
+          <Button
+            variant="contained"
+            startIcon={<Add />}
+            onClick={handleNewAssessment}
+          >
+            Nova Avaliação
+          </Button>
+        </Stack>
       </Box>
 
       {measurements && measurements.length > 0 ? (

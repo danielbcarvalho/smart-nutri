@@ -245,6 +245,69 @@ export class PatientsController {
     return this.patientsService.findMeasurements(id, req.user.id);
   }
 
+  @Get(':id/measurements/evolution')
+  @ApiOperation({
+    summary: 'Listar medições para evolução',
+    description:
+      'Retorna medições de um paciente em um intervalo de datas específico, limitado a 5 registros',
+  })
+  @ApiParam({
+    name: 'id',
+    description: 'ID do paciente',
+    example: '123e4567-e89b-12d3-a456-426614174000',
+    schema: {
+      type: 'string',
+      format: 'uuid',
+    },
+  })
+  @ApiQuery({
+    name: 'startDate',
+    required: false,
+    type: Date,
+    description: 'Data inicial do período',
+  })
+  @ApiQuery({
+    name: 'endDate',
+    required: false,
+    type: Date,
+    description: 'Data final do período',
+  })
+  @ApiQuery({
+    name: 'limit',
+    required: false,
+    type: Number,
+    description: 'Limite de registros (máximo 5)',
+    example: 5,
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Lista de medições retornada com sucesso',
+    type: [Measurement],
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'Paciente não encontrado',
+  })
+  findMeasurementsEvolution(
+    @Param('id') id: string,
+    @Request() req: RequestWithUser,
+    @Query('startDate') startDate?: string,
+    @Query('endDate') endDate?: string,
+    @Query('limit') limit?: number,
+  ) {
+    const parsedStartDate = startDate ? new Date(startDate) : undefined;
+    const parsedEndDate = endDate ? new Date(endDate) : undefined;
+    const parsedLimit = Math.min(limit || 5, 5); // Ensure limit doesn't exceed 5
+
+    return this.patientsService.findMeasurementsByDateRange(
+      id,
+      req.user.id,
+      parsedStartDate,
+      parsedEndDate,
+      parsedLimit,
+    );
+  }
+
   @Delete(':id/measurements/:measurementId')
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({

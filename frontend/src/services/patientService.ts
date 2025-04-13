@@ -188,6 +188,26 @@ export const patientService = {
     return response.data;
   },
 
+  findMeasurementsEvolution: async (
+    patientId: string,
+    startDate?: string,
+    endDate?: string,
+    limit: number = 5
+  ): Promise<Measurement[]> => {
+    const params = new URLSearchParams();
+    if (startDate) params.append("startDate", startDate);
+    if (endDate) params.append("endDate", endDate);
+    if (limit) params.append("limit", limit.toString());
+
+    const response = await api.get(
+      `/patients/${patientId}/measurements/evolution`,
+      {
+        params,
+      }
+    );
+    return response.data;
+  },
+
   createMeasurement: async (
     patientId: string,
     measurement: CreateMeasurementDto

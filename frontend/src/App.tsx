@@ -20,6 +20,7 @@ import { PrivateRoute } from "./components/PrivateRoute";
 import { Box, Typography } from "@mui/material";
 import { Assessments } from "./pages/Assessments/index";
 import { ViewAssessment } from "./pages/ViewAssessment";
+import { AssessmentEvolution } from "./pages/AssessmentEvolution";
 
 // Placeholder components
 const DocumentsPlaceholder = () => (
@@ -117,6 +118,10 @@ const router = createBrowserRouter([
               {
                 path: "view/:measurementId",
                 element: <ViewAssessment />,
+              },
+              {
+                path: "evolution",
+                element: <AssessmentEvolution />,
               },
             ],
           },

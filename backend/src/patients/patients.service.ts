@@ -162,6 +162,35 @@ export class PatientsService {
     });
   }
 
+  async findMeasurementsByDateRange(
+    patientId: string,
+    nutritionistId: string,
+    startDate?: Date,
+    endDate?: Date,
+    limit: number = 5,
+  ): Promise<Measurement[]> {
+    const patient = await this.findOne(patientId, nutritionistId);
+
+    const queryBuilder = this.measurementRepository
+      .createQueryBuilder('measurement')
+      .where('measurement.patient_id = :patientId', { patientId: patient.id })
+      .andWhere('measurement.nutritionist_id = :nutritionistId', {
+        nutritionistId,
+      })
+      .orderBy('measurement.date', 'DESC')
+      .take(limit);
+
+    if (startDate) {
+      queryBuilder.andWhere('measurement.date >= :startDate', { startDate });
+    }
+
+    if (endDate) {
+      queryBuilder.andWhere('measurement.date <= :endDate', { endDate });
+    }
+
+    return queryBuilder.getMany();
+  }
+
   async removeMeasurement(
     patientId: string,
     measurementId: string,
