@@ -14,13 +14,12 @@ export class EnhanceFoodEntity1712600200000 implements MigrationInterface {
       ADD COLUMN "usage_count_meal_plans" INTEGER NOT NULL DEFAULT 0,
       ADD COLUMN "usage_count_favorites" INTEGER NOT NULL DEFAULT 0,
       ADD COLUMN "usage_count_searches" INTEGER NOT NULL DEFAULT 0,
-      ADD COLUMN "category_hierarchy" JSONB DEFAULT '[]'::jsonb,
-      ADD COLUMN "search_vector" tsvector
+      ADD COLUMN "category_hierarchy" JSONB DEFAULT '[]'::jsonb
     `);
 
-    // Create GIN index for categories array
+    // Create GIN index for tags JSONB
     await queryRunner.query(`
-      CREATE INDEX "IDX_foods_categories" ON "foods" USING GIN ("categories")
+      CREATE INDEX "IDX_foods_tags" ON "foods" USING GIN ("tags")
     `);
 
     // Create GIN index for category_hierarchy JSONB
@@ -74,7 +73,10 @@ export class EnhanceFoodEntity1712600200000 implements MigrationInterface {
       BEGIN
         NEW.search_vector = 
           setweight(to_tsvector('portuguese', COALESCE(NEW.name, '')), 'A') ||
-          setweight(to_tsvector('portuguese', array_to_string(COALESCE(NEW.categories, '{}'::text[]), ' ')), 'B');
+          setweight(to_tsvector('portuguese', COALESCE(NEW.category, '')), 'B') ||
+          setweight(to_tsvector('portuguese', COALESCE(
+            (SELECT string_agg(value::text, ' ')
+             FROM jsonb_array_elements_text(NEW.tags)), '')), 'C');
         RETURN NEW;
       END;
       $$ LANGUAGE plpgsql;
@@ -98,7 +100,10 @@ export class EnhanceFoodEntity1712600200000 implements MigrationInterface {
       UPDATE foods
       SET search_vector = 
         setweight(to_tsvector('portuguese', COALESCE(name, '')), 'A') ||
-        setweight(to_tsvector('portuguese', array_to_string(COALESCE(categories, '{}'::text[]), ' ')), 'B')
+        setweight(to_tsvector('portuguese', COALESCE(category, '')), 'B') ||
+        setweight(to_tsvector('portuguese', COALESCE(
+          (SELECT string_agg(value::text, ' ')
+           FROM jsonb_array_elements_text(tags)), '')), 'C')
     `);
   }
 
@@ -131,12 +136,11 @@ export class EnhanceFoodEntity1712600200000 implements MigrationInterface {
     await queryRunner.query(
       `DROP INDEX IF EXISTS "IDX_foods_category_hierarchy"`,
     );
-    await queryRunner.query(`DROP INDEX IF EXISTS "IDX_foods_categories"`);
+    await queryRunner.query(`DROP INDEX IF EXISTS "IDX_foods_tags"`);
 
     // Drop columns
     await queryRunner.query(`
       ALTER TABLE "foods"
-      DROP COLUMN "search_vector",
       DROP COLUMN "category_hierarchy",
       DROP COLUMN "usage_count_searches",
       DROP COLUMN "usage_count_favorites",

@@ -25,8 +25,6 @@ import { join } from 'path';
         password: configService.get('DB_PASSWORD'),
         database: configService.get('DB_DATABASE'),
         entities: [join(__dirname, '**', '*.entity.{ts,js}')],
-        migrations: [join(__dirname, 'database', 'migrations', '*.{ts,js}')],
-        migrationsRun: true,
         synchronize: false,
         logging: true,
       }),
