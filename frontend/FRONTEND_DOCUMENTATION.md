@@ -196,6 +196,30 @@ Located in `src/components/`:
 - **PrivateRoute**: Route guard for authenticated pages.
 - **RecentPatients**: List of recently accessed patients.
 - **StatsCards**: Dashboard statistics.
+- **SearchModal**: Modal de pesquisa global, utilizado no Header para busca de pacientes e planos alimentares. Possui feedback visual aprimorado, estado de carregamento, mensagem de vazio e navegação por teclado.
+
+#### SearchModal
+
+O componente `SearchModal` é responsável por toda a experiência de busca global no sistema. Ele é utilizado diretamente no Header e oferece:
+
+- Campo de busca customizado com botão de limpar
+- Feedback visual de carregamento (spinner)
+- Mensagem amigável quando não há resultados:
+  _"Ops! Não encontramos nada com o termo utilizado. Tente usar outras palavras-chave ou revise sua busca."_
+- Resultados exibidos em cards, com indicação de tipo (Paciente/Plano alimentar)
+- Navegação por teclado (Enter/Barra de espaço)
+- Acessibilidade (ARIA labels)
+- Animações suaves e design responsivo
+
+**Uso:**
+
+```tsx
+// No Header.tsx
+<SearchModal open={searchOpen} onClose={() => setSearchOpen(false)} />
+```
+
+**Localização:**
+`src/components/SearchModal.tsx`
 
 ### Component Hierarchy Example
 
@@ -204,6 +228,7 @@ graph TD
   Layout -->|wraps| Dashboard
   Dashboard --> StatsCards
   Dashboard --> RecentPatients
+  Header --> SearchModal
   Patients --> PatientCard
   PatientInfo --> PatientMeasurements
 ```

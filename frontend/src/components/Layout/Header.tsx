@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   AppBar,
@@ -6,33 +6,28 @@ import {
   Typography,
   IconButton,
   Box,
-  Modal,
-  TextField,
   Tooltip,
-  Paper,
   Avatar,
   Divider,
+  Modal,
+  Paper,
 } from "@mui/material";
 import {
   Notifications as NotificationsIcon,
   Search as SearchIcon,
-  Close as CloseIcon,
   Groups as GroupsIcon,
   ExitToApp as LogoutIcon,
   Person as PersonIcon,
+  Close as CloseIcon,
 } from "@mui/icons-material";
-import { searchAll } from "../../services/search.service";
-import { SearchResult } from "../../types/search";
 import { authService } from "../../services/authService";
-import debounce from "lodash/debounce";
+import { SearchModal } from "../SearchModal";
 
 export const Header = () => {
   const navigate = useNavigate();
   const [searchOpen, setSearchOpen] = useState(false);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
-  const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
-  const [searchValue, setSearchValue] = useState("");
 
   const user = authService.getUser();
 
@@ -46,24 +41,6 @@ export const Header = () => {
 
   const handleLogout = () => {
     authService.logout();
-  };
-
-  const debouncedSearch = useCallback(
-    debounce(async (term: string) => {
-      if (term.length >= 3) {
-        const results = await searchAll(term);
-        setSearchResults(results);
-      } else {
-        setSearchResults([]);
-      }
-    }, 300),
-    []
-  );
-
-  const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const newValue = event.target.value;
-    setSearchValue(newValue);
-    debouncedSearch(newValue);
   };
 
   return (
@@ -155,69 +132,7 @@ export const Header = () => {
       </AppBar>
 
       {/* Modal de pesquisa */}
-      <Modal
-        open={searchOpen}
-        onClose={() => setSearchOpen(false)}
-        aria-labelledby="search-modal"
-      >
-        <Box
-          sx={{
-            position: "absolute",
-            top: "50%",
-            left: "50%",
-            transform: "translate(-50%, -50%)",
-            width: "80%",
-            maxWidth: 600,
-            bgcolor: "background.paper",
-            boxShadow: 24,
-            p: 4,
-            borderRadius: 1,
-          }}
-        >
-          <Box sx={{ display: "flex", alignItems: "center", gap: 2, mb: 2 }}>
-            <SearchIcon sx={{ color: "text.secondary" }} />
-            <TextField
-              fullWidth
-              placeholder="Pesquisar..."
-              variant="standard"
-              value={searchValue}
-              onChange={handleSearchChange}
-              autoFocus
-            />
-            <IconButton
-              onClick={() => setSearchOpen(false)}
-              sx={{ color: "text.secondary" }}
-            >
-              <CloseIcon />
-            </IconButton>
-          </Box>
-
-          {/* Resultados da pesquisa */}
-          {searchResults.length > 0 && (
-            <Paper sx={{ mt: 2, maxHeight: 400, overflow: "auto" }}>
-              {searchResults.map((result, index) => (
-                <Box
-                  key={index}
-                  sx={{
-                    p: 1,
-                    "&:hover": { bgcolor: "action.hover" },
-                    cursor: "pointer",
-                  }}
-                  onClick={() => {
-                    navigate(result.link);
-                    setSearchOpen(false);
-                  }}
-                >
-                  <Typography variant="subtitle1">{result.title}</Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    {result.description}
-                  </Typography>
-                </Box>
-              ))}
-            </Paper>
-          )}
-        </Box>
-      </Modal>
+      <SearchModal open={searchOpen} onClose={() => setSearchOpen(false)} />
 
       {/* Modal de Notificações */}
       <Modal
