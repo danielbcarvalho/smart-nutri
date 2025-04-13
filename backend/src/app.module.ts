@@ -9,6 +9,7 @@ import { StatsModule } from './stats/stats.module';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { join } from 'path';
+import { SearchModule } from './search/search.module';
 
 @Module({
   imports: [
@@ -35,6 +36,7 @@ import { join } from 'path';
     PatientsModule,
     MealPlansModule,
     StatsModule,
+    SearchModule,
   ],
   controllers: [AppController],
   providers: [AppService],
