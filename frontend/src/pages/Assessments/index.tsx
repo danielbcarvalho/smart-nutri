@@ -19,6 +19,7 @@ import {
   DialogContentText,
   DialogTitle,
   Snackbar,
+  useTheme,
   Alert,
 } from "@mui/material";
 import { Add, Visibility, Edit, Delete, Timeline } from "@mui/icons-material";
@@ -28,6 +29,7 @@ import { LoadingBackdrop } from "../../components/LoadingBackdrop";
 import { useState } from "react";
 
 export function Assessments() {
+  const theme = useTheme();
   const { patientId } = useParams<{ patientId: string }>();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -153,23 +155,47 @@ export function Assessments() {
       {measurements && measurements.length > 0 ? (
         <TableContainer component={Paper}>
           <Table>
-            <TableHead sx={{ bgcolor: "grey.100" }}>
+            <TableHead>
               <TableRow>
-                <TableCell>Data</TableCell>
-                <TableCell>Peso (kg)</TableCell>
-                <TableCell>Altura (cm)</TableCell>
-                <TableCell>IMC</TableCell>
-                <TableCell>% Gordura</TableCell>
-                <TableCell>Massa Magra (kg)</TableCell>
-                <TableCell>Ações</TableCell>
+                <TableCell
+                  sx={{ fontWeight: "bold", color: theme.palette.primary.main }}
+                >
+                  Data
+                </TableCell>
+                <TableCell
+                  sx={{ fontWeight: "bold", color: theme.palette.primary.main }}
+                >
+                  Peso (kg)
+                </TableCell>
+                <TableCell
+                  sx={{ fontWeight: "bold", color: theme.palette.primary.main }}
+                >
+                  Altura (cm)
+                </TableCell>
+                <TableCell
+                  sx={{ fontWeight: "bold", color: theme.palette.primary.main }}
+                >
+                  IMC
+                </TableCell>
+                <TableCell
+                  sx={{ fontWeight: "bold", color: theme.palette.primary.main }}
+                >
+                  % Gordura
+                </TableCell>
+                <TableCell
+                  sx={{ fontWeight: "bold", color: theme.palette.primary.main }}
+                >
+                  Massa Magra (kg)
+                </TableCell>
+                <TableCell
+                  sx={{ fontWeight: "bold", color: theme.palette.primary.main }}
+                >
+                  Ações
+                </TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
               {measurements.map((measurement) => {
-                console.log(
-                  "🚀 ~ index.tsx:169 ~ measurement 🚀🚀🚀:",
-                  measurement
-                );
                 // Calcula o IMC se tiver altura e peso
                 const height = Number(measurement.height);
                 const weight = Number(measurement.weight);
@@ -181,7 +207,17 @@ export function Assessments() {
                 }
 
                 return (
-                  <TableRow key={measurement.id}>
+                  <TableRow
+                    key={measurement.id}
+                    hover
+                    sx={{
+                      cursor: "pointer",
+                      "&:hover": {
+                        backgroundColor: `${theme.palette.primary.main}08`,
+                      },
+                    }}
+                    onClick={() => handleEditAssessment(measurement.id)}
+                  >
                     <TableCell>
                       {formatDate(measurement.date as string)}
                     </TableCell>
@@ -201,22 +237,10 @@ export function Assessments() {
                         <IconButton
                           size="small"
                           color="primary"
-                          onClick={() => handleViewAssessment(measurement.id)}
-                          title="Visualizar"
-                        >
-                          <Visibility fontSize="small" />
-                        </IconButton>
-                        <IconButton
-                          size="small"
-                          color="primary"
-                          title="Evolução"
-                        >
-                          <Timeline fontSize="small" />
-                        </IconButton>
-                        <IconButton
-                          size="small"
-                          color="primary"
-                          onClick={() => handleEditAssessment(measurement.id)}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleEditAssessment(measurement.id);
+                          }}
                           title="Editar"
                         >
                           <Edit fontSize="small" />
@@ -224,7 +248,10 @@ export function Assessments() {
                         <IconButton
                           size="small"
                           color="error"
-                          onClick={() => handleDeleteClick(measurement.id)}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDeleteClick(measurement.id);
+                          }}
                           title="Excluir"
                         >
                           <Delete fontSize="small" />

@@ -9,6 +9,62 @@ SmartNutri's frontend is a React + TypeScript application, using:
 - **React Router** for navigation
 - **Axios** for HTTP requests
 
+---
+
+## Global Error Handling & Notifications
+
+### Overview
+
+The application implements a global error handling and notification system to provide clear, user-friendly feedback for API/network errors and other unexpected issues. This system is based on:
+
+- A global Axios interceptor for API error handling
+- A Notification Context and MUI Snackbar/Alert for displaying messages
+- A notification bus utility for triggering notifications from anywhere (including outside React components)
+
+### How it Works
+
+1. **All API requests** use a single Axios instance (`src/lib/axios.ts`) with interceptors for:
+   - Attaching authentication tokens
+   - Handling errors globally (network, HTTP, unexpected)
+2. **On error**, the interceptor triggers a notification using the notification bus.
+3. **NotificationProvider** (`src/context/NotificationContext.tsx`) listens to the bus and manages notification state.
+4. **ErrorSnackbar** (`src/components/ErrorHandling/ErrorSnackbar.tsx`) displays the message to the user at the top of the screen.
+
+### Example Error Flow
+
+```mermaid
+sequenceDiagram
+    participant User
+    participant UI
+    participant Axios
+    participant NotificationBus
+    participant Snackbar
+
+    User->>UI: Triggers API action
+    UI->>Axios: Makes request
+    Axios-->>Axios: Error occurs (e.g., 500, network)
+    Axios->>NotificationBus: notify("Error message", "error")
+    NotificationBus->>Snackbar: Show error message
+    Snackbar->>User: Displays error
+```
+
+### Usage
+
+- **To trigger a notification manually** (e.g., in a custom hook or utility):
+  ```ts
+  import { notify } from "src/utils/notificationBus";
+  notify("Custom message", "error");
+  ```
+- **All API errors** are handled automatically; no need to catch and display errors in each component.
+
+### Benefits
+
+- Consistent, user-friendly error feedback
+- No silent failures: all errors are visible to testers and users
+- Centralized logic for easy maintenance and future improvements
+
+---
+
 This document provides a comprehensive guide to the architecture, main components, pages, services, flows, and best practices. It also includes onboarding instructions and visual diagrams to help new and existing developers.
 
 ---

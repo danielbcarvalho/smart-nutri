@@ -3,6 +3,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ThemeProvider } from "@mui/material/styles";
 import CssBaseline from "@mui/material/CssBaseline";
 import { theme } from "./theme/index";
+import ErrorSnackbar from "./components/ErrorHandling/ErrorSnackbar";
 import { Layout } from "./layouts/Layout";
 import { PatientLayout } from "./layouts/PatientLayout";
 import { Home } from "./pages/Home";
@@ -24,6 +25,13 @@ import { ViewAssessment } from "./pages/ViewAssessment";
 const DocumentsPlaceholder = () => (
   <Box sx={{ p: 3 }}>
     <Typography variant="h5">Documentos</Typography>
+    <Typography color="text.secondary">Em desenvolvimento...</Typography>
+  </Box>
+);
+
+const PlansPlaceholder = () => (
+  <Box sx={{ p: 3 }}>
+    <Typography variant="h5">Planos alimentares</Typography>
     <Typography color="text.secondary">Em desenvolvimento...</Typography>
   </Box>
 );
@@ -72,15 +80,18 @@ const router = createBrowserRouter([
             children: [
               {
                 index: true,
-                element: <MealPlan />,
+                element: <PlansPlaceholder />,
+                // element: <MealPlan />,
               },
               {
                 path: "new",
-                element: <NewMealPlan />,
+                element: <PlansPlaceholder />,
+                // element: <NewMealPlan />,
               },
               {
                 path: ":planId",
-                element: <MealPlanDetails />,
+                element: <PlansPlaceholder />,
+                // element: <MealPlanDetails />,
               },
             ],
           },
@@ -124,6 +135,7 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <ThemeProvider theme={theme}>
         <CssBaseline />
+        <ErrorSnackbar />
         <RouterProvider router={router} />
       </ThemeProvider>
     </QueryClientProvider>

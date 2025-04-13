@@ -158,7 +158,7 @@ export function PatientLayout() {
         sx={{
           flexGrow: 1,
           bgcolor: theme.palette.grey[100],
-          mt: mobile ? "112px" : "64px", // 64px + novo header no mobile
+          // mt: mobile ? "112px" : "64px", // 64px + novo header no mobile
           ml: { xs: 0, md: "250px" },
           p: { xs: 2, md: 4 },
           minHeight: mobile ? "calc(100vh - 112px)" : "calc(100vh - 64px)",
