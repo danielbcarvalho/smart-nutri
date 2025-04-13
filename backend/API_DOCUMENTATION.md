@@ -9,6 +9,8 @@ API para gestão completa de nutrição, incluindo:
 - Planos alimentares
 - Base de dados de alimentos
 
+---
+
 ## Endpoints
 
 ### Pacientes (`/patients`)
@@ -83,6 +85,8 @@ API para gestão completa de nutrição, incluindo:
   - 204: Paciente removido
   - 404: Paciente não encontrado
 
+---
+
 ### Alimentos (`/foods`)
 
 #### Criar Alimento
@@ -145,6 +149,8 @@ API para gestão completa de nutrição, incluindo:
 - **Respostas**:
   - 201: Alimento importado
   - 404: Alimento não encontrado na API
+
+---
 
 ### Planos Alimentares (`/meal-plans`)
 
@@ -217,6 +223,278 @@ API para gestão completa de nutrição, incluindo:
   - 201: Refeição adicionada
   - 400: Dados inválidos
   - 404: Plano não encontrado
+
+---
+
+### Templates de Planos Alimentares (`/meal-plan-templates`)
+
+#### Listar Templates
+
+- **GET** `/meal-plan-templates`
+- **Descrição**: Lista todos os templates de planos alimentares disponíveis.
+- **Parâmetros**: Nenhum.
+- **Exemplo de Requisição**:
+  - Headers:
+    - Authorization: Bearer {token}
+- **Exemplo de Resposta**:
+  ```json
+  [
+    {
+      "id": "uuid",
+      "name": "Template Básico",
+      "description": "Plano alimentar básico",
+      "isPublic": true,
+      "meals": [
+        {
+          "id": "uuid",
+          "name": "Café da Manhã",
+          "description": "Refeição matinal",
+          "time": "08:00",
+          "foods": [
+            {
+              "id": "uuid",
+              "name": "Pão Integral",
+              "portion": "2 fatias",
+              "calories": 140,
+              "protein": 6,
+              "carbs": 28,
+              "fat": 2,
+              "category": "Carboidratos",
+              "tags": ["integral", "café da manhã"]
+            }
+          ]
+        }
+      ],
+      "createdAt": "2024-03-20T10:00:00Z",
+      "updatedAt": "2024-03-20T10:00:00Z"
+    }
+  ]
+  ```
+- **Códigos de Status**:
+  - 200: Lista de templates retornada com sucesso
+  - 401: Não autorizado
+
+---
+
+#### Criar Template
+
+- **POST** `/meal-plan-templates`
+- **Descrição**: Cria um novo template de plano alimentar.
+- **Parâmetros**: Nenhum (body da requisição obrigatório).
+- **Corpo da Requisição**:
+  ```json
+  {
+    "name": "Template Básico",
+    "description": "Plano alimentar básico",
+    "isPublic": true,
+    "meals": [
+      {
+        "name": "Café da Manhã",
+        "description": "Refeição matinal",
+        "time": "08:00",
+        "foods": [
+          {
+            "name": "Pão Integral",
+            "portion": "2 fatias",
+            "category": "Carboidratos",
+            "tags": ["integral", "café da manhã"]
+          }
+        ]
+      }
+    ]
+  }
+  ```
+- **Exemplo de Requisição**:
+  - Headers:
+    - Authorization: Bearer {token}
+    - Content-Type: application/json
+- **Exemplo de Resposta**:
+  ```json
+  {
+    "id": "uuid",
+    "name": "Template Básico",
+    "description": "Plano alimentar básico",
+    "isPublic": true,
+    "meals": [ ... ],
+    "createdAt": "2024-03-20T10:00:00Z",
+    "updatedAt": "2024-03-20T10:00:00Z"
+  }
+  ```
+- **Códigos de Status**:
+  - 201: Template criado com sucesso
+  - 400: Dados inválidos
+  - 401: Não autorizado
+
+---
+
+#### Buscar Template
+
+- **GET** `/meal-plan-templates/{id}`
+- **Descrição**: Retorna os detalhes de um template específico.
+- **Parâmetros**:
+  - id (string, path): ID do template
+- **Exemplo de Requisição**:
+  - Headers:
+    - Authorization: Bearer {token}
+- **Exemplo de Resposta**:
+  ```json
+  {
+    "id": "uuid",
+    "name": "Template Básico",
+    "description": "Plano alimentar básico",
+    "isPublic": true,
+    "meals": [ ... ],
+    "createdAt": "2024-03-20T10:00:00Z",
+    "updatedAt": "2024-03-20T10:00:00Z"
+  }
+  ```
+- **Códigos de Status**:
+  - 200: Template encontrado
+  - 404: Template não encontrado
+  - 401: Não autorizado
+
+---
+
+#### Atualizar Template
+
+- **PATCH** `/meal-plan-templates/{id}`
+- **Descrição**: Atualiza um template de plano alimentar existente.
+- **Parâmetros**:
+  - id (string, path): ID do template
+- **Corpo da Requisição**:
+  ```json
+  {
+    "name": "Template Básico Atualizado",
+    "description": "Plano alimentar básico atualizado",
+    "isPublic": false
+  }
+  ```
+- **Exemplo de Requisição**:
+  - Headers:
+    - Authorization: Bearer {token}
+    - Content-Type: application/json
+- **Exemplo de Resposta**:
+  ```json
+  {
+    "id": "uuid",
+    "name": "Template Básico Atualizado",
+    "description": "Plano alimentar básico atualizado",
+    "isPublic": false,
+    "meals": [ ... ],
+    "createdAt": "2024-03-20T10:00:00Z",
+    "updatedAt": "2024-03-20T10:00:00Z"
+  }
+  ```
+- **Códigos de Status**:
+  - 200: Template atualizado com sucesso
+  - 400: Dados inválidos
+  - 404: Template não encontrado
+  - 401: Não autorizado
+
+---
+
+#### Remover Template
+
+- **DELETE** `/meal-plan-templates/{id}`
+- **Descrição**: Remove um template de plano alimentar.
+- **Parâmetros**:
+  - id (string, path): ID do template
+- **Exemplo de Requisição**:
+  - Headers:
+    - Authorization: Bearer {token}
+- **Códigos de Status**:
+  - 204: Template removido com sucesso
+  - 404: Template não encontrado
+  - 401: Não autorizado
+
+---
+
+#### Buscar Alimentos
+
+- **GET** `/meal-plan-templates/search/foods?query={termo}`
+- **Descrição**: Busca alimentos disponíveis para templates de planos alimentares pelo termo informado.
+- **Parâmetros**:
+  - query (string, query): Termo de busca
+- **Exemplo de Requisição**:
+  - Headers:
+    - Authorization: Bearer {token}
+- **Exemplo de Resposta**:
+  ```json
+  [
+    {
+      "id": "uuid",
+      "name": "Pão Integral",
+      "portion": "2 fatias",
+      "calories": 140,
+      "protein": 6,
+      "carbs": 28,
+      "fat": 2,
+      "category": "Carboidratos",
+      "tags": ["integral", "café da manhã"]
+    }
+  ]
+  ```
+- **Códigos de Status**:
+  - 200: Lista de alimentos retornada com sucesso
+  - 401: Não autorizado
+
+---
+
+#### Criar Plano a partir de Template
+
+- **POST** `/meal-plan-templates/{id}/create-plan/{patientId}`
+- **Descrição**: Cria um novo plano alimentar para um paciente a partir de um template.
+- **Parâmetros**:
+  - id (string, path): ID do template
+  - patientId (string, path): ID do paciente
+- **Exemplo de Requisição**:
+  - Headers:
+    - Authorization: Bearer {token}
+- **Exemplo de Resposta**:
+  ```json
+  {
+    "id": "uuid",
+    "name": "Plano Alimentar - João",
+    "description": "Plano alimentar baseado no Template Básico",
+    "startDate": "2024-03-20T00:00:00Z",
+    "endDate": "2024-03-27T00:00:00Z",
+    "patient": {
+      "id": "uuid",
+      "name": "João Silva"
+    },
+    "meals": [
+      {
+        "id": "uuid",
+        "name": "Café da Manhã",
+        "description": "Refeição matinal",
+        "time": "08:00",
+        "foods": [
+          {
+            "id": "uuid",
+            "name": "Pão Integral",
+            "portion": "2 fatias",
+            "calories": 140,
+            "protein": 6,
+            "carbs": 28,
+            "fat": 2,
+            "category": "Carboidratos",
+            "consumed": false
+          }
+        ]
+      }
+    ],
+    "createdAt": "2024-03-20T10:00:00Z",
+    "updatedAt": "2024-03-20T10:00:00Z"
+  }
+  ```
+- **Códigos de Status**:
+  - 201: Plano criado com sucesso
+  - 404: Template ou paciente não encontrado
+  - 401: Não autorizado
+
+---
+
+---
 
 ## Modelos de Dados
 
@@ -326,6 +604,8 @@ API para gestão completa de nutrição, incluindo:
 }
 ```
 
+---
+
 ## Códigos de Erro
 
 - **400**: Dados inválidos fornecidos
@@ -335,6 +615,8 @@ API para gestão completa de nutrição, incluindo:
 - **409**: Conflito (ex: CPF/email já existe)
 - **500**: Erro interno do servidor
 
+---
+
 ## Autenticação
 
 A API utiliza autenticação JWT (Bearer Token). Para acessar endpoints protegidos, inclua o token no header:
@@ -343,10 +625,14 @@ A API utiliza autenticação JWT (Bearer Token). Para acessar endpoints protegid
 Authorization: Bearer <seu_token_jwt>
 ```
 
+---
+
 ## Rate Limiting
 
 - 100 requisições por minuto por IP
 - 1000 requisições por hora por IP
+
+---
 
 ## Versionamento
 

@@ -25,6 +25,13 @@
 
 Backend da aplicação SmartNutri, desenvolvido com NestJS e TypeORM.
 
+## Documentation
+
+- [API Documentation](./API_DOCUMENTATION.md)
+- [Database & Migrations](./DATABASE_DOCUMENTATION.md)
+
+Para detalhes completos sobre os endpoints da API e o esquema do banco de dados, consulte os arquivos acima.
+
 ## Project setup
 
 ```bash

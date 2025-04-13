@@ -1,236 +1,308 @@
 # SmartNutri Frontend Documentation
 
-## Visão Geral
+## Overview
 
-Frontend da aplicação SmartNutri, desenvolvido com React e TypeScript, utilizando:
+SmartNutri's frontend is a React + TypeScript application, using:
 
-- Material-UI para componentes
-- React Query para gerenciamento de estado e cache
-- React Router para navegação
-- Axios para requisições HTTP
+- **Material-UI** for UI components and theming
+- **React Query** for server state management and caching
+- **React Router** for navigation
+- **Axios** for HTTP requests
 
-## Estrutura do Projeto
+This document provides a comprehensive guide to the architecture, main components, pages, services, flows, and best practices. It also includes onboarding instructions and visual diagrams to help new and existing developers.
 
-### Diretórios Principais
+---
+
+## Onboarding for New Developers
+
+### 1. Prerequisites
+
+- Node.js (v18+ recommended)
+- npm (v9+) or yarn
+- Git
+
+### 2. Setup
+
+```bash
+git clone https://github.com/your-org/smartnutri.git
+cd smartnutri/frontend
+npm install
+# or
+yarn install
+```
+
+### 3. Environment
+
+- Copy `.env.example` to `.env` and configure as needed.
+- Ensure the backend is running and accessible (see backend documentation).
+
+### 4. Running the App
+
+```bash
+npm run dev
+# or
+yarn dev
+```
+
+The app will be available at [http://localhost:5173](http://localhost:5173) (default Vite port).
+
+### 5. Contribution Workflow
+
+- Create a feature branch: `git checkout -b feature/your-feature`
+- Follow the [Checklist for New Features](#checklist-for-new-features)
+- Open a pull request and request review
+- Ensure all tests pass and documentation is updated
+
+---
+
+## Project Structure
 
 ```
 src/
-├── components/     # Componentes reutilizáveis
-├── pages/         # Páginas da aplicação
-├── services/      # Serviços de API
-├── hooks/         # Custom hooks
-├── contexts/      # Contextos React
-├── types/         # Definições de tipos TypeScript
-├── utils/         # Funções utilitárias
-└── assets/        # Recursos estáticos
+├── components/     # Reusable UI components
+├── layouts/        # Layout components (app-wide or section-wide)
+├── pages/          # Main pages and flows
+├── services/       # API and business logic
+├── lib/            # Shared libraries (e.g., axios instance)
+├── theme/          # Theme configuration
+├── types/          # TypeScript type definitions
+├── assets/         # Static assets
 ```
 
-## Componentes Principais
+---
 
-### Layout
+## Architecture Diagram
 
-- `MainLayout`: Layout principal da aplicação
-  - Header com navegação
-  - Sidebar com menu
-  - Área de conteúdo principal
-
-### Páginas
-
-1. **Dashboard**
-
-   - Visão geral do sistema
-   - Cards com informações importantes
-   - Gráficos e estatísticas
-
-2. **Pacientes**
-
-   - Lista de pacientes
-   - Formulário de cadastro/edição
-   - Detalhes do paciente
-   - Histórico de avaliações
-
-3. **Planos Alimentares**
-
-   - Lista de planos
-   - Criação/edição de planos
-   - Visualização detalhada
-   - Adição de refeições
-
-4. **Alimentos**
-   - Lista de alimentos
-   - Busca e filtros
-   - Cadastro manual
-   - Importação da API
-
-## Padrões de Desenvolvimento
-
-### 1. Componentes
-
-- Usar functional components
-- Implementar TypeScript
-- Seguir princípios de componentização
-- Documentar props com JSDoc
-
-Exemplo:
-
-```typescript
-interface ButtonProps {
-  /** Texto do botão */
-  label: string;
-  /** Função chamada ao clicar */
-  onClick: () => void;
-  /** Variante do botão */
-  variant?: "primary" | "secondary";
-}
-
-export const Button: React.FC<ButtonProps> = ({
-  label,
-  onClick,
-  variant = "primary",
-}) => {
-  // ...
-};
+```mermaid
+graph TD
+  App[App.tsx] -->|uses| Router[React Router]
+  Router -->|renders| Layouts
+  Layouts -->|wraps| Pages
+  Pages -->|compose| Components
+  Pages -->|call| Services
+  Services -->|use| Axios
 ```
 
-### 2. Estado e Dados
+---
 
-- Usar React Query para dados do servidor
-- Context API para estado global
-- Local state para estado de UI
-- Custom hooks para lógica reutilizável
+## Main Layouts
 
-### 3. Estilização
+- **Layout**: Root layout, provides app-wide structure (header, footer, main content).
+- **PatientLayout**: Specialized layout for patient-related pages, includes sidebar navigation.
 
-- Usar Material-UI
-- Seguir tema da aplicação
-- Manter consistência visual
-- Usar styled-components quando necessário
+---
 
-### 4. Formulários
+## Main Pages & Flows
 
-- Usar React Hook Form
-- Implementar validação com Yup
-- Manter feedback visual
-- Tratar erros adequadamente
+Each page is a directory under `src/pages/` and typically exports a main component.
 
-## Checklist para Novas Features
+- **Home**: Landing/dashboard page for the app.
+- **Login**: Authentication page for nutritionists.
+- **Register**: Nutritionist registration.
+- **Dashboard**: System overview, stats, and quick access.
+- **Patients**: List, search, and manage patients.
+- **PatientForm**: Create/edit patient details.
+- **PatientInfo**: View patient profile and contact info.
+- **PatientMealPlan**: List meal plans for a patient.
+- **MealPlan**: List, create, edit, and delete meal plans.
+- **MealPlanDetails**: View and manage details of a specific meal plan.
+- **Assessments**: List and manage patient assessments.
+- **NewAssessment**: Create a new assessment (complex, multi-section form).
+- **Measurements**: List and manage body measurements.
+- **ViewAssessment**: View details and evolution of a specific assessment.
 
-### 1. Planejamento
+### Example: Main Flow - New Assessment
 
-- [ ] Consultar documentação existente
-- [ ] Identificar componentes similares
-- [ ] Planejar estrutura de dados
-- [ ] Definir fluxo de usuário
+```mermaid
+flowchart TD
+  Start[Start New Assessment] --> Basic[Fill Basic Data]
+  Basic --> Skinfolds[Enter Skinfolds]
+  Skinfolds --> Circumferences[Enter Circumferences]
+  Circumferences --> Bone[Enter Bone Diameters]
+  Bone --> Bioimpedance[Enter Bioimpedance]
+  Bioimpedance --> Save[Save Assessment]
+  Save --> Results[View Results]
+```
 
-### 2. Desenvolvimento
+---
 
-- [ ] Criar tipos TypeScript
-- [ ] Implementar componentes
-- [ ] Adicionar testes
-- [ ] Documentar props e funções
+## Main Components
 
-### 3. Integração
+Located in `src/components/`:
 
-- [ ] Integrar com API
-- [ ] Implementar tratamento de erros
-- [ ] Adicionar loading states
-- [ ] Testar em diferentes dispositivos
+- **AssessmentButton**: Triggers assessment actions.
+- **FoodSearch**: Search and select foods.
+- **LoadingBackdrop**: Displays loading overlay.
+- **MealPlan**: UI for creating and displaying meal plans.
+- **MealPlanButton**: Action button for meal plans.
+- **PatientCard**: Displays patient summary.
+- **PatientMeasurements**: Modal for entering/viewing measurements.
+- **PrivateRoute**: Route guard for authenticated pages.
+- **RecentPatients**: List of recently accessed patients.
+- **StatsCards**: Dashboard statistics.
 
-### 4. Documentação
+### Component Hierarchy Example
 
-- [ ] Atualizar este documento
-- [ ] Documentar novos componentes
-- [ ] Adicionar exemplos de uso
-- [ ] Atualizar tipos globais
+```mermaid
+graph TD
+  Layout -->|wraps| Dashboard
+  Dashboard --> StatsCards
+  Dashboard --> RecentPatients
+  Patients --> PatientCard
+  PatientInfo --> PatientMeasurements
+```
 
-## Boas Práticas
+---
 
-### 1. Performance
+## Main Services
 
-- Implementar lazy loading
-- Otimizar re-renders
-- Usar memoização quando necessário
-- Minimizar bundle size
+Located in `src/services/`:
 
-### 2. Acessibilidade
+- **api.ts**: Axios instance with interceptors.
+- **authService.ts**: Authentication (login, register, get user, logout).
+- **foodService.ts**: Food search, favorites, macro calculations.
+- **mealPlanService.ts**: CRUD for meal plans and meals.
+- **patientService.ts**: CRUD for patients and measurements.
+- **search.service.ts**: Global search.
 
-- Usar roles ARIA
-- Implementar navegação por teclado
-- Manter contraste adequado
-- Testar com leitores de tela
+---
 
-### 3. Testes
+## Expanded Flow Explanations
 
-- Testes unitários para componentes
-- Testes de integração
-- Testes de fluxo
-- Testes de acessibilidade
+### New Assessment (src/pages/NewAssessment)
 
-### 4. Código
+- Multi-section form for anthropometric data.
+- Handles basic data, skinfolds, circumferences, bone diameters, and bioimpedance.
+- Uses React state and controlled components for each section.
+- Validates and calculates results before saving.
+- On save, persists data and shows results with charts.
 
-- Seguir ESLint
-- Usar Prettier
-- Manter código limpo
-- Documentar funções complexas
+### Meal Plan Management
 
-## Fluxos Principais
+- Users can create, edit, and delete meal plans for patients.
+- Each plan contains multiple meals, each with foods and macros.
+- UI supports drag-and-drop, toggling, and inline editing.
 
-### 1. Cadastro de Paciente
+### Patient Management
 
-1. Acessar lista de pacientes
-2. Clicar em "Novo Paciente"
-3. Preencher formulário
-4. Validar dados
-5. Salvar e redirecionar
+- List, search, and filter patients.
+- Create/edit via PatientForm.
+- View details and measurements in PatientInfo and PatientMeasurements.
 
-### 2. Criação de Plano Alimentar
+---
 
-1. Selecionar paciente
-2. Criar novo plano
-3. Adicionar refeições
-4. Definir alimentos
-5. Salvar e visualizar
+## Development Standards
 
-### 3. Busca de Alimentos
+### Components
 
-1. Acessar lista de alimentos
-2. Usar barra de busca
-3. Filtrar resultados
-4. Selecionar alimento
-5. Ver detalhes
+- Use functional components and TypeScript.
+- Follow componentization principles.
+- Document props with JSDoc.
+- Keep components small and focused.
 
-## Manutenção
+### State & Data
 
-### 1. Atualizações
+- Use React Query for server data.
+- Use Context API for global state.
+- Use local state for UI.
+- Extract reusable logic into custom hooks.
 
-- Manter dependências atualizadas
-- Remover código não utilizado
-- Otimizar performance
-- Atualizar documentação
+### Styling
 
-### 2. Debugging
+- Use Material-UI and theme.
+- Maintain visual consistency.
+- Use styled-components if needed.
 
-- Usar React DevTools
-- Implementar logging
-- Monitorar erros
-- Testar em diferentes browsers
+### Forms
 
-## Recursos e Referências
+- Use React Hook Form.
+- Validate with Yup.
+- Provide clear feedback and error handling.
 
-### 1. Documentação
+---
+
+## Checklist for New Features
+
+### Planning
+
+- [ ] Review existing documentation
+- [ ] Identify similar components
+- [ ] Plan data structure and user flow
+
+### Development
+
+- [ ] Define TypeScript types
+- [ ] Implement components
+- [ ] Add tests
+- [ ] Document props and functions
+
+### Integration
+
+- [ ] Integrate with API
+- [ ] Handle errors and loading states
+- [ ] Test on multiple devices
+
+### Documentation
+
+- [ ] Update this document
+- [ ] Document new components and usage
+- [ ] Update global types
+
+---
+
+## Best Practices
+
+### Performance
+
+- Use lazy loading for routes/components.
+- Optimize re-renders and memoize where needed.
+- Minimize bundle size.
+
+### Accessibility
+
+- Use ARIA roles and labels.
+- Support keyboard navigation.
+- Ensure color contrast.
+- Test with screen readers.
+
+### Testing
+
+- Write unit and integration tests.
+- Test main flows and accessibility.
+
+### Code Quality
+
+- Follow ESLint and Prettier.
+- Keep code clean and well-documented.
+
+---
+
+## Maintenance
+
+### Updates
+
+- Keep dependencies up to date.
+- Remove unused code.
+- Optimize performance.
+- Update documentation regularly.
+
+### Debugging
+
+- Use React DevTools and browser tools.
+- Implement logging and error monitoring.
+- Test across browsers.
+
+---
+
+## References
 
 - [Material-UI](https://mui.com/)
 - [React Query](https://react-query.tanstack.com/)
 - [React Router](https://reactrouter.com/)
 - [TypeScript](https://www.typescriptlang.org/)
 
-### 2. Ferramentas
+---
 
-- React DevTools
-- Chrome DevTools
-- VS Code Extensions
-- Testing Tools
+## Contact & Support
 
-## Contato e Suporte
-
-Para dúvidas sobre o frontend ou sugestões de melhoria, entre em contato com a equipe de desenvolvimento.
+For questions or suggestions, contact the development team.
