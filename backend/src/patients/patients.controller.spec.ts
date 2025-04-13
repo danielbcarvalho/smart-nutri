@@ -97,6 +97,10 @@ describe('PatientsController', () => {
         consultationFrequency: ConsultationFrequency.MONTHLY,
         customConsultationDays: 0,
         address: '123 Main St',
+        isSample: false,
+        instagram: '',
+        photos: [],
+        consultations: [],
       };
 
       const createSpy = jest.spyOn(service, 'create');
@@ -142,6 +146,10 @@ describe('PatientsController', () => {
           consultationFrequency: ConsultationFrequency.MONTHLY,
           customConsultationDays: 0,
           address: '123 Main St',
+          isSample: false,
+          instagram: '',
+          photos: [],
+          consultations: [],
         },
         {
           id: '2',
@@ -171,6 +179,10 @@ describe('PatientsController', () => {
           consultationFrequency: ConsultationFrequency.MONTHLY,
           customConsultationDays: 0,
           address: '456 Main St',
+          isSample: false,
+          instagram: '',
+          photos: [],
+          consultations: [],
         },
       ];
 
@@ -213,6 +225,10 @@ describe('PatientsController', () => {
         consultationFrequency: ConsultationFrequency.MONTHLY,
         customConsultationDays: 0,
         address: '123 Main St',
+        isSample: false,
+        instagram: '',
+        photos: [],
+        consultations: [],
       };
 
       const findOneSpy = jest.spyOn(service, 'findOne');
@@ -258,6 +274,10 @@ describe('PatientsController', () => {
         consultationFrequency: ConsultationFrequency.MONTHLY,
         customConsultationDays: 0,
         address: '123 Main St',
+        isSample: false,
+        instagram: '',
+        photos: [],
+        consultations: [],
       };
 
       const updateSpy = jest.spyOn(service, 'update');
@@ -289,7 +309,7 @@ describe('PatientsController', () => {
 
   describe('createMeasurement', () => {
     it('should create a measurement for a patient', async () => {
-      const patient = {
+      const patient: Patient = {
         id: '1',
         name: 'John Doe',
         email: 'john@example.com',
@@ -317,6 +337,10 @@ describe('PatientsController', () => {
         consultationFrequency: ConsultationFrequency.MONTHLY,
         customConsultationDays: 0,
         address: '123 Main St',
+        isSample: false,
+        instagram: '',
+        photos: [],
+        consultations: [],
       };
 
       const createMeasurementDto: CreateMeasurementDto = {
@@ -337,17 +361,36 @@ describe('PatientsController', () => {
         id: '1',
         date: new Date(createMeasurementDto.date),
         weight: createMeasurementDto.weight,
+        height: 180,
+        sittingHeight: 0,
+        kneeHeight: 0,
+        bodyFat: 20,
+        fatMass: 15,
+        muscleMassPercentage: 40,
+        muscleMass: 35,
+        fatFreeMass: 0,
+        boneMass: 0,
+        visceralFat: 8,
+        bodyWater: 60,
+        metabolicAge: 0,
         measurements: createMeasurementDto.measurements,
+        skinfolds: {},
+        boneDiameters: {},
+        skinfoldFormula: '',
         patientId: '1',
-        patient: patient,
+        patient: {
+          ...patient,
+          isSample: false,
+          instagram: '',
+          photos: [],
+          consultations: [],
+        },
         createdAt: new Date(),
         updatedAt: new Date(),
-        bodyFat: 20,
-        muscleMass: 35,
-        bodyWater: 60,
-        visceralFat: 8,
         nutritionist: {} as Nutritionist,
         nutritionistId: '123e4567-e89b-12d3-a456-426614174000',
+        consultation: {} as any,
+        consultationId: '',
       };
 
       const createMeasurementSpy = jest.spyOn(service, 'createMeasurement');
@@ -369,7 +412,7 @@ describe('PatientsController', () => {
 
   describe('findMeasurements', () => {
     it('should return an array of measurements for a patient', async () => {
-      const patient = {
+      const patient: Patient = {
         id: '1',
         name: 'John Doe',
         email: 'john@example.com',
@@ -397,6 +440,10 @@ describe('PatientsController', () => {
         consultationFrequency: ConsultationFrequency.MONTHLY,
         customConsultationDays: 0,
         address: '123 Main St',
+        isSample: false,
+        instagram: '',
+        photos: [],
+        consultations: [],
       };
 
       const measurements: Measurement[] = [
@@ -404,6 +451,18 @@ describe('PatientsController', () => {
           id: '1',
           date: new Date(),
           weight: 75,
+          height: 180,
+          sittingHeight: 0,
+          kneeHeight: 0,
+          bodyFat: 20,
+          fatMass: 15,
+          muscleMassPercentage: 40,
+          muscleMass: 35,
+          fatFreeMass: 0,
+          boneMass: 0,
+          visceralFat: 8,
+          bodyWater: 60,
+          metabolicAge: 0,
           measurements: {
             chest: 95,
             waist: 80,
@@ -411,16 +470,23 @@ describe('PatientsController', () => {
             arm: 32,
             thigh: 55,
           },
+          skinfolds: {},
+          boneDiameters: {},
+          skinfoldFormula: '',
           patientId: '1',
-          patient: patient,
+          patient: {
+            ...patient,
+            isSample: false,
+            instagram: '',
+            photos: [],
+            consultations: [],
+          },
           createdAt: new Date(),
           updatedAt: new Date(),
-          bodyFat: 20,
-          muscleMass: 35,
-          bodyWater: 60,
-          visceralFat: 8,
           nutritionist: {} as Nutritionist,
           nutritionistId: '123e4567-e89b-12d3-a456-426614174000',
+          consultation: {} as any,
+          consultationId: '',
         },
       ];
 

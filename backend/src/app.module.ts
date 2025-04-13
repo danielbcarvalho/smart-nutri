@@ -10,6 +10,8 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { join } from 'path';
 import { SearchModule } from './search/search.module';
+import { SupabaseModule } from './supabase/supabase.module';
+import { supabaseConfig } from './config/supabase.config';
 
 @Module({
   imports: [
@@ -37,6 +39,7 @@ import { SearchModule } from './search/search.module';
     MealPlansModule,
     StatsModule,
     SearchModule,
+    SupabaseModule,
   ],
   controllers: [AppController],
   providers: [AppService],

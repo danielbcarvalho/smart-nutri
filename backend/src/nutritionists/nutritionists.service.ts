@@ -9,12 +9,14 @@ import * as bcrypt from 'bcrypt';
 import { Nutritionist } from './entities/nutritionist.entity';
 import { CreateNutritionistDto } from './dto/create-nutritionist.dto';
 import { UpdateNutritionistDto } from './dto/update-nutritionist.dto';
+import { SamplePatientService } from '../patients/services/sample-patient.service';
 
 @Injectable()
 export class NutritionistsService {
   constructor(
     @InjectRepository(Nutritionist)
     private nutritionistRepository: Repository<Nutritionist>,
+    private readonly samplePatientService: SamplePatientService,
   ) {}
 
   private readonly selectFields: (keyof Nutritionist)[] = [
@@ -65,6 +67,9 @@ export class NutritionistsService {
         `Nutricionista com ID ${savedNutritionist.id} não encontrado`,
       );
     }
+
+    // Cria paciente exemplo para o novo nutricionista
+    this.samplePatientService.createSamplePatient(result.id);
 
     return result;
   }

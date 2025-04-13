@@ -25,6 +25,32 @@
 
 Backend da aplicação SmartNutri, desenvolvido com NestJS e TypeORM.
 
+---
+
+## Sample Patient Feature
+
+A partir de agora, todo nutricionista recém-cadastrado recebe automaticamente um "paciente exemplo" (flag `isSample: true`) vinculado à sua conta. Este paciente contém dados fictícios realistas, incluindo avaliações, consultas e plano alimentar, permitindo que o nutricionista explore e aprenda a plataforma sem precisar cadastrar um paciente real inicialmente.
+
+- O paciente exemplo é facilmente identificável e não interfere nos dados reais.
+- O campo `isSample` pode ser utilizado para filtrar ou ocultar pacientes de demonstração em listagens e relatórios.
+- O paciente exemplo é criado automaticamente logo após o cadastro do nutricionista.
+
+---
+
+## Supabase Integration
+
+Este projeto utiliza Supabase como backend para banco de dados e armazenamento de arquivos em todos os ambientes (desenvolvimento, staging e produção).
+
+### Variáveis de ambiente
+
+Adicione as seguintes variáveis ao seu arquivo `.env` (veja `.env.example`):
+
+- `SUPABASE_URL`
+- `SUPABASE_ANON_KEY`
+- `SUPABASE_SERVICE_ROLE_KEY`
+
+Consulte o arquivo [docs/SUPABASE_INTEGRATION_PLAN.md](../docs/SUPABASE_INTEGRATION_PLAN.md) para o plano completo de integração e etapas detalhadas de configuração.
+
 ## Documentation
 
 - [API Documentation](./API_DOCUMENTATION.md)

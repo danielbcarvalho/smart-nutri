@@ -37,6 +37,10 @@ export enum ConsultationFrequency {
 
 @Entity('patients')
 export class Patient {
+  @ApiProperty({ description: 'Indica se é um paciente de exemplo' })
+  @Column({ default: false })
+  isSample: boolean;
+
   @ApiProperty({ description: 'ID do paciente' })
   @PrimaryGeneratedColumn('uuid')
   id: string;

@@ -6,6 +6,10 @@ import { Patient } from './entities/patient.entity';
 import { Measurement } from './entities/measurement.entity';
 import { PatientPhoto } from './entities/patient-photo.entity';
 import { Consultation } from './entities/consultation.entity';
+import { MealPlan } from '../meal-plans/entities/meal-plan.entity';
+import { Meal } from '../meal-plans/entities/meal.entity';
+import { MealFood } from '../meal-plans/entities/meal-food.entity';
+import { Food } from '../foods/entities/food.entity';
 import { PatientPhotosService } from './services/patient-photos.service';
 import { PatientPhotosController } from './controllers/patient-photos.controller';
 import { ConsultationsService } from './services/consultations.service';
@@ -18,6 +22,10 @@ import { ConsultationsController } from './controllers/consultations.controller'
       Measurement,
       PatientPhoto,
       Consultation,
+      MealPlan,
+      Meal,
+      MealFood,
+      Food,
     ]),
   ],
   controllers: [
@@ -25,7 +33,17 @@ import { ConsultationsController } from './controllers/consultations.controller'
     PatientPhotosController,
     ConsultationsController,
   ],
-  providers: [PatientsService, PatientPhotosService, ConsultationsService],
-  exports: [PatientsService, PatientPhotosService, ConsultationsService],
+  providers: [
+    PatientsService,
+    PatientPhotosService,
+    ConsultationsService,
+    require('./services/sample-patient.service').SamplePatientService,
+  ],
+  exports: [
+    PatientsService,
+    PatientPhotosService,
+    ConsultationsService,
+    require('./services/sample-patient.service').SamplePatientService,
+  ],
 })
 export class PatientsModule {}

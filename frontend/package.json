@@ -4,10 +4,15 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
-    "build": "tsc -b && vite build",
+    "dev": "vite --mode development",
+    "dev:prod": "vite --mode production",
+    "build": "tsc -b && vite build --mode production",
+    "build:dev": "tsc -b && vite build --mode development",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "setup:env": "node scripts/setup-env.js",
+    "setup:env:dev": "NODE_ENV=development node scripts/setup-env.js",
+    "setup:env:prod": "NODE_ENV=production node scripts/setup-env.js"
   },
   "dependencies": {
     "@emotion/react": "^11.14.0",
@@ -19,6 +24,7 @@
     "@mui/x-charts": "^7.28.0",
     "@mui/x-data-grid": "^7.28.3",
     "@mui/x-date-pickers": "^7.28.3",
+    "@supabase/supabase-js": "^2.49.4",
     "@tanstack/react-query": "^5.71.10",
     "@tanstack/react-query-devtools": "^5.71.10",
     "autoprefixer": "^10.4.21",
