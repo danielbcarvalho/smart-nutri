@@ -12,9 +12,9 @@ import {
   Area,
   TooltipProps,
 } from "recharts";
-import { format } from "date-fns";
 import { Measurement } from "../../../services/patientService";
 import { useTheme } from "@mui/material";
+import { formatDateToLocal } from "../../../utils/dateUtils";
 
 interface CompositionChartProps {
   measurements: Measurement[];
@@ -58,7 +58,7 @@ export function CompositionChart({ measurements }: CompositionChartProps) {
     return measurements
       .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
       .map((measurement) => ({
-        date: format(new Date(measurement.date), "dd/MM/yyyy"),
+        date: formatDateToLocal(measurement.date),
         pesoTotal: Number(measurement.weight),
         massaGorda: Number(measurement.fatMass || 0),
         massaLivre: Number(measurement.fatFreeMass || 0),

@@ -494,6 +494,83 @@ API para gestão completa de nutrição, incluindo:
 
 ---
 
+### Medições e Composição Corporal (`/measurements`)
+
+#### Listar Medições de um Paciente
+
+- **GET** `/measurements/patient/:patientId`
+- **Descrição**: Retorna todas as medições de um paciente, ordenadas por data
+- **Parâmetros**:
+  - patientId (string, path): ID do paciente
+- **Exemplo de Resposta**:
+  ```json
+  [
+    {
+      "id": "uuid",
+      "patientId": "uuid",
+      "weight": 70.5,
+      "height": 1.75,
+      "bodyFat": 15.2,
+      "muscleMass": 35.8,
+      "measurements": {
+        "skinfolds": {
+          "triceps": 10.5,
+          "subscapular": 12.3,
+          "suprailiac": 8.7,
+          "abdominal": 15.2
+        },
+        "circumferences": {
+          "chest": 95.5,
+          "waist": 80.2,
+          "hip": 98.7,
+          "thigh": 55.3
+        }
+      },
+      "measureDate": "2024-03-20",
+      "createdAt": "2024-03-20T10:00:00Z"
+    }
+  ]
+  ```
+- **Códigos de Status**:
+  - 200: Lista de medições retornada com sucesso
+  - 404: Paciente não encontrado
+  - 401: Não autorizado
+
+#### Criar Nova Medição
+
+- **POST** `/measurements`
+- **Descrição**: Registra uma nova medição para um paciente
+- **Corpo da Requisição**:
+  ```json
+  {
+    "patientId": "uuid",
+    "weight": 70.5,
+    "height": 1.75,
+    "bodyFat": 15.2,
+    "muscleMass": 35.8,
+    "measurements": {
+      "skinfolds": {
+        "triceps": 10.5,
+        "subscapular": 12.3,
+        "suprailiac": 8.7,
+        "abdominal": 15.2
+      },
+      "circumferences": {
+        "chest": 95.5,
+        "waist": 80.2,
+        "hip": 98.7,
+        "thigh": 55.3
+      }
+    },
+    "measureDate": "2024-03-20"
+  }
+  ```
+- **Respostas**:
+  - 201: Medição criada com sucesso
+  - 400: Dados inválidos
+  - 404: Paciente não encontrado
+  - 401: Não autorizado
+
 ---
 
 ## Modelos de Dados

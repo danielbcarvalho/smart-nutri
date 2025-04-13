@@ -166,6 +166,20 @@ Each page is a directory under `src/pages/` and typically exports a main compone
 - **NewAssessment**: Create a new assessment (complex, multi-section form).
 - **Measurements**: List and manage body measurements.
 - **ViewAssessment**: View details and evolution of a specific assessment.
+- **AssessmentEvolution**: Visualize the evolution of body composition over time through interactive charts.
+
+### AssessmentEvolution Page
+
+The AssessmentEvolution page provides a comprehensive view of a patient's body composition changes over time. It includes:
+
+- **CompositionChart**: A responsive chart component that displays:
+  - Total body weight evolution
+  - Fat mass and fat-free mass distribution
+  - Interactive tooltips with detailed measurements
+  - Date-based X-axis with proper timezone handling
+  - Custom styling matching the application theme
+
+The chart is built using Recharts and integrates with the application's date formatting utilities to ensure consistent date display across the platform.
 
 ### Example: Main Flow - New Assessment
 
@@ -197,6 +211,7 @@ Located in `src/components/`:
 - **RecentPatients**: List of recently accessed patients.
 - **StatsCards**: Dashboard statistics.
 - **SearchModal**: Modal de pesquisa global, utilizado no Header para busca de pacientes e planos alimentares. Possui feedback visual aprimorado, estado de carregamento, mensagem de vazio e navegação por teclado.
+- **CompositionChart**: Componente responsável por exibir a evolução da composição corporal do paciente ao longo do tempo.
 
 #### SearchModal
 
@@ -220,6 +235,32 @@ O componente `SearchModal` é responsável por toda a experiência de busca glob
 
 **Localização:**
 `src/components/SearchModal.tsx`
+
+#### CompositionChart
+
+O componente `CompositionChart` é um gráfico interativo que exibe a evolução da composição corporal do paciente. Características principais:
+
+- **Visualização de Dados**:
+
+  - Linha de evolução do peso total
+  - Barras empilhadas mostrando distribuição entre massa gorda e massa livre
+  - Tooltips interativos com valores detalhados
+  - Eixo X com datas formatadas no padrão brasileiro (dd/MM/yyyy)
+
+- **Integração**:
+
+  - Utiliza a biblioteca Recharts para renderização
+  - Integra-se com o sistema de temas do Material-UI
+  - Usa utilitários de formatação de data centralizados
+
+- **Responsividade**:
+
+  - Adapta-se automaticamente ao tamanho do container
+  - Mantém legibilidade em diferentes tamanhos de tela
+  - Suporta interação via mouse e toque
+
+- **Localização**:
+  `src/pages/AssessmentEvolution/components/CompositionChart.tsx`
 
 ### Component Hierarchy Example
 

@@ -24,7 +24,7 @@ import {
 } from "@mui/material";
 import { Add, Edit, Delete, Timeline } from "@mui/icons-material";
 import { patientService } from "../../services/patientService";
-import { format } from "date-fns";
+import { formatDateToLocal } from "../../utils/dateUtils";
 import { LoadingBackdrop } from "../../components/LoadingBackdrop";
 import { useState } from "react";
 
@@ -110,11 +110,7 @@ export function Assessments() {
   };
 
   const formatDate = (dateString: string) => {
-    try {
-      return format(new Date(dateString), "dd/MM/yyyy");
-    } catch {
-      return dateString;
-    }
+    return formatDateToLocal(dateString);
   };
 
   if (isLoading) {

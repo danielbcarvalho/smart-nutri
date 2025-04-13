@@ -93,8 +93,15 @@ export function ViewAssessment() {
         const heightInMeters = height / 100;
         const imc = weight / (heightInMeters * heightInMeters);
 
+        // Parse the date string and create a date object
+        const date = new Date(m.date);
+        // Use UTC methods to avoid timezone issues
+        const utcDate = new Date(
+          Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate())
+        );
+
         return {
-          date: format(new Date(m.date), "dd/MM/yyyy"),
+          date: format(utcDate, "dd/MM/yyyy"),
           weight: weight,
           imc: Number(imc.toFixed(1)),
           bodyFat: m.bodyFat ? Number(m.bodyFat) : null,
@@ -248,9 +255,14 @@ export function ViewAssessment() {
             </IconButton>
             <Typography variant="h5">Avaliação Antropométrica</Typography>
             <Chip
-              label={format(new Date(measurement.date), "dd/MM/yyyy", {
-                locale: ptBR,
-              })}
+              label={format(
+                new Date(
+                  new Date(measurement.date).getTime() +
+                    new Date(measurement.date).getTimezoneOffset() * 60000
+                ),
+                "dd/MM/yyyy",
+                { locale: ptBR }
+              )}
               color="primary"
               variant="outlined"
             />
@@ -489,9 +501,15 @@ export function ViewAssessment() {
                   gutterBottom
                 >
                   Data da avaliação anterior:{" "}
-                  {format(new Date(previousMeasurement.date), "dd/MM/yyyy", {
-                    locale: ptBR,
-                  })}
+                  {format(
+                    new Date(
+                      new Date(previousMeasurement.date).getTime() +
+                        new Date(previousMeasurement.date).getTimezoneOffset() *
+                          60000
+                    ),
+                    "dd/MM/yyyy",
+                    { locale: ptBR }
+                  )}
                 </Typography>
 
                 <Grid container spacing={2} sx={{ mt: 1 }}>

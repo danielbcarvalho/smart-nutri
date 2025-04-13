@@ -67,6 +67,18 @@ export function AnalysisTable({ measurements }: AnalysisTableProps) {
     return value > 0 ? `(+${value.toFixed(1)})` : `(${value.toFixed(1)})`;
   };
 
+  const formatDate = (dateString: string) => {
+    try {
+      const date = new Date(dateString);
+      const localDate = new Date(
+        date.getTime() + date.getTimezoneOffset() * 60000
+      );
+      return format(localDate, "dd/MM/yyyy");
+    } catch {
+      return dateString;
+    }
+  };
+
   const parameters: AnalysisParameter[] = [
     {
       label: "Peso atual (Kg)",
@@ -207,7 +219,7 @@ export function AnalysisTable({ measurements }: AnalysisTableProps) {
               <TableCell>Parâmetro</TableCell>
               {sortedMeasurements.map((m) => (
                 <TableCell key={m.id} align="center">
-                  {format(new Date(m.date), "dd/MM/yyyy")}
+                  {formatDate(m.date)}
                 </TableCell>
               ))}
             </TableRow>

@@ -118,7 +118,33 @@ erDiagram
 #### Measurements
 
 - Records physical measurements and assessments.
-- **Fields:** id (PK), patient_id (FK), nutritionistId (FK), weight, height, bodyFat, muscleMass, measurements, measureDate, created_at
+- **Fields:**
+  - id (PK): UUID
+  - patient_id (FK): Referência ao paciente
+  - nutritionistId (FK): Referência ao nutricionista
+  - weight: Peso em kg
+  - height: Altura em metros
+  - bodyFat: Percentual de gordura corporal
+  - muscleMass: Massa muscular em kg
+  - measurements (JSONB): Medições detalhadas
+    ```json
+    {
+      "skinfolds": {
+        "triceps": 10.5,
+        "subscapular": 12.3,
+        "suprailiac": 8.7,
+        "abdominal": 15.2
+      },
+      "circumferences": {
+        "chest": 95.5,
+        "waist": 80.2,
+        "hip": 98.7,
+        "thigh": 55.3
+      }
+    }
+    ```
+  - measureDate: Data da medição
+  - created_at: Timestamp de criação
 
 #### MealPlans
 
@@ -157,6 +183,52 @@ erDiagram
 - Date constraints (e.g., endDate >= startDate)
 - Unique order for meals per plan
 - Defaults: monitoring_status ('in_progress'), consultation_frequency ('monthly')
+
+### Exemplos de Queries
+
+#### Buscar Evolução de Medições
+
+```sql
+-- Buscar evolução de peso e composição corporal
+SELECT
+    m.measureDate,
+    m.weight,
+    m.bodyFat,
+    m.muscleMass,
+    m.measurements->>'skinfolds' as skinfolds,
+    m.measurements->>'circumferences' as circumferences
+FROM measurements m
+WHERE m.patient_id = :patientId
+ORDER BY m.measureDate DESC;
+```
+
+#### Calcular Variação Percentual
+
+```sql
+-- Calcular variação percentual entre medições
+WITH measurements_ordered AS (
+    SELECT
+        m.measureDate,
+        m.weight,
+        m.bodyFat,
+        m.muscleMass,
+        LAG(m.weight) OVER (ORDER BY m.measureDate) as prev_weight,
+        LAG(m.bodyFat) OVER (ORDER BY m.measureDate) as prev_bodyFat,
+        LAG(m.muscleMass) OVER (ORDER BY m.measureDate) as prev_muscleMass
+    FROM measurements m
+    WHERE m.patient_id = :patientId
+)
+SELECT
+    measureDate,
+    weight,
+    bodyFat,
+    muscleMass,
+    ROUND((weight - prev_weight) / prev_weight * 100, 2) as weight_change_percent,
+    ROUND((bodyFat - prev_bodyFat) / prev_bodyFat * 100, 2) as bodyFat_change_percent,
+    ROUND((muscleMass - prev_muscleMass) / prev_muscleMass * 100, 2) as muscleMass_change_percent
+FROM measurements_ordered
+ORDER BY measureDate DESC;
+```
 
 ---
 

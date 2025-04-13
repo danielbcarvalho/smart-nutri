@@ -150,7 +150,11 @@ export function NewAssessment() {
 
       // Preencher data
       if (measurementToEdit.date) {
-        setAssessmentDate(new Date(measurementToEdit.date));
+        const date = new Date(measurementToEdit.date);
+        const localDate = new Date(
+          date.getTime() + date.getTimezoneOffset() * 60000
+        );
+        setAssessmentDate(localDate);
       }
 
       // Preencher dados básicos
@@ -451,7 +455,13 @@ export function NewAssessment() {
     );
 
     const measurementData = {
-      date: format(assessmentDate || new Date(), "yyyy-MM-dd"),
+      date: format(
+        new Date(
+          (assessmentDate || new Date()).getTime() -
+            (assessmentDate || new Date()).getTimezoneOffset() * 60000
+        ),
+        "yyyy-MM-dd"
+      ),
       weight: parseFloat(basicData.weight),
       height: basicData.height ? parseFloat(basicData.height) : undefined,
       sittingHeight: basicData.sittingHeight
