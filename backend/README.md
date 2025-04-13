@@ -23,13 +23,41 @@
 
 ## Description
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+Backend da aplicação SmartNutri, desenvolvido com NestJS e TypeORM.
 
 ## Project setup
 
 ```bash
 $ npm install
 ```
+
+## Configuração do Banco de Dados
+
+O projeto usa PostgreSQL como banco de dados. Para configurar:
+
+1. Crie um arquivo `.env` na raiz do projeto com as seguintes variáveis:
+
+```env
+DB_HOST=localhost
+DB_PORT=5432
+DB_USERNAME=seu_usuario
+DB_PASSWORD=sua_senha
+DB_DATABASE=smartnutri_db
+```
+
+2. Crie o banco de dados:
+
+```bash
+createdb smartnutri_db
+```
+
+3. Execute as migrations:
+
+```bash
+npm run migration:run
+```
+
+Para mais detalhes sobre como gerenciar o banco de dados e migrations, consulte o [Guia de Migrations](MIGRATION_GUIDE.md).
 
 ## Compile and run the project
 
