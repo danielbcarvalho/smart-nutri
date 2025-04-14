@@ -7,10 +7,19 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
   // Configuração do CORS
+  const allowedOrigins: string[] = [
+    'http://localhost:3001',
+    'http://localhost:3000',
+    process.env.FRONTEND_URL, // URL do frontend em produção
+  ].filter((origin): origin is string => Boolean(origin)); // Ensure only strings are included
+
+  console.log('Allowed CORS origins:', allowedOrigins);
+
   app.enableCors({
-    origin: ['http://localhost:3001', 'http://localhost:3000'], // Permitir ambas as portas que o Vite pode usar
+    origin: allowedOrigins,
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
     credentials: true,
+    optionsSuccessStatus: 204,
   });
 
   // Configuração da validação global
