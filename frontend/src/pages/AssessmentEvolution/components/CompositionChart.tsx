@@ -61,7 +61,8 @@ export function CompositionChart({ measurements }: CompositionChartProps) {
         date: formatDateToLocal(measurement.date),
         pesoTotal: Number(measurement.weight),
         massaGorda: Number(measurement.fatMass || 0),
-        massaLivre: Number(measurement.fatFreeMass || 0),
+        massaLivre:
+          Number(measurement.weight) - Number(measurement.fatMass || 0),
       }));
   }, [measurements]);
 

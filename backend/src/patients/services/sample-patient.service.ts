@@ -1,6 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, DeepPartial } from 'typeorm';
 import {
   Patient,
   PatientStatus,
@@ -18,6 +18,7 @@ import { Meal } from '../../meal-plans/entities/meal.entity';
 import { MealFood } from '../../meal-plans/entities/meal-food.entity';
 import { Food } from '../../foods/entities/food.entity';
 import { Gender } from '../enums/gender.enum';
+import { CreateMeasurementDto } from '../dto/create-measurement.dto';
 
 @Injectable()
 export class SamplePatientService {
@@ -115,6 +116,62 @@ export class SamplePatientService {
    * @param patient The patient to create measurements for
    */
   private async createMeasurements(patient: Patient): Promise<void> {
+    // Create old measurement (1 year ago)
+    const oldDate = new Date();
+    oldDate.setFullYear(oldDate.getFullYear() - 1);
+
+    const oldMeasurement = this.measurementRepository.create({
+      date: oldDate,
+      weight: 77.0,
+      height: 165,
+      sittingHeight: undefined,
+      kneeHeight: undefined,
+      bodyFat: 35.2,
+      fatMass: 27.1,
+      muscleMassPercentage: 26.8,
+      muscleMass: 20.6,
+      fatFreeMass: undefined,
+      boneMass: undefined,
+      visceralFat: 9,
+      bodyWater: undefined,
+      metabolicAge: undefined,
+      measurements: {
+        neck: 36,
+        shoulder: 107,
+        chest: 97,
+        waist: 86,
+        abdomen: 92,
+        hip: 108,
+        arm: 33,
+        forearm: 27,
+        calf: 39,
+        relaxedArm: 32,
+        contractedArm: 34,
+        proximalThigh: 57,
+        medialThigh: 54,
+        distalThigh: 50,
+      },
+      skinfolds: {
+        tricipital: 30,
+        bicipital: 17,
+        abdominal: 38,
+        subscapular: 27,
+        axillaryMedian: 24,
+        thigh: 40,
+        thoracic: 20,
+        suprailiac: 34,
+        calf: 27,
+        supraspinal: 30,
+      },
+      boneDiameters: undefined,
+      skinfoldFormula: undefined,
+      patient,
+      patientId: patient.id,
+      nutritionistId: patient.nutritionistId,
+    } as DeepPartial<Measurement>);
+
+    await this.measurementRepository.save(oldMeasurement);
+
     // Create initial measurement (3 months ago)
     const initialDate = new Date();
     initialDate.setMonth(initialDate.getMonth() - 3);
@@ -123,21 +180,51 @@ export class SamplePatientService {
       date: initialDate,
       weight: 72.5,
       height: 165,
+      sittingHeight: undefined,
+      kneeHeight: undefined,
       bodyFat: 32.5,
       fatMass: 23.6,
       muscleMassPercentage: 28.4,
       muscleMass: 20.6,
+      fatFreeMass: undefined,
+      boneMass: undefined,
       visceralFat: 8,
+      bodyWater: undefined,
+      metabolicAge: undefined,
       measurements: {
+        neck: 35,
+        shoulder: 105,
+        chest: 95,
         waist: 82,
+        abdomen: 88,
         hip: 105,
         arm: 32,
-        thigh: 58,
+        forearm: 26,
+        calf: 38,
+        relaxedArm: 31,
+        contractedArm: 33,
+        proximalThigh: 55,
+        medialThigh: 52,
+        distalThigh: 48,
       },
+      skinfolds: {
+        tricipital: 28,
+        bicipital: 15,
+        abdominal: 35,
+        subscapular: 25,
+        axillaryMedian: 22,
+        thigh: 38,
+        thoracic: 18,
+        suprailiac: 32,
+        calf: 25,
+        supraspinal: 28,
+      },
+      boneDiameters: undefined,
+      skinfoldFormula: undefined,
       patient,
       patientId: patient.id,
       nutritionistId: patient.nutritionistId,
-    });
+    } as DeepPartial<Measurement>);
 
     await this.measurementRepository.save(initialMeasurement);
 
@@ -146,24 +233,54 @@ export class SamplePatientService {
     followUpDate.setMonth(followUpDate.getMonth() - 2);
 
     const followUpMeasurement = this.measurementRepository.create({
-      date: followUpDate,
+      date: new Date(followUpDate),
       weight: 70.8,
       height: 165,
+      sittingHeight: undefined,
+      kneeHeight: undefined,
       bodyFat: 31.2,
       fatMass: 22.1,
       muscleMassPercentage: 29.1,
       muscleMass: 20.6,
+      fatFreeMass: undefined,
+      boneMass: undefined,
       visceralFat: 7.5,
+      bodyWater: undefined,
+      metabolicAge: undefined,
       measurements: {
+        neck: 34,
+        shoulder: 104,
+        chest: 94,
         waist: 80,
+        abdomen: 86,
         hip: 103,
         arm: 31.5,
-        thigh: 57,
+        forearm: 25.5,
+        calf: 37,
+        relaxedArm: 30.5,
+        contractedArm: 32.5,
+        proximalThigh: 54,
+        medialThigh: 51,
+        distalThigh: 47,
       },
+      skinfolds: {
+        tricipital: 26,
+        bicipital: 14,
+        abdominal: 33,
+        subscapular: 23,
+        axillaryMedian: 20,
+        thigh: 36,
+        thoracic: 17,
+        suprailiac: 30,
+        calf: 24,
+        supraspinal: 26,
+      },
+      boneDiameters: undefined,
+      skinfoldFormula: undefined,
       patient,
       patientId: patient.id,
       nutritionistId: patient.nutritionistId,
-    });
+    } as DeepPartial<Measurement>);
 
     await this.measurementRepository.save(followUpMeasurement);
 
@@ -172,24 +289,54 @@ export class SamplePatientService {
     recentDate.setMonth(recentDate.getMonth() - 1);
 
     const recentMeasurement = this.measurementRepository.create({
-      date: recentDate,
+      date: new Date(recentDate),
       weight: 68.5,
       height: 165,
+      sittingHeight: undefined,
+      kneeHeight: undefined,
       bodyFat: 29.8,
       fatMass: 20.4,
       muscleMassPercentage: 30.2,
       muscleMass: 20.7,
+      fatFreeMass: undefined,
+      boneMass: undefined,
       visceralFat: 7,
+      bodyWater: undefined,
+      metabolicAge: undefined,
       measurements: {
+        neck: 33.5,
+        shoulder: 103,
+        chest: 93,
         waist: 78,
+        abdomen: 84,
         hip: 101,
         arm: 31,
-        thigh: 56,
+        forearm: 25,
+        calf: 36,
+        relaxedArm: 30,
+        contractedArm: 32,
+        proximalThigh: 53,
+        medialThigh: 50,
+        distalThigh: 46,
       },
+      skinfolds: {
+        tricipital: 24,
+        bicipital: 13,
+        abdominal: 31,
+        subscapular: 21,
+        axillaryMedian: 19,
+        thigh: 34,
+        thoracic: 16,
+        suprailiac: 28,
+        calf: 23,
+        supraspinal: 24,
+      },
+      boneDiameters: undefined,
+      skinfoldFormula: undefined,
       patient,
       patientId: patient.id,
       nutritionistId: patient.nutritionistId,
-    });
+    } as DeepPartial<Measurement>);
 
     await this.measurementRepository.save(recentMeasurement);
   }
@@ -204,7 +351,7 @@ export class SamplePatientService {
     initialDate.setMonth(initialDate.getMonth() - 3);
 
     const initialConsultation = this.consultationRepository.create({
-      date: initialDate,
+      date: new Date(initialDate),
       patientId: patient.id,
       nutritionistId: patient.nutritionistId,
       notes:
@@ -220,7 +367,7 @@ export class SamplePatientService {
     followUpDate.setMonth(followUpDate.getMonth() - 2);
 
     const followUpConsultation = this.consultationRepository.create({
-      date: followUpDate,
+      date: new Date(followUpDate),
       patientId: patient.id,
       nutritionistId: patient.nutritionistId,
       notes:
@@ -236,7 +383,7 @@ export class SamplePatientService {
     recentDate.setMonth(recentDate.getMonth() - 1);
 
     const recentConsultation = this.consultationRepository.create({
-      date: recentDate,
+      date: new Date(recentDate),
       patientId: patient.id,
       nutritionistId: patient.nutritionistId,
       notes:
@@ -252,7 +399,7 @@ export class SamplePatientService {
     nextDate.setMonth(nextDate.getMonth() + 1);
 
     const nextConsultation = this.consultationRepository.create({
-      date: nextDate,
+      date: new Date(nextDate),
       patientId: patient.id,
       nutritionistId: patient.nutritionistId,
       notes: 'Consulta de acompanhamento mensal.',
@@ -264,8 +411,8 @@ export class SamplePatientService {
 
     // Update patient with last and next consultation dates
     await this.patientRepository.update(patient.id, {
-      lastConsultationAt: recentDate,
-      nextConsultationAt: nextDate,
+      lastConsultationAt: new Date(recentDate),
+      nextConsultationAt: new Date(nextDate),
     });
   }
 
