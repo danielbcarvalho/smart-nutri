@@ -33,6 +33,7 @@ interface ApiError {
 
 interface LocationState {
   message?: string;
+  error?: string;
   from?: string;
 }
 
@@ -56,9 +57,28 @@ export function Login() {
   const [formErrors, setFormErrors] = useState<Partial<LoginCredentials>>({});
 
   useEffect(() => {
+    // Verificar mensagens no estado da navegação
     const state = location.state as LocationState;
     if (state?.message) {
       setSuccess(state.message);
+    }
+    if (state?.error) {
+      setError(state.error);
+    }
+
+    // Verificar mensagens no localStorage
+    const storedError = localStorage.getItem("@smartnutri:loginError");
+    if (storedError) {
+      setError(storedError);
+      // Limpar após recuperar
+      localStorage.removeItem("@smartnutri:loginError");
+    }
+
+    const storedSuccess = localStorage.getItem("@smartnutri:loginSuccess");
+    if (storedSuccess) {
+      setSuccess(storedSuccess);
+      // Limpar após recuperar
+      localStorage.removeItem("@smartnutri:loginSuccess");
     }
   }, [location]);
 
@@ -99,6 +119,10 @@ export function Login() {
         [name]: undefined,
       }));
     }
+
+    // Limpar mensagens de erro e sucesso quando o usuário começa a digitar
+    if (error) setError("");
+    if (success) setSuccess("");
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -122,12 +146,26 @@ export function Login() {
 
       const state = location.state as LocationState;
       const redirectPath = state?.from || "/";
+
+      // Armazenar mensagem de sucesso no localStorage antes do redirecionamento
+      localStorage.setItem(
+        "@smartnutri:loginSuccess",
+        "Login realizado com sucesso!"
+      );
+
       navigate(redirectPath, { replace: true });
     } catch (err) {
       const apiError = err as ApiError;
-      setError(
-        apiError.response?.data?.message || "Ocorreu um erro ao fazer login"
-      );
+      const errorMessage =
+        apiError.response?.data?.message || "Ocorreu um erro ao fazer login";
+
+      // Armazenar mensagem de erro no localStorage
+      localStorage.setItem("@smartnutri:loginError", errorMessage);
+
+      // Definir o erro para exibição imediata (sem recarregar)
+      setError(errorMessage);
+
+      // Se houver recarregamento da página, o erro será recuperado do localStorage
     } finally {
       setLoading(false);
     }
