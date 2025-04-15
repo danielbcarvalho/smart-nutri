@@ -55,19 +55,21 @@ export const Header = () => {
       >
         <Toolbar>
           {/* Logo/Título */}
-          <Typography
-            variant="h6"
-            component="div"
+          <Box
             sx={{
               flexGrow: 1,
+              display: "flex",
+              alignItems: "center",
               cursor: "pointer",
-              fontWeight: "bold",
-              color: "primary.main",
             }}
             onClick={() => navigate("/")}
           >
-            SmartNutri
-          </Typography>
+            <img
+              src="/images/logo.png"
+              alt="Smart Nutri"
+              style={{ height: 40, width: "auto", display: "block" }}
+            />
+          </Box>
 
           {/* Ícones do lado direito */}
           <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
