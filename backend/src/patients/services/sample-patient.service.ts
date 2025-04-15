@@ -172,6 +172,286 @@ export class SamplePatientService {
 
     await this.measurementRepository.save(oldMeasurement);
 
+    // Create measurement 10 months ago (gained 2kg)
+    const date10MonthsAgo = new Date();
+    date10MonthsAgo.setMonth(date10MonthsAgo.getMonth() - 10);
+
+    const measurement10MonthsAgo = this.measurementRepository.create({
+      date: date10MonthsAgo,
+      weight: 79.0,
+      height: 165,
+      sittingHeight: undefined,
+      kneeHeight: undefined,
+      bodyFat: 35.8,
+      fatMass: 28.3,
+      muscleMassPercentage: 26.5,
+      muscleMass: 20.9,
+      fatFreeMass: undefined,
+      boneMass: undefined,
+      visceralFat: 9.2,
+      bodyWater: undefined,
+      metabolicAge: undefined,
+      measurements: {
+        neck: 36.5,
+        shoulder: 108,
+        chest: 98,
+        waist: 87,
+        abdomen: 93,
+        hip: 109,
+        arm: 33.5,
+        forearm: 27.2,
+        calf: 39.5,
+        relaxedArm: 32.5,
+        contractedArm: 34.5,
+        proximalThigh: 58,
+        medialThigh: 55,
+        distalThigh: 51,
+      },
+      skinfolds: {
+        tricipital: 31,
+        bicipital: 17.5,
+        abdominal: 39,
+        subscapular: 28,
+        axillaryMedian: 25,
+        thigh: 41,
+        thoracic: 21,
+        suprailiac: 35,
+        calf: 28,
+        supraspinal: 31,
+      },
+      boneDiameters: undefined,
+      skinfoldFormula: undefined,
+      patient,
+      patientId: patient.id,
+      nutritionistId: patient.nutritionistId,
+    } as DeepPartial<Measurement>);
+
+    await this.measurementRepository.save(measurement10MonthsAgo);
+
+    // Create measurement 8 months ago (lost 1kg)
+    const date8MonthsAgo = new Date();
+    date8MonthsAgo.setMonth(date8MonthsAgo.getMonth() - 8);
+
+    const measurement8MonthsAgo = this.measurementRepository.create({
+      date: date8MonthsAgo,
+      weight: 78.0,
+      height: 165,
+      sittingHeight: undefined,
+      kneeHeight: undefined,
+      bodyFat: 35.5,
+      fatMass: 27.7,
+      muscleMassPercentage: 26.7,
+      muscleMass: 20.8,
+      fatFreeMass: undefined,
+      boneMass: undefined,
+      visceralFat: 9.1,
+      bodyWater: undefined,
+      metabolicAge: undefined,
+      measurements: {
+        neck: 36.3,
+        shoulder: 107.5,
+        chest: 97.5,
+        waist: 86.5,
+        abdomen: 92.5,
+        hip: 108.5,
+        arm: 33.3,
+        forearm: 27.1,
+        calf: 39.3,
+        relaxedArm: 32.3,
+        contractedArm: 34.3,
+        proximalThigh: 57.5,
+        medialThigh: 54.5,
+        distalThigh: 50.5,
+      },
+      skinfolds: {
+        tricipital: 30.5,
+        bicipital: 17.3,
+        abdominal: 38.5,
+        subscapular: 27.5,
+        axillaryMedian: 24.5,
+        thigh: 40.5,
+        thoracic: 20.5,
+        suprailiac: 34.5,
+        calf: 27.5,
+        supraspinal: 30.5,
+      },
+      boneDiameters: undefined,
+      skinfoldFormula: undefined,
+      patient,
+      patientId: patient.id,
+      nutritionistId: patient.nutritionistId,
+    } as DeepPartial<Measurement>);
+
+    await this.measurementRepository.save(measurement8MonthsAgo);
+
+    // Create measurement 6 months ago (gained 0.5kg)
+    const date6MonthsAgo = new Date();
+    date6MonthsAgo.setMonth(date6MonthsAgo.getMonth() - 6);
+
+    const measurement6MonthsAgo = this.measurementRepository.create({
+      date: date6MonthsAgo,
+      weight: 78.5,
+      height: 165,
+      sittingHeight: undefined,
+      kneeHeight: undefined,
+      bodyFat: 35.6,
+      fatMass: 27.9,
+      muscleMassPercentage: 26.6,
+      muscleMass: 20.9,
+      fatFreeMass: undefined,
+      boneMass: undefined,
+      visceralFat: 9.1,
+      bodyWater: undefined,
+      metabolicAge: undefined,
+      measurements: {
+        neck: 36.4,
+        shoulder: 107.7,
+        chest: 97.7,
+        waist: 86.7,
+        abdomen: 92.7,
+        hip: 108.7,
+        arm: 33.4,
+        forearm: 27.15,
+        calf: 39.4,
+        relaxedArm: 32.4,
+        contractedArm: 34.4,
+        proximalThigh: 57.7,
+        medialThigh: 54.7,
+        distalThigh: 50.7,
+      },
+      skinfolds: {
+        tricipital: 30.7,
+        bicipital: 17.4,
+        abdominal: 38.7,
+        subscapular: 27.7,
+        axillaryMedian: 24.7,
+        thigh: 40.7,
+        thoracic: 20.7,
+        suprailiac: 34.7,
+        calf: 27.7,
+        supraspinal: 30.7,
+      },
+      boneDiameters: undefined,
+      skinfoldFormula: undefined,
+      patient,
+      patientId: patient.id,
+      nutritionistId: patient.nutritionistId,
+    } as DeepPartial<Measurement>);
+
+    await this.measurementRepository.save(measurement6MonthsAgo);
+
+    // Create measurement 5 months ago (lost 1.5kg)
+    const date5MonthsAgo = new Date();
+    date5MonthsAgo.setMonth(date5MonthsAgo.getMonth() - 5);
+
+    const measurement5MonthsAgo = this.measurementRepository.create({
+      date: date5MonthsAgo,
+      weight: 77.0,
+      height: 165,
+      sittingHeight: undefined,
+      kneeHeight: undefined,
+      bodyFat: 35.2,
+      fatMass: 27.1,
+      muscleMassPercentage: 26.8,
+      muscleMass: 20.6,
+      fatFreeMass: undefined,
+      boneMass: undefined,
+      visceralFat: 9,
+      bodyWater: undefined,
+      metabolicAge: undefined,
+      measurements: {
+        neck: 36,
+        shoulder: 107,
+        chest: 97,
+        waist: 86,
+        abdomen: 92,
+        hip: 108,
+        arm: 33,
+        forearm: 27,
+        calf: 39,
+        relaxedArm: 32,
+        contractedArm: 34,
+        proximalThigh: 57,
+        medialThigh: 54,
+        distalThigh: 50,
+      },
+      skinfolds: {
+        tricipital: 30,
+        bicipital: 17,
+        abdominal: 38,
+        subscapular: 27,
+        axillaryMedian: 24,
+        thigh: 40,
+        thoracic: 20,
+        suprailiac: 34,
+        calf: 27,
+        supraspinal: 30,
+      },
+      boneDiameters: undefined,
+      skinfoldFormula: undefined,
+      patient,
+      patientId: patient.id,
+      nutritionistId: patient.nutritionistId,
+    } as DeepPartial<Measurement>);
+
+    await this.measurementRepository.save(measurement5MonthsAgo);
+
+    // Create measurement 4 months ago (gained 1kg)
+    const date4MonthsAgo = new Date();
+    date4MonthsAgo.setMonth(date4MonthsAgo.getMonth() - 4);
+
+    const measurement4MonthsAgo = this.measurementRepository.create({
+      date: date4MonthsAgo,
+      weight: 78.0,
+      height: 165,
+      sittingHeight: undefined,
+      kneeHeight: undefined,
+      bodyFat: 35.5,
+      fatMass: 27.7,
+      muscleMassPercentage: 26.7,
+      muscleMass: 20.8,
+      fatFreeMass: undefined,
+      boneMass: undefined,
+      visceralFat: 9.1,
+      bodyWater: undefined,
+      metabolicAge: undefined,
+      measurements: {
+        neck: 36.3,
+        shoulder: 107.5,
+        chest: 97.5,
+        waist: 86.5,
+        abdomen: 92.5,
+        hip: 108.5,
+        arm: 33.3,
+        forearm: 27.1,
+        calf: 39.3,
+        relaxedArm: 32.3,
+        contractedArm: 34.3,
+        proximalThigh: 57.5,
+        medialThigh: 54.5,
+        distalThigh: 50.5,
+      },
+      skinfolds: {
+        tricipital: 30.5,
+        bicipital: 17.3,
+        abdominal: 38.5,
+        subscapular: 27.5,
+        axillaryMedian: 24.5,
+        thigh: 40.5,
+        thoracic: 20.5,
+        suprailiac: 34.5,
+        calf: 27.5,
+        supraspinal: 30.5,
+      },
+      boneDiameters: undefined,
+      skinfoldFormula: undefined,
+      patient,
+      patientId: patient.id,
+      nutritionistId: patient.nutritionistId,
+    } as DeepPartial<Measurement>);
+
+    await this.measurementRepository.save(measurement4MonthsAgo);
+
     // Create initial measurement (3 months ago)
     const initialDate = new Date();
     initialDate.setMonth(initialDate.getMonth() - 3);
