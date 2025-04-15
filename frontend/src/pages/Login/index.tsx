@@ -195,7 +195,7 @@ export function Login() {
           left: 0,
           right: 0,
           height: "50vh",
-          padding: "15px 15px 15px 15px",
+          padding: { xs: 0, sm: "15px 15px 15px 15px" },
           backgroundColor: "#ffffff",
         }}
       >
@@ -206,17 +206,17 @@ export function Login() {
             backgroundImage: "url(/images/nutri.jpg)",
             backgroundSize: "cover",
             backgroundPosition: "center",
-            borderRadius: "12px",
+            borderRadius: { xs: 0, sm: "12px" },
             "&::before": {
               content: '""',
               position: "absolute",
-              top: "15px",
-              left: "15px",
-              right: "15px",
-              bottom: "15px",
+              top: { xs: 0, sm: "15px" },
+              left: { xs: 0, sm: "15px" },
+              right: { xs: 0, sm: "15px" },
+              bottom: { xs: 0, sm: "15px" },
               backgroundColor: "rgba(0, 0, 0, 0.6)",
               zIndex: 1,
-              borderRadius: "12px",
+              borderRadius: { xs: 0, sm: "12px" },
             },
           }}
         />
@@ -266,6 +266,7 @@ export function Login() {
               backgroundColor: "background.paper",
               backdropFilter: "blur(10px)",
               transition: "all 0.3s ease-in-out",
+              boxShadow: theme.shadows[6],
               "&:hover": {
                 boxShadow: theme.shadows[8],
               },
@@ -273,7 +274,7 @@ export function Login() {
           >
             <Box
               component="img"
-              src="/images/logo-horizontal.png"
+              src="/images/logo.png"
               alt="Smart Nutri"
               sx={{
                 width: "180px",
@@ -482,7 +483,7 @@ export function Login() {
             variant="caption"
             color="black"
             sx={{
-              mt: 2,
+              m: 2,
               textAlign: "center",
             }}
           >
