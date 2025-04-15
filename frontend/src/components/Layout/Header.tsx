@@ -28,7 +28,7 @@ export const Header = () => {
   const [searchOpen, setSearchOpen] = useState(false);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
-
+  const [aiOpen, setAiOpen] = useState(false);
   const user = authService.getUser();
 
   const getInitials = (name: string) => {
@@ -82,6 +82,22 @@ export const Header = () => {
                 }}
               >
                 <SearchIcon />
+              </IconButton>
+            </Tooltip>
+
+            <Tooltip title="Inteligência Artificial">
+              <IconButton
+                onClick={() => setAiOpen(true)}
+                sx={{
+                  color: "text.secondary",
+                  "&:hover": { color: "text.primary" },
+                }}
+              >
+                <img
+                  src="/images/ai-animated.gif"
+                  alt="IA"
+                  style={{ height: 24, width: 24 }}
+                />
               </IconButton>
             </Tooltip>
 
@@ -193,6 +209,85 @@ export const Header = () => {
             <NotificationsIcon sx={{ fontSize: 48 }} />
             <Typography variant="body1">
               Nenhuma notificação no momento
+            </Typography>
+          </Box>
+        </Paper>
+      </Modal>
+
+      {/* Modal de IA - NOVO */}
+      <Modal
+        open={aiOpen}
+        onClose={() => setAiOpen(false)}
+        sx={{
+          display: "flex",
+          alignItems: "flex-start",
+          justifyContent: "flex-end",
+          pt: 8,
+          pr: 2,
+        }}
+      >
+        <Paper
+          sx={{
+            width: "100%",
+            maxWidth: 400,
+            maxHeight: "calc(100vh - 100px)",
+            overflow: "auto",
+            borderRadius: 1,
+            boxShadow: 24,
+          }}
+        >
+          {/* Header do Modal */}
+          <Box
+            sx={{
+              p: 2,
+              borderBottom: "1px solid",
+              borderColor: "divider",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+            }}
+          >
+            <Typography variant="h6">Inteligência Artificial</Typography>
+            <IconButton
+              size="small"
+              onClick={() => setAiOpen(false)}
+              sx={{ color: "text.secondary" }}
+            >
+              <CloseIcon />
+            </IconButton>
+          </Box>
+
+          {/* Conteúdo do Modal de IA */}
+          <Box
+            sx={{
+              p: 4,
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              gap: 2,
+              color: "text.secondary",
+              textAlign: "center",
+            }}
+          >
+            <img
+              src="/images/ai-animated.gif"
+              alt="IA Smart Nutri"
+              style={{ width: 120, height: 120 }}
+            />
+            <Typography
+              variant="h5"
+              color="primary.main"
+              sx={{ fontWeight: "bold" }}
+            >
+              Em breve
+            </Typography>
+            <Typography variant="body1" sx={{ mb: 1 }}>
+              Inteligência Artificial Smart Nutri
+            </Typography>
+            <Typography variant="body2" color="text.secondary">
+              Nossa IA especializada está chegando para auxiliar na criação de
+              planos alimentares, relatórios nutricionais, insights de pacientes
+              e aumentar sua produtividade.
             </Typography>
           </Box>
         </Paper>
