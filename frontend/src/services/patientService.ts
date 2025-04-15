@@ -192,7 +192,7 @@ export const patientService = {
     patientId: string,
     startDate?: string,
     endDate?: string,
-    limit: number = 5
+    limit?: number
   ): Promise<Measurement[]> => {
     const params = new URLSearchParams();
     if (startDate) params.append("startDate", startDate);

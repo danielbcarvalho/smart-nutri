@@ -9,6 +9,8 @@ import {
 } from "@mui/material";
 import { format } from "date-fns";
 import { Measurement } from "../../../services/patientService";
+import ArrowUpwardIcon from "@mui/icons-material/ArrowUpward";
+import ArrowDownwardIcon from "@mui/icons-material/ArrowDownward";
 
 interface AnalysisTableProps {
   measurements: Measurement[];
@@ -17,7 +19,7 @@ interface AnalysisTableProps {
 interface AnalysisParameter {
   label: string;
   getValue: (m: Measurement) => string | number;
-  getVariation?: (current: number, previous: number) => string;
+  getVariation?: (current: number, previous: number) => React.ReactNode;
   unit?: string;
   getClassification?: (value: string | number) => string;
 }
@@ -62,8 +64,20 @@ export function AnalysisTable({ measurements }: AnalysisTableProps) {
   };
 
   const formatVariation = (value: number) => {
-    if (value === 0) return "(0)";
-    return value > 0 ? `(+${value.toFixed(1)})` : `(${value.toFixed(1)})`;
+    if (value === 0) return null;
+    const arrow =
+      value > 0 ? (
+        <ArrowUpwardIcon sx={{ fontSize: "0.5rem" }} />
+      ) : (
+        <ArrowDownwardIcon sx={{ fontSize: "0.5rem" }} />
+      );
+    return (
+      <span
+        style={{ display: "inline-flex", alignItems: "center", gap: "2px" }}
+      >
+        {arrow} {Math.abs(value).toFixed(1)}
+      </span>
+    );
   };
 
   const formatDate = (dateString: string) => {
@@ -214,9 +228,25 @@ export function AnalysisTable({ measurements }: AnalysisTableProps) {
       <Table>
         <TableHead>
           <TableRow>
-            <TableCell sx={{ fontWeight: "bold" }}>Parâmetro</TableCell>
+            <TableCell
+              sx={{
+                fontWeight: "bold",
+                color: "primary.main",
+                fontSize: "1rem",
+              }}
+            >
+              Parâmetro
+            </TableCell>
             {sortedMeasurements.map((m) => (
-              <TableCell key={m.id} align="center" sx={{ fontWeight: "bold" }}>
+              <TableCell
+                key={m.id}
+                align="center"
+                sx={{
+                  fontWeight: "bold",
+                  color: "primary.main",
+                  fontSize: "0.9rem",
+                }}
+              >
                 {formatDate(m.date)}
               </TableCell>
             ))}
@@ -245,20 +275,30 @@ export function AnalysisTable({ measurements }: AnalysisTableProps) {
 
                 return (
                   <TableCell key={measurement.id} align="center">
-                    {value}
-                    {variation && (
-                      <Typography
-                        component="span"
-                        color={
-                          variation.includes("+")
-                            ? "success.main"
-                            : "error.main"
-                        }
-                        sx={{ ml: 1, fontSize: "0.8em" }}
-                      >
-                        {variation}
+                    <span
+                      style={{
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: "4px",
+                      }}
+                    >
+                      <Typography component="span" sx={{ fontWeight: 500 }}>
+                        {value}
                       </Typography>
-                    )}
+                      {variation && (
+                        <Typography
+                          component="span"
+                          color="text.secondary"
+                          sx={{
+                            fontSize: "0.7em",
+                            display: "inline-flex",
+                            alignItems: "center",
+                          }}
+                        >
+                          {variation}
+                        </Typography>
+                      )}
+                    </span>
                     {classification && (
                       <Typography
                         component="div"
