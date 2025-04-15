@@ -117,7 +117,6 @@ export function Register() {
             backgroundSize: "cover",
             backgroundPosition: "center",
             borderRadius: { xs: 0, sm: "12px" },
-            position: "relative",
             "&::before": {
               content: '""',
               position: "absolute",
