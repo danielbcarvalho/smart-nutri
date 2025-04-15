@@ -31,6 +31,8 @@ import { CreateMeasurementDto } from "../../services/patientService";
 import { calculateAnthropometricResults } from "./utils/anthropometricCalculations";
 import { bodyDensityFormulas } from "./utils/formulas";
 import { SkinfoldType } from "./utils/formulas/types";
+import { PhotoUpload } from "../../components/PhotoUpload";
+import { AssessmentPhoto } from "../../services/photoService";
 
 export function NewAssessment() {
   const { patientId, measurementId } = useParams<{
@@ -140,6 +142,31 @@ export function NewAssessment() {
     },
     enabled: !!patientId && !!measurementId && !!previousMeasurements,
   });
+
+  // Estado local para fotos (AssessmentPhoto)
+  const [photos, setPhotos] = useState<{
+    front: AssessmentPhoto | null;
+    back: AssessmentPhoto | null;
+    left: AssessmentPhoto | null;
+    right: AssessmentPhoto | null;
+  }>({
+    front: null,
+    back: null,
+    left: null,
+    right: null,
+  });
+
+  // Handler para atualizar o objeto AssessmentPhoto
+  const handlePhotoChange =
+    (type: "front" | "back" | "left" | "right") => (photo: AssessmentPhoto) => {
+      setPhotos((prev) => ({ ...prev, [type]: photo }));
+    };
+
+  // Handler de erro (apenas log)
+  const handlePhotoError = (err: Error) => {
+    // Pode exibir um snackbar futuramente
+    console.error("Erro ao selecionar foto:", err);
+  };
 
   // Este useEffect preenche os dados quando estamos editando
   useEffect(() => {
@@ -1266,6 +1293,56 @@ export function NewAssessment() {
                 <Tooltip title="Necessário informar o PIN SEGURO">
                   <HelpIcon color="action" fontSize="small" />
                 </Tooltip>
+              </Box>
+              {/* Grid de uploads fotográficos */}
+              <Box
+                sx={{
+                  mt: 3,
+                  display: "grid",
+                  gridTemplateColumns: "repeat(2, 1fr)",
+                  gap: 2,
+                }}
+              >
+                <PhotoUpload
+                  type="front"
+                  assessmentId={measurementId || "new"}
+                  patientId={patientId || ""}
+                  onUploadComplete={handlePhotoChange("front")}
+                  onUploadError={handlePhotoError}
+                  initialPhotoUrl={photos.front?.url}
+                  showPreview
+                  previewSize={{ width: 180, height: 180 }}
+                />
+                <PhotoUpload
+                  type="back"
+                  assessmentId={measurementId || "new"}
+                  patientId={patientId || ""}
+                  onUploadComplete={handlePhotoChange("back")}
+                  onUploadError={handlePhotoError}
+                  initialPhotoUrl={photos.back?.url}
+                  showPreview
+                  previewSize={{ width: 180, height: 180 }}
+                />
+                <PhotoUpload
+                  type="left"
+                  assessmentId={measurementId || "new"}
+                  patientId={patientId || ""}
+                  onUploadComplete={handlePhotoChange("left")}
+                  onUploadError={handlePhotoError}
+                  initialPhotoUrl={photos.left?.url}
+                  showPreview
+                  previewSize={{ width: 180, height: 180 }}
+                />
+                <PhotoUpload
+                  type="right"
+                  assessmentId={measurementId || "new"}
+                  patientId={patientId || ""}
+                  onUploadComplete={handlePhotoChange("right")}
+                  onUploadError={handlePhotoError}
+                  initialPhotoUrl={photos.right?.url}
+                  showPreview
+                  previewSize={{ width: 180, height: 180 }}
+                />
               </Box>
             </AccordionDetails>
           </Accordion>

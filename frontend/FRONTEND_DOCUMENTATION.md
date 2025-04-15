@@ -212,6 +212,19 @@ Located in `src/components/`:
 - **StatsCards**: Dashboard statistics.
 - **SearchModal**: Modal de pesquisa global, utilizado no Header para busca de pacientes e planos alimentares. Possui feedback visual aprimorado, estado de carregamento, mensagem de vazio e navegação por teclado.
 - **CompositionChart**: Componente responsável por exibir a evolução da composição corporal do paciente ao longo do tempo.
+- **PhotoUpload**: Componente para seleção e pré-visualização de fotos de avaliação (Fase 1: apenas seleção local e preview, sem upload real). Permite ao usuário arrastar ou selecionar arquivos de imagem (JPG, JPEG, PNG, até 5MB por padrão), valida o formato/tamanho e exibe a pré-visualização da imagem escolhida. Localização: `src/components/PhotoUpload/`. Interface:
+
+```tsx
+<PhotoUpload
+  type="front" // ou "back" | "left" | "right"
+  assessmentId="123"
+  patientId="456"
+  onUploadComplete={(photo) => console.log(photo)}
+  onUploadError={(err) => console.error(err)}
+/>
+```
+
+> Limitação atual: não realiza upload real nem integração com backend/Supabase nesta fase inicial. Apenas seleção, validação e preview local.
 
 #### SearchModal
 
