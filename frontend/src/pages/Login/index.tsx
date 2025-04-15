@@ -203,7 +203,7 @@ export function Login() {
           sx={{
             width: "100%",
             height: "100%",
-            backgroundImage: "url(/src/assets/images/nutri.jpg)",
+            backgroundImage: "url(/images/nutri.jpg)",
             backgroundSize: "cover",
             backgroundPosition: "center",
             borderRadius: "12px",
@@ -273,7 +273,7 @@ export function Login() {
           >
             <Box
               component="img"
-              src="/src/assets/logos/logo-horizontal.png"
+              src="/images/logo-horizontal.png"
               alt="Smart Nutri"
               sx={{
                 width: "180px",
