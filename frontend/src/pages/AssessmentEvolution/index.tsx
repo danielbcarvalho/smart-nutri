@@ -49,7 +49,6 @@ export function AssessmentEvolution() {
     enabled: !!patientId,
     // staleTime: 5 * 60 * 1000, // Opcional: manter dados frescos por 5 min
   });
-  console.log("🚀 ~ index.tsx:52 ~ allMeasurements 🚀🚀🚀:", allMeasurements);
 
   // Filtrar medições localmente com base no período selecionado no estado 'dateRange'
   const filteredMeasurements = useMemo(() => {
@@ -86,10 +85,6 @@ export function AssessmentEvolution() {
       return true;
     });
   }, [allMeasurements, dateRange]); // Recalcula SOMENTE se as medições totais ou o dateRange mudarem
-  console.log(
-    "🚀 ~ index.tsx:89 ~ filteredMeasurements 🚀🚀🚀:",
-    filteredMeasurements
-  );
 
   // Estado de Carregamento
   if (isLoadingPatient || isLoadingMeasurements) {

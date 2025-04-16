@@ -18,7 +18,7 @@ export class StorageService {
    * @returns The URL of the uploaded file
    */
   async uploadPatientPhoto(
-    patientId: number,
+    patientId: string,
     file: Buffer,
     filename: string,
     contentType: string,

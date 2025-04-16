@@ -117,6 +117,16 @@ export interface Measurement {
   createdAt: string;
   updatedAt: string;
   notes?: string;
+  photos?: Array<{
+    id: string;
+    type: string;
+    url: string;
+    thumbnailUrl?: string;
+    assessmentId?: string;
+    createdAt?: string;
+    updatedAt?: string;
+    storagePath?: string;
+  }>;
 }
 
 export interface CreateMeasurementDto {
@@ -140,6 +150,7 @@ export interface CreateMeasurementDto {
   boneDiameters?: BoneDiameters;
   skinfoldFormula?: string;
   patientId?: string;
+  sharePhotos?: boolean;
 }
 
 export const patientService = {

@@ -544,3 +544,80 @@ interface LocationState {
    - Use proper loading states
    - Implement efficient validation
    - Maintain responsive design
+
+---
+
+## Novo Fluxo de Upload e Listagem de Fotos de Pacientes
+
+A partir de 2024-06, o upload, listagem e remoção de fotos de avaliações de pacientes é feito exclusivamente via endpoints REST do backend, desacoplando o frontend do Supabase.
+
+### Principais mudanças:
+
+- O componente e hook de upload de fotos (`PhotoUpload`, `usePhotoUpload`) agora utilizam apenas os endpoints do backend:
+  - `POST /photos` para upload
+  - `GET /photos` para listagem (com filtros por paciente, avaliação, tipo, datas)
+  - `DELETE /photos/:id` para remoção
+- O frontend envia arquivos e metadados via `FormData` para o backend.
+- URLs de imagens e thumbnails são retornadas pelo backend e consumidas normalmente.
+- Não há mais dependência direta do Supabase no frontend para fotos.
+
+### Exemplo de uso do hook:
+
+```tsx
+const { uploadPhoto, isUploading, error } = usePhotoUpload();
+
+// Para upload:
+await uploadPhoto({
+  file,
+  patientId,
+  assessmentId,
+  type: "front",
+});
+
+// Para listar fotos:
+const { data } = await api.get("/photos", {
+  params: { patientId, type: "front" },
+});
+```
+
+### Benefícios
+
+- Centralização de regras de negócio e segurança no backend
+- Facilidade para implementar filtros, evolução visual e auditoria
+- Menor exposição de chaves e lógica sensível
+
+## Refatoração da Página de Pacientes
+
+A página de listagem de pacientes foi refatorada para melhorar a organização do código e exibição das fotos dos pacientes. As principais mudanças incluem:
+
+### Nova Estrutura de Componentes
+
+A página de pacientes agora está organizada em componentes menores e mais específicos:
+
+- **Patients (index.tsx)**: Componente principal que gerencia estado e lógica
+- **PatientTable**: Componente que exibe a tabela de pacientes, incluindo fotos
+- **PatientActionsMenu**: Menu de ações para cada paciente
+- **DeleteConfirmationDialog**: Diálogo de confirmação para exclusão
+
+### Melhorias na Exibição de Fotos
+
+- Avatar agora exibe adequadamente a foto do paciente quando disponível
+- Fallback para exibir iniciais quando não há foto disponível
+- Cores consistentes baseadas no nome do paciente para os avatares sem foto
+- Melhor interação com o backend para obtenção de fotos
+
+### Como Implementar
+
+```tsx
+// Na tabela de pacientes
+<Avatar
+  src={patient.photoUrl}
+  sx={{
+    bgcolor: !patient.photoUrl ? stringToColor(patient.name) : undefined,
+    width: 40,
+    height: 40,
+  }}
+>
+  {!patient.photoUrl && getInitials(patient.name)}
+</Avatar>
+```

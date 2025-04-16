@@ -157,3 +157,65 @@ Nest is an MIT-licensed open source project. It can grow thanks to the sponsors 
 ## License
 
 Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+
+---
+
+## Plano de Melhoria do Fluxo de Upload de Fotos
+
+### Diagnóstico Atual
+
+- O upload de fotos atualmente é feito diretamente do frontend para o Supabase Storage.
+- O registro de metadados é feito via Supabase REST API, resultando em erro 404 (endpoint/tabela inexistente ou configuração incorreta).
+- Não há endpoints REST no backend para upload, listagem ou remoção de fotos.
+- Não há tabela documentada para fotos no banco de dados.
+- O frontend está acoplado ao Supabase, dificultando abstração, controle e segurança.
+
+### Problemas Identificados
+
+- Acoplamento do frontend ao provedor de storage (Supabase).
+- Falta de controle centralizado de regras de negócio, validação e logging.
+- Risco de exposição de chaves sensíveis do Supabase no frontend.
+- Dificuldade de manutenção, evolução e implementação de lógica adicional (ex: thumbnails, quotas, logs).
+
+### Proposta de Solução
+
+#### Backend
+
+- Criar endpoints REST para upload, listagem e remoção de fotos:
+  - `POST /photos` (upload de foto)
+  - `GET /photos?assessmentId=...` (listagem de fotos por avaliação)
+  - `DELETE /photos/:id` (remoção de foto)
+- O backend será responsável por:
+  - Receber o arquivo (multipart/form-data) e metadados.
+  - Validar permissões e dados.
+  - Fazer upload para o Supabase Storage (ou outro provedor).
+  - Gerenciar registros no banco de dados.
+  - Retornar URLs seguras para o frontend.
+
+#### Frontend
+
+- Refatorar o serviço de upload de fotos para consumir apenas os endpoints do backend.
+- Remover dependência direta do Supabase e chaves sensíveis do frontend.
+
+#### Banco de Dados
+
+- Criar tabela `photos` para armazenar metadados das fotos (id, patient_id, assessment_id, tipo, url, thumbnail, storage_path, timestamps, etc).
+- Garantir integridade referencial e possibilidade de soft delete.
+
+#### Segurança
+
+- Chaves do Supabase devem ficar restritas ao backend.
+- Implementar autenticação e autorização nos endpoints de fotos.
+
+#### Documentação
+
+- Atualizar documentação da API e banco de dados para refletir os novos fluxos e endpoints.
+
+### Benefícios Esperados
+
+- Centralização de regras de negócio, validação e segurança.
+- Facilidade de manutenção e evolução futura.
+- Menor exposição de chaves e dados sensíveis.
+- Possibilidade de processamento adicional (thumbnails, logs, quotas, etc).
+
+---

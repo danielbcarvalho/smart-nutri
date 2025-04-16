@@ -30,26 +30,12 @@ interface RegisterNutritionistDto {
 
 export const authService = {
   async login(credentials: LoginCredentials): Promise<LoginResponse> {
-    console.log("Login Request - Starting request to:", "/auth/login");
-    console.log(
-      "Login Request - Using api instance with baseURL:",
-      api.defaults.baseURL
-    );
-
     try {
       const response = await api.post<LoginResponse>(
         "/auth/login",
         credentials
       );
-      console.log("Login Request - Success response:", {
-        status: response.status,
-        headers: response.headers,
-        config: {
-          url: response.config.url,
-          baseURL: response.config.baseURL,
-          method: response.config.method,
-        },
-      });
+
       return response.data;
     } catch (error) {
       console.error("Login Request - Error:", error);

@@ -73,10 +73,8 @@ export function MealPlanDetails() {
         !defaultMealsCreated.current
       ) {
         defaultMealsCreated.current = true;
-        console.log("Creating default meals for plan:", plan.id);
         try {
           for (const meal of DEFAULT_MEALS) {
-            console.log("Adding meal:", meal);
             await addMealMutation.mutateAsync({
               name: meal.name,
               time: formatTime(meal.time),
@@ -85,7 +83,6 @@ export function MealPlanDetails() {
             });
           }
         } catch (error) {
-          console.error("Erro ao criar refeição padrão:", error);
           // Não resetamos o defaultMealsCreated aqui, pois queremos tentar apenas uma vez
         }
       }
@@ -125,12 +122,10 @@ export function MealPlanDetails() {
 
   const handleAddFood = (mealId: string) => {
     // TODO: Implementar adição de alimento
-    console.log("Adicionar alimento à refeição:", mealId);
   };
 
   const handleEditMeal = (meal: Meal) => {
     // TODO: Implementar edição de refeição
-    console.log("Editar refeição:", meal);
   };
 
   if (isLoading) {

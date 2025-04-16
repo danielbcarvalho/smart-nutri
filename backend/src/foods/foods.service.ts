@@ -50,13 +50,11 @@ export class FoodsService {
 
   async search(searchFoodDto: SearchFoodDto): Promise<Food[]> {
     const { query, page = 0, pageSize = 20 } = searchFoodDto;
-    console.log('Iniciando busca com query:', query);
 
     let localFoods: Food[] = [];
 
     try {
       // Primeiro, procura no cache local
-      console.log('Buscando no cache local...');
       localFoods = await this.foodsRepository
         .createQueryBuilder('food')
         .where('food.name ILIKE :query', { query: `%${query}%` })
@@ -67,16 +65,12 @@ export class FoodsService {
         .addOrderBy('food.name', 'ASC')
         .getMany();
 
-      console.log('Resultados do cache local:', localFoods.length);
-
       // Se encontrou resultados suficientes no cache, retorna
       if (localFoods.length >= pageSize) {
-        console.log('Cache suficiente, retornando resultados locais');
         return localFoods;
       }
 
       // Caso contrário, busca na API do Open Food Facts
-      console.log('Buscando na API do Open Food Facts...');
       const openFoodResponse = await this.openFoodFactsService.searchFoods(
         query,
         page + 1, // Open Food Facts usa página 1-based
@@ -84,9 +78,6 @@ export class FoodsService {
       );
 
       if (!openFoodResponse?.products?.length) {
-        console.log(
-          'Sem resultados do Open Food Facts, retornando apenas cache local',
-        );
         return localFoods;
       }
 
@@ -107,14 +98,8 @@ export class FoodsService {
         return food;
       });
 
-      console.log(
-        'Resultados do Open Food Facts transformados:',
-        openFoodFoods.length,
-      );
-
       // Combina os resultados
       const results = [...localFoods, ...openFoodFoods];
-      console.log('Total de resultados:', results.length);
       return results;
     } catch (error) {
       console.error(

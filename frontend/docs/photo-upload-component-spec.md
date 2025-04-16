@@ -273,9 +273,7 @@ export const PreviewContainer = styled(Box)(({ theme }) => ({
   type="front"
   assessmentId="123"
   patientId="456"
-  onUploadComplete={(photo) => {
-    console.log("Upload complete:", photo);
-  }}
+  onUploadComplete={(photo) => {}}
   onUploadError={(error) => {
     console.error("Upload failed:", error);
   }}

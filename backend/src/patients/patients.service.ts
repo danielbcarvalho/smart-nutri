@@ -159,6 +159,7 @@ export class PatientsService {
     return this.measurementRepository.find({
       where: { patient: { id: patient.id }, nutritionistId },
       order: { date: 'DESC' },
+      relations: ['photos'],
     });
   }
 

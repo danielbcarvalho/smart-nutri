@@ -1,4 +1,4 @@
-import { supabase } from "../lib/supabase";
+import { api } from "./api";
 
 export interface UploadPhotoParams {
   file: File;
@@ -17,108 +17,94 @@ export interface AssessmentPhoto {
   updatedAt: Date;
 }
 
-export class PhotoService {
-  private static BUCKET = "patient-photos";
+// Interface para dados da foto recebidos da API
+export interface RawPhotoData {
+  id: string;
+  type: string;
+  url: string;
+  thumbnailUrl?: string;
+  thumbnail_url?: string;
+  storagePath?: string;
+  storage_path?: string;
+  createdAt?: string | Date;
+  created_at?: string | Date;
+  updatedAt?: string | Date;
+  updated_at?: string | Date;
+  patientId?: string;
+  assessmentId?: string;
+  deletedAt?: string | Date | null;
+  [key: string]: string | Date | null | undefined; // Tipo mais específico para indexação
+}
 
+export class PhotoService {
   static async uploadPhoto({
     file,
     type,
     patientId,
     assessmentId,
   }: UploadPhotoParams): Promise<AssessmentPhoto> {
-    // Mock de thumbnail (usar o próprio arquivo por enquanto)
-    const thumbnail = file;
-    const fileName = `${type}.${file.name.split(".").pop()}`;
-    const thumbnailName = `thumbnails/${type}.jpg`;
-    const storagePath = `${patientId}/${assessmentId}/${fileName}`;
-    const thumbnailPath = `${patientId}/${assessmentId}/${thumbnailName}`;
-
-    // Upload original
-    const { error: uploadError } = await supabase.storage
-      .from(this.BUCKET)
-      .upload(storagePath, file, {
-        upsert: true,
-      });
-    if (uploadError) throw uploadError;
-
-    // Upload thumbnail (mock)
-    const { error: thumbnailError } = await supabase.storage
-      .from(this.BUCKET)
-      .upload(thumbnailPath, thumbnail, {
-        upsert: true,
-        contentType: "image/jpeg",
-      });
-    if (thumbnailError) throw thumbnailError;
-
-    // Get URLs
-    const { data: urlData } = await supabase.storage
-      .from(this.BUCKET)
-      .createSignedUrl(storagePath, 3600);
-    const { data: thumbnailUrlData } = await supabase.storage
-      .from(this.BUCKET)
-      .createSignedUrl(thumbnailPath, 3600);
-
-    // Criar registro no banco
-    const { data: photo, error: dbError } = await supabase
-      .from(this.BUCKET)
-      .insert({
-        assessment_id: assessmentId,
-        patient_id: patientId,
-        type,
-        url: urlData?.signedUrl,
-        thumbnail_url: thumbnailUrlData?.signedUrl,
-        storage_path: storagePath,
-      })
-      .select()
-      .single();
-    if (dbError) throw dbError;
-    return this.transformPhotoData(photo);
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("type", type);
+    formData.append("patientId", patientId);
+    if (assessmentId) formData.append("assessmentId", assessmentId);
+    const { data } = await api.post("/photos", formData, {
+      headers: { "Content-Type": "multipart/form-data" },
+    });
+    return this.transformPhotoData(data);
   }
 
   static async getAssessmentPhotos(
     assessmentId: string
   ): Promise<AssessmentPhoto[]> {
-    const { data, error } = await supabase
-      .from(this.BUCKET)
-      .select("*")
-      .eq("assessment_id", assessmentId)
-      .is("deleted_at", null);
-    if (error) throw error;
-    return data.map(this.transformPhotoData);
+    const { data } = await api.get("/photos", {
+      params: { assessmentId },
+    });
+
+    // Garantir que temos um array para processar
+    const photosData = Array.isArray(data.data) ? data.data : [];
+    return photosData.map((photo: RawPhotoData) =>
+      this.transformPhotoData(photo)
+    );
   }
 
   static async deletePhoto(photoId: string): Promise<void> {
-    const { data: photo, error: fetchError } = await supabase
-      .from(this.BUCKET)
-      .select("storage_path")
-      .eq("id", photoId)
-      .single();
-    if (fetchError) throw fetchError;
-    const { error: storageError } = await supabase.storage
-      .from(this.BUCKET)
-      .remove([
-        photo.storage_path,
-        photo.storage_path.replace(/([^/]+)$/, "thumbnails/$1"),
-      ]);
-    if (storageError) throw storageError;
-    const { error: dbError } = await supabase
-      .from(this.BUCKET)
-      .update({ deleted_at: new Date().toISOString() })
-      .eq("id", photoId);
-    if (dbError) throw dbError;
+    await api.delete(`/photos/${photoId}`);
   }
 
-  private static transformPhotoData(photo: {
-    [key: string]: unknown;
-  }): AssessmentPhoto {
+  static transformPhotoData(photo: RawPhotoData): AssessmentPhoto {
+    // Garantir que o tipo seja válido
+    const validType = (
+      type: string
+    ): type is "front" | "back" | "left" | "right" => {
+      return ["front", "back", "left", "right"].includes(type);
+    };
+
+    const photoType = photo.type;
+    if (!validType(photoType)) {
+      console.warn(
+        `Tipo de foto inválido: ${photoType}. Usando "front" como padrão.`
+      );
+    }
+
     return {
-      id: photo.id as string,
-      type: photo.type as "front" | "back" | "left" | "right",
-      url: photo.url as string,
-      thumbnailUrl: photo.thumbnail_url as string,
-      storagePath: photo.storage_path as string,
-      createdAt: new Date(photo.created_at as string),
-      updatedAt: new Date(photo.updated_at as string),
+      id: photo.id,
+      type: validType(photoType) ? photoType : "front",
+      url: photo.url,
+      thumbnailUrl: photo.thumbnailUrl || photo.thumbnail_url || photo.url,
+      storagePath: photo.storagePath || photo.storage_path || "",
+      createdAt:
+        photo.createdAt instanceof Date
+          ? photo.createdAt
+          : photo.created_at instanceof Date
+          ? photo.created_at
+          : new Date(photo.createdAt || photo.created_at || Date.now()),
+      updatedAt:
+        photo.updatedAt instanceof Date
+          ? photo.updatedAt
+          : photo.updated_at instanceof Date
+          ? photo.updated_at
+          : new Date(photo.updatedAt || photo.updated_at || Date.now()),
     };
   }
 }

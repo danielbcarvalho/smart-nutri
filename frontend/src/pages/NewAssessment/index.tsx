@@ -1,38 +1,26 @@
-import React, { useState, useMemo, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import {
-  Box,
-  Typography,
-  TextField,
-  Button,
-  Grid,
-  Paper,
-  Switch,
-  Tooltip,
-  Accordion,
-  AccordionSummary,
-  AccordionDetails,
-  ToggleButtonGroup,
-  ToggleButton,
-  Modal,
-  Snackbar,
-  Alert,
-} from "@mui/material";
-import { DatePicker } from "@mui/x-date-pickers/DatePicker";
-import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
-import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
-import { ptBR } from "date-fns/locale";
-import { format } from "date-fns";
-import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
-import HelpIcon from "@mui/icons-material/Help";
+import { Box, Snackbar, Alert } from "@mui/material";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { patientService } from "../../services/patientService";
-import { CreateMeasurementDto } from "../../services/patientService";
-import { calculateAnthropometricResults } from "./utils/anthropometricCalculations";
-import { bodyDensityFormulas } from "./utils/formulas";
-import { SkinfoldType } from "./utils/formulas/types";
-import { PhotoUpload } from "../../components/PhotoUpload";
+import {
+  CreateMeasurementDto,
+  Skinfolds,
+  BodyMeasurements,
+  BoneDiameters,
+} from "../../services/patientService";
+
 import { AssessmentPhoto } from "../../services/photoService";
+
+// Componentes
+import { PhotosSection } from "./components/PhotosSection";
+import { BasicDataSection } from "./components/BasicDataSection";
+import { SkinfoldSection } from "./components/SkinfoldSection";
+import { CircumferenceSection } from "./components/CircumferenceSection";
+import { BoneDiameterSection } from "./components/BoneDiameterSection";
+import { BioimpedanceSection } from "./components/BioimpedanceSection";
+import { AssessmentHeader } from "./components/AssessmentHeader";
+import { ActionButtons } from "./components/ActionButtons";
 
 export function NewAssessment() {
   const { patientId, measurementId } = useParams<{
@@ -42,7 +30,6 @@ export function NewAssessment() {
   const navigate = useNavigate();
   const [sharePhotos, setSharePhotos] = useState(false);
   const [assessmentDate, setAssessmentDate] = useState<Date | null>(new Date());
-  const [openGraphsModal, setOpenGraphsModal] = useState(false);
   const [snackbar, setSnackbar] = useState({
     open: false,
     message: "",
@@ -50,6 +37,7 @@ export function NewAssessment() {
   });
   const queryClient = useQueryClient();
   const isEditMode = !!measurementId;
+  const isSaving = useRef(false);
 
   // Dados básicos
   const [basicData, setBasicData] = useState({
@@ -114,6 +102,19 @@ export function NewAssessment() {
     metabolicAge: "",
   });
 
+  // Estado local para fotos (utilizado pelo handlePhotosChange)
+  const [, setPhotos] = useState<{
+    front: AssessmentPhoto | null;
+    back: AssessmentPhoto | null;
+    left: AssessmentPhoto | null;
+    right: AssessmentPhoto | null;
+  }>({
+    front: null,
+    back: null,
+    left: null,
+    right: null,
+  });
+
   // Criar ref para controlar se já preenchemos dados
   const hasFilledDataRef = useRef(false);
 
@@ -142,31 +143,6 @@ export function NewAssessment() {
     },
     enabled: !!patientId && !!measurementId && !!previousMeasurements,
   });
-
-  // Estado local para fotos (AssessmentPhoto)
-  const [photos, setPhotos] = useState<{
-    front: AssessmentPhoto | null;
-    back: AssessmentPhoto | null;
-    left: AssessmentPhoto | null;
-    right: AssessmentPhoto | null;
-  }>({
-    front: null,
-    back: null,
-    left: null,
-    right: null,
-  });
-
-  // Handler para atualizar o objeto AssessmentPhoto
-  const handlePhotoChange =
-    (type: "front" | "back" | "left" | "right") => (photo: AssessmentPhoto) => {
-      setPhotos((prev) => ({ ...prev, [type]: photo }));
-    };
-
-  // Handler de erro (apenas log)
-  const handlePhotoError = (err: Error) => {
-    // Pode exibir um snackbar futuramente
-    console.error("Erro ao selecionar foto:", err);
-  };
 
   // Este useEffect preenche os dados quando estamos editando
   useEffect(() => {
@@ -254,146 +230,52 @@ export function NewAssessment() {
         });
       }
 
+      // Marcar como preenchido
       hasFilledDataRef.current = true;
+
+      // Verificar se deve compartilhar fotos
+      if ("sharePhotos" in measurementToEdit) {
+        setSharePhotos(!!measurementToEdit.sharePhotos);
+      }
     }
   }, [isEditMode, measurementToEdit]);
 
-  // Este useEffect preenche a altura inicial da última avaliação (apenas em novo modo)
-  useEffect(() => {
-    // Este efeito só deve rodar uma vez quando o componente montar
-    // e os dados do paciente e medições estiverem disponíveis
-    // e não estamos no modo de edição
-    if (
-      !isEditMode &&
-      !hasFilledDataRef.current &&
-      previousMeasurements &&
-      previousMeasurements.length > 0
-    ) {
-      try {
-        console.log("Todas as medições:", previousMeasurements);
-
-        // Função para converter seguramente qualquer formato de data para timestamp
-        const getTimestamp = (
-          dateValue: Date | string | null | undefined
-        ): number => {
-          if (!dateValue) return 0;
-
-          try {
-            // Tentar converter para data se for string ou outro formato
-            const date = new Date(dateValue);
-            // Verificar se a data é válida
-            if (isNaN(date.getTime())) {
-              console.warn(`Data inválida: ${dateValue}`);
-              return 0;
-            }
-            return date.getTime();
-          } catch (e) {
-            console.warn(`Erro ao converter data: ${dateValue}`, e);
-            return 0;
-          }
-        };
-
-        // Encontrar a medição mais recente manualmente
-        let mostRecentMeasurement = previousMeasurements[0];
-        let mostRecentTimestamp = getTimestamp(mostRecentMeasurement.date);
-
-        // Log detalhado para cada medição
-        previousMeasurements.forEach((measurement, index) => {
-          const timestamp = getTimestamp(measurement.date);
-
-          console.log(`Medição ${index}:`, {
-            id: measurement.id,
-            date: measurement.date,
-            dateOriginal: String(measurement.date),
-            timestamp,
-            formattedDate: new Date(timestamp).toISOString(),
-            height: measurement.height,
-          });
-
-          // Verificar se esta medição é mais recente
-          if (timestamp > mostRecentTimestamp) {
-            console.log(
-              `Nova medição mais recente encontrada: ${
-                measurement.id
-              } com data ${String(measurement.date)}`
-            );
-            mostRecentMeasurement = measurement;
-            mostRecentTimestamp = timestamp;
-          }
-        });
-
-        console.log("Medição mais recente identificada:", {
-          id: mostRecentMeasurement.id,
-          date: mostRecentMeasurement.date,
-          formattedDate: new Date(mostRecentTimestamp).toISOString(),
-          height: mostRecentMeasurement.height,
-        });
-
-        // Verificar se a medição mais recente tem altura
-        if (mostRecentMeasurement && mostRecentMeasurement.height) {
-          // Atualiza apenas a altura
-          const heightValue = mostRecentMeasurement.height
-            ? Math.floor(Number(mostRecentMeasurement.height)).toString()
-            : "";
-
-          console.log(
-            "Preenchendo altura com:",
-            heightValue,
-            "da medição:",
-            mostRecentMeasurement.id
-          );
-
-          setBasicData((prev) => ({
-            ...prev,
-            height: heightValue,
-          }));
-
-          // Marca a ref para indicar que já preenchemos os dados
-          hasFilledDataRef.current = true;
-        }
-      } catch (error) {
-        console.error("Erro ao preencher altura do paciente:", error);
-      }
-    }
-  }, [previousMeasurements, isEditMode]);
-
-  // Mutation para criar ou atualizar avaliação
-  const createMeasurementMutation = useMutation({
-    mutationFn: (data: CreateMeasurementDto) => {
-      if (isEditMode) {
-        return patientService.updateMeasurement(
-          patientId!,
-          measurementId!,
-          data
-        );
+  // Mutação para criar/editar avaliação
+  const createMutation = useMutation({
+    mutationFn: async (dto: CreateMeasurementDto) => {
+      if (isEditMode && measurementId) {
+        return patientService.updateMeasurement(patientId!, measurementId, dto);
       } else {
-        return patientService.createMeasurement(patientId!, data);
+        return patientService.createMeasurement(patientId!, dto);
       }
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["patient", patientId] });
+    onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["measurements", patientId] });
       setSnackbar({
         open: true,
         message: isEditMode
-          ? "Avaliação antropométrica atualizada com sucesso!"
-          : "Avaliação antropométrica salva com sucesso!",
+          ? "Avaliação atualizada com sucesso!"
+          : "Avaliação criada com sucesso!",
         severity: "success",
       });
-      navigate(`/patient/${patientId}/assessments`);
+
+      // Navegar para visualização após criação
+      setTimeout(() => {
+        navigate(`/patients/${patientId}/measurements/${data.id}`);
+      }, 1500);
     },
     onError: (error) => {
-      console.error("Erro ao salvar avaliação", error);
+      console.error("Erro ao salvar avaliação:", error);
       setSnackbar({
         open: true,
-        message: isEditMode
-          ? "Erro ao atualizar avaliação antropométrica"
-          : "Erro ao salvar avaliação antropométrica",
+        message: `Erro ao salvar: ${error}`,
         severity: "error",
       });
+      isSaving.current = false;
     },
   });
 
+  // Handlers para mudanças nos diversos campos
   const handleAccordionChange =
     (panel: string) => (event: React.SyntheticEvent, isExpanded: boolean) => {
       setExpanded(isExpanded ? panel : false);
@@ -401,1527 +283,258 @@ export function NewAssessment() {
 
   const handleBasicDataChange =
     (field: string) => (event: React.ChangeEvent<HTMLInputElement>) => {
-      setBasicData({
-        ...basicData,
+      setBasicData((prev) => ({
+        ...prev,
         [field]: event.target.value,
-      });
+      }));
     };
 
   const handleSkinfoldChange =
     (field: keyof typeof skinfolds) =>
     (event: React.ChangeEvent<HTMLInputElement>) => {
-      const value = event.target.value;
-      // Permite apenas números e ponto
-      if (value === "" || /^\d*\.?\d*$/.test(value)) {
-        setSkinfolds((prev) => ({
-          ...prev,
-          [field]: value,
-        }));
-      }
+      setSkinfolds((prev) => ({
+        ...prev,
+        [field]: event.target.value,
+      }));
     };
 
   const handleCircumferenceChange =
     (field: keyof typeof circumferences) =>
     (event: React.ChangeEvent<HTMLInputElement>) => {
-      const value = event.target.value;
-      // Permite apenas números e ponto
-      if (value === "" || /^\d*\.?\d*$/.test(value)) {
-        setCircumferences((prev) => ({
-          ...prev,
-          [field]: value,
-        }));
-      }
+      setCircumferences((prev) => ({
+        ...prev,
+        [field]: event.target.value,
+      }));
     };
 
   const handleBoneDiameterChange =
     (field: keyof typeof boneDiameters) =>
     (event: React.ChangeEvent<HTMLInputElement>) => {
-      const value = event.target.value;
-      // Permite apenas números e ponto
-      if (value === "" || /^\d*\.?\d*$/.test(value)) {
-        setBoneDiameters((prev) => ({
-          ...prev,
-          [field]: value,
-        }));
-      }
+      setBoneDiameters((prev) => ({
+        ...prev,
+        [field]: event.target.value,
+      }));
     };
 
   const handleBioimpedanceChange =
     (field: keyof typeof bioimpedance) =>
     (event: React.ChangeEvent<HTMLInputElement>) => {
-      const value = event.target.value;
-      // Permite apenas números e ponto
-      if (value === "" || /^\d*\.?\d*$/.test(value)) {
-        setBioimpedance((prev) => ({
-          ...prev,
-          [field]: value,
-        }));
-      }
+      setBioimpedance((prev) => ({
+        ...prev,
+        [field]: event.target.value,
+      }));
     };
 
   const handleSaveAssessment = () => {
-    if (!patientId) return;
+    if (!patientId || isSaving.current) return;
 
-    // Calcula os resultados antropométricos
-    const results = calculateAnthropometricResults(
-      {
-        weight: basicData.weight,
-        height: basicData.height,
-        sittingHeight: basicData.sittingHeight,
-        kneeHeight: basicData.kneeHeight,
-      },
-      circumferences,
-      skinfolds,
-      boneDiameters,
-      bioimpedance,
-      patient?.gender as "M" | "F",
-      patient?.birthDate
-        ? new Date().getFullYear() - new Date(patient.birthDate).getFullYear()
-        : 30,
-      skinfoldFormula
-    );
+    isSaving.current = true;
 
-    const measurementData = {
-      date: format(
-        new Date(
-          (assessmentDate || new Date()).getTime() -
-            (assessmentDate || new Date()).getTimezoneOffset() * 60000
-        ),
-        "yyyy-MM-dd"
-      ),
-      weight: parseFloat(basicData.weight),
-      height: basicData.height ? parseFloat(basicData.height) : undefined,
-      sittingHeight: basicData.sittingHeight
-        ? parseFloat(basicData.sittingHeight)
-        : undefined,
-      kneeHeight: basicData.kneeHeight
-        ? parseFloat(basicData.kneeHeight)
-        : undefined,
-      bodyFat: results.bodyFatPercentage
-        ? parseFloat(results.bodyFatPercentage)
-        : undefined,
-      fatMass: results.fatMass ? parseFloat(results.fatMass) : undefined,
-      muscleMassPercentage: results.bioimpedanceMuscleMassPercentage
-        ? parseFloat(results.bioimpedanceMuscleMassPercentage)
-        : undefined,
-      muscleMass: results.muscleMass
-        ? parseFloat(results.muscleMass)
-        : undefined,
-      fatFreeMass: results.fatFreeMass
-        ? parseFloat(results.fatFreeMass)
-        : undefined,
-      boneMass: results.boneMass ? parseFloat(results.boneMass) : undefined,
-      bodyWater: results.bioimpedanceBodyWater
-        ? parseFloat(results.bioimpedanceBodyWater)
-        : undefined,
-      visceralFat: results.bioimpedanceVisceralFat
-        ? parseFloat(results.bioimpedanceVisceralFat)
-        : undefined,
-      metabolicAge: results.bioimpedanceMetabolicAge
-        ? parseInt(results.bioimpedanceMetabolicAge)
-        : undefined,
-      skinfoldFormula: skinfoldFormula !== "none" ? skinfoldFormula : undefined,
-      measurements:
-        Object.keys(circumferences).length > 0
-          ? {
-              ...(circumferences.chest
-                ? { chest: parseFloat(circumferences.chest) }
-                : {}),
-              ...(circumferences.waist
-                ? { waist: parseFloat(circumferences.waist) }
-                : {}),
-              ...(circumferences.hip
-                ? { hip: parseFloat(circumferences.hip) }
-                : {}),
-              ...(circumferences.relaxedArm
-                ? { relaxedArm: parseFloat(circumferences.relaxedArm) }
-                : {}),
-              ...(circumferences.contractedArm
-                ? { contractedArm: parseFloat(circumferences.contractedArm) }
-                : {}),
-              ...(circumferences.forearm
-                ? { forearm: parseFloat(circumferences.forearm) }
-                : {}),
-              ...(circumferences.neck
-                ? { neck: parseFloat(circumferences.neck) }
-                : {}),
-              ...(circumferences.shoulder
-                ? { shoulder: parseFloat(circumferences.shoulder) }
-                : {}),
-              ...(circumferences.abdomen
-                ? { abdomen: parseFloat(circumferences.abdomen) }
-                : {}),
-              ...(circumferences.proximalThigh
-                ? { proximalThigh: parseFloat(circumferences.proximalThigh) }
-                : {}),
-              ...(circumferences.medialThigh
-                ? { medialThigh: parseFloat(circumferences.medialThigh) }
-                : {}),
-              ...(circumferences.distalThigh
-                ? { distalThigh: parseFloat(circumferences.distalThigh) }
-                : {}),
-              ...(circumferences.calf
-                ? { calf: parseFloat(circumferences.calf) }
-                : {}),
-            }
-          : Object.entries(circumferences).reduce((acc, [key, value]) => {
-              if (value) {
-                acc[key] = parseFloat(value);
-              }
-              return acc;
-            }, {} as Record<string, number>),
-      skinfolds:
-        Object.keys(skinfolds).length > 0
-          ? {
-              ...(skinfolds.tricipital
-                ? { tricipital: parseFloat(skinfolds.tricipital) }
-                : {}),
-              ...(skinfolds.bicipital
-                ? { bicipital: parseFloat(skinfolds.bicipital) }
-                : {}),
-              ...(skinfolds.abdominal
-                ? { abdominal: parseFloat(skinfolds.abdominal) }
-                : {}),
-              ...(skinfolds.subscapular
-                ? { subscapular: parseFloat(skinfolds.subscapular) }
-                : {}),
-              ...(skinfolds.axillaryMedian
-                ? { axillaryMedian: parseFloat(skinfolds.axillaryMedian) }
-                : {}),
-              ...(skinfolds.thigh
-                ? { thigh: parseFloat(skinfolds.thigh) }
-                : {}),
-              ...(skinfolds.thoracic
-                ? { thoracic: parseFloat(skinfolds.thoracic) }
-                : {}),
-              ...(skinfolds.suprailiac
-                ? { suprailiac: parseFloat(skinfolds.suprailiac) }
-                : {}),
-              ...(skinfolds.calf ? { calf: parseFloat(skinfolds.calf) } : {}),
-              ...(skinfolds.supraspinal
-                ? { supraspinal: parseFloat(skinfolds.supraspinal) }
-                : {}),
-            }
-          : undefined,
-      boneDiameters:
-        Object.keys(boneDiameters).length > 0
-          ? {
-              ...(boneDiameters.humerus
-                ? { humerus: parseFloat(boneDiameters.humerus) }
-                : {}),
-              ...(boneDiameters.wrist
-                ? { wrist: parseFloat(boneDiameters.wrist) }
-                : {}),
-              ...(boneDiameters.femur
-                ? { femur: parseFloat(boneDiameters.femur) }
-                : {}),
-            }
-          : undefined,
-      patientId,
+    // Converter dados de string para número
+    const toNumber = (value: string): number | undefined => {
+      if (!value || value.trim() === "") return undefined;
+      const num = parseFloat(value);
+      return isNaN(num) ? undefined : num;
     };
 
-    console.log("Enviando dados para o servidor:", measurementData);
-    createMeasurementMutation.mutate(measurementData);
+    // Preparar skinfolds
+    const skinfoldData: Skinfolds = {};
+    if (skinfolds.tricipital)
+      skinfoldData.tricipital = toNumber(skinfolds.tricipital);
+    if (skinfolds.bicipital)
+      skinfoldData.bicipital = toNumber(skinfolds.bicipital);
+    if (skinfolds.abdominal)
+      skinfoldData.abdominal = toNumber(skinfolds.abdominal);
+    if (skinfolds.subscapular)
+      skinfoldData.subscapular = toNumber(skinfolds.subscapular);
+    if (skinfolds.axillaryMedian)
+      skinfoldData.axillaryMedian = toNumber(skinfolds.axillaryMedian);
+    if (skinfolds.thigh) skinfoldData.thigh = toNumber(skinfolds.thigh);
+    if (skinfolds.thoracic)
+      skinfoldData.thoracic = toNumber(skinfolds.thoracic);
+    if (skinfolds.suprailiac)
+      skinfoldData.suprailiac = toNumber(skinfolds.suprailiac);
+    if (skinfolds.calf) skinfoldData.calf = toNumber(skinfolds.calf);
+    if (skinfolds.supraspinal)
+      skinfoldData.supraspinal = toNumber(skinfolds.supraspinal);
+
+    // Preparar medidas
+    const measurementsData: BodyMeasurements = {};
+    if (circumferences.neck)
+      measurementsData.neck = toNumber(circumferences.neck);
+    if (circumferences.shoulder)
+      measurementsData.shoulder = toNumber(circumferences.shoulder);
+    if (circumferences.chest)
+      measurementsData.chest = toNumber(circumferences.chest);
+    if (circumferences.waist)
+      measurementsData.waist = toNumber(circumferences.waist);
+    if (circumferences.abdomen)
+      measurementsData.abdomen = toNumber(circumferences.abdomen);
+    if (circumferences.hip) measurementsData.hip = toNumber(circumferences.hip);
+    if (circumferences.relaxedArm)
+      measurementsData.relaxedArm = toNumber(circumferences.relaxedArm);
+    if (circumferences.contractedArm)
+      measurementsData.contractedArm = toNumber(circumferences.contractedArm);
+    if (circumferences.forearm)
+      measurementsData.forearm = toNumber(circumferences.forearm);
+    if (circumferences.proximalThigh)
+      measurementsData.proximalThigh = toNumber(circumferences.proximalThigh);
+    if (circumferences.medialThigh)
+      measurementsData.medialThigh = toNumber(circumferences.medialThigh);
+    if (circumferences.distalThigh)
+      measurementsData.distalThigh = toNumber(circumferences.distalThigh);
+    if (circumferences.calf)
+      measurementsData.calf = toNumber(circumferences.calf);
+
+    // Preparar diâmetros ósseos
+    const boneDiametersData: BoneDiameters = {};
+    if (boneDiameters.humerus)
+      boneDiametersData.humerus = toNumber(boneDiameters.humerus);
+    if (boneDiameters.wrist)
+      boneDiametersData.wrist = toNumber(boneDiameters.wrist);
+    if (boneDiameters.femur)
+      boneDiametersData.femur = toNumber(boneDiameters.femur);
+
+    // Montar objeto para envio
+    const measurementData: CreateMeasurementDto = {
+      date: (assessmentDate
+        ? new Date(assessmentDate)
+        : new Date()
+      ).toISOString(),
+      weight: toNumber(basicData.weight) || 0,
+
+      // Campos opcionais
+      skinfoldFormula,
+      height: toNumber(basicData.height),
+      sittingHeight: toNumber(basicData.sittingHeight),
+      kneeHeight: toNumber(basicData.kneeHeight),
+      bodyFat: toNumber(bioimpedance.fatPercentage),
+      fatMass: toNumber(bioimpedance.fatMass),
+      muscleMassPercentage: toNumber(bioimpedance.muscleMassPercentage),
+      muscleMass: toNumber(bioimpedance.muscleMass),
+      fatFreeMass: toNumber(bioimpedance.fatFreeMass),
+      boneMass: toNumber(bioimpedance.boneMass),
+      visceralFat: toNumber(bioimpedance.visceralFat),
+      bodyWater: toNumber(bioimpedance.bodyWater),
+      metabolicAge: toNumber(bioimpedance.metabolicAge),
+
+      // Objetos complexos
+      skinfolds: skinfoldData,
+      measurements: measurementsData,
+      boneDiameters: boneDiametersData,
+
+      // Adicionar sharePhotos ao objeto
+      sharePhotos,
+      patientId: patientId!,
+    };
+
+    // Executar mutação
+    createMutation.mutate(measurementData);
+  };
+
+  const handleCancel = () => {
+    navigate(`/patients/${patientId}`);
   };
 
   const handleCloseSnackbar = () => {
-    setSnackbar({ ...snackbar, open: false });
+    setSnackbar((prev) => ({ ...prev, open: false }));
   };
 
-  // Calcular resultados antropométricos
-  const anthropometricResults = useMemo(() => {
-    // Determinar o gênero para os cálculos (M ou F)
-    let calculationGender: "M" | "F" = "M";
-    if (patient?.gender === "F" || String(patient?.gender) === "FEMALE") {
-      calculationGender = "F";
-    }
+  const handleNavigateBack = () => {
+    navigate(`/patients/${patientId}`);
+  };
 
-    // Determinar a idade do paciente
-    const calculationAge = patient?.birthDate
-      ? new Date().getFullYear() - new Date(patient.birthDate).getFullYear()
-      : 30;
+  const handleSkinfoldFormulaChange = (value: string) => {
+    setSkinfoldFormula(value);
+  };
 
-    // Calcular e atualizar os resultados
-    return calculateAnthropometricResults(
-      basicData,
-      circumferences,
-      skinfolds,
-      boneDiameters,
-      bioimpedance,
-      calculationGender,
-      calculationAge,
-      skinfoldFormula
-    );
-  }, [
-    basicData,
-    circumferences,
-    skinfolds,
-    boneDiameters,
-    bioimpedance,
-    patient,
-    skinfoldFormula,
-  ]);
-
-  if (!patient) return null;
-
-  // Cálculo da idade do paciente para exibição
-  const age = patient.birthDate
-    ? new Date().getFullYear() - new Date(patient.birthDate).getFullYear()
-    : null;
-
-  // Função auxiliar para formatar as referências bibliográficas
-  const getReferenceTooltip = (calculation: string): string => {
-    const references: Record<string, string> = {
-      bmi: "Índice de Massa Corporal (IMC) - Medida que relaciona peso e altura para avaliar o estado nutricional. Valores entre 18,5 e 24,9 kg/m² indicam peso adequado.\n\nReferência: Organização Mundial da Saúde (OMS). Estado físico: uso e interpretação da antropometria. Genebra: OMS, 1995.",
-      waistHipRatio:
-        "Relação Cintura/Quadril (RCQ) - Medida que avalia a distribuição de gordura corporal. Valores elevados indicam maior risco de doenças cardiovasculares.\n\nReferência: Organização Mundial da Saúde (OMS). Circunferência da cintura e relação cintura-quadril: relatório de uma consulta de especialistas da OMS. Genebra: OMS, 2008.",
-      cmb: "Circunferência Muscular do Braço (CMB) - Medida que avalia a massa muscular do braço, importante para diagnóstico de desnutrição e sarcopenia.\n\nReferência: Frisancho AR. Novas normas de áreas de gordura e músculo dos membros superiores para avaliação do estado nutricional. Am J Clin Nutr. 1981;34(11):2540-5.",
-      bodyDensity:
-        "Densidade Corporal - Medida que avalia a composição corporal através da relação entre massa e volume. Valores mais altos indicam maior proporção de massa magra.\n\nReferência: Pollock ML, Schmidt DH, Jackson AS. Medição da aptidão cardiorrespiratória e composição corporal no ambiente clínico. Compr Ther. 1980;6(9):12-27.",
-      bodyFatPercentage:
-        "Percentual de Gordura Corporal - Medida que avalia a proporção de gordura em relação ao peso total. Valores ideais variam conforme sexo e idade.\n\nReferência: Siri WE. Composição corporal a partir de espaços fluidos e densidade: análise de métodos. In: Brozek J, Henschel A, eds. Técnicas para medir a composição corporal. Washington, DC: National Academy of Sciences, 1961:223-244.",
-      bodyFatClassification:
-        "Classificação do Percentual de Gordura - Avaliação do estado nutricional baseada no percentual de gordura corporal. Classificações variam de 'Essencial' a 'Obesidade'.\n\nReferência: Diretrizes do American College of Sports Medicine (ACSM) para Teste de Esforço e Prescrição, 10ª Edição",
-      boneMass:
-        "Massa Óssea - Estimativa do peso dos ossos baseada em medidas antropométricas. Importante para avaliação de osteopenia e osteoporose.\n\nReferência: Martin AD, Spenst LF, Drinkwater DT, Clarys JP. Estimativa antropométrica da massa muscular em homens. Med Sci Sports Exerc. 1990;22(5):729-33.",
-      muscleMass:
-        "Massa Muscular - Medida que avalia a quantidade total de músculos do corpo. Importante para diagnóstico de sarcopenia e avaliação do estado nutricional.\n\nReferência: Matiegka J. O teste de eficiência física. Am J Phys Anthropol. 1921;4:223-230.",
-      residualWeight:
-        "Peso Residual - Componente do peso corporal que inclui órgãos, vísceras e outros tecidos não classificados como gordura, músculo ou osso.\n\nReferência: Matiegka J. O teste de eficiência física. Am J Phys Anthropol. 1921;4:223-230.",
-    };
-    return references[calculation] || "Referência não disponível";
+  const handlePhotosChange = (updatedPhotos: {
+    front: AssessmentPhoto | null;
+    back: AssessmentPhoto | null;
+    left: AssessmentPhoto | null;
+    right: AssessmentPhoto | null;
+  }) => {
+    setPhotos(updatedPhotos);
   };
 
   return (
-    <Box>
-      <Paper
-        elevation={3}
-        sx={{
-          p: { xs: 2, md: 4 },
-          mb: 3,
-        }}
-      >
-        <Typography variant="h5" component="h1" sx={{ mb: 3 }}>
-          {isEditMode
-            ? "Editar Avaliação Antropométrica"
-            : "Nova Avaliação Antropométrica"}
-        </Typography>
+    <Box sx={{ maxWidth: 1200, mx: "auto", p: { xs: 2, sm: 3 } }}>
+      {/* Cabeçalho */}
+      <AssessmentHeader
+        patientName={patient?.name || ""}
+        assessmentDate={assessmentDate}
+        onAssessmentDateChange={setAssessmentDate}
+        onNavigateBack={handleNavigateBack}
+        isEditMode={isEditMode}
+      />
 
-        {patient && (
-          <Typography variant="subtitle1" color="text.secondary" sx={{ mb: 3 }}>
-            Paciente: {patient.name}
-            {age && `, Idade: ${age} anos`}
-          </Typography>
-        )}
+      {/* Seção de dados básicos */}
+      <BasicDataSection
+        expanded={expanded === "basicData"}
+        onAccordionChange={handleAccordionChange}
+        basicData={basicData}
+        onBasicDataChange={handleBasicDataChange}
+      />
 
-        {/* Campo de Data */}
-        <Box sx={{ mb: 3 }}>
-          <LocalizationProvider
-            dateAdapter={AdapterDateFns}
-            adapterLocale={ptBR}
-          >
-            <DatePicker
-              label="Data da Avaliação"
-              value={assessmentDate}
-              onChange={(newValue) => setAssessmentDate(newValue)}
-              format="dd/MM/yyyy"
-              sx={{ width: "100%" }}
-            />
-          </LocalizationProvider>
-        </Box>
+      {/* Seção de dobras cutâneas */}
+      <SkinfoldSection
+        expanded={expanded === "skinfolds"}
+        onAccordionChange={handleAccordionChange}
+        skinfolds={skinfolds}
+        skinfoldFormula={skinfoldFormula}
+        onSkinfoldFormulaChange={handleSkinfoldFormulaChange}
+        onSkinfoldChange={handleSkinfoldChange}
+        patientGender={patient?.gender}
+      />
 
-        {/* Botões de ação 
-        <Box sx={{ display: "flex", gap: 2, mt: 2 }}>
-          <Button
-            variant="contained"
-            startIcon={<TimelineIcon />}
-            onClick={() => {}}
-            sx={{ bgcolor: "grey.500" }}
-          >
-            ver evolução
-          </Button>
-          <Button
-            variant="contained"
-            startIcon={<DescriptionIcon />}
-            onClick={() => {}}
-            sx={{ bgcolor: "grey.500" }}
-          >
-            ver anamnese
-          </Button>
-          <Button
-            variant="contained"
-            startIcon={<AssessmentIcon />}
-            onClick={() => {}}
-            sx={{ bgcolor: "grey.500" }}
-          >
-            avaliações anteriores
-          </Button>
-          <Button
-            variant="contained"
-            startIcon={<EditIcon />}
-            onClick={() => {}}
-            sx={{ bgcolor: "grey.500" }}
-          >
-            editar data
-          </Button>
-        </Box>*/}
-      </Paper>
+      {/* Seção de circunferências */}
+      <CircumferenceSection
+        expanded={expanded === "circumferences"}
+        onAccordionChange={handleAccordionChange}
+        circumferences={circumferences}
+        onCircumferenceChange={handleCircumferenceChange}
+      />
 
-      <Box sx={{ display: "flex", gap: 3 }}>
-        {/* Coluna da esquerda - Formulários */}
-        <Box sx={{ flex: "0 0 58.333%" }}>
-          {/* Dados antropométricos básicos */}
-          <Accordion
-            expanded={expanded === "basicData"}
-            onChange={handleAccordionChange("basicData")}
-          >
-            <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-              <Typography variant="h6">
-                Dados antropométricos básicos
-              </Typography>
-            </AccordionSummary>
-            <AccordionDetails>
-              {/* @ts-ignore */}
-              <Grid container spacing={2}>
-                {/* @ts-ignore */}
-                <Grid item xs={12} sm={6}>
-                  <TextField
-                    fullWidth
-                    label="Peso (Kg)"
-                    value={basicData.weight}
-                    onChange={handleBasicDataChange("weight")}
-                    required
-                  />
-                </Grid>
-                {/* @ts-ignore */}
-                <Grid item xs={12} sm={6}>
-                  <TextField
-                    fullWidth
-                    label="Altura (cm)"
-                    value={basicData.height}
-                    onChange={handleBasicDataChange("height")}
-                  />
-                </Grid>
-                {/* @ts-ignore */}
-                <Grid item xs={12} sm={6}>
-                  <TextField
-                    fullWidth
-                    label="Altura sentado (cm)"
-                    value={basicData.sittingHeight}
-                    onChange={handleBasicDataChange("sittingHeight")}
-                  />
-                </Grid>
-                {/* @ts-ignore */}
-                <Grid item xs={12} sm={6}>
-                  <TextField
-                    fullWidth
-                    label="Altura do joelho (cm)"
-                    value={basicData.kneeHeight}
-                    onChange={handleBasicDataChange("kneeHeight")}
-                  />
-                </Grid>
-              </Grid>
-            </AccordionDetails>
-          </Accordion>
+      {/* Seção de diâmetros ósseos */}
+      <BoneDiameterSection
+        expanded={expanded === "boneDiameters"}
+        onAccordionChange={handleAccordionChange}
+        boneDiameters={boneDiameters}
+        onBoneDiameterChange={handleBoneDiameterChange}
+      />
 
-          {/* Dobras cutâneas */}
-          <Accordion
-            expanded={expanded === "skinfolds"}
-            onChange={handleAccordionChange("skinfolds")}
-          >
-            <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-              <Typography variant="h6">Dobras cutâneas (mm)</Typography>
-            </AccordionSummary>
-            <AccordionDetails>
-              <Box sx={{ p: 1, mb: 3, borderRadius: 1 }}>
-                <Typography variant="body2" gutterBottom>
-                  Escolha a fórmula para cálculo:
-                </Typography>
-                <ToggleButtonGroup
-                  value={skinfoldFormula}
-                  exclusive
-                  onChange={(_, newValue) => {
-                    if (newValue !== null) {
-                      setSkinfoldFormula(newValue);
-                    }
-                  }}
-                  size="small"
-                  sx={{
-                    flexWrap: "wrap",
-                    gap: 1,
-                    "& .MuiToggleButton-root": {
-                      border: "1px solid",
-                      borderColor: "grey.300",
-                      borderRadius: "8px !important",
-                      color: "text.secondary",
-                      textTransform: "none",
-                      px: 2,
-                      py: 1,
-                      "&:hover": {
-                        borderColor: "primary.main",
-                      },
-                      "&.Mui-selected": {
-                        backgroundColor: "primary.main",
-                        color: "white",
-                        borderColor: "primary.main",
-                        "&:hover": {
-                          backgroundColor: "primary.dark",
-                        },
-                      },
-                      "&.Mui-disabled": {
-                        opacity: 0.6,
-                        color: "grey.500",
-                        borderColor: "grey.300",
-                        backgroundColor: "transparent",
-                      },
-                    },
-                  }}
-                >
-                  <ToggleButton value="pollock3">Pollock 3</ToggleButton>
-                  <ToggleButton value="pollock7">Pollock 7</ToggleButton>
-                  <ToggleButton value="petroski" disabled>
-                    Petroski (Em breve)
-                  </ToggleButton>
-                  <ToggleButton value="guedes" disabled>
-                    Guedes (Em breve)
-                  </ToggleButton>
-                  <ToggleButton value="durnin" disabled>
-                    Durnin (Em breve)
-                  </ToggleButton>
-                  <ToggleButton value="faulkner" disabled>
-                    Faulkner (Em breve)
-                  </ToggleButton>
-                  <ToggleButton value="none">Nenhuma</ToggleButton>
-                </ToggleButtonGroup>
-              </Box>
+      {/* Seção de bioimpedância */}
+      <BioimpedanceSection
+        expanded={expanded === "bioimpedance"}
+        onAccordionChange={handleAccordionChange}
+        bioimpedance={bioimpedance}
+        onBioimpedanceChange={handleBioimpedanceChange}
+      />
 
-              {/* @ts-ignore */}
-              <Grid container spacing={2}>
-                {Object.entries(skinfolds).map(([key, value]) => {
-                  const skinfoldLabels: Record<string, string> = {
-                    tricipital: "Dobra Tricipital",
-                    bicipital: "Dobra Bicipital",
-                    abdominal: "Dobra Abdominal",
-                    subscapular: "Dobra Subescapular",
-                    axillaryMedian: "Dobra Axilar Média",
-                    thigh: "Dobra da Coxa",
-                    thoracic: "Dobra Torácica",
-                    suprailiac: "Dobra Suprailíaca",
-                    calf: "Dobra da Panturrilha",
-                    supraspinal: "Dobra Supraespinhal",
-                  };
+      {/* Seção de fotos */}
+      <PhotosSection
+        patientId={patientId!}
+        measurementId={measurementId}
+        sharePhotos={sharePhotos}
+        onSharePhotosChange={setSharePhotos}
+        onPhotosChange={handlePhotosChange}
+        measurement={measurementToEdit}
+        expanded={expanded === "photos"}
+        onAccordionChange={handleAccordionChange}
+      />
 
-                  const formula = bodyDensityFormulas.find(
-                    (f) => f.id === skinfoldFormula
-                  );
-                  const isRequired =
-                    formula &&
-                    formula.requiredSkinfolds.includes(key as SkinfoldType) &&
-                    (skinfoldFormula === "pollock3"
-                      ? patient?.gender === "M" ||
-                        String(patient?.gender) === "MALE"
-                        ? ["thoracic", "abdominal", "thigh"].includes(key)
-                        : ["tricipital", "suprailiac", "thigh"].includes(key)
-                      : skinfoldFormula === "pollock7"
-                      ? [
-                          "thoracic",
-                          "axillaryMedian",
-                          "tricipital",
-                          "subscapular",
-                          "abdominal",
-                          "suprailiac",
-                          "thigh",
-                        ].includes(key)
-                      : false);
+      {/* Botões de ação */}
+      <ActionButtons
+        onSave={handleSaveAssessment}
+        onCancel={handleCancel}
+        isSaving={isSaving.current}
+      />
 
-                  return (
-                    <Grid item xs={12} sm={6} key={key}>
-                      <TextField
-                        fullWidth
-                        label={
-                          <Typography
-                            component="span"
-                            sx={{
-                              fontWeight: isRequired ? 700 : 400,
-                              color: isRequired ? "primary.main" : "inherit",
-                            }}
-                          >
-                            {`${skinfoldLabels[key]} (mm)`}
-                          </Typography>
-                        }
-                        value={value}
-                        onChange={handleSkinfoldChange(
-                          key as keyof typeof skinfolds
-                        )}
-                        InputProps={{
-                          sx: {
-                            bgcolor: "background.paper",
-                            ...(skinfoldFormula !== "none" && {
-                              "& .MuiOutlinedInput-notchedOutline": {
-                                borderColor: isRequired
-                                  ? "primary.main"
-                                  : "grey.300",
-                              },
-                              "&:hover .MuiOutlinedInput-notchedOutline": {
-                                borderColor: isRequired
-                                  ? "primary.main"
-                                  : "grey.300",
-                              },
-                            }),
-                          },
-                        }}
-                      />
-                    </Grid>
-                  );
-                })}
-              </Grid>
-            </AccordionDetails>
-          </Accordion>
-
-          {/* Circunferências corporais */}
-          <Accordion
-            expanded={expanded === "circumferences"}
-            onChange={handleAccordionChange("circumferences")}
-          >
-            <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-              <Typography variant="h6">
-                Circunferências corporais (cm)
-              </Typography>
-            </AccordionSummary>
-            <AccordionDetails>
-              <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-                Importantes para calcular RCQ, CMB e entre outros.
-              </Typography>
-
-              {/* @ts-ignore */}
-              <Grid container spacing={2}>
-                {/* @ts-ignore */}
-                <Grid item xs={12} sm={6}>
-                  <TextField
-                    fullWidth
-                    label="Pescoço"
-                    value={circumferences.neck}
-                    onChange={handleCircumferenceChange("neck")}
-                  />
-                </Grid>
-                {/* @ts-ignore */}
-                <Grid item xs={12} sm={6}>
-                  <TextField
-                    fullWidth
-                    label="Tórax"
-                    value={circumferences.chest}
-                    onChange={handleCircumferenceChange("chest")}
-                  />
-                </Grid>
-                {/* @ts-ignore */}
-                <Grid item xs={12} sm={6}>
-                  <TextField
-                    fullWidth
-                    label="Ombro"
-                    value={circumferences.shoulder}
-                    onChange={handleCircumferenceChange("shoulder")}
-                  />
-                </Grid>
-                {/* @ts-ignore */}
-                <Grid item xs={12} sm={6}>
-                  <TextField
-                    fullWidth
-                    label="Cintura"
-                    value={circumferences.waist}
-                    onChange={handleCircumferenceChange("waist")}
-                  />
-                </Grid>
-                {/* @ts-ignore */}
-                <Grid item xs={12} sm={6}>
-                  <TextField
-                    fullWidth
-                    label="Quadril"
-                    value={circumferences.hip}
-                    onChange={handleCircumferenceChange("hip")}
-                  />
-                </Grid>
-                {/* @ts-ignore */}
-                <Grid item xs={12} sm={6}>
-                  <TextField
-                    fullWidth
-                    label="Abdômen"
-                    value={circumferences.abdomen}
-                    onChange={handleCircumferenceChange("abdomen")}
-                  />
-                </Grid>
-                {/* @ts-ignore */}
-                <Grid item xs={12} sm={6}>
-                  <TextField
-                    fullWidth
-                    label="Braço relaxado"
-                    value={circumferences.relaxedArm}
-                    onChange={handleCircumferenceChange("relaxedArm")}
-                  />
-                </Grid>
-                {/* @ts-ignore */}
-                <Grid item xs={12} sm={6}>
-                  <TextField
-                    fullWidth
-                    label="Braço contraído"
-                    value={circumferences.contractedArm}
-                    onChange={handleCircumferenceChange("contractedArm")}
-                  />
-                </Grid>
-                {/* @ts-ignore */}
-                <Grid item xs={12} sm={6}>
-                  <TextField
-                    fullWidth
-                    label="Antebraço"
-                    value={circumferences.forearm}
-                    onChange={handleCircumferenceChange("forearm")}
-                  />
-                </Grid>
-                {/* @ts-ignore */}
-                <Grid item xs={12} sm={6}>
-                  <TextField
-                    fullWidth
-                    label="Coxa proximal"
-                    value={circumferences.proximalThigh}
-                    onChange={handleCircumferenceChange("proximalThigh")}
-                  />
-                </Grid>
-                {/* @ts-ignore */}
-                <Grid item xs={12} sm={6}>
-                  <TextField
-                    fullWidth
-                    label="Coxa medial"
-                    value={circumferences.medialThigh}
-                    onChange={handleCircumferenceChange("medialThigh")}
-                  />
-                </Grid>
-                {/* @ts-ignore */}
-                <Grid item xs={12} sm={6}>
-                  <TextField
-                    fullWidth
-                    label="Coxa distal"
-                    value={circumferences.distalThigh}
-                    onChange={handleCircumferenceChange("distalThigh")}
-                  />
-                </Grid>
-                {/* @ts-ignore */}
-                <Grid item xs={12} sm={6}>
-                  <TextField
-                    fullWidth
-                    label="Panturrilha"
-                    value={circumferences.calf}
-                    onChange={handleCircumferenceChange("calf")}
-                  />
-                </Grid>
-              </Grid>
-            </AccordionDetails>
-          </Accordion>
-
-          {/* Diâmetro ósseo */}
-          <Accordion
-            expanded={expanded === "boneDiameter"}
-            onChange={handleAccordionChange("boneDiameter")}
-          >
-            <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-              <Typography variant="h6">Diâmetro ósseo (cm)</Typography>
-            </AccordionSummary>
-            <AccordionDetails>
-              <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-                Importantes para calcular peso ósseo e massa muscular.
-              </Typography>
-
-              {/* @ts-ignore */}
-              <Grid container spacing={2}>
-                {/* @ts-ignore */}
-                <Grid item xs={12} sm={6}>
-                  <TextField
-                    fullWidth
-                    label="Diâmetro do úmero"
-                    value={boneDiameters.humerus}
-                    onChange={handleBoneDiameterChange("humerus")}
-                  />
-                </Grid>
-                {/* @ts-ignore */}
-                <Grid item xs={12} sm={6}>
-                  <TextField
-                    fullWidth
-                    label="Diâmetro do punho"
-                    value={boneDiameters.wrist}
-                    onChange={handleBoneDiameterChange("wrist")}
-                  />
-                </Grid>
-                {/* @ts-ignore */}
-                <Grid item xs={12} sm={6}>
-                  <TextField
-                    fullWidth
-                    label="Diâmetro do fêmur"
-                    value={boneDiameters.femur}
-                    onChange={handleBoneDiameterChange("femur")}
-                  />
-                </Grid>
-              </Grid>
-            </AccordionDetails>
-          </Accordion>
-
-          {/* Balança de bioimpedância */}
-          <Accordion
-            expanded={expanded === "bioimpedance"}
-            onChange={handleAccordionChange("bioimpedance")}
-          >
-            <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-              <Typography variant="h6">Balança de bioimpedância</Typography>
-            </AccordionSummary>
-            <AccordionDetails>
-              <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-                Insira os dados da sua balança diretamente aqui.
-              </Typography>
-
-              {/* @ts-ignore */}
-              <Grid container spacing={2}>
-                {/* @ts-ignore */}
-                <Grid item xs={12} sm={6}>
-                  <TextField
-                    fullWidth
-                    label="% de Gordura"
-                    value={bioimpedance.fatPercentage}
-                    onChange={handleBioimpedanceChange("fatPercentage")}
-                  />
-                </Grid>
-                {/* @ts-ignore */}
-                <Grid item xs={12} sm={6}>
-                  <TextField
-                    fullWidth
-                    label="Massa Gorda"
-                    value={bioimpedance.fatMass}
-                    onChange={handleBioimpedanceChange("fatMass")}
-                  />
-                </Grid>
-                {/* @ts-ignore */}
-                <Grid item xs={12} sm={6}>
-                  <TextField
-                    fullWidth
-                    label="% de Massa Muscular"
-                    value={bioimpedance.muscleMassPercentage}
-                    onChange={handleBioimpedanceChange("muscleMassPercentage")}
-                  />
-                </Grid>
-                {/* @ts-ignore */}
-                <Grid item xs={12} sm={6}>
-                  <TextField
-                    fullWidth
-                    label="Massa Muscular"
-                    value={bioimpedance.muscleMass}
-                    onChange={handleBioimpedanceChange("muscleMass")}
-                  />
-                </Grid>
-                {/* @ts-ignore */}
-                <Grid item xs={12} sm={6}>
-                  <TextField
-                    fullWidth
-                    label="Massa Livre de Gordura"
-                    value={bioimpedance.fatFreeMass}
-                    onChange={handleBioimpedanceChange("fatFreeMass")}
-                  />
-                </Grid>
-                {/* @ts-ignore */}
-                <Grid item xs={12} sm={6}>
-                  <TextField
-                    fullWidth
-                    label="Peso Ósseo"
-                    value={bioimpedance.boneMass}
-                    onChange={handleBioimpedanceChange("boneMass")}
-                  />
-                </Grid>
-                {/* @ts-ignore */}
-                <Grid item xs={12} sm={6}>
-                  <TextField
-                    fullWidth
-                    label="Gordura Visceral"
-                    value={bioimpedance.visceralFat}
-                    onChange={handleBioimpedanceChange("visceralFat")}
-                  />
-                </Grid>
-                {/* @ts-ignore */}
-                <Grid item xs={12} sm={6}>
-                  <TextField
-                    fullWidth
-                    label="Água Corporal"
-                    value={bioimpedance.bodyWater}
-                    onChange={handleBioimpedanceChange("bodyWater")}
-                  />
-                </Grid>
-                {/* @ts-ignore */}
-                <Grid item xs={12} sm={6}>
-                  <TextField
-                    fullWidth
-                    label="Idade Metabólica"
-                    value={bioimpedance.metabolicAge}
-                    onChange={handleBioimpedanceChange("metabolicAge")}
-                  />
-                </Grid>
-              </Grid>
-            </AccordionDetails>
-          </Accordion>
-
-          {/* Evolução fotográfica */}
-          <Accordion
-            expanded={expanded === "photos"}
-            onChange={handleAccordionChange("photos")}
-          >
-            <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-              <Typography variant="h6">Evolução fotográfica</Typography>
-            </AccordionSummary>
-            <AccordionDetails>
-              <Typography variant="body2" color="text.secondary" gutterBottom>
-                Fotos técnicas do seu paciente, para avaliar a evolução
-              </Typography>
-              <Button
-                variant="outlined"
-                fullWidth
-                sx={{ mt: 2, mb: 2 }}
-                onClick={() => {}}
-              >
-                Ver evolução fotográfica
-              </Button>
-              <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                <Switch
-                  checked={sharePhotos}
-                  onChange={(e) => setSharePhotos(e.target.checked)}
-                />
-                <Typography variant="body2">
-                  Liberar fotos no app do paciente?
-                </Typography>
-                <Tooltip title="Necessário informar o PIN SEGURO">
-                  <HelpIcon color="action" fontSize="small" />
-                </Tooltip>
-              </Box>
-              {/* Grid de uploads fotográficos */}
-              <Box
-                sx={{
-                  mt: 3,
-                  display: "grid",
-                  gridTemplateColumns: "repeat(2, 1fr)",
-                  gap: 2,
-                }}
-              >
-                <PhotoUpload
-                  type="front"
-                  assessmentId={measurementId || "new"}
-                  patientId={patientId || ""}
-                  onUploadComplete={handlePhotoChange("front")}
-                  onUploadError={handlePhotoError}
-                  initialPhotoUrl={photos.front?.url}
-                  showPreview
-                  previewSize={{ width: 180, height: 180 }}
-                />
-                <PhotoUpload
-                  type="back"
-                  assessmentId={measurementId || "new"}
-                  patientId={patientId || ""}
-                  onUploadComplete={handlePhotoChange("back")}
-                  onUploadError={handlePhotoError}
-                  initialPhotoUrl={photos.back?.url}
-                  showPreview
-                  previewSize={{ width: 180, height: 180 }}
-                />
-                <PhotoUpload
-                  type="left"
-                  assessmentId={measurementId || "new"}
-                  patientId={patientId || ""}
-                  onUploadComplete={handlePhotoChange("left")}
-                  onUploadError={handlePhotoError}
-                  initialPhotoUrl={photos.left?.url}
-                  showPreview
-                  previewSize={{ width: 180, height: 180 }}
-                />
-                <PhotoUpload
-                  type="right"
-                  assessmentId={measurementId || "new"}
-                  patientId={patientId || ""}
-                  onUploadComplete={handlePhotoChange("right")}
-                  onUploadError={handlePhotoError}
-                  initialPhotoUrl={photos.right?.url}
-                  showPreview
-                  previewSize={{ width: 180, height: 180 }}
-                />
-              </Box>
-            </AccordionDetails>
-          </Accordion>
-
-          {/* Botão Salvar */}
-          <Box sx={{ mt: 3 }}>
-            <Button
-              variant="contained"
-              fullWidth
-              color="primary"
-              size="large"
-              onClick={handleSaveAssessment}
-              disabled={createMeasurementMutation.isPending}
-            >
-              {createMeasurementMutation.isPending
-                ? "Salvando..."
-                : isEditMode
-                ? "Atualizar Avaliação"
-                : "Salvar Avaliação"}
-            </Button>
-          </Box>
-        </Box>
-
-        {/* Coluna da direita - Resultados */}
-        <Box sx={{ flex: "0 0 41.667%" }}>
-          <Paper sx={{ p: 3 }}>
-            <Box
-              sx={{ display: "flex", justifyContent: "space-between", mb: 2 }}
-            >
-              <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                <Typography variant="h5">Resultados analíticos</Typography>
-                <Tooltip title="Informações sobre os cálculos">
-                  <HelpIcon color="action" fontSize="small" />
-                </Tooltip>
-              </Box>
-              <Button variant="text" onClick={() => setOpenGraphsModal(true)}>
-                Ver gráficos
-              </Button>
-            </Box>
-
-            {/* Análises de pesos e medidas */}
-            <Typography variant="h6" gutterBottom>
-              Análises de pesos e medidas
-            </Typography>
-
-            <Box sx={{ bgcolor: "grey.100", borderRadius: 1, mb: 1 }}>
-              <Box
-                sx={{ display: "flex", justifyContent: "space-between", p: 2 }}
-              >
-                <Typography sx={{ fontWeight: "bold" }}>Peso atual</Typography>
-                <Typography color="text.secondary">
-                  {anthropometricResults.currentWeight}
-                </Typography>
-              </Box>
-            </Box>
-
-            <Box sx={{ bgcolor: "grey.100", borderRadius: 1, mb: 1 }}>
-              <Box
-                sx={{ display: "flex", justifyContent: "space-between", p: 2 }}
-              >
-                <Typography sx={{ fontWeight: "bold" }}>
-                  Altura atual
-                </Typography>
-                <Typography color="text.secondary">
-                  {anthropometricResults.currentHeight}
-                </Typography>
-              </Box>
-            </Box>
-
-            <Box sx={{ bgcolor: "grey.100", borderRadius: 1, mb: 1 }}>
-              <Box
-                sx={{ display: "flex", justifyContent: "space-between", p: 2 }}
-              >
-                <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                  <Typography sx={{ fontWeight: "bold" }}>
-                    Índice de Massa Corporal
-                  </Typography>
-                  <Tooltip title={getReferenceTooltip("bmi")}>
-                    <HelpIcon color="action" fontSize="small" />
-                  </Tooltip>
-                </Box>
-                <Typography color="text.secondary">
-                  {anthropometricResults.bmi}
-                </Typography>
-              </Box>
-            </Box>
-
-            <Box sx={{ bgcolor: "grey.100", borderRadius: 1, mb: 1 }}>
-              <Box
-                sx={{ display: "flex", justifyContent: "space-between", p: 2 }}
-              >
-                <Typography sx={{ fontWeight: "bold" }}>
-                  Classificação do IMC
-                </Typography>
-                <Typography color="text.secondary">
-                  {anthropometricResults.bmiClassification}
-                </Typography>
-              </Box>
-            </Box>
-
-            <Box sx={{ bgcolor: "grey.100", borderRadius: 1, mb: 1 }}>
-              <Box
-                sx={{ display: "flex", justifyContent: "space-between", p: 2 }}
-              >
-                <Typography sx={{ fontWeight: "bold" }}>
-                  Faixa de peso ideal
-                </Typography>
-                <Typography color="text.secondary">
-                  {anthropometricResults.idealWeightRange}
-                </Typography>
-              </Box>
-            </Box>
-
-            <Box sx={{ bgcolor: "grey.100", borderRadius: 1, mb: 1 }}>
-              <Box
-                sx={{ display: "flex", justifyContent: "space-between", p: 2 }}
-              >
-                <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                  <Typography sx={{ fontWeight: "bold" }}>
-                    Relação da Cintura/Quadril (RCQ)
-                  </Typography>
-                  <Tooltip title={getReferenceTooltip("waistHipRatio")}>
-                    <HelpIcon color="action" fontSize="small" />
-                  </Tooltip>
-                </Box>
-                <Typography color="text.secondary">
-                  {anthropometricResults.waistHipRatio}
-                </Typography>
-              </Box>
-            </Box>
-
-            <Box sx={{ bgcolor: "grey.100", borderRadius: 1, mb: 1 }}>
-              <Box
-                sx={{ display: "flex", justifyContent: "space-between", p: 2 }}
-              >
-                <Typography sx={{ fontWeight: "bold" }}>
-                  Risco Metabólico por RCQ
-                </Typography>
-                <Typography color="text.secondary">
-                  {anthropometricResults.waistHipRiskClassification}
-                </Typography>
-              </Box>
-            </Box>
-
-            <Box sx={{ bgcolor: "grey.100", borderRadius: 1, mb: 1 }}>
-              <Box
-                sx={{ display: "flex", justifyContent: "space-between", p: 2 }}
-              >
-                <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                  <Typography sx={{ fontWeight: "bold" }}>CMB (cm)</Typography>
-                  <Tooltip title={getReferenceTooltip("cmb")}>
-                    <HelpIcon color="action" fontSize="small" />
-                  </Tooltip>
-                </Box>
-                <Typography color="text.secondary">
-                  {anthropometricResults.cmb}
-                </Typography>
-              </Box>
-            </Box>
-
-            <Box sx={{ bgcolor: "grey.100", borderRadius: 1, mb: 1 }}>
-              <Box
-                sx={{ display: "flex", justifyContent: "space-between", p: 2 }}
-              >
-                <Typography sx={{ fontWeight: "bold" }}>
-                  Classificação CMB
-                </Typography>
-                <Typography color="text.secondary">
-                  {anthropometricResults.cmbClassification}
-                </Typography>
-              </Box>
-            </Box>
-
-            {/* Análises por dobras e diâmetro ósseo */}
-            <Box
-              sx={{
-                display: "flex",
-                justifyContent: "space-between",
-                mb: 2,
-                mt: 3,
-              }}
-            >
-              <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                <Typography variant="h6">
-                  Análises por dobras e diâmetro ósseo
-                </Typography>
-                <Tooltip title="Informações sobre os cálculos">
-                  <HelpIcon color="action" fontSize="small" />
-                </Tooltip>
-              </Box>
-            </Box>
-
-            <Box sx={{ bgcolor: "grey.100", borderRadius: 1, mb: 1 }}>
-              <Box
-                sx={{ display: "flex", justifyContent: "space-between", p: 2 }}
-              >
-                <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                  <Typography sx={{ fontWeight: "bold" }}>
-                    Percentual de Gordura
-                  </Typography>
-                  <Tooltip title={getReferenceTooltip("bodyFatPercentage")}>
-                    <HelpIcon color="action" fontSize="small" />
-                  </Tooltip>
-                </Box>
-                <Typography color="text.secondary">
-                  {anthropometricResults.bodyFatPercentage}
-                </Typography>
-              </Box>
-            </Box>
-
-            <Box sx={{ bgcolor: "grey.100", borderRadius: 1, mb: 1 }}>
-              <Box
-                sx={{ display: "flex", justifyContent: "space-between", p: 2 }}
-              >
-                <Typography sx={{ fontWeight: "bold" }}>
-                  Percentual Ideal
-                </Typography>
-                <Typography color="text.secondary">
-                  {anthropometricResults.idealFatPercentage}
-                </Typography>
-              </Box>
-            </Box>
-
-            <Box sx={{ bgcolor: "grey.100", borderRadius: 1, mb: 1 }}>
-              <Box
-                sx={{ display: "flex", justifyContent: "space-between", p: 2 }}
-              >
-                <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                  <Typography sx={{ fontWeight: "bold" }}>
-                    Classif. do % GC
-                  </Typography>
-                  <Tooltip title={getReferenceTooltip("bodyFatClassification")}>
-                    <HelpIcon color="action" fontSize="small" />
-                  </Tooltip>
-                </Box>
-                <Typography color="text.secondary">
-                  {anthropometricResults.bodyFatClassification}
-                </Typography>
-              </Box>
-            </Box>
-
-            <Box sx={{ bgcolor: "grey.100", borderRadius: 1, mb: 1 }}>
-              <Box
-                sx={{ display: "flex", justifyContent: "space-between", p: 2 }}
-              >
-                <Typography sx={{ fontWeight: "bold" }}>
-                  Peso de gordura
-                </Typography>
-                <Typography color="text.secondary">
-                  {anthropometricResults.fatMass}
-                </Typography>
-              </Box>
-            </Box>
-
-            <Box sx={{ bgcolor: "grey.100", borderRadius: 1, mb: 1 }}>
-              <Box
-                sx={{ display: "flex", justifyContent: "space-between", p: 2 }}
-              >
-                <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                  <Typography sx={{ fontWeight: "bold" }}>
-                    Peso ósseo
-                  </Typography>
-                  <Tooltip title={getReferenceTooltip("boneMass")}>
-                    <HelpIcon color="action" fontSize="small" />
-                  </Tooltip>
-                </Box>
-                <Typography color="text.secondary">
-                  {anthropometricResults.boneMass}
-                </Typography>
-              </Box>
-            </Box>
-
-            <Box sx={{ bgcolor: "grey.100", borderRadius: 1, mb: 1 }}>
-              <Box
-                sx={{ display: "flex", justifyContent: "space-between", p: 2 }}
-              >
-                <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                  <Typography sx={{ fontWeight: "bold" }}>
-                    Massa Muscular
-                  </Typography>
-                  <Tooltip title={getReferenceTooltip("muscleMass")}>
-                    <HelpIcon color="action" fontSize="small" />
-                  </Tooltip>
-                </Box>
-                <Typography color="text.secondary">
-                  {anthropometricResults.muscleMass}
-                </Typography>
-              </Box>
-            </Box>
-
-            <Box sx={{ bgcolor: "grey.100", borderRadius: 1, mb: 1 }}>
-              <Box
-                sx={{ display: "flex", justifyContent: "space-between", p: 2 }}
-              >
-                <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                  <Typography sx={{ fontWeight: "bold" }}>
-                    Peso residual
-                  </Typography>
-                  <Tooltip title={getReferenceTooltip("residualWeight")}>
-                    <HelpIcon color="action" fontSize="small" />
-                  </Tooltip>
-                </Box>
-                <Typography color="text.secondary">
-                  {anthropometricResults.residualWeight}
-                </Typography>
-              </Box>
-            </Box>
-
-            <Box sx={{ bgcolor: "grey.100", borderRadius: 1, mb: 1 }}>
-              <Box
-                sx={{ display: "flex", justifyContent: "space-between", p: 2 }}
-              >
-                <Typography sx={{ fontWeight: "bold" }}>
-                  Massa Livre de Gordura
-                </Typography>
-                <Typography color="text.secondary">
-                  {anthropometricResults.fatFreeMass}
-                </Typography>
-              </Box>
-            </Box>
-
-            <Box sx={{ bgcolor: "grey.100", borderRadius: 1, mb: 1 }}>
-              <Box
-                sx={{ display: "flex", justifyContent: "space-between", p: 2 }}
-              >
-                <Typography sx={{ fontWeight: "bold" }}>
-                  Somatório de Dobras
-                </Typography>
-                <Typography color="text.secondary">
-                  {anthropometricResults.skinfoldsSum}
-                </Typography>
-              </Box>
-            </Box>
-
-            <Box sx={{ bgcolor: "grey.100", borderRadius: 1, mb: 1 }}>
-              <Box
-                sx={{ display: "flex", justifyContent: "space-between", p: 2 }}
-              >
-                <Typography sx={{ fontWeight: "bold" }}>
-                  Densidade Corporal
-                </Typography>
-                <Typography color="text.secondary">
-                  {anthropometricResults.bodyDensity}
-                </Typography>
-              </Box>
-            </Box>
-
-            <Box sx={{ bgcolor: "grey.100", borderRadius: 1, mb: 1 }}>
-              <Box
-                sx={{ display: "flex", justifyContent: "space-between", p: 2 }}
-              >
-                <Typography sx={{ fontWeight: "bold" }}>
-                  Referência usada
-                </Typography>
-                <Typography color="text.secondary">
-                  {anthropometricResults.referenceUsed}
-                </Typography>
-              </Box>
-            </Box>
-
-            {/* Análises por bioimpedância */}
-            <Box
-              sx={{
-                display: "flex",
-                justifyContent: "space-between",
-                mb: 2,
-                mt: 3,
-              }}
-            >
-              <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                <Typography variant="h6">Análises por bioimpedância</Typography>
-                <Tooltip title="Informações sobre os cálculos">
-                  <HelpIcon color="action" fontSize="small" />
-                </Tooltip>
-              </Box>
-            </Box>
-
-            <Box sx={{ bgcolor: "grey.100", borderRadius: 1, mb: 1 }}>
-              <Box
-                sx={{ display: "flex", justifyContent: "space-between", p: 2 }}
-              >
-                <Typography sx={{ fontWeight: "bold" }}>
-                  Percentual de Gordura
-                </Typography>
-                <Typography color="text.secondary">
-                  {anthropometricResults.bioimpedanceBodyFatPercentage}
-                </Typography>
-              </Box>
-            </Box>
-
-            <Box sx={{ bgcolor: "grey.100", borderRadius: 1, mb: 1 }}>
-              <Box
-                sx={{ display: "flex", justifyContent: "space-between", p: 2 }}
-              >
-                <Typography sx={{ fontWeight: "bold" }}>
-                  Percentual Ideal
-                </Typography>
-                <Typography color="text.secondary">
-                  {anthropometricResults.bioimpedanceIdealFatPercentage}
-                </Typography>
-              </Box>
-            </Box>
-
-            <Box sx={{ bgcolor: "grey.100", borderRadius: 1, mb: 1 }}>
-              <Box
-                sx={{ display: "flex", justifyContent: "space-between", p: 2 }}
-              >
-                <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                  <Typography sx={{ fontWeight: "bold" }}>
-                    Classif. do % GC
-                  </Typography>
-                  <Tooltip title={getReferenceTooltip("bodyFatClassification")}>
-                    <HelpIcon color="action" fontSize="small" />
-                  </Tooltip>
-                </Box>
-                <Typography color="text.secondary">
-                  {anthropometricResults.bioimpedanceBodyFatClassification}
-                </Typography>
-              </Box>
-            </Box>
-
-            <Box sx={{ bgcolor: "grey.100", borderRadius: 1, mb: 1 }}>
-              <Box
-                sx={{ display: "flex", justifyContent: "space-between", p: 2 }}
-              >
-                <Typography sx={{ fontWeight: "bold" }}>
-                  Percentual de Massa Muscular
-                </Typography>
-                <Typography color="text.secondary">
-                  {anthropometricResults.bioimpedanceMuscleMassPercentage}
-                </Typography>
-              </Box>
-            </Box>
-
-            <Box sx={{ bgcolor: "grey.100", borderRadius: 1, mb: 1 }}>
-              <Box
-                sx={{ display: "flex", justifyContent: "space-between", p: 2 }}
-              >
-                <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                  <Typography sx={{ fontWeight: "bold" }}>
-                    Massa Muscular
-                  </Typography>
-                  <Tooltip title={getReferenceTooltip("muscleMass")}>
-                    <HelpIcon color="action" fontSize="small" />
-                  </Tooltip>
-                </Box>
-                <Typography color="text.secondary">
-                  {anthropometricResults.bioimpedanceMuscleMass}
-                </Typography>
-              </Box>
-            </Box>
-
-            <Box sx={{ bgcolor: "grey.100", borderRadius: 1, mb: 1 }}>
-              <Box
-                sx={{ display: "flex", justifyContent: "space-between", p: 2 }}
-              >
-                <Typography sx={{ fontWeight: "bold" }}>
-                  Água Corporal Total
-                </Typography>
-                <Typography color="text.secondary">
-                  {anthropometricResults.bioimpedanceBodyWater}
-                </Typography>
-              </Box>
-            </Box>
-
-            <Box sx={{ bgcolor: "grey.100", borderRadius: 1, mb: 1 }}>
-              <Box
-                sx={{ display: "flex", justifyContent: "space-between", p: 2 }}
-              >
-                <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                  <Typography sx={{ fontWeight: "bold" }}>
-                    Peso Ósseo
-                  </Typography>
-                  <Tooltip title={getReferenceTooltip("boneMass")}>
-                    <HelpIcon color="action" fontSize="small" />
-                  </Tooltip>
-                </Box>
-                <Typography color="text.secondary">
-                  {anthropometricResults.bioimpedanceBoneMass}
-                </Typography>
-              </Box>
-            </Box>
-
-            <Box sx={{ bgcolor: "grey.100", borderRadius: 1, mb: 1 }}>
-              <Box
-                sx={{ display: "flex", justifyContent: "space-between", p: 2 }}
-              >
-                <Typography sx={{ fontWeight: "bold" }}>
-                  Massa de gordura
-                </Typography>
-                <Typography color="text.secondary">
-                  {anthropometricResults.bioimpedanceFatMass}
-                </Typography>
-              </Box>
-            </Box>
-
-            <Box sx={{ bgcolor: "grey.100", borderRadius: 1, mb: 1 }}>
-              <Box
-                sx={{ display: "flex", justifyContent: "space-between", p: 2 }}
-              >
-                <Typography sx={{ fontWeight: "bold" }}>
-                  Massa Livre de Gordura
-                </Typography>
-                <Typography color="text.secondary">
-                  {anthropometricResults.bioimpedanceFatFreeMass}
-                </Typography>
-              </Box>
-            </Box>
-
-            <Box sx={{ bgcolor: "grey.100", borderRadius: 1, mb: 1 }}>
-              <Box
-                sx={{ display: "flex", justifyContent: "space-between", p: 2 }}
-              >
-                <Typography sx={{ fontWeight: "bold" }}>
-                  Índice de Gordura Visceral
-                </Typography>
-                <Typography color="text.secondary">
-                  {anthropometricResults.bioimpedanceVisceralFat}
-                </Typography>
-              </Box>
-            </Box>
-
-            <Box sx={{ bgcolor: "grey.100", borderRadius: 1, mb: 1 }}>
-              <Box
-                sx={{ display: "flex", justifyContent: "space-between", p: 2 }}
-              >
-                <Typography sx={{ fontWeight: "bold" }}>
-                  Idade Metabólica
-                </Typography>
-                <Typography color="text.secondary">
-                  {anthropometricResults.bioimpedanceMetabolicAge}
-                </Typography>
-              </Box>
-            </Box>
-
-            {/* Modal de Gráficos */}
-            <Modal
-              open={openGraphsModal}
-              onClose={() => setOpenGraphsModal(false)}
-              aria-labelledby="modal-graphs"
-              aria-describedby="modal-graphs-description"
-            >
-              <Box
-                sx={{
-                  position: "absolute",
-                  top: "50%",
-                  left: "50%",
-                  transform: "translate(-50%, -50%)",
-                  width: 800,
-                  bgcolor: "background.paper",
-                  boxShadow: 24,
-                  p: 4,
-                  borderRadius: 1,
-                }}
-              >
-                <Typography variant="h6" component="h2" gutterBottom>
-                  Gráficos
-                </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  Em breve você poderá visualizar os gráficos aqui.
-                </Typography>
-                <Box
-                  sx={{ mt: 2, display: "flex", justifyContent: "flex-end" }}
-                >
-                  <Button onClick={() => setOpenGraphsModal(false)}>
-                    Fechar
-                  </Button>
-                </Box>
-              </Box>
-            </Modal>
-          </Paper>
-        </Box>
-      </Box>
-
+      {/* Snackbar de feedback */}
       <Snackbar
         open={snackbar.open}
         autoHideDuration={6000}
         onClose={handleCloseSnackbar}
-        anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
       >
         <Alert
           onClose={handleCloseSnackbar}

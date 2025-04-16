@@ -6,10 +6,12 @@ import {
   UpdateDateColumn,
   ManyToOne,
   JoinColumn,
+  OneToMany,
 } from 'typeorm';
 import { Patient } from './patient.entity';
 import { Nutritionist } from '../../nutritionists/entities/nutritionist.entity';
 import { Consultation } from './consultation.entity';
+import { Photo } from '../../photos/entities/photo.entity';
 
 @Entity('measurements')
 export class Measurement {
@@ -139,4 +141,7 @@ export class Measurement {
 
   @UpdateDateColumn({ name: 'updated_at' })
   updatedAt: Date;
+
+  @OneToMany(() => Photo, (photo) => photo.measurement)
+  photos: Photo[];
 }

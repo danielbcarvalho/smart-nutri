@@ -11,6 +11,7 @@ import { AppService } from './app.service';
 import { join } from 'path';
 import { SearchModule } from './search/search.module';
 import { SupabaseModule } from './supabase/supabase.module';
+import { PhotosModule } from './photos/photos.module';
 
 @Module({
   imports: [
@@ -21,19 +22,12 @@ import { SupabaseModule } from './supabase/supabase.module';
       imports: [ConfigModule],
       useFactory: (configService: ConfigService) => {
         const dbHost = configService.get('DB_HOST');
-        console.log('[TypeORM Config] DB_HOST:', dbHost);
         const dbPort = configService.get('DB_PORT');
-        console.log('[TypeORM Config] DB_PORT:', dbPort);
         const dbUsername = configService.get('DB_USERNAME');
-        console.log('[TypeORM Config] DB_USERNAME:', dbUsername);
         const dbPassword = configService.get('DB_PASSWORD');
-        console.log('[TypeORM Config] DB_PASSWORD:', dbPassword);
         const dbDatabase = configService.get('DB_DATABASE');
-        console.log('[TypeORM Config] DB_DATABASE:', dbDatabase);
         const supabaseUrl = configService.get('SUPABASE_URL');
-        console.log('[TypeORM Config] SUPABASE_URL:', supabaseUrl);
         const supabaseAnonKey = configService.get('SUPABASE_ANON_KEY');
-        console.log('[TypeORM Config] SUPABASE_ANON_KEY:', supabaseAnonKey);
         return {
           type: 'postgres',
           host: configService.get('DB_HOST'),
@@ -55,6 +49,7 @@ import { SupabaseModule } from './supabase/supabase.module';
     StatsModule,
     SearchModule,
     SupabaseModule,
+    PhotosModule,
   ],
   controllers: [AppController],
   providers: [AppService],

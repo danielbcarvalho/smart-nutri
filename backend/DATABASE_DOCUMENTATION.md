@@ -232,6 +232,50 @@ ORDER BY measureDate DESC;
 
 ---
 
+### Photos
+
+- Armazena metadados das fotos de avaliações de pacientes.
+- **Fields:**
+  - id (PK, uuid)
+  - patient_id (FK, uuid, obrigatório)
+  - assessment_id (FK, uuid, opcional)
+  - type (enum: 'front', 'back', 'left', 'right', obrigatório)
+  - url (string, obrigatório)
+  - thumbnail_url (string, obrigatório)
+  - storage_path (string, obrigatório)
+  - created_at (timestamp, default now)
+  - updated_at (timestamp, default now)
+  - deleted_at (timestamp, nullable, para soft delete)
+
+**Constraints:**
+
+- FK para patients e assessments
+- Soft delete via deleted_at
+- Index em patient_id, assessment_id, created_at
+
+**Exemplo de Query: Buscar fotos de um paciente por período**
+
+```sql
+SELECT * FROM photos
+WHERE patient_id = :patientId
+  AND (deleted_at IS NULL)
+  AND (created_at >= :from OR :from IS NULL)
+  AND (created_at <= :to OR :to IS NULL)
+ORDER BY created_at DESC;
+```
+
+**Exemplo de Query: Buscar fotos de um tipo específico**
+
+```sql
+SELECT * FROM photos
+WHERE patient_id = :patientId
+  AND type = 'front'
+  AND (deleted_at IS NULL)
+ORDER BY created_at DESC;
+```
+
+---
+
 ## 2. Migrations
 
 ### Visão Geral

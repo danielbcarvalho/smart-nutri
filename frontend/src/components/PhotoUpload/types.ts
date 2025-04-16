@@ -8,6 +8,7 @@ export interface PhotoUploadProps {
   patientId: string;
   onUploadComplete: (photoData: AssessmentPhoto) => void;
   onUploadError: (error: Error) => void;
+  onUploadStart?: () => Promise<boolean> | boolean; // Retorna falso para cancelar o upload
   initialPhotoUrl?: string;
   maxFileSizeMB?: number; // defaults to 5
   acceptedFormats?: string[]; // defaults to ['.jpg', '.jpeg', '.png']

@@ -718,3 +718,80 @@ A API atual está na versão 1.0. O versionamento é feito através do header:
 ```
 Accept: application/vnd.smartnutri.v1+json
 ```
+
+---
+
+### Fotos de Pacientes (`/photos`)
+
+#### Upload de Foto
+
+- **POST** `/photos`
+- **Descrição**: Faz upload de uma foto de avaliação de paciente.
+- **Headers**: `Content-Type: multipart/form-data`
+- **Body** (form-data):
+  - `file`: Arquivo de imagem (obrigatório)
+  - `patientId`: string (obrigatório)
+  - `assessmentId`: string (opcional)
+  - `type`: "front" | "back" | "left" | "right" (obrigatório)
+- **Resposta**:
+  - 201: Metadados da foto criada
+  - 400: Dados inválidos
+  - 401: Não autorizado
+
+#### Listar Fotos
+
+- **GET** `/photos`
+- **Descrição**: Lista fotos de pacientes, com filtros flexíveis.
+- **Query Params**:
+  - `patientId`: string (obrigatório)
+  - `assessmentId`: string (opcional)
+  - `type`: string (opcional)
+  - `from`: string (data inicial, opcional)
+  - `to`: string (data final, opcional)
+  - `page`: number (opcional, default: 1)
+  - `limit`: number (opcional, default: 20)
+  - `order`: "asc" | "desc" (opcional, default: desc)
+- **Resposta**:
+  - 200: Lista paginada de fotos
+  - 400: Dados inválidos
+  - 401: Não autorizado
+
+**Exemplo de requisição:**
+
+```http
+GET /photos?patientId=123&type=front&from=2024-01-01&to=2024-06-01&page=1&limit=10
+```
+
+**Exemplo de resposta:**
+
+```json
+{
+  "data": [
+    {
+      "id": "uuid",
+      "patientId": "uuid",
+      "assessmentId": "uuid",
+      "type": "front",
+      "url": "https://...",
+      "thumbnailUrl": "https://...",
+      "storagePath": "...",
+      "createdAt": "2024-05-01T10:00:00Z",
+      "updatedAt": "2024-05-01T10:00:00Z"
+    }
+  ],
+  "total": 1,
+  "page": 1,
+  "limit": 10
+}
+```
+
+#### Remover Foto
+
+- **DELETE** `/photos/:id`
+- **Descrição**: Remove (soft delete) uma foto de paciente.
+- **Resposta**:
+  - 204: Foto removida
+  - 404: Foto não encontrada
+  - 401: Não autorizado
+
+---

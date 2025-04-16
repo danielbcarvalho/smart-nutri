@@ -202,15 +202,12 @@ export class MealPlansService {
     createMealDto: CreateMealDto,
     nutritionistId: string,
   ): Promise<Meal> {
-    console.log('Service: Adding meal to plan', { planId, createMealDto });
     const mealPlan = await this.findOne(planId, nutritionistId);
-    console.log('Service: Found meal plan:', mealPlan);
 
     const meal = this.mealRepository.create({
       ...createMealDto,
       mealPlan,
     });
-    console.log('Service: Created meal entity:', meal);
 
     try {
       const savedMeal = await this.mealRepository.save(meal);
@@ -220,7 +217,6 @@ export class MealPlansService {
 
       return savedMeal;
     } catch (error) {
-      console.error('Service: Error saving meal:', error);
       throw error;
     }
   }
