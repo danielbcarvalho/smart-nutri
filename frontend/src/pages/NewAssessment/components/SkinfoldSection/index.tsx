@@ -52,16 +52,16 @@ export const SkinfoldSection: React.FC<SkinfoldSectionProps> = ({
 }) => {
   // Mapeamento das etiquetas das dobras
   const skinfoldLabels: Record<string, string> = {
-    tricipital: "Dobra Tricipital",
-    bicipital: "Dobra Bicipital",
-    abdominal: "Dobra Abdominal",
-    subscapular: "Dobra Subescapular",
-    axillaryMedian: "Dobra Axilar Média",
-    thigh: "Dobra da Coxa",
-    thoracic: "Dobra Torácica",
-    suprailiac: "Dobra Suprailíaca",
-    calf: "Dobra da Panturrilha",
-    supraspinal: "Dobra Supraespinhal",
+    tricipital: "Tricipital",
+    bicipital: "Bicipital",
+    abdominal: "Abdominal",
+    subscapular: "Subescapular",
+    axillaryMedian: "Axilar Média",
+    thigh: "Coxa",
+    thoracic: "Torácica",
+    suprailiac: "Suprailíaca",
+    calf: "Panturrilha",
+    supraspinal: "Supraespinhal",
   };
 
   return (

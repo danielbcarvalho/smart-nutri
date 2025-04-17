@@ -51,7 +51,13 @@ export const BasicDataSection: React.FC<BasicDataSectionProps> = ({
             <TextField
               fullWidth
               label="Altura (cm)"
-              value={basicData.height}
+              value={
+                basicData.height !== undefined &&
+                basicData.height !== null &&
+                basicData.height !== ""
+                  ? Math.trunc(Number(basicData.height)).toString()
+                  : ""
+              }
               onChange={onBasicDataChange("height")}
             />
           </Grid>
@@ -66,7 +72,7 @@ export const BasicDataSection: React.FC<BasicDataSectionProps> = ({
           <Grid item xs={12} sm={6}>
             <TextField
               fullWidth
-              label="Altura do joelho (cm)"
+              label="Altura de joelho (cm)"
               value={basicData.kneeHeight}
               onChange={onBasicDataChange("kneeHeight")}
             />
