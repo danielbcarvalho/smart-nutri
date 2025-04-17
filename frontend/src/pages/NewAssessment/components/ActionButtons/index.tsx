@@ -34,7 +34,7 @@ export const ActionButtons: React.FC<ActionButtonsProps> = ({
         onClick={onSave}
         disabled={isSaving}
       >
-        {isSaving ? "Salvando..." : "Salvar"}
+        {isSaving ? "Salvando..." : "Salvar Avaliação"}
       </Button>
     </Box>
   );

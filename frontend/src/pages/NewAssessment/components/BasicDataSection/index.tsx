@@ -1,11 +1,12 @@
 import React from "react";
 import {
   TextField,
-  Grid,
   AccordionDetails,
   AccordionSummary,
   Typography,
   Accordion,
+  Box,
+  Paper,
 } from "@mui/material";
 import ExpandMoreIcon from "@mui/icons-material/ArrowDropDown";
 
@@ -32,22 +33,37 @@ export const BasicDataSection: React.FC<BasicDataSectionProps> = ({
   onBasicDataChange,
 }) => {
   return (
-    <Accordion expanded={expanded} onChange={onAccordionChange("basicData")}>
+    <Accordion
+      expanded={expanded}
+      onChange={onAccordionChange("basicData")}
+      disableGutters
+      sx={{
+        borderRadius: 0,
+        "&:before": {
+          display: "none",
+        },
+        boxShadow: "none",
+      }}
+    >
       <AccordionSummary expandIcon={<ExpandMoreIcon />}>
         <Typography variant="h6">Dados antropométricos básicos</Typography>
       </AccordionSummary>
-      <AccordionDetails>
-        <Grid container spacing={2}>
-          <Grid item xs={12} sm={6}>
+      <AccordionDetails sx={{ p: 3 }}>
+        <Box sx={{ display: "flex", flexWrap: "wrap", gap: 2 }}>
+          <Box sx={{ flex: { xs: "1 1 100%", sm: "1 1 calc(50% - 8px)" } }}>
             <TextField
               fullWidth
               label="Peso (Kg)"
               value={basicData.weight}
               onChange={onBasicDataChange("weight")}
               required
+              variant="outlined"
+              InputProps={{
+                sx: { borderRadius: 2 },
+              }}
             />
-          </Grid>
-          <Grid item xs={12} sm={6}>
+          </Box>
+          <Box sx={{ flex: { xs: "1 1 100%", sm: "1 1 calc(50% - 8px)" } }}>
             <TextField
               fullWidth
               label="Altura (cm)"
@@ -59,25 +75,37 @@ export const BasicDataSection: React.FC<BasicDataSectionProps> = ({
                   : ""
               }
               onChange={onBasicDataChange("height")}
+              variant="outlined"
+              InputProps={{
+                sx: { borderRadius: 2 },
+              }}
             />
-          </Grid>
-          <Grid item xs={12} sm={6}>
+          </Box>
+          <Box sx={{ flex: { xs: "1 1 100%", sm: "1 1 calc(50% - 8px)" } }}>
             <TextField
               fullWidth
               label="Altura sentado (cm)"
               value={basicData.sittingHeight}
               onChange={onBasicDataChange("sittingHeight")}
+              variant="outlined"
+              InputProps={{
+                sx: { borderRadius: 2 },
+              }}
             />
-          </Grid>
-          <Grid item xs={12} sm={6}>
+          </Box>
+          <Box sx={{ flex: { xs: "1 1 100%", sm: "1 1 calc(50% - 8px)" } }}>
             <TextField
               fullWidth
               label="Altura de joelho (cm)"
               value={basicData.kneeHeight}
               onChange={onBasicDataChange("kneeHeight")}
+              variant="outlined"
+              InputProps={{
+                sx: { borderRadius: 2 },
+              }}
             />
-          </Grid>
-        </Grid>
+          </Box>
+        </Box>
       </AccordionDetails>
     </Accordion>
   );

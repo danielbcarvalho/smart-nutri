@@ -34,15 +34,21 @@ export const BoneDiameterSection: React.FC<BoneDiameterSectionProps> = ({
 }) => {
   // Mapeamento das etiquetas dos diâmetros ósseos
   const boneDiameterLabels: Record<keyof BoneDiameters, string> = {
-    humerus: "Diâmetro do Úmero",
-    wrist: "Diâmetro do Punho",
-    femur: "Diâmetro do Fêmur",
+    humerus: "Úmero",
+    wrist: "Punho",
+    femur: "Fêmur",
   };
 
   return (
     <Accordion
       expanded={expanded}
       onChange={onAccordionChange("boneDiameters")}
+      sx={{
+        "&:before": {
+          display: "none",
+        },
+        boxShadow: "none",
+      }}
     >
       <AccordionSummary expandIcon={<ExpandMoreIcon />}>
         <Typography variant="h6">Diâmetros ósseos (cm)</Typography>

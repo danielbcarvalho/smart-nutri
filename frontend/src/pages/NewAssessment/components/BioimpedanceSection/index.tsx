@@ -52,7 +52,16 @@ export const BioimpedanceSection: React.FC<BioimpedanceSectionProps> = ({
   };
 
   return (
-    <Accordion expanded={expanded} onChange={onAccordionChange("bioimpedance")}>
+    <Accordion
+      expanded={expanded}
+      onChange={onAccordionChange("bioimpedance")}
+      sx={{
+        "&:before": {
+          display: "none",
+        },
+        boxShadow: "none",
+      }}
+    >
       <AccordionSummary expandIcon={<ExpandMoreIcon />}>
         <Typography variant="h6">Dados de Bioimpedância</Typography>
       </AccordionSummary>

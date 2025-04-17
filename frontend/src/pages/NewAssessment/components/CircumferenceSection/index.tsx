@@ -63,6 +63,12 @@ export const CircumferenceSection: React.FC<CircumferenceSectionProps> = ({
     <Accordion
       expanded={expanded}
       onChange={onAccordionChange("circumferences")}
+      sx={{
+        "&:before": {
+          display: "none",
+        },
+        boxShadow: "none",
+      }}
     >
       <AccordionSummary expandIcon={<ExpandMoreIcon />}>
         <Typography variant="h6">Circunferências (cm)</Typography>

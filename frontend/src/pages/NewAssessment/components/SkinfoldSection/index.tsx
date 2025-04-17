@@ -65,7 +65,16 @@ export const SkinfoldSection: React.FC<SkinfoldSectionProps> = ({
   };
 
   return (
-    <Accordion expanded={expanded} onChange={onAccordionChange("skinfolds")}>
+    <Accordion
+      expanded={expanded}
+      onChange={onAccordionChange("skinfolds")}
+      sx={{
+        "&:before": {
+          display: "none",
+        },
+        boxShadow: "none",
+      }}
+    >
       <AccordionSummary expandIcon={<ExpandMoreIcon />}>
         <Typography variant="h6">Dobras cutâneas (mm)</Typography>
       </AccordionSummary>

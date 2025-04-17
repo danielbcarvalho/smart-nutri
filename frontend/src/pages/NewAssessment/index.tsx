@@ -1,6 +1,13 @@
 import React, { useState, useEffect, useRef, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { Box, Snackbar, Alert } from "@mui/material";
+import {
+  Box,
+  Snackbar,
+  Alert,
+  useMediaQuery,
+  useTheme,
+  Paper,
+} from "@mui/material";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { patientService } from "../../services/patientService";
 import {
@@ -20,7 +27,9 @@ import { CircumferenceSection } from "./components/CircumferenceSection";
 import { BoneDiameterSection } from "./components/BoneDiameterSection";
 import { BioimpedanceSection } from "./components/BioimpedanceSection";
 import { AssessmentHeader } from "./components/AssessmentHeader";
+import { AssessmentDate } from "./components/AssessmentDate";
 import { ActionButtons } from "./components/ActionButtons";
+import { FloatingActionButton } from "./components/FloatingActionButton";
 import { AnalyticalResults } from "./components/AnalyticalResults";
 import { calculateAnthropometricResults } from "./utils/anthropometricCalculations";
 
@@ -472,49 +481,48 @@ export function NewAssessment() {
     return calculateAnthropometricResults({
       gender: calculationGender,
       age: calculationAge,
-      weight: parseFloat(basicData.weight) || 0,
-      height: parseFloat(basicData.height) || 0,
+      weight: parseFloat(basicData.weight),
+      height: parseFloat(basicData.height),
       skinfolds: {
-        tricipital: parseFloat(skinfolds.tricipital) || 0,
-        bicipital: parseFloat(skinfolds.bicipital) || 0,
-        abdominal: parseFloat(skinfolds.abdominal) || 0,
-        subscapular: parseFloat(skinfolds.subscapular) || 0,
-        axillaryMedian: parseFloat(skinfolds.axillaryMedian) || 0,
-        thigh: parseFloat(skinfolds.thigh) || 0,
-        thoracic: parseFloat(skinfolds.thoracic) || 0,
-        suprailiac: parseFloat(skinfolds.suprailiac) || 0,
-        calf: parseFloat(skinfolds.calf) || 0,
-        supraspinal: parseFloat(skinfolds.supraspinal) || 0,
+        tricipital: parseFloat(skinfolds.tricipital),
+        bicipital: parseFloat(skinfolds.bicipital),
+        abdominal: parseFloat(skinfolds.abdominal),
+        subscapular: parseFloat(skinfolds.subscapular),
+        axillaryMedian: parseFloat(skinfolds.axillaryMedian),
+        thigh: parseFloat(skinfolds.thigh),
+        thoracic: parseFloat(skinfolds.thoracic),
+        suprailiac: parseFloat(skinfolds.suprailiac),
+        calf: parseFloat(skinfolds.calf),
+        supraspinal: parseFloat(skinfolds.supraspinal),
       },
       circumferences: {
-        neck: parseFloat(circumferences.neck) || 0,
-        waist: parseFloat(circumferences.waist) || 0,
-        abdomen: parseFloat(circumferences.abdomen) || 0,
-        hip: parseFloat(circumferences.hip) || 0,
-        relaxedArm: parseFloat(circumferences.relaxedArm) || 0,
-        contractedArm: parseFloat(circumferences.contractedArm) || 0,
-        forearm: parseFloat(circumferences.forearm) || 0,
-        proximalThigh: parseFloat(circumferences.proximalThigh) || 0,
-        medialThigh: parseFloat(circumferences.medialThigh) || 0,
-        distalThigh: parseFloat(circumferences.distalThigh) || 0,
-        calf: parseFloat(circumferences.calf) || 0,
+        neck: parseFloat(circumferences.neck),
+        waist: parseFloat(circumferences.waist),
+        abdomen: parseFloat(circumferences.abdomen),
+        hip: parseFloat(circumferences.hip),
+        relaxedArm: parseFloat(circumferences.relaxedArm),
+        contractedArm: parseFloat(circumferences.contractedArm),
+        forearm: parseFloat(circumferences.forearm),
+        proximalThigh: parseFloat(circumferences.proximalThigh),
+        medialThigh: parseFloat(circumferences.medialThigh),
+        distalThigh: parseFloat(circumferences.distalThigh),
+        calf: parseFloat(circumferences.calf),
       },
       boneDiameters: {
-        humerus: parseFloat(boneDiameters.humerus) || 0,
-        wrist: parseFloat(boneDiameters.wrist) || 0,
-        femur: parseFloat(boneDiameters.femur) || 0,
+        humerus: parseFloat(boneDiameters.humerus),
+        wrist: parseFloat(boneDiameters.wrist),
+        femur: parseFloat(boneDiameters.femur),
       },
       bioimpedance: {
-        fatPercentage: parseFloat(bioimpedance.fatPercentage) || 0,
-        fatMass: parseFloat(bioimpedance.fatMass) || 0,
-        muscleMassPercentage:
-          parseFloat(bioimpedance.muscleMassPercentage) || 0,
-        muscleMass: parseFloat(bioimpedance.muscleMass) || 0,
-        fatFreeMass: parseFloat(bioimpedance.fatFreeMass) || 0,
-        boneMass: parseFloat(bioimpedance.boneMass) || 0,
-        visceralFat: parseFloat(bioimpedance.visceralFat) || 0,
-        bodyWater: parseFloat(bioimpedance.bodyWater) || 0,
-        metabolicAge: parseFloat(bioimpedance.metabolicAge) || 0,
+        fatPercentage: parseFloat(bioimpedance.fatPercentage),
+        fatMass: parseFloat(bioimpedance.fatMass),
+        muscleMassPercentage: parseFloat(bioimpedance.muscleMassPercentage),
+        muscleMass: parseFloat(bioimpedance.muscleMass),
+        fatFreeMass: parseFloat(bioimpedance.fatFreeMass),
+        boneMass: parseFloat(bioimpedance.boneMass),
+        visceralFat: parseFloat(bioimpedance.visceralFat),
+        bodyWater: parseFloat(bioimpedance.bodyWater),
+        metabolicAge: parseFloat(bioimpedance.metabolicAge),
       },
       skinfoldFormula,
     });
@@ -551,76 +559,98 @@ export function NewAssessment() {
     return references[calculation] || "Referência não disponível";
   };
 
+  // Este trecho substitui o return atual
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down("md"));
+
   return (
     <Box sx={{ maxWidth: 1200, mx: "auto", p: { xs: 2, sm: 3 } }}>
-      {/* Cabeçalho */}
+      {/* Cabeçalho fora do card */}
       <AssessmentHeader
         patientName={patient?.name || ""}
-        assessmentDate={assessmentDate}
-        onAssessmentDateChange={setAssessmentDate}
         onNavigateBack={handleNavigateBack}
         isEditMode={isEditMode}
       />
 
-      <Box sx={{ display: "flex", gap: 3 }}>
+      {/* Layout flexível que se adapta para mobile */}
+      <Box
+        sx={{
+          display: "flex",
+          flexDirection: isMobile ? "column" : "row",
+          gap: 3,
+        }}
+      >
         {/* Coluna da esquerda - Formulários */}
-        <Box sx={{ flex: "0 0 58.333%" }}>
-          {/* Seção de dados básicos */}
-          <BasicDataSection
-            expanded={expanded === "basicData"}
-            onAccordionChange={handleAccordionChange}
-            basicData={basicData}
-            onBasicDataChange={handleBasicDataChange}
-          />
+        <Box sx={{ flex: isMobile ? "1 1 auto" : "0 0 58.333%" }}>
+          {/* Data da avaliação como um card separado */}
 
-          {/* Seção de dobras cutâneas */}
-          <SkinfoldSection
-            expanded={expanded === "skinfolds"}
-            onAccordionChange={handleAccordionChange}
-            skinfolds={skinfolds}
-            skinfoldFormula={skinfoldFormula}
-            onSkinfoldFormulaChange={handleSkinfoldFormulaChange}
-            onSkinfoldChange={handleSkinfoldChange}
-            patientGender={patient?.gender}
+          <AssessmentDate
+            assessmentDate={assessmentDate}
+            onAssessmentDateChange={setAssessmentDate}
           />
+          <Paper
+            elevation={1}
+            sx={{
+              borderRadius: 2,
+              overflow: "hidden",
+            }}
+          >
+            {/* Seção de dados básicos */}
+            <BasicDataSection
+              expanded={expanded === "basicData"}
+              onAccordionChange={handleAccordionChange}
+              basicData={basicData}
+              onBasicDataChange={handleBasicDataChange}
+            />
 
-          {/* Seção de circunferências */}
-          <CircumferenceSection
-            expanded={expanded === "circumferences"}
-            onAccordionChange={handleAccordionChange}
-            circumferences={circumferences}
-            onCircumferenceChange={handleCircumferenceChange}
-          />
+            {/* Seção de dobras cutâneas */}
+            <SkinfoldSection
+              expanded={expanded === "skinfolds"}
+              onAccordionChange={handleAccordionChange}
+              skinfolds={skinfolds}
+              skinfoldFormula={skinfoldFormula}
+              onSkinfoldFormulaChange={handleSkinfoldFormulaChange}
+              onSkinfoldChange={handleSkinfoldChange}
+              patientGender={patient?.gender}
+            />
 
-          {/* Seção de diâmetros ósseos */}
-          <BoneDiameterSection
-            expanded={expanded === "boneDiameters"}
-            onAccordionChange={handleAccordionChange}
-            boneDiameters={boneDiameters}
-            onBoneDiameterChange={handleBoneDiameterChange}
-          />
+            {/* Seção de circunferências */}
+            <CircumferenceSection
+              expanded={expanded === "circumferences"}
+              onAccordionChange={handleAccordionChange}
+              circumferences={circumferences}
+              onCircumferenceChange={handleCircumferenceChange}
+            />
 
-          {/* Seção de bioimpedância */}
-          <BioimpedanceSection
-            expanded={expanded === "bioimpedance"}
-            onAccordionChange={handleAccordionChange}
-            bioimpedance={bioimpedance}
-            onBioimpedanceChange={handleBioimpedanceChange}
-          />
+            {/* Seção de diâmetros ósseos */}
+            <BoneDiameterSection
+              expanded={expanded === "boneDiameters"}
+              onAccordionChange={handleAccordionChange}
+              boneDiameters={boneDiameters}
+              onBoneDiameterChange={handleBoneDiameterChange}
+            />
 
-          {/* Seção de fotos */}
-          <PhotosSection
-            patientId={patientId!}
-            measurementId={measurementId}
-            sharePhotos={sharePhotos}
-            onSharePhotosChange={setSharePhotos}
-            onPhotosChange={handlePhotosChange}
-            measurement={measurementToEdit}
-            expanded={expanded === "photos"}
-            onAccordionChange={handleAccordionChange}
-          />
+            {/* Seção de bioimpedância */}
+            <BioimpedanceSection
+              expanded={expanded === "bioimpedance"}
+              onAccordionChange={handleAccordionChange}
+              bioimpedance={bioimpedance}
+              onBioimpedanceChange={handleBioimpedanceChange}
+            />
 
-          {/* Botões de ação */}
+            {/* Seção de fotos */}
+            <PhotosSection
+              patientId={patientId!}
+              measurementId={measurementId}
+              sharePhotos={sharePhotos}
+              onSharePhotosChange={setSharePhotos}
+              onPhotosChange={handlePhotosChange}
+              measurement={measurementToEdit}
+              expanded={expanded === "photos"}
+              onAccordionChange={handleAccordionChange}
+            />
+          </Paper>
+
           <ActionButtons
             onSave={handleSaveAssessment}
             onCancel={handleCancel}
@@ -629,7 +659,7 @@ export function NewAssessment() {
         </Box>
 
         {/* Coluna da direita - Resultados */}
-        <Box sx={{ flex: "0 0 41.667%" }}>
+        <Box sx={{ flex: isMobile ? "1 1 auto" : "0 0 41.667%" }}>
           <AnalyticalResults
             anthropometricResults={anthropometricResults}
             openGraphsModal={openGraphsModal}

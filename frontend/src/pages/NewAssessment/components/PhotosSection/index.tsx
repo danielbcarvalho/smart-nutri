@@ -425,7 +425,18 @@ export const PhotosSection: React.FC<PhotosSectionProps> = ({
   );
 
   return (
-    <Accordion expanded={expanded} onChange={onAccordionChange("photos")}>
+    <Accordion
+      expanded={expanded}
+      onChange={onAccordionChange("photos")}
+      sx={{
+        borderBottomRightRadius: 8,
+        borderBottomLeftRadius: 8,
+        "&:before": {
+          display: "none",
+        },
+        boxShadow: "none",
+      }}
+    >
       <AccordionSummary expandIcon={<ExpandMoreIcon />}>
         <Typography variant="h6">Fotos</Typography>
       </AccordionSummary>

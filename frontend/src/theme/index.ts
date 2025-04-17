@@ -104,6 +104,12 @@ export const theme = createTheme({
           "&.Mui-disabled": {
             backgroundColor: "rgba(0, 0, 0, 0.12)",
           },
+          "&:focus": {
+            outline: "none",
+          },
+          "&:focus-visible": {
+            outline: "none",
+          },
         },
         contained: {
           "&.MuiButton-contained": {
@@ -156,6 +162,12 @@ export const theme = createTheme({
             "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
               borderColor: baseColors.teal,
             },
+            "&:focus": {
+              outline: "none",
+            },
+            "&:focus-visible": {
+              outline: "none",
+            },
           },
           "& .MuiInputLabel-root.Mui-focused": {
             color: baseColors.teal,
@@ -177,6 +189,18 @@ export const theme = createTheme({
         root: {
           "&.Mui-focused": {
             color: baseColors.teal,
+          },
+        },
+      },
+    },
+    MuiCssBaseline: {
+      styleOverrides: {
+        "*": {
+          "&:focus": {
+            outline: "none !important",
+          },
+          "&:focus-visible": {
+            outline: "none !important",
           },
         },
       },
