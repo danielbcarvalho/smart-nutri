@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Box, Snackbar, Alert } from "@mui/material";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -21,6 +21,8 @@ import { BoneDiameterSection } from "./components/BoneDiameterSection";
 import { BioimpedanceSection } from "./components/BioimpedanceSection";
 import { AssessmentHeader } from "./components/AssessmentHeader";
 import { ActionButtons } from "./components/ActionButtons";
+import { AnalyticalResults } from "./components/AnalyticalResults";
+import { calculateAnthropometricResults } from "./utils/anthropometricCalculations";
 
 export function NewAssessment() {
   const { patientId, measurementId } = useParams<{
@@ -249,7 +251,7 @@ export function NewAssessment() {
         return patientService.createMeasurement(patientId!, dto);
       }
     },
-    onSuccess: (data) => {
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["measurements", patientId] });
       setSnackbar({
         open: true,
@@ -259,9 +261,9 @@ export function NewAssessment() {
         severity: "success",
       });
 
-      // Navegar para visualização após criação
+      // Navegar para a listagem de avaliações após criação/edição
       setTimeout(() => {
-        navigate(`/patients/${patientId}/measurements/${data.id}`);
+        navigate(`/patient/${patientId}/assessments`);
       }, 1500);
     },
     onError: (error) => {
@@ -433,7 +435,7 @@ export function NewAssessment() {
   };
 
   const handleCancel = () => {
-    navigate(`/patients/${patientId}`);
+    navigate(`/patient/${patientId}/assessments`);
   };
 
   const handleCloseSnackbar = () => {
@@ -441,7 +443,7 @@ export function NewAssessment() {
   };
 
   const handleNavigateBack = () => {
-    navigate(`/patients/${patientId}`);
+    navigate(`/patient/${patientId}/assessments`);
   };
 
   const handleSkinfoldFormulaChange = (value: string) => {
@@ -457,6 +459,98 @@ export function NewAssessment() {
     setPhotos(updatedPhotos);
   };
 
+  // Calcular resultados antropométricos
+  const [openGraphsModal, setOpenGraphsModal] = useState(false);
+  const anthropometricResults = useMemo(() => {
+    let calculationGender: "M" | "F" = "M";
+    if (patient?.gender === "F" || String(patient?.gender) === "FEMALE") {
+      calculationGender = "F";
+    }
+    const calculationAge = patient?.birthDate
+      ? new Date().getFullYear() - new Date(patient.birthDate).getFullYear()
+      : 30;
+    return calculateAnthropometricResults({
+      gender: calculationGender,
+      age: calculationAge,
+      weight: parseFloat(basicData.weight) || 0,
+      height: parseFloat(basicData.height) || 0,
+      skinfolds: {
+        tricipital: parseFloat(skinfolds.tricipital) || 0,
+        bicipital: parseFloat(skinfolds.bicipital) || 0,
+        abdominal: parseFloat(skinfolds.abdominal) || 0,
+        subscapular: parseFloat(skinfolds.subscapular) || 0,
+        axillaryMedian: parseFloat(skinfolds.axillaryMedian) || 0,
+        thigh: parseFloat(skinfolds.thigh) || 0,
+        thoracic: parseFloat(skinfolds.thoracic) || 0,
+        suprailiac: parseFloat(skinfolds.suprailiac) || 0,
+        calf: parseFloat(skinfolds.calf) || 0,
+        supraspinal: parseFloat(skinfolds.supraspinal) || 0,
+      },
+      circumferences: {
+        neck: parseFloat(circumferences.neck) || 0,
+        waist: parseFloat(circumferences.waist) || 0,
+        abdomen: parseFloat(circumferences.abdomen) || 0,
+        hip: parseFloat(circumferences.hip) || 0,
+        relaxedArm: parseFloat(circumferences.relaxedArm) || 0,
+        contractedArm: parseFloat(circumferences.contractedArm) || 0,
+        forearm: parseFloat(circumferences.forearm) || 0,
+        proximalThigh: parseFloat(circumferences.proximalThigh) || 0,
+        medialThigh: parseFloat(circumferences.medialThigh) || 0,
+        distalThigh: parseFloat(circumferences.distalThigh) || 0,
+        calf: parseFloat(circumferences.calf) || 0,
+      },
+      boneDiameters: {
+        humerus: parseFloat(boneDiameters.humerus) || 0,
+        wrist: parseFloat(boneDiameters.wrist) || 0,
+        femur: parseFloat(boneDiameters.femur) || 0,
+      },
+      bioimpedance: {
+        fatPercentage: parseFloat(bioimpedance.fatPercentage) || 0,
+        fatMass: parseFloat(bioimpedance.fatMass) || 0,
+        muscleMassPercentage:
+          parseFloat(bioimpedance.muscleMassPercentage) || 0,
+        muscleMass: parseFloat(bioimpedance.muscleMass) || 0,
+        fatFreeMass: parseFloat(bioimpedance.fatFreeMass) || 0,
+        boneMass: parseFloat(bioimpedance.boneMass) || 0,
+        visceralFat: parseFloat(bioimpedance.visceralFat) || 0,
+        bodyWater: parseFloat(bioimpedance.bodyWater) || 0,
+        metabolicAge: parseFloat(bioimpedance.metabolicAge) || 0,
+      },
+      skinfoldFormula,
+    });
+  }, [
+    basicData,
+    circumferences,
+    skinfolds,
+    boneDiameters,
+    bioimpedance,
+    patient,
+    skinfoldFormula,
+  ]);
+
+  // Função auxiliar para formatar as referências bibliográficas
+  const getReferenceTooltip = (calculation: string): string => {
+    const references: Record<string, string> = {
+      bmi: "Índice de Massa Corporal (IMC) - Medida que relaciona peso e altura para avaliar o estado nutricional. Valores entre 18,5 e 24,9 kg/m² indicam peso adequado.\n\nReferência: Organização Mundial da Saúde (OMS). Estado físico: uso e interpretação da antropometria. Genebra: OMS, 1995.",
+      waistHipRatio:
+        "Relação Cintura/Quadril (RCQ) - Medida que avalia a distribuição de gordura corporal. Valores elevados indicam maior risco de doenças cardiovasculares.\n\nReferência: Organização Mundial da Saúde (OMS). Circunferência da cintura e relação cintura-quadril: relatório de uma consulta de especialistas da OMS. Genebra: OMS, 2008.",
+      cmb: "Circunferência Muscular do Braço (CMB) - Medida que avalia a massa muscular do braço, importante para diagnóstico de desnutrição e sarcopenia.\n\nReferência: Frisancho AR. Novas normas de áreas de gordura e músculo dos membros superiores para avaliação do estado nutricional. Am J Clin Nutr. 1981;34(11):2540-5.",
+      bodyDensity:
+        "Densidade Corporal - Medida que avalia a composição corporal através da relação entre massa e volume. Valores mais altos indicam maior proporção de massa magra.\n\nReferência: Pollock ML, Schmidt DH, Jackson AS. Medição da aptidão cardiorrespiratória e composição corporal no ambiente clínico. Compr Ther. 1980;6(9):12-27.",
+      bodyFatPercentage:
+        "Percentual de Gordura Corporal - Medida que avalia a proporção de gordura em relação ao peso total. Valores ideais variam conforme sexo e idade.\n\nReferência: Siri WE. Composição corporal a partir de espaços fluidos e densidade: análise de métodos. In: Brozek J, Henschel A, eds. Técnicas para medir a composição corporal. Washington, DC: National Academy of Sciences, 1961:223-244.",
+      bodyFatClassification:
+        "Classificação do Percentual de Gordura - Avaliação do estado nutricional baseada no percentual de gordura corporal. Classificações variam de 'Essencial' a 'Obesidade'.\n\nReferência: Diretrizes do American College of Sports Medicine (ACSM) para Teste de Esforço e Prescrição, 10ª Edição",
+      boneMass:
+        "Massa Óssea - Estimativa do peso dos ossos baseada em medidas antropométricas. Importante para avaliação de osteopenia e osteoporose.\n\nReferência: Martin AD, Spenst LF, Drinkwater DT, Clarys JP. Estimativa antropométrica da massa muscular em homens. Med Sci Sports Exerc. 1990;22(5):729-33.",
+      muscleMass:
+        "Massa Muscular - Medida que avalia a quantidade total de músculos do corpo. Importante para diagnóstico de sarcopenia e avaliação do estado nutricional.\n\nReferência: Matiegka J. O teste de eficiência física. Am J Phys Anthropol. 1921;4:223-230.",
+      residualWeight:
+        "Peso Residual - Componente do peso corporal que inclui órgãos, vísceras e outros tecidos não classificados como gordura, músculo ou osso.\n\nReferência: Matiegka J. O teste de eficiência física. Am J Phys Anthropol. 1921;4:223-230.",
+    };
+    return references[calculation] || "Referência não disponível";
+  };
+
   return (
     <Box sx={{ maxWidth: 1200, mx: "auto", p: { xs: 2, sm: 3 } }}>
       {/* Cabeçalho */}
@@ -468,67 +562,82 @@ export function NewAssessment() {
         isEditMode={isEditMode}
       />
 
-      {/* Seção de dados básicos */}
-      <BasicDataSection
-        expanded={expanded === "basicData"}
-        onAccordionChange={handleAccordionChange}
-        basicData={basicData}
-        onBasicDataChange={handleBasicDataChange}
-      />
+      <Box sx={{ display: "flex", gap: 3 }}>
+        {/* Coluna da esquerda - Formulários */}
+        <Box sx={{ flex: "0 0 58.333%" }}>
+          {/* Seção de dados básicos */}
+          <BasicDataSection
+            expanded={expanded === "basicData"}
+            onAccordionChange={handleAccordionChange}
+            basicData={basicData}
+            onBasicDataChange={handleBasicDataChange}
+          />
 
-      {/* Seção de dobras cutâneas */}
-      <SkinfoldSection
-        expanded={expanded === "skinfolds"}
-        onAccordionChange={handleAccordionChange}
-        skinfolds={skinfolds}
-        skinfoldFormula={skinfoldFormula}
-        onSkinfoldFormulaChange={handleSkinfoldFormulaChange}
-        onSkinfoldChange={handleSkinfoldChange}
-        patientGender={patient?.gender}
-      />
+          {/* Seção de dobras cutâneas */}
+          <SkinfoldSection
+            expanded={expanded === "skinfolds"}
+            onAccordionChange={handleAccordionChange}
+            skinfolds={skinfolds}
+            skinfoldFormula={skinfoldFormula}
+            onSkinfoldFormulaChange={handleSkinfoldFormulaChange}
+            onSkinfoldChange={handleSkinfoldChange}
+            patientGender={patient?.gender}
+          />
 
-      {/* Seção de circunferências */}
-      <CircumferenceSection
-        expanded={expanded === "circumferences"}
-        onAccordionChange={handleAccordionChange}
-        circumferences={circumferences}
-        onCircumferenceChange={handleCircumferenceChange}
-      />
+          {/* Seção de circunferências */}
+          <CircumferenceSection
+            expanded={expanded === "circumferences"}
+            onAccordionChange={handleAccordionChange}
+            circumferences={circumferences}
+            onCircumferenceChange={handleCircumferenceChange}
+          />
 
-      {/* Seção de diâmetros ósseos */}
-      <BoneDiameterSection
-        expanded={expanded === "boneDiameters"}
-        onAccordionChange={handleAccordionChange}
-        boneDiameters={boneDiameters}
-        onBoneDiameterChange={handleBoneDiameterChange}
-      />
+          {/* Seção de diâmetros ósseos */}
+          <BoneDiameterSection
+            expanded={expanded === "boneDiameters"}
+            onAccordionChange={handleAccordionChange}
+            boneDiameters={boneDiameters}
+            onBoneDiameterChange={handleBoneDiameterChange}
+          />
 
-      {/* Seção de bioimpedância */}
-      <BioimpedanceSection
-        expanded={expanded === "bioimpedance"}
-        onAccordionChange={handleAccordionChange}
-        bioimpedance={bioimpedance}
-        onBioimpedanceChange={handleBioimpedanceChange}
-      />
+          {/* Seção de bioimpedância */}
+          <BioimpedanceSection
+            expanded={expanded === "bioimpedance"}
+            onAccordionChange={handleAccordionChange}
+            bioimpedance={bioimpedance}
+            onBioimpedanceChange={handleBioimpedanceChange}
+          />
 
-      {/* Seção de fotos */}
-      <PhotosSection
-        patientId={patientId!}
-        measurementId={measurementId}
-        sharePhotos={sharePhotos}
-        onSharePhotosChange={setSharePhotos}
-        onPhotosChange={handlePhotosChange}
-        measurement={measurementToEdit}
-        expanded={expanded === "photos"}
-        onAccordionChange={handleAccordionChange}
-      />
+          {/* Seção de fotos */}
+          <PhotosSection
+            patientId={patientId!}
+            measurementId={measurementId}
+            sharePhotos={sharePhotos}
+            onSharePhotosChange={setSharePhotos}
+            onPhotosChange={handlePhotosChange}
+            measurement={measurementToEdit}
+            expanded={expanded === "photos"}
+            onAccordionChange={handleAccordionChange}
+          />
 
-      {/* Botões de ação */}
-      <ActionButtons
-        onSave={handleSaveAssessment}
-        onCancel={handleCancel}
-        isSaving={isSaving.current}
-      />
+          {/* Botões de ação */}
+          <ActionButtons
+            onSave={handleSaveAssessment}
+            onCancel={handleCancel}
+            isSaving={isSaving.current}
+          />
+        </Box>
+
+        {/* Coluna da direita - Resultados */}
+        <Box sx={{ flex: "0 0 41.667%" }}>
+          <AnalyticalResults
+            anthropometricResults={anthropometricResults}
+            openGraphsModal={openGraphsModal}
+            setOpenGraphsModal={setOpenGraphsModal}
+            getReferenceTooltip={getReferenceTooltip}
+          />
+        </Box>
+      </Box>
 
       {/* Snackbar de feedback */}
       <Snackbar
