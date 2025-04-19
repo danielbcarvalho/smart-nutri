@@ -621,3 +621,35 @@ A página de pacientes agora está organizada em componentes menores e mais espe
   {!patient.photoUrl && getInitials(patient.name)}
 </Avatar>
 ```
+
+## Container Centralizado (Layout)
+
+### Descrição
+
+O componente `Container` localizado em `src/components/Layout/Container.tsx` é um wrapper reutilizável que centraliza e limita a largura do conteúdo principal da aplicação, garantindo espaçamento consistente nas laterais e responsividade. Ele deve ser utilizado para envolver o header, sidebar e conteúdo principal, conforme o novo padrão de layout centralizado.
+
+### Propriedades
+
+- `children`: Conteúdo a ser renderizado dentro do container.
+- `fullHeight` (opcional): Se verdadeiro, o container ocupa 100% da altura disponível.
+- Aceita todas as propriedades de `BoxProps` do MUI.
+
+### Exemplo de Uso
+
+```tsx
+import { Container } from "../components/Layout/Container";
+
+export function Example() {
+  return (
+    <Container>
+      <h1>Conteúdo centralizado</h1>
+    </Container>
+  );
+}
+```
+
+### Objetivo
+
+- Centralizar o conteúdo da aplicação com largura máxima (ex: 1200px)
+- Garantir padding responsivo nas laterais
+- Facilitar a padronização visual do layout em todas as páginas

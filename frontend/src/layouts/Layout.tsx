@@ -1,22 +1,36 @@
 import { Box } from "@mui/material";
-import { Header } from "../components/Layout/Header";
 import { Outlet } from "react-router-dom";
+import { Container } from "../components/Layout/Container";
+
+import { HeaderGlobal } from "../components/Layout/HeaderGlobal";
 
 export const Layout = () => {
   return (
-    <Box sx={{ display: "flex", flexDirection: "column", minHeight: "100vh" }}>
-      <Header />
-      <Box
-        component="main"
+    <Box sx={{ minHeight: "100vh", bgcolor: "#F5F6FA", p: 4 }}>
+      <Container
         sx={{
-          flexGrow: 1,
-          p: 3,
-          mt: "64px", // altura do header
-          width: "100%",
+          backgroundColor: "white",
+          borderRadius: "32px",
+
+          boxShadow: "0 2px 16px 0 rgba(0,0,0,0.04)",
+          px: 0,
+          display: "flex",
+          flexDirection: "column",
+          minHeight: { xs: "auto", md: "90vh" },
+          overflow: "hidden",
         }}
       >
-        <Outlet />
-      </Box>
+        <HeaderGlobal />
+        <Box
+          component="main"
+          sx={{
+            flexGrow: 1,
+            width: "100%",
+          }}
+        >
+          <Outlet />
+        </Box>
+      </Container>
     </Box>
   );
 };

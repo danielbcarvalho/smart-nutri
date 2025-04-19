@@ -3,14 +3,14 @@ import { useNavigate } from "react-router-dom";
 import {
   AppBar,
   Toolbar,
-  Typography,
-  IconButton,
   Box,
+  IconButton,
   Tooltip,
   Avatar,
-  Divider,
   Modal,
   Paper,
+  Typography,
+  Divider,
 } from "@mui/material";
 import {
   Notifications as NotificationsIcon,
@@ -22,8 +22,9 @@ import {
 } from "@mui/icons-material";
 import { authService } from "../../services/authService";
 import { SearchModal } from "../SearchModal";
+import { Container } from "./Container";
 
-export const Header = () => {
+export const HeaderGlobal = () => {
   const navigate = useNavigate();
   const [searchOpen, setSearchOpen] = useState(false);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
@@ -44,16 +45,19 @@ export const Header = () => {
   };
 
   return (
-    <>
-      <AppBar
-        position="fixed"
+    <AppBar
+      position="static"
+      elevation={0}
+      sx={{ background: "transparent", boxShadow: "none", p: 0 }}
+    >
+      <Container
         sx={{
-          zIndex: (theme) => theme.zIndex.drawer + 1,
           backgroundColor: "white",
-          color: "text.primary",
+          borderRadius: "32px 32px 0 0",
+          boxShadow: "none",
         }}
       >
-        <Toolbar>
+        <Toolbar sx={{ minHeight: 88 }}>
           {/* Logo/Título */}
           <Box
             sx={{
@@ -147,7 +151,7 @@ export const Header = () => {
             </Tooltip>
           </Box>
         </Toolbar>
-      </AppBar>
+      </Container>
 
       {/* Modal de pesquisa */}
       <SearchModal open={searchOpen} onClose={() => setSearchOpen(false)} />
@@ -301,7 +305,7 @@ export const Header = () => {
           display: "flex",
           alignItems: "flex-start",
           justifyContent: "flex-end",
-          mt: "64px", // Altura do header
+          mt: "88px", // Altura do header
           pr: 2,
         }}
       >
@@ -400,6 +404,6 @@ export const Header = () => {
           </Box>
         </Paper>
       </Modal>
-    </>
+    </AppBar>
   );
 };
