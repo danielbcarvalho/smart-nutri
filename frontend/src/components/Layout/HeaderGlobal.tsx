@@ -50,13 +50,7 @@ export const HeaderGlobal = () => {
       elevation={0}
       sx={{ background: "transparent", boxShadow: "none", p: 0 }}
     >
-      <Container
-        sx={{
-          backgroundColor: "white",
-          borderRadius: "32px 32px 0 0",
-          boxShadow: "none",
-        }}
-      >
+      <Container>
         <Toolbar sx={{ minHeight: 88 }}>
           {/* Logo/Título */}
           <Box
@@ -164,7 +158,7 @@ export const HeaderGlobal = () => {
           display: "flex",
           alignItems: "flex-start",
           justifyContent: "flex-end",
-          pt: 8,
+          mt: "88px", // Altura do header
           pr: 2,
         }}
       >
@@ -226,7 +220,7 @@ export const HeaderGlobal = () => {
           display: "flex",
           alignItems: "flex-start",
           justifyContent: "flex-end",
-          pt: 8,
+          mt: "88px", // Altura do header
           pr: 2,
         }}
       >

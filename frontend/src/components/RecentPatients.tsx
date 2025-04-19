@@ -24,10 +24,12 @@ import {
 import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { patientService, Patient } from "../services/patientService";
+import { PatientFormModal } from "./PatientForm/PatientFormModal";
 
 export function PatientList() {
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = React.useState("");
+  const [isPatientModalOpen, setIsPatientModalOpen] = React.useState(false);
 
   const { data: patients = [] } = useQuery<Patient[]>({
     queryKey: ["patients"],
@@ -67,7 +69,7 @@ export function PatientList() {
       <Button
         variant="contained"
         startIcon={<PersonAddIcon />}
-        onClick={() => navigate("/patients/new")}
+        onClick={() => setIsPatientModalOpen(true)}
         sx={{ borderRadius: 20 }}
       >
         Adicionar Paciente
@@ -112,7 +114,7 @@ export function PatientList() {
           <Button
             variant="contained"
             startIcon={<AddIcon />}
-            onClick={() => navigate("/patients/new")}
+            onClick={() => setIsPatientModalOpen(true)}
             sx={{ borderRadius: 20 }}
           >
             Novo Paciente
@@ -184,6 +186,11 @@ export function PatientList() {
             ))}
           </List>
         )}
+        <PatientFormModal
+          open={isPatientModalOpen}
+          onClose={() => setIsPatientModalOpen(false)}
+          onSuccess={() => setIsPatientModalOpen(false)}
+        />
       </CardContent>
     </Card>
   );

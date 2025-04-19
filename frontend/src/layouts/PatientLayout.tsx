@@ -4,7 +4,6 @@ import {
   Box,
   Typography,
   Paper,
-  Divider,
   List,
   ListItemButton,
   ListItemIcon,
@@ -13,8 +12,6 @@ import {
   Drawer,
   useTheme,
   useMediaQuery,
-  Avatar,
-  Modal,
   Tooltip,
 } from "@mui/material";
 import {
@@ -23,30 +20,21 @@ import {
   Assessment,
   Description,
   Menu as MenuIcon,
-  Notifications as NotificationsIcon,
-  Search as SearchIcon,
-  Groups as GroupsIcon,
-  ExitToApp as LogoutIcon,
-  Person as PersonIcon,
-  Close as CloseIcon,
+  ChevronLeft,
+  ChevronRight,
+  Timeline as TimelineIcon,
 } from "@mui/icons-material";
 import { useQuery } from "@tanstack/react-query";
 import { patientService } from "../services/patientService";
 import { Container } from "../components/Layout/Container";
 import { authService } from "../services/authService";
-import { SearchModal } from "../components/SearchModal";
-import { HeaderGlobal } from "../components/Layout/HeaderGlobal";
 
 export function PatientLayout() {
   const { patientId } = useParams<{ patientId: string }>();
   const theme = useTheme();
   const mobile = useMediaQuery(theme.breakpoints.down("md"));
   const [drawerOpen, setDrawerOpen] = useState(false);
-  const [searchOpen, setSearchOpen] = useState(false);
-  const [notificationsOpen, setNotificationsOpen] = useState(false);
-  const [profileOpen, setProfileOpen] = useState(false);
-  const [aiOpen, setAiOpen] = useState(false);
-  const user = authService.getUser();
+  const [sidebarMinimized, setSidebarMinimized] = useState(false);
 
   // Buscar os dados do paciente
   const { data: patient } = useQuery({
@@ -72,6 +60,11 @@ export function PatientLayout() {
       path: `/patient/${patientId}/assessments`,
     },
     {
+      label: "Evolução",
+      icon: <TimelineIcon />,
+      path: `/patient/${patientId}/assessments/evolution`,
+    },
+    {
       label: "Documentos",
       icon: <Description />,
       path: `/patient/${patientId}/documents`,
@@ -79,34 +72,81 @@ export function PatientLayout() {
   ];
 
   const SidebarContent = (
-    <Box sx={{ width: 250, p: 2 }}>
-      <Typography variant="subtitle1" fontWeight="bold" mb={2}>
-        Paciente:
-        <br />
-        <Typography component="span" color="primary">
-          {patient?.name || "Carregando..."}
+    <Box
+      sx={{
+        width: sidebarMinimized ? 60 : 250,
+        p: 2,
+        display: "flex",
+        flexDirection: "column",
+        alignItems: sidebarMinimized ? "center" : "stretch",
+        transition: "width 0.2s",
+        minHeight: "100vh",
+      }}
+    >
+      <Box
+        sx={{
+          display: "flex",
+          justifyContent: sidebarMinimized ? "center" : "flex-end",
+          mb: 2,
+        }}
+      >
+        <IconButton
+          size="small"
+          onClick={() => setSidebarMinimized((v) => !v)}
+          sx={{ mb: sidebarMinimized ? 0 : 1 }}
+        >
+          {sidebarMinimized ? <ChevronRight /> : <ChevronLeft />}
+        </IconButton>
+      </Box>
+      {!sidebarMinimized && (
+        <Typography
+          variant="subtitle1"
+          fontWeight="bold"
+          mb={2}
+          textAlign="left"
+        >
+          Paciente:
+          <br />
+          <Typography component="span" color="primary">
+            {patient?.name || "Carregando..."}
+          </Typography>
         </Typography>
-      </Typography>
-      <Divider />
+      )}
       <List component="nav" sx={{ mt: 1 }}>
         {menuItems.map((item) => (
-          <ListItemButton
+          <Tooltip
             key={item.path}
-            component={NavLink}
-            to={item.path}
-            onClick={() => setDrawerOpen(false)}
-            sx={{
-              "&.active": {
-                bgcolor: theme.palette.primary.main + "15",
-                "& .MuiListItemIcon-root, & .MuiListItemText-root": {
-                  color: theme.palette.primary.main,
-                },
-              },
-            }}
+            title={sidebarMinimized ? item.label : ""}
+            placement="right"
           >
-            <ListItemIcon>{item.icon}</ListItemIcon>
-            <ListItemText primary={item.label} />
-          </ListItemButton>
+            <ListItemButton
+              component={NavLink}
+              to={item.path}
+              onClick={() => setDrawerOpen(false)}
+              {...(item.label === "Informações pessoais" ? { end: true } : {})}
+              sx={{
+                justifyContent: sidebarMinimized ? "center" : "flex-start",
+                px: sidebarMinimized ? 1 : 2,
+                "&.active": {
+                  bgcolor: theme.palette.primary.main + "15",
+                  "& .MuiListItemIcon-root, & .MuiListItemText-root": {
+                    color: theme.palette.primary.main,
+                  },
+                },
+              }}
+            >
+              <ListItemIcon
+                sx={{
+                  minWidth: 0,
+                  mr: sidebarMinimized ? 0 : 2,
+                  justifyContent: "center",
+                }}
+              >
+                {item.icon}
+              </ListItemIcon>
+              {!sidebarMinimized && <ListItemText primary={item.label} />}
+            </ListItemButton>
+          </Tooltip>
         ))}
       </List>
     </Box>
@@ -126,269 +166,18 @@ export function PatientLayout() {
 
   return (
     <Container>
-      {/* Modal de pesquisa */}
-      <SearchModal open={searchOpen} onClose={() => setSearchOpen(false)} />
-
-      {/* Modal de Notificações */}
-      <Modal
-        open={notificationsOpen}
-        onClose={() => setNotificationsOpen(false)}
-        sx={{
-          display: "flex",
-          alignItems: "flex-start",
-          justifyContent: "flex-end",
-          pt: 8,
-          pr: 2,
-        }}
-      >
-        <Paper
-          sx={{
-            width: "100%",
-            maxWidth: 400,
-            maxHeight: "calc(100vh - 100px)",
-            overflow: "auto",
-            borderRadius: 1,
-            boxShadow: 24,
-          }}
-        >
-          {/* Header do Modal */}
-          <Box
-            sx={{
-              p: 2,
-              borderBottom: "1px solid",
-              borderColor: "divider",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-            }}
-          >
-            <Typography variant="h6">Notificações</Typography>
-            <IconButton
-              size="small"
-              onClick={() => setNotificationsOpen(false)}
-              sx={{ color: "text.secondary" }}
-            >
-              <CloseIcon />
-            </IconButton>
-          </Box>
-
-          {/* Conteúdo - Estado Vazio */}
-          <Box
-            sx={{
-              p: 4,
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
-              gap: 2,
-              color: "text.secondary",
-            }}
-          >
-            <NotificationsIcon sx={{ fontSize: 48 }} />
-            <Typography variant="body1">
-              Nenhuma notificação no momento
-            </Typography>
-          </Box>
-        </Paper>
-      </Modal>
-
-      {/* Modal de IA - NOVO */}
-      <Modal
-        open={aiOpen}
-        onClose={() => setAiOpen(false)}
-        sx={{
-          display: "flex",
-          alignItems: "flex-start",
-          justifyContent: "flex-end",
-          pt: 8,
-          pr: 2,
-        }}
-      >
-        <Paper
-          sx={{
-            width: "100%",
-            maxWidth: 400,
-            maxHeight: "calc(100vh - 100px)",
-            overflow: "auto",
-            borderRadius: 1,
-            boxShadow: 24,
-          }}
-        >
-          {/* Header do Modal */}
-          <Box
-            sx={{
-              p: 2,
-              borderBottom: "1px solid",
-              borderColor: "divider",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-            }}
-          >
-            <Typography variant="h6">Inteligência Artificial</Typography>
-            <IconButton
-              size="small"
-              onClick={() => setAiOpen(false)}
-              sx={{ color: "text.secondary" }}
-            >
-              <CloseIcon />
-            </IconButton>
-          </Box>
-
-          {/* Conteúdo do Modal de IA */}
-          <Box
-            sx={{
-              p: 4,
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
-              gap: 2,
-              color: "text.secondary",
-              textAlign: "center",
-            }}
-          >
-            <img
-              src="/images/ai-animated.gif"
-              alt="IA Smart Nutri"
-              style={{ width: 120, height: 120 }}
-            />
-            <Typography
-              variant="h5"
-              color="primary.main"
-              sx={{ fontWeight: "bold" }}
-            >
-              Em breve
-            </Typography>
-            <Typography variant="body1" sx={{ mb: 1 }}>
-              Inteligência Artificial Smart Nutri
-            </Typography>
-            <Typography variant="body2" color="text.secondary">
-              Nossa IA especializada está chegando para auxiliar na criação de
-              planos alimentares, relatórios nutricionais, insights de pacientes
-              e aumentar sua produtividade.
-            </Typography>
-          </Box>
-        </Paper>
-      </Modal>
-
-      {/* Modal de Perfil */}
-      <Modal
-        open={profileOpen}
-        onClose={() => setProfileOpen(false)}
-        sx={{
-          display: "flex",
-          alignItems: "flex-start",
-          justifyContent: "flex-end",
-          mt: "88px", // Altura do header
-          pr: 2,
-        }}
-      >
-        <Paper
-          sx={{
-            width: "100%",
-            maxWidth: 400,
-            maxHeight: "calc(100vh - 100px)",
-            overflow: "auto",
-            borderRadius: 1,
-            boxShadow: 24,
-          }}
-        >
-          {/* Header do Modal */}
-          <Box
-            sx={{
-              p: 2,
-              borderBottom: "1px solid",
-              borderColor: "divider",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-            }}
-          >
-            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-              <Typography variant="h6">Meu Perfil</Typography>
-            </Box>
-            <Box sx={{ display: "flex", gap: 1 }}>
-              <Tooltip title="Logout">
-                <IconButton
-                  onClick={handleLogout}
-                  size="small"
-                  sx={{ color: "text.secondary" }}
-                >
-                  <LogoutIcon />
-                </IconButton>
-              </Tooltip>
-              <IconButton
-                size="small"
-                onClick={() => setProfileOpen(false)}
-                sx={{ color: "text.secondary" }}
-              >
-                <CloseIcon />
-              </IconButton>
-            </Box>
-          </Box>
-
-          {/* Conteúdo do Perfil */}
-          <Box sx={{ p: 3 }}>
-            <Box
-              sx={{
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "center",
-                gap: 2,
-                mb: 3,
-              }}
-            >
-              <Avatar
-                sx={{
-                  width: 100,
-                  height: 100,
-                  bgcolor: "primary.main",
-                  fontSize: "2rem",
-                }}
-              >
-                {user ? getInitials(user.name) : <PersonIcon />}
-              </Avatar>
-              <Typography variant="h6">{user?.name}</Typography>
-              <Typography variant="body2" color="text.secondary">
-                {user?.email}
-              </Typography>
-            </Box>
-
-            <Divider sx={{ my: 2 }} />
-
-            <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-              {user?.crn && (
-                <Box>
-                  <Typography variant="subtitle2" color="text.secondary">
-                    CRN
-                  </Typography>
-                  <Typography variant="body1">{user.crn}</Typography>
-                </Box>
-              )}
-
-              {user?.clinicName && (
-                <Box>
-                  <Typography variant="subtitle2" color="text.secondary">
-                    Clínica
-                  </Typography>
-                  <Typography variant="body1">{user.clinicName}</Typography>
-                </Box>
-              )}
-            </Box>
-          </Box>
-        </Paper>
-      </Modal>
-
       <Box sx={{ display: "flex", flex: 1, width: "100%" }}>
         {/* Sidebar */}
         <Box
           sx={{
-            width: 250,
+            width: sidebarMinimized ? 60 : 250,
             bgcolor: "transparent",
-            borderRight: "1px solid #F0F1F3",
             py: 4,
             px: 2,
             flexShrink: 0,
             display: { xs: "none", md: "block" },
+            transition: "width 0.2s",
+            minHeight: "100vh",
           }}
         >
           {SidebarContent}

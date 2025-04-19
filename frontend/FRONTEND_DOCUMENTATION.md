@@ -146,6 +146,19 @@ graph TD
 - **Layout**: Root layout, provides app-wide structure (header, footer, main content).
 - **PatientLayout**: Specialized layout for patient-related pages, includes sidebar navigation.
 
+### PatientLayout Sidebar Minimization (2024)
+
+O menu lateral do PatientLayout agora pode ser minimizado pelo usuário. Por padrão, ele é exibido expandido (com ícones e textos). O usuário pode clicar no botão de minimizar/expandir no topo do menu para alternar entre os modos:
+
+- **Expandido:** Mostra ícone e texto de cada item de menu, largura padrão (250px).
+- **Minimizado:** Mostra apenas os ícones centralizados, largura reduzida (60px). O nome do menu aparece em tooltip ao passar o mouse.
+- O estado do menu não afeta o Drawer mobile, que mantém o comportamento padrão.
+- **[2024-06]** A linha divisória (borderRight) foi removida do menu lateral esquerdo para melhor integração visual.
+- Novo item de menu lateral **Evolução** (ícone Timeline), posicionado após 'Avaliações', leva diretamente para a tela de evolução corporal do paciente (`/patient/:patientId/assessments/evolution`).
+
+**Localização:**
+`src/layouts/PatientLayout.tsx`
+
 ---
 
 ## Main Pages & Flows
@@ -201,12 +214,9 @@ flowchart TD
 Located in `src/components/`:
 
 - **AssessmentButton**: Triggers assessment actions.
-- **FoodSearch**: Search and select foods.
 - **LoadingBackdrop**: Displays loading overlay.
 - **MealPlan**: UI for creating and displaying meal plans.
 - **MealPlanButton**: Action button for meal plans.
-- **PatientCard**: Displays patient summary.
-- **PatientMeasurements**: Modal for entering/viewing measurements.
 - **PrivateRoute**: Route guard for authenticated pages.
 - **RecentPatients**: List of recently accessed patients.
 - **StatsCards**: Dashboard statistics.
@@ -653,3 +663,52 @@ export function Example() {
 - Centralizar o conteúdo da aplicação com largura máxima (ex: 1200px)
 - Garantir padding responsivo nas laterais
 - Facilitar a padronização visual do layout em todas as páginas
+
+## Novo Fluxo de Criação de Pacientes via Modal
+
+A partir de 2024-06, a criação de pacientes é feita exclusivamente via modal, utilizando o componente `PatientFormModal`. Não existe mais navegação para a rota `/patients/new`.
+
+### Como funciona:
+
+- O botão "Novo Paciente" nas telas de listagem e dashboard abre o `PatientFormModal`.
+- O modal é controlado por estado local (`open`, `onClose`, `onSuccess`).
+- Após criar um paciente, o modal é fechado automaticamente e a lista é atualizada via React Query.
+- O componente `PatientFormModal` pode ser importado e utilizado em qualquer tela:
+
+```tsx
+import { PatientFormModal } from "../pages/PatientForm";
+
+const [isPatientModalOpen, setIsPatientModalOpen] = useState(false);
+
+<Button onClick={() => setIsPatientModalOpen(true)}>Novo Paciente</Button>
+<PatientFormModal
+  open={isPatientModalOpen}
+  onClose={() => setIsPatientModalOpen(false)}
+  onSuccess={() => setIsPatientModalOpen(false)}
+/>
+```
+
+### Benefícios
+
+- Experiência mais fluida, sem navegação de rota.
+- Padrão consistente para criação de entidades.
+- Redução de código duplicado e de rotas desnecessárias.
+
+> **Atenção:** Não utilize mais a navegação para `/patients/new`. O fluxo oficial é via modal.
+
+---
+
+## Padrão de Nomenclatura de Páginas
+
+Para garantir organização e consistência no projeto, **todas as novas páginas devem seguir o seguinte padrão de nomenclatura e estrutura**:
+
+- O diretório da página deve ser criado em `src/pages/NomeDaFeature/`.
+- O arquivo principal da página deve ser nomeado como `NomeDaFeaturePage.tsx`.
+
+**Exemplo:**
+
+```
+src/pages/NewFeature/NewFeaturePage.tsx
+```
+
+> Siga sempre este padrão ao criar novas páginas. Isso facilita a manutenção, busca e entendimento do projeto por toda a equipe.

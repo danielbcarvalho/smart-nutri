@@ -7,6 +7,7 @@ import { patientService, Patient } from "../../services/patientService";
 import { PatientTable } from "./components/PatientTable";
 import { PatientActionsMenu } from "./components/PatientActionsMenu";
 import { DeleteConfirmationDialog } from "./components/DeleteConfirmationDialog";
+import { PatientFormModal } from "../../components/PatientForm/PatientFormModal";
 
 export function Patients() {
   const navigate = useNavigate();
@@ -20,6 +21,7 @@ export function Patients() {
   const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [patientToDelete, setPatientToDelete] = useState<Patient | null>(null);
+  const [isPatientModalOpen, setIsPatientModalOpen] = useState(false);
 
   const { data: patients = [] } = useQuery({
     queryKey: ["patients"],
@@ -112,7 +114,7 @@ export function Patients() {
         <Button
           variant="contained"
           startIcon={<PersonAddIcon />}
-          onClick={() => navigate("/patients/new")}
+          onClick={() => setIsPatientModalOpen(true)}
           sx={{ bgcolor: "primary.main" }}
         >
           Novo Paciente
@@ -147,6 +149,13 @@ export function Patients() {
         onClose={handleDeleteDialogClose}
         onConfirm={handleDeleteConfirm}
         patientName={patientToDelete?.name || ""}
+      />
+
+      {/* PatientFormModal para novo paciente */}
+      <PatientFormModal
+        open={isPatientModalOpen}
+        onClose={() => setIsPatientModalOpen(false)}
+        onSuccess={() => setIsPatientModalOpen(false)}
       />
     </Box>
   );

@@ -2,10 +2,10 @@ import { useState, useMemo } from "react";
 import { useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { Box, Typography, Paper, Stack, CircularProgress } from "@mui/material";
-import { patientService, Measurement } from "../../services/patientService"; // Assume Measurement é exportado daqui
-import { DateRangeSelector } from "./components/DateRangeSelector"; // Ajuste o caminho se necessário
-import { CompositionChart } from "./components/CompositionChart"; // Ajuste o caminho se necessário
-import { AnalysisTable } from "./components/AnalysisTable"; // Ajuste o caminho se necessário
+import { patientService } from "../../services/patientService";
+import { DateRangeSelector } from "./components/DateRangeSelector";
+import { CompositionChart } from "./components/CompositionChart";
+import { AnalysisTable } from "./components/AnalysisTable";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
 import { ptBR } from "date-fns/locale";

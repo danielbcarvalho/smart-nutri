@@ -6,18 +6,17 @@ import { theme } from "./theme/index";
 import ErrorSnackbar from "./components/ErrorHandling/ErrorSnackbar";
 import { Layout } from "./layouts/Layout";
 import { PatientLayout } from "./layouts/PatientLayout";
-import { Home } from "./pages/Home";
-import { Patients } from "./pages/Patients";
-import { PatientForm } from "./pages/PatientForm";
-import { PatientInfo } from "./pages/PatientInfo";
-import { NewAssessment } from "./pages/NewAssessment/index";
-import { Login } from "./pages/Login";
+import { Home } from "./pages/Home/HomePage";
+import { Patients } from "./pages/Patients/PatientsPage";
+import { PatientInfo } from "./pages/PatientInfo/PatientInfoPage";
+import { NewAssessment } from "./pages/NewAssessment/NewAssessmentPage";
+import { Login } from "./pages/Login/LoginPage";
 import { Register } from "./pages/Register";
 import { PrivateRoute } from "./components/PrivateRoute";
 import { Box, Typography, Button } from "@mui/material";
-import { Assessments } from "./pages/Assessments/index";
+import { Assessments } from "./pages/Assessments/AssessentsPage";
 import { ViewAssessment } from "./pages/ViewAssessment";
-import { AssessmentEvolution } from "./pages/AssessmentEvolution";
+import { AssessmentEvolution } from "./pages/AssessmentEvolution/AssessmentEvolutionPage";
 import { useRouteError, isRouteErrorResponse, Link } from "react-router-dom";
 
 // Placeholder components
@@ -98,10 +97,6 @@ const router = createBrowserRouter([
         element: <Patients />,
       },
       {
-        path: "patients/new",
-        element: <PatientForm />,
-      },
-      {
         path: "patient/:patientId",
         element: <PatientLayout />,
         children: [
@@ -162,7 +157,7 @@ const router = createBrowserRouter([
       },
       {
         path: "patient/:patientId/edit",
-        element: <PatientForm />,
+        element: <PatientInfo />,
       },
     ],
   },

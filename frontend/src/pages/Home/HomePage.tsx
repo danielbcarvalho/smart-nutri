@@ -1,8 +1,8 @@
 import React from "react";
 import { Box, Typography } from "@mui/material";
-import { StatsCards } from "../components/StatsCards";
-import { PatientList } from "../components/RecentPatients";
-import { Container } from "../components/Layout/Container";
+import { StatsCards } from "../../components/StatsCards";
+import { PatientList } from "../../components/RecentPatients";
+import { Container } from "../../components/Layout/Container";
 
 export function Home() {
   return (
