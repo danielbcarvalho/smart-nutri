@@ -23,7 +23,10 @@ import {
 } from "@mui/icons-material";
 import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { patientService, Patient } from "../services/patientService";
+import {
+  patientService,
+  Patient,
+} from "../modules/patient/services/patientService";
 import { PatientFormModal } from "./PatientForm/PatientFormModal";
 
 export function PatientList() {

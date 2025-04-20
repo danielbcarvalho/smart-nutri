@@ -25,9 +25,9 @@ import {
   Timeline as TimelineIcon,
 } from "@mui/icons-material";
 import { useQuery } from "@tanstack/react-query";
-import { patientService } from "../services/patientService";
+import { patientService } from "../modules/patient/services/patientService";
 import { Container } from "../components/Layout/Container";
-import { authService } from "../services/authService";
+import { authService } from "../modules/auth/services/authService";
 
 export function PatientLayout() {
   const { patientId } = useParams<{ patientId: string }>();

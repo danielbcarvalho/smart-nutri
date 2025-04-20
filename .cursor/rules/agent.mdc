@@ -13,54 +13,12 @@ alwaysApply: true
 Consulte as documentações antes de criar novas funções ou métodos.
 Priorize o reaproveitamento e extensão de código já existente.
 Se necessário, implemente códigos em módulos separados e reutilizáveis.
+
 📌 Fluxo de ação obrigatório:
-Para garantir qualidade, consistência e foco, siga SEMPRE com exatidão esta sequência:
-
-✅ Passo 1 (Planejamento inicial)
-Antes de iniciar a implementação técnica, sempre faça uma breve validação ("check-up") da documentação especificada abaixo (dependendo do escopo da atividade) para garantir que você entendeu corretamente os padrões existentes e consiga evitar duplicidades.
-
-✅ Passo 2 (Desenvolvimento direcionado e específico)
-Implemente as mudanças solicitadas, cumprindo exatamente o solicitado sem modificar comportamentos existentes não solicitados. O escopo de cada tarefa deve ser mantido, sem ajustes externos desnecessários.
-
-✅ Passo 3 (Atualização da documentação pós-atividade)
-Após concluir as implementações solicitadas e validadas, revise rapidamente se é necessária atualização da documentação relacionada ao escopo específico.
-
-📚 REGRAS ESPECÍFICAS PARA DOCUMENTAÇÃO (LEIA ANTES E ATUALIZE APÓS):
-🔙 Backend Geral:
-Antes de atividades gerais de backend:
-
-Leia sempre: [README.md](mdc:backend/README.md)
-Após trabalho realizado, avalie rapidamente a necessidade de atualização em backend/README.md.
-🌐 Backend - API:
-Antes de atividades específicas relacionadas à API:
-
-Verifique sempre o arquivo atualizado: [API_DOCUMENTATION.md](mdc:backend/API_DOCUMENTATION.md)
-Após concluir a alteração, valide se é necessário atualizar: [API_DOCUMENTATION.md](mdc:backend/API_DOCUMENTATION.md)
-🗃️ Database:
-Ao realizar mudanças em banco de dados / esquemas / queries:
-
-Sempre revise ANTES o arquivo: [DATABASE_DOCUMENTATION.md](mdc:backend/DATABASE_DOCUMENTATION.md)
-Se ocorrer mudança significativa, atualize o arquivo imediatamente após terminar.
-💻 Frontend:
-Quando uma alteração de frontend for solicitada especificamente:
-
-Leia inicialmente: [FRONTEND_DOCUMENTATION.md](mdc:frontend/FRONTEND_DOCUMENTATION.md)
-Após alterações realizadas, obrigatoriamente atualize a documentação em [FRONTEND_DOCUMENTATION.md](mdc:frontend/FRONTEND_DOCUMENTATION.md)
-
-🔒 Checklist anti-duplicação (sempre utilize isto antes de finalizar sua entrega):
- - [ ] Considerei se o código já existia.
- - [ ] Validei o reaproveitamento de código já implementado.
- - [ ] Atualizei as documentações apropriadas após mudanças significativas.
- - [ ] Mantive o escopo fechado (não mexi em funcionalidades não solicitadas).
+If you are not sure about file content or codebase structure pertaining to the user’s request, use your tools to read files and gather the relevant information or ask me for more details: do NOT guess or make up an answer.
 
 📌 Template para referência rápida:
 Cada vez que receber uma nova solicitação, valide rapidamente:
-
-### Tipo de atividade: (Assinale a área abaixo)
-- [ ] Backend → [README.md](mdc:backend/README.md)
-- [ ] API → [API_DOCUMENTATION.md](mdc:backend/API_DOCUMENTATION.md)
-- [ ] Database → [DATABASE_DOCUMENTATION.md](mdc:backend/DATABASE_DOCUMENTATION.md)
-- [ ] Frontend → [FRONTEND_DOCUMENTATION.md](mdc:frontend/FRONTEND_DOCUMENTATION.md)
 
 ### Checklist rápido:
 - [ ] Li a documentação antes de iniciar (ok para iniciar desenvolvimento).

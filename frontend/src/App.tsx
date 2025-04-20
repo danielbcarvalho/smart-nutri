@@ -6,17 +6,17 @@ import { theme } from "./theme/index";
 import ErrorSnackbar from "./components/ErrorHandling/ErrorSnackbar";
 import { Layout } from "./layouts/Layout";
 import { PatientLayout } from "./layouts/PatientLayout";
-import { Home } from "./pages/Home/HomePage";
-import { Patients } from "./pages/Patients/PatientsPage";
-import { PatientInfo } from "./pages/Patients/PatientInfo/PatientInfoPage";
-import { NewAssessment } from "./pages/Assessments/NewAssessment/NewAssessmentPage";
-import { Login } from "./pages/Login/LoginPage";
-import { Register } from "./pages/Register";
+import { Home } from "@modules/home/pages/HomePage";
+import { NewAssessment } from "@modules/assessment/pages/NewAssessment/NewAssessmentPage";
+import { Login } from "./modules/auth/pages/Login/LoginPage";
+import { Register } from "./modules/auth/pages/Register/RegisterPage";
 import { PrivateRoute } from "./components/PrivateRoute";
 import { Box, Typography, Button } from "@mui/material";
-import { Assessments } from "./pages/Assessments/AssessentsPage";
-import { AssessmentEvolution } from "./pages/Assessments/AssessmentEvolution/AssessmentEvolutionPage";
+import { Assessments } from "@modules/assessment/pages/AssessentsPage";
+import { AssessmentEvolution } from "@modules/assessment/pages/AssessmentEvolution/AssessmentEvolutionPage";
 import { useRouteError, isRouteErrorResponse, Link } from "react-router-dom";
+import { Patients } from "./modules/patient/pages/Patients/PatientsPage";
+import { PatientInfo } from "./modules/patient/pages/PatientInfo/PatientInfoPage";
 
 // Placeholder components
 const DocumentsPlaceholder = () => (

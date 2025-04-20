@@ -11,441 +11,208 @@ SmartNutri's frontend is a React + TypeScript application, using:
 
 ---
 
-## Global Error Handling & Notifications
+## Estrutura do Projeto
 
-### Overview
-
-The application implements a global error handling and notification system to provide clear, user-friendly feedback for API/network errors and other unexpected issues. This system is based on:
-
-- A global Axios interceptor for API error handling
-- A Notification Context and MUI Snackbar/Alert for displaying messages
-- A notification bus utility for triggering notifications from anywhere (including outside React components)
-
-### How it Works
-
-1. **All API requests** use a single Axios instance (`src/lib/axios.ts`) with interceptors for:
-   - Attaching authentication tokens
-   - Handling errors globally (network, HTTP, unexpected)
-2. **On error**, the interceptor triggers a notification using the notification bus.
-3. **NotificationProvider** (`src/context/NotificationContext.tsx`) listens to the bus and manages notification state.
-4. **ErrorSnackbar** (`src/components/ErrorHandling/ErrorSnackbar.tsx`) displays the message to the user at the top of the screen.
-
-### Example Error Flow
-
-```mermaid
-sequenceDiagram
-    participant User
-    participant UI
-    participant Axios
-    participant NotificationBus
-    participant Snackbar
-
-    User->>UI: Triggers API action
-    UI->>Axios: Makes request
-    Axios-->>Axios: Error occurs (e.g., 500, network)
-    Axios->>NotificationBus: notify("Error message", "error")
-    NotificationBus->>Snackbar: Show error message
-    Snackbar->>User: Displays error
-```
-
-### Usage
-
-- **To trigger a notification manually** (e.g., in a custom hook or utility):
-  ```ts
-  import { notify } from "src/utils/notificationBus";
-  notify("Custom message", "error");
-  ```
-- **All API errors** are handled automatically; no need to catch and display errors in each component.
-
-### Benefits
-
-- Consistent, user-friendly error feedback
-- No silent failures: all errors are visible to testers and users
-- Centralized logic for easy maintenance and future improvements
-
----
-
-This document provides a comprehensive guide to the architecture, main components, pages, services, flows, and best practices. It also includes onboarding instructions and visual diagrams to help new and existing developers.
-
----
-
-## Onboarding for New Developers
-
-### 1. Prerequisites
-
-- Node.js (v18+ recommended)
-- npm (v9+) or yarn
-- Git
-
-### 2. Setup
-
-```bash
-git clone https://github.com/your-org/smartnutri.git
-cd smartnutri/frontend
-npm install
-# or
-yarn install
-```
-
-### 3. Environment
-
-- Copy `.env.example` to `.env` and configure as needed.
-- Ensure the backend is running and accessible (see backend documentation).
-
-### 4. Running the App
-
-```bash
-npm run dev
-# or
-yarn dev
-```
-
-The app will be available at [http://localhost:5173](http://localhost:5173) (default Vite port).
-
-### 5. Contribution Workflow
-
-- Create a feature branch: `git checkout -b feature/your-feature`
-- Follow the [Checklist for New Features](#checklist-for-new-features)
-- Open a pull request and request review
-- Ensure all tests pass and documentation is updated
-
----
-
-## Project Structure
+A estrutura do frontend é **modularizada**. Cada domínio funcional possui seu próprio módulo em `src/modules/`, contendo páginas, serviços e lógica específica. Não existe mais `src/pages` ou `src/services` globais para novas features.
 
 ```
 src/
-├── components/     # Reusable UI components
-├── layouts/        # Layout components (app-wide or section-wide)
-├── pages/          # Main pages and flows
-├── services/       # API and business logic
-├── lib/            # Shared libraries (e.g., axios instance)
-├── theme/          # Theme configuration
-├── types/          # TypeScript type definitions
-├── assets/         # Static assets
+├── modules/        # Módulos de domínio (auth, patients, meal-plan, assessments, home, etc)
+│   └── {modulo}/
+│       ├── pages/         # Páginas do módulo
+│       ├── services/      # Serviços e tipos do módulo
+│       ├── components/    # Componentes específicos do módulo (opcional)
+│       └── calcs/         # Utilitários/cálculos do módulo (opcional)
+├── components/     # Componentes globais reutilizáveis (UI, botões, modais, etc)
+├── layouts/        # Layouts globais (header, sidebar, etc)
+├── lib/            # Bibliotecas utilitárias (axios, notificationBus, etc)
+├── theme/          # Configuração de tema
+├── types/          # Tipos TypeScript globais
+├── assets/         # Assets estáticos (imagens, etc)
 ```
+
+> **Padrão:** Toda nova feature deve ser criada dentro de um módulo em `src/modules/{modulo}`.
 
 ---
 
-## Architecture Diagram
+## Diagrama de Arquitetura
 
 ```mermaid
 graph TD
-  App[App.tsx] -->|uses| Router[React Router]
-  Router -->|renders| Layouts
-  Layouts -->|wraps| Pages
-  Pages -->|compose| Components
-  Pages -->|call| Services
-  Services -->|use| Axios
+  App[App.tsx] -->|usa| Router[React Router]
+  Router -->|renderiza| Módulos
+  Módulos -->|usam| ComponentesGlobais
+  Módulos -->|usam| ServiçosGlobais
+  ComponentesGlobais -->|usam| Libs
 ```
 
 ---
 
-## Main Layouts
+## Onboarding para Novos Devs
 
-- **Layout**: Root layout, provides app-wide structure (header, footer, main content).
-- **PatientLayout**: Specialized layout for patient-related pages, includes sidebar navigation.
+1. **Pré-requisitos**
 
-### PatientLayout Sidebar Minimization (2024)
+   - Node.js (v18+ recomendado)
+   - npm (v9+) ou yarn
+   - Git
 
-O menu lateral do PatientLayout agora pode ser minimizado pelo usuário. Por padrão, ele é exibido expandido (com ícones e textos). O usuário pode clicar no botão de minimizar/expandir no topo do menu para alternar entre os modos:
+2. **Setup**
 
-- **Expandido:** Mostra ícone e texto de cada item de menu, largura padrão (250px).
-- **Minimizado:** Mostra apenas os ícones centralizados, largura reduzida (60px). O nome do menu aparece em tooltip ao passar o mouse.
-- O estado do menu não afeta o Drawer mobile, que mantém o comportamento padrão.
-- **[2024-06]** A linha divisória (borderRight) foi removida do menu lateral esquerdo para melhor integração visual.
-- Novo item de menu lateral **Evolução** (ícone Timeline), posicionado após 'Avaliações', leva diretamente para a tela de evolução corporal do paciente (`/patient/:patientId/assessments/evolution`).
+   ```bash
+   git clone https://github.com/your-org/smartnutri.git
+   cd smartnutri/frontend
+   npm install
+   # ou
+   yarn install
+   ```
 
-**Localização:**
-`src/layouts/PatientLayout.tsx`
+3. **Ambiente**
+
+   - Copie `.env.example` para `.env` e configure conforme necessário.
+   - Certifique-se de que o backend está rodando e acessível.
+
+4. **Rodando o App**
+
+   ```bash
+   npm run dev
+   # ou
+   yarn dev
+   ```
+
+   O app estará disponível em [http://localhost:5173](http://localhost:5173).
+
+5. **Workflow de Contribuição**
+   - Crie uma branch: `git checkout -b feature/sua-feature`
+   - Siga o [Checklist para Novas Features](#checklist-para-novas-features)
+   - Abra um pull request e solicite revisão
+   - Garanta que todos os testes passam e a documentação está atualizada
 
 ---
 
-## Main Pages & Flows
+## Padrão de Módulos
 
-Each page is a directory under `src/pages/` and typically exports a main component.
+Cada módulo em `src/modules/{modulo}` deve conter:
 
-- **Home**: Landing/dashboard page for the app.
-- **Login**: Authentication page for nutritionists.
-- **Register**: Nutritionist registration.
-- **Dashboard**: System overview, stats, and quick access.
-- **Patients**: List, search, and manage patients.
-- **PatientForm**: Create/edit patient details.
-- **PatientInfo**: View patient profile and contact info.
-- **PatientMealPlan**: List meal plans for a patient.
-- **MealPlan**: List, create, edit, and delete meal plans.
-- **MealPlanDetails**: View and manage details of a specific meal plan.
-- **Assessments**: List and manage patient assessments.
-- **NewAssessment**: Create a new assessment (complex, multi-section form).
-- **Measurements**: List and manage body measurements.
-- **ViewAssessment**: View details and evolution of a specific assessment.
-- **AssessmentEvolution**: Visualize the evolution of body composition over time through interactive charts.
+- `pages/`: Páginas principais do fluxo do domínio
+- `services/`: Serviços de API, tipos e lógica de dados
+- `components/`: Componentes específicos do domínio (opcional)
+- `calcs/`: Utilitários/cálculos do domínio (opcional)
 
-### AssessmentEvolution Page
+**Exemplo:**
 
-The AssessmentEvolution page provides a comprehensive view of a patient's body composition changes over time. It includes:
-
-- **CompositionChart**: A responsive chart component that displays:
-  - Total body weight evolution
-  - Fat mass and fat-free mass distribution
-  - Interactive tooltips with detailed measurements
-  - Date-based X-axis with proper timezone handling
-  - Custom styling matching the application theme
-
-The chart is built using Recharts and integrates with the application's date formatting utilities to ensure consistent date display across the platform.
-
-### Example: Main Flow - New Assessment
-
-```mermaid
-flowchart TD
-  Start[Start New Assessment] --> Basic[Fill Basic Data]
-  Basic --> Skinfolds[Enter Skinfolds]
-  Skinfolds --> Circumferences[Enter Circumferences]
-  Circumferences --> Bone[Enter Bone Diameters]
-  Bone --> Bioimpedance[Enter Bioimpedance]
-  Bioimpedance --> Save[Save Assessment]
-  Save --> Results[View Results]
+```
+src/modules/patient/
+├── pages/Patients/PatientsPage.tsx
+├── pages/PatientInfo/PatientInfoPage.tsx
+├── services/patientService.ts
+├── components/PatientsTable.tsx
 ```
 
 ---
 
-## Main Components
+## Componentes Globais
 
-Located in `src/components/`:
+Componentes reutilizáveis (UI, botões, modais, etc) ficam em `src/components/`.
 
-- **AssessmentButton**: Triggers assessment actions.
-- **LoadingBackdrop**: Displays loading overlay.
-- **MealPlan**: UI for creating and displaying meal plans.
-- **MealPlanButton**: Action button for meal plans.
-- **PrivateRoute**: Route guard for authenticated pages.
-- **RecentPatients**: List of recently accessed patients.
-- **StatsCards**: Dashboard statistics.
-- **SearchModal**: Modal de pesquisa global, utilizado no Header para busca de pacientes e planos alimentares. Possui feedback visual aprimorado, estado de carregamento, mensagem de vazio e navegação por teclado.
-- **FloatingHelpButton**: Botão flutuante de ajuda exibido no canto inferior direito em todas as páginas. Ao ser clicado, abre o HelpModal com botões para dúvidas frequentes e contato com suporte. Localização: `src/components/FloatingHelpButton.tsx`.
-- **HelpModal**: Modal reutilizável exibindo botões para dúvidas frequentes e contato com suporte. Segue o padrão visual dos outros modais do sistema. Localização: `src/components/Modals/HelpModal.tsx`.
-- **CompositionChart**: Componente responsável por exibir a evolução da composição corporal do paciente ao longo do tempo.
-- **PhotoUpload**: Componente para seleção e pré-visualização de fotos de avaliação (Fase 1: apenas seleção local e preview, sem upload real). Permite ao usuário arrastar ou selecionar arquivos de imagem (JPG, JPEG, PNG, até 5MB por padrão), valida o formato/tamanho e exibe a pré-visualização da imagem escolhida. Localização: `src/components/PhotoUpload/`. Interface:
+- Exemplo: `src/components/StatsCards.tsx`, `src/components/PatientForm/PatientFormModal.tsx`
+- Use sempre os **aliases** para importar:
+  ```ts
+  import { StatsCards } from "@components/StatsCards";
+  import { PatientFormModal } from "@components/PatientForm/PatientFormModal";
+  ```
 
-```tsx
-<PhotoUpload
-  type="front" // ou "back" | "left" | "right"
-  assessmentId="123"
-  patientId="456"
-  onUploadComplete={(photo) => console.log(photo)}
-  onUploadError={(err) => console.error(err)}
-/>
-```
+---
 
-> Limitação atual: não realiza upload real nem integração com backend/Supabase nesta fase inicial. Apenas seleção, validação e preview local.
+## Importação com Aliases (IMPORTANTE)
 
-#### SearchModal
+> **Todos os imports internos devem usar aliases definidos em `tsconfig.app.json` e `vite.config.ts`.**
 
-O componente `SearchModal` é responsável por toda a experiência de busca global no sistema. Ele é utilizado diretamente no Header e oferece:
+- `@modules/*` para módulos de domínio
+- `@components/*` para componentes globais
+- `@services/*` para serviços globais (legado ou compartilhado)
+- `@lib/*` para libs utilitárias
+- `@types/*` para tipos globais
+- `@utils/*` para utilitários globais
 
-- Campo de busca customizado com botão de limpar
-- Feedback visual de carregamento (spinner)
-- Mensagem amigável quando não há resultados:
-  _"Ops! Não encontramos nada com o termo utilizado. Tente usar outras palavras-chave ou revise sua busca."_
-- Resultados exibidos em cards, com indicação de tipo (Paciente/Plano alimentar)
-- Navegação por teclado (Enter/Barra de espaço)
-- Acessibilidade (ARIA labels)
-- Animações suaves e design responsivo
+**Exemplo:**
 
-**Uso:**
-
-```tsx
-// No Header.tsx
-<SearchModal open={searchOpen} onClose={() => setSearchOpen(false)} />
-```
-
-**Localização:**
-`src/components/SearchModal.tsx`
-
-#### CompositionChart
-
-O componente `CompositionChart` é um gráfico interativo que exibe a evolução da composição corporal do paciente. Características principais:
-
-- **Visualização de Dados**:
-
-  - Linha de evolução do peso total
-  - Barras empilhadas mostrando distribuição entre massa gorda e massa livre
-  - Tooltips interativos com valores detalhados
-  - Eixo X com datas formatadas no padrão brasileiro (dd/MM/yyyy)
-
-- **Integração**:
-
-  - Utiliza a biblioteca Recharts para renderização
-  - Integra-se com o sistema de temas do Material-UI
-  - Usa utilitários de formatação de data centralizados
-
-- **Responsividade**:
-
-  - Adapta-se automaticamente ao tamanho do container
-  - Mantém legibilidade em diferentes tamanhos de tela
-  - Suporta interação via mouse e toque
-
-- **Localização**:
-  `src/pages/AssessmentEvolution/components/CompositionChart.tsx`
-
-### Component Hierarchy Example
-
-```mermaid
-graph TD
-  Layout -->|wraps| Dashboard
-  Dashboard --> StatsCards
-  Dashboard --> RecentPatients
-  Header --> SearchModal
-  Patients --> PatientCard
-  PatientInfo --> PatientMeasurements
+```ts
+import { patientService } from "@modules/patient/services/patientService";
+import { MealPlan } from "@modules/meal-plan/services/mealPlanService";
+import { StatsCards } from "@components/StatsCards";
 ```
 
 ---
 
-## Main Services
+## Padrão de Nomenclatura de Páginas
 
-Located in `src/services/`:
-
-- **api.ts**: Axios instance with interceptors.
-- **authService.ts**: Authentication (login, register, get user, logout).
-- **foodService.ts**: Food search, favorites, macro calculations.
-- **mealPlanService.ts**: CRUD for meal plans and meals.
-- **patientService.ts**: CRUD for patients and measurements.
-- **search.service.ts**: Global search.
-
----
-
-## Expanded Flow Explanations
-
-### New Assessment (src/pages/NewAssessment)
-
-- Multi-section form for anthropometric data.
-- Handles basic data, skinfolds, circumferences, bone diameters, and bioimpedance.
-- Uses React state and controlled components for each section.
-- Validates and calculates results before saving.
-- On save, persists data and shows results with charts.
-
-### Meal Plan Management
-
-- Users can create, edit, and delete meal plans for patients.
-- Each plan contains multiple meals, each with foods and macros.
-- UI supports drag-and-drop, toggling, and inline editing.
-
-### Patient Management
-
-- List, search, and filter patients.
-- Create/edit via PatientForm.
-- View details and measurements in PatientInfo and PatientMeasurements.
-
-### Atualização instantânea da foto de perfil do paciente
-
-Após cadastrar ou editar um paciente (incluindo atualização do Instagram), a foto de perfil será atualizada instantaneamente na tela, sem necessidade de recarregar a página manualmente. Isso é feito via refetch dos dados e bust de cache da imagem (query param timestamp).
+- O diretório da página deve ser criado em `src/modules/{modulo}/pages/NomeDaFeature/`.
+- O arquivo principal da página deve ser nomeado como `NomeDaFeaturePage.tsx`.
+- Exemplo:
+  ```
+  src/modules/patient/pages/Patients/PatientsPage.tsx
+  src/modules/assessment/pages/NewAssessment/NewAssessmentPage.tsx
+  ```
 
 ---
 
-## Development Standards
+## Exemplos de Módulos
 
-### Components
+### Módulo de Pacientes (`src/modules/patient`)
 
-- Use functional components and TypeScript.
-- Follow componentization principles.
-- Document props with JSDoc.
-- Keep components small and focused.
+- Gerenciamento de pacientes, listagem, edição, visualização, etc.
+- Serviços: `services/patientService.ts`
+- Páginas: `pages/Patients/PatientsPage.tsx`, `pages/PatientInfo/PatientInfoPage.tsx`
+- Componentes: `components/PatientsTable.tsx`, etc.
 
-### State & Data
+### Módulo de Avaliações (`src/modules/assessment`)
 
-- Use React Query for server data.
-- Use Context API for global state.
-- Use local state for UI.
-- Extract reusable logic into custom hooks.
+- Avaliações antropométricas, evolução corporal, cálculos, etc.
+- Serviços: `services/assessmentService.ts` (se houver)
+- Páginas: `pages/NewAssessment/NewAssessmentPage.tsx`, `pages/AssessmentEvolution/AssessmentEvolutionPage.tsx`
+- Utilitários: `calcs/anthropometricCalculations.ts`
 
-### Styling
+### Módulo de Planos Alimentares (`src/modules/meal-plan`)
 
-- Use Material-UI and theme.
-- Maintain visual consistency.
-- Use styled-components if needed.
+- Criação, edição e visualização de planos alimentares.
+- Serviços: `services/mealPlanService.ts`
+- Páginas: `pages/MealPlanPage.tsx`, `pages/MealPlanDetails/MealPlanDetailsPage.tsx`
 
-### Forms
+### Módulo Home (`src/modules/home`)
 
-- Use React Hook Form.
-- Validate with Yup.
-- Provide clear feedback and error handling.
+- Dashboard e visão geral do sistema.
+- Páginas: `pages/HomePage.tsx`
 
----
+### Módulo Auth (`src/modules/auth`)
 
-## Checklist for New Features
-
-### Planning
-
-- [ ] Review existing documentation
-- [ ] Identify similar components
-- [ ] Plan data structure and user flow
-
-### Development
-
-- [ ] Define TypeScript types
-- [ ] Implement components
-- [ ] Add tests
-- [ ] Document props and functions
-
-### Integration
-
-- [ ] Integrate with API
-- [ ] Handle errors and loading states
-- [ ] Test on multiple devices
-
-### Documentation
-
-- [ ] Update this document
-- [ ] Document new components and usage
-- [ ] Update global types
+- Login, registro e autenticação.
+- Serviços: `services/authService.ts`
+- Páginas: `pages/Login/LoginPage.tsx`, `pages/Register/RegisterPage.tsx`
 
 ---
 
-## Best Practices
+## Boas Práticas e Padrões
 
-### Performance
-
-- Use lazy loading for routes/components.
-- Optimize re-renders and memoize where needed.
-- Minimize bundle size.
-
-### Accessibility
-
-- Use ARIA roles and labels.
-- Support keyboard navigation.
-- Ensure color contrast.
-- Test with screen readers.
-
-### Testing
-
-- Write unit and integration tests.
-- Test main flows and accessibility.
-
-### Code Quality
-
-- Follow ESLint and Prettier.
-- Keep code clean and well-documented.
+- Sempre use **aliases** para imports.
+- Crie novos domínios como módulos em `src/modules/`.
+- Componentes globais devem ser genéricos e reutilizáveis.
+- Serviços e lógica de domínio devem ficar dentro do módulo correspondente.
+- Siga o padrão de nomenclatura de páginas e arquivos.
+- Atualize a documentação sempre que criar ou alterar módulos.
 
 ---
 
-## Maintenance
+## Checklist para Novas Features
 
-### Updates
-
-- Keep dependencies up to date.
-- Remove unused code.
-- Optimize performance.
-- Update documentation regularly.
-
-### Debugging
-
-- Use React DevTools and browser tools.
-- Implement logging and error monitoring.
-- Test across browsers.
+- [ ] Criei a feature dentro de um módulo em `src/modules/`
+- [ ] Usei aliases para todos os imports
+- [ ] Segui o padrão de nomenclatura de páginas
+- [ ] Atualizei a documentação
+- [ ] Testei o fluxo principal da feature
 
 ---
 
-## References
+## Referências
 
 - [Material-UI](https://mui.com/)
 - [React Query](https://react-query.tanstack.com/)
@@ -454,287 +221,6 @@ Após cadastrar ou editar um paciente (incluindo atualização do Instagram), a 
 
 ---
 
-## Contact & Support
+## Suporte
 
-For questions or suggestions, contact the development team.
-
-## Login Page
-
-### Authentication Integration
-
-The login page now includes enhanced authentication features:
-
-1. **Form Validation**
-
-   - Client-side validation for email and password fields
-   - Real-time error feedback
-   - Clear error messages when user starts typing
-   - Password strength requirements (minimum 6 characters)
-
-2. **Security Features**
-
-   - Password visibility toggle
-   - Proper autocomplete attributes for form fields
-   - Secure password handling
-   - Protected route redirection
-
-3. **User Experience**
-
-   - Visual feedback for form errors
-   - Loading state during authentication
-   - Success/error messages with animations
-   - Smooth transitions between states
-
-4. **Navigation**
-   - Smart redirection after login
-   - Support for protected route redirects
-   - Maintains navigation history
-
-### Component Structure
-
-```typescript
-interface LoginCredentials {
-  email: string;
-  password: string;
-}
-
-interface LocationState {
-  message?: string;
-  from?: string;
-}
-```
-
-### Key Features
-
-1. **Form Handling**
-
-   - Centralized state management for credentials
-   - Type-safe form handling
-   - Reusable validation logic
-
-2. **Error Handling**
-
-   - Comprehensive error messages
-   - API error handling
-   - Form validation errors
-   - User-friendly error display
-
-3. **Security**
-
-   - Secure password handling
-   - Token storage
-   - Protected routes
-   - Session management
-
-4. **Accessibility**
-   - ARIA labels for interactive elements
-   - Keyboard navigation support
-   - Screen reader compatibility
-   - Focus management
-
-### Best Practices
-
-1. **Form Validation**
-
-   - Validate before submission
-   - Clear error messages
-   - Real-time feedback
-   - Prevent invalid submissions
-
-2. **Security**
-
-   - Never store sensitive data
-   - Use secure storage methods
-   - Implement proper token handling
-   - Follow security best practices
-
-3. **User Experience**
-
-   - Provide clear feedback
-   - Maintain state consistency
-   - Handle edge cases
-   - Ensure smooth transitions
-
-4. **Performance**
-   - Optimize re-renders
-   - Use proper loading states
-   - Implement efficient validation
-   - Maintain responsive design
-
----
-
-## Novo Fluxo de Upload e Listagem de Fotos de Pacientes
-
-A partir de 2024-06, o upload, listagem e remoção de fotos de avaliações de pacientes é feito exclusivamente via endpoints REST do backend, desacoplando o frontend do Supabase.
-
-### Principais mudanças:
-
-- O componente e hook de upload de fotos (`PhotoUpload`, `usePhotoUpload`) agora utilizam apenas os endpoints do backend:
-  - `POST /photos` para upload
-  - `GET /photos` para listagem (com filtros por paciente, avaliação, tipo, datas)
-  - `DELETE /photos/:id` para remoção
-- O frontend envia arquivos e metadados via `FormData` para o backend.
-- URLs de imagens e thumbnails são retornadas pelo backend e consumidas normalmente.
-- Não há mais dependência direta do Supabase no frontend para fotos.
-
-### Exemplo de uso do hook:
-
-```tsx
-const { uploadPhoto, isUploading, error } = usePhotoUpload();
-
-// Para upload:
-await uploadPhoto({
-  file,
-  patientId,
-  assessmentId,
-  type: "front",
-});
-
-// Para listar fotos:
-const { data } = await api.get("/photos", {
-  params: { patientId, type: "front" },
-});
-```
-
-### Benefícios
-
-- Centralização de regras de negócio e segurança no backend
-- Facilidade para implementar filtros, evolução visual e auditoria
-- Menor exposição de chaves e lógica sensível
-
-## Refatoração da Página de Pacientes
-
-A página de listagem de pacientes foi refatorada para melhorar a organização do código e exibição das fotos dos pacientes. As principais mudanças incluem:
-
-### Nova Estrutura de Componentes
-
-A página de pacientes agora está organizada em componentes menores e mais específicos:
-
-- **Patients (index.tsx)**: Componente principal que gerencia estado e lógica
-- **PatientTable**: Componente que exibe a tabela de pacientes, incluindo fotos
-- **PatientActionsMenu**: Menu de ações para cada paciente
-- **DeleteConfirmationDialog**: Diálogo de confirmação para exclusão
-
-### Melhorias na Exibição de Fotos
-
-- Avatar agora exibe adequadamente a foto do paciente quando disponível
-- Fallback para exibir iniciais quando não há foto disponível
-- Cores consistentes baseadas no nome do paciente para os avatares sem foto
-- Melhor interação com o backend para obtenção de fotos
-- **[2024-06]** O Avatar de perfil no HeaderGlobal foi atualizado: agora está maior (44x44px) e possui uma borda moderna com gradiente e cor de destaque do tema, trazendo mais destaque e integração visual ao cabeçalho.
-
-### Como Implementar
-
-```tsx
-// Na tabela de pacientes
-<Avatar
-  src={patient.photoUrl}
-  sx={{
-    bgcolor: !patient.photoUrl ? stringToColor(patient.name) : undefined,
-    width: 40,
-    height: 40,
-  }}
->
-  {!patient.photoUrl && getInitials(patient.name)}
-</Avatar>
-```
-
-## Container Centralizado (Layout)
-
-### Descrição
-
-O componente `Container` localizado em `src/components/Layout/Container.tsx` é um wrapper reutilizável que centraliza e limita a largura do conteúdo principal da aplicação, garantindo espaçamento consistente nas laterais e responsividade. Ele deve ser utilizado para envolver o header, sidebar e conteúdo principal, conforme o novo padrão de layout centralizado.
-
-### Propriedades
-
-- `children`: Conteúdo a ser renderizado dentro do container.
-- `fullHeight` (opcional): Se verdadeiro, o container ocupa 100% da altura disponível.
-- Aceita todas as propriedades de `BoxProps` do MUI.
-
-### Exemplo de Uso
-
-```tsx
-import { Container } from "../components/Layout/Container";
-
-export function Example() {
-  return (
-    <Container>
-      <h1>Conteúdo centralizado</h1>
-    </Container>
-  );
-}
-```
-
-### Objetivo
-
-- Centralizar o conteúdo da aplicação com largura máxima (ex: 1200px)
-- Garantir padding responsivo nas laterais
-- Facilitar a padronização visual do layout em todas as páginas
-
-## Novo Fluxo de Criação de Pacientes via Modal
-
-A partir de 2024-06, a criação de pacientes é feita exclusivamente via modal, utilizando o componente `PatientFormModal`. Não existe mais navegação para a rota `/patients/new`.
-
-### Como funciona:
-
-- O botão "Novo Paciente" nas telas de listagem e dashboard abre o `PatientFormModal`.
-- O modal é controlado por estado local (`open`, `onClose`, `onSuccess`).
-- Após criar um paciente, o modal é fechado automaticamente e a lista é atualizada via React Query.
-- O componente `PatientFormModal` pode ser importado e utilizado em qualquer tela:
-
-```tsx
-import { PatientFormModal } from "../pages/PatientForm";
-
-const [isPatientModalOpen, setIsPatientModalOpen] = useState(false);
-
-<Button onClick={() => setIsPatientModalOpen(true)}>Novo Paciente</Button>
-<PatientFormModal
-  open={isPatientModalOpen}
-  onClose={() => setIsPatientModalOpen(false)}
-  onSuccess={() => setIsPatientModalOpen(false)}
-/>
-```
-
-### Benefícios
-
-- Experiência mais fluida, sem navegação de rota.
-- Padrão consistente para criação de entidades.
-- Redução de código duplicado e de rotas desnecessárias.
-
-> **Atenção:** Não utilize mais a navegação para `/patients/new`. O fluxo oficial é via modal.
-
-> **Atualização 2024-06:** Ao editar um paciente pelo `PatientFormModal`, apenas os campos preenchidos são enviados ao backend. Assim, é possível atualizar somente os dados desejados, sem obrigatoriedade de preencher todos os campos do formulário.
-
----
-
-## Padrão de Nomenclatura de Páginas
-
-Para garantir organização e consistência no projeto, **todas as novas páginas devem seguir o seguinte padrão de nomenclatura e estrutura**:
-
-- O diretório da página deve ser criado em `src/pages/NomeDaFeature/`.
-- O arquivo principal da página deve ser nomeado como `NomeDaFeaturePage.tsx`.
-
-**Exemplo:**
-
-```
-src/pages/NewFeature/NewFeaturePage.tsx
-```
-
-> Siga sempre este padrão ao criar novas páginas. Isso facilita a manutenção, busca e entendimento do projeto por toda a equipe.
-
-- O formulário de cadastro de nutricionista agora possui o campo opcional "Instagram" (ex: @exemplo_nutri), que é enviado para o backend e armazenado junto ao perfil do nutricionista.
-
-### AssessmentButton & MealPlanButton
-
-Ambos os botões agora aceitam a propriedade opcional `outline` (boolean):
-
-- Quando `outline={true}`: o botão fica com fundo transparente, borda e cor da fonte `primary`.
-- Quando omitido ou `false`: mantém o padrão anterior (cores de sucesso/info).
-- Ambos possuem largura mínima padronizada para garantir alinhamento visual.
-
-**Exemplo de uso:**
-
-```tsx
-<AssessmentButton patientId="123" outline />
-<MealPlanButton patientId="123" outline />
-```
+Em caso de dúvidas, consulte este documento ou entre em contato com o time de desenvolvimento.

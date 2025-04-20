@@ -15,7 +15,6 @@ import {
   Groups as GroupsIcon,
   Person as PersonIcon,
 } from "@mui/icons-material";
-import { authService, Nutritionist } from "../../services/authService";
 import { SearchModal } from "../SearchModal";
 import { Container } from "./Container";
 import { api } from "../../services/api";
@@ -23,6 +22,10 @@ import { EditProfileModal } from "../Modals/NutritionistEditProfileModal";
 import NotificationsModal from "../Modals/NotificationsModal";
 import AiModal from "../Modals/AiModal";
 import ProfileModal from "../Modals/NutritionistProfileModal";
+import {
+  authService,
+  Nutritionist,
+} from "../../modules/auth/services/authService";
 
 export const HeaderGlobal = () => {
   const navigate = useNavigate();

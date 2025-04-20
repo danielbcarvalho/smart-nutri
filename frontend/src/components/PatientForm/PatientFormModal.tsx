@@ -23,7 +23,10 @@ import {
   PhotoCamera as PhotoCameraIcon,
 } from "@mui/icons-material";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { patientService, Patient } from "../../services/patientService";
+import {
+  patientService,
+  Patient,
+} from "../../modules/patient/services/patientService";
 
 // Função para validar o nome (apenas letras e espaços)
 const validateName = (name: string) => {
