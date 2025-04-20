@@ -180,7 +180,7 @@ erDiagram
 
 ### 🔒 Constraints & Validations
 
-- Unique emails and CRNs when present
+- Unique emails when present
 - Positive values for measurements
 - Date constraints (e.g., endDate >= startDate)
 - Unique order for meals per plan
