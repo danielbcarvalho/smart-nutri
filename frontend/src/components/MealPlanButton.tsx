@@ -30,6 +30,7 @@ export function MealPlanButton({
       startIcon={<RestaurantIcon />}
       onClick={handleClick}
       sx={{
+        minWidth: 140,
         fontSize: "0.75rem",
         py: 0.5,
         borderColor: "info.main",

@@ -13,8 +13,6 @@ async function bootstrap() {
     process.env.FRONTEND_URL, // URL do frontend em produção
   ].filter((origin): origin is string => Boolean(origin)); // Ensure only strings are included
 
-  console.log('Allowed CORS origins:', allowedOrigins);
-
   app.enableCors({
     origin: allowedOrigins,
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
@@ -95,9 +93,5 @@ async function bootstrap() {
   });
 
   await app.listen(port);
-  console.log(`Application is running on: http://localhost:${port}`);
-  console.log(
-    `Swagger documentation is available at: http://localhost:${port}/api-docs`,
-  );
 }
 bootstrap();

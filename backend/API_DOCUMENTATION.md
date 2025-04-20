@@ -18,7 +18,7 @@ API para gestão completa de nutrição, incluindo:
 #### Criar Paciente
 
 - **POST** `/patients`
-- **Descrição**: Cria um novo paciente com todas as informações necessárias
+- **Descrição**: Cria um novo paciente com todas as informações necessárias. Se o campo `instagram` for informado, o backend tentará buscar a foto de perfil do Instagram e salvar automaticamente em `photo_url`.
 - **Corpo da Requisição**:
   ```json
   {
@@ -44,7 +44,8 @@ API para gestão completa de nutrição, incluindo:
     },
     "occupation": "Engenheiro",
     "maritalStatus": "Solteiro",
-    "education": "Superior Completo"
+    "education": "Superior Completo",
+    "photo_url": "https://storage.example.com/patients/123e4567/photo.jpg"
   }
   ```
 - **Respostas**:
@@ -70,7 +71,7 @@ API para gestão completa de nutrição, incluindo:
 #### Atualizar Paciente
 
 - **PATCH** `/patients/:id`
-- **Descrição**: Atualiza informações de um paciente
+- **Descrição**: Atualiza informações de um paciente. Se o campo `instagram` for alterado, o backend tentará buscar a nova foto de perfil do Instagram e atualizar o campo `photo_url` automaticamente.
 - **Respostas**:
   - 200: Paciente atualizado
   - 400: Dados inválidos
@@ -718,3 +719,93 @@ A API atual está na versão 1.0. O versionamento é feito através do header:
 ```
 Accept: application/vnd.smartnutri.v1+json
 ```
+
+---
+
+### Fotos de Pacientes (`/photos`)
+
+#### Upload de Foto
+
+- **POST** `/photos`
+- **Descrição**: Faz upload de uma foto de avaliação de paciente.
+- **Headers**: `Content-Type: multipart/form-data`
+- **Body** (form-data):
+  - `file`: Arquivo de imagem (obrigatório)
+  - `patientId`: string (obrigatório)
+  - `assessmentId`: string (opcional)
+  - `type`: "front" | "back" | "left" | "right" (obrigatório)
+- **Resposta**:
+  - 201: Metadados da foto criada
+  - 400: Dados inválidos
+  - 401: Não autorizado
+
+#### Listar Fotos
+
+- **GET** `/photos`
+- **Descrição**: Lista fotos de pacientes, com filtros flexíveis.
+- **Query Params**:
+  - `patientId`: string (obrigatório)
+  - `assessmentId`: string (opcional)
+  - `type`: string (opcional)
+  - `from`: string (data inicial, opcional)
+  - `to`: string (data final, opcional)
+  - `page`: number (opcional, default: 1)
+  - `limit`: number (opcional, default: 20)
+  - `order`: "asc" | "desc" (opcional, default: desc)
+- **Resposta**:
+  - 200: Lista paginada de fotos
+  - 400: Dados inválidos
+  - 401: Não autorizado
+
+**Exemplo de requisição:**
+
+```http
+GET /photos?patientId=123&type=front&from=2024-01-01&to=2024-06-01&page=1&limit=10
+```
+
+**Exemplo de resposta:**
+
+```json
+{
+  "data": [
+    {
+      "id": "uuid",
+      "patientId": "uuid",
+      "assessmentId": "uuid",
+      "type": "front",
+      "url": "https://...",
+      "thumbnailUrl": "https://...",
+      "storagePath": "...",
+      "createdAt": "2024-05-01T10:00:00Z",
+      "updatedAt": "2024-05-01T10:00:00Z"
+    }
+  ],
+  "total": 1,
+  "page": 1,
+  "limit": 10
+}
+```
+
+#### Remover Foto
+
+- **DELETE** `/photos/:id`
+- **Descrição**: Remove (soft delete) uma foto de paciente.
+- **Resposta**:
+  - 204: Foto removida
+  - 404: Foto não encontrada
+  - 401: Não autorizado
+
+---
+
+### Nutricionistas (`/nutritionists`)
+
+#### Upload de Foto de Perfil
+
+- **POST** `/nutritionists/:id/photo`
+- **Descrição**: Faz upload da foto de perfil do nutricionista e armazena a URL no banco de dados.
+- **Request**: multipart/form-data, campo `file` (imagem)
+- **Respostas**:
+  - 200: Nutricionista atualizado com a URL da foto
+  - 404: Nutricionista não encontrado
+
+---

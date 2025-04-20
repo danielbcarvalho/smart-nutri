@@ -8,6 +8,8 @@ import {
   Delete,
   HttpCode,
   HttpStatus,
+  UseInterceptors,
+  UploadedFile,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -20,6 +22,7 @@ import { NutritionistsService } from './nutritionists.service';
 import { CreateNutritionistDto } from './dto/create-nutritionist.dto';
 import { UpdateNutritionistDto } from './dto/update-nutritionist.dto';
 import { Nutritionist } from './entities/nutritionist.entity';
+import { FileInterceptor } from '@nestjs/platform-express';
 
 @ApiTags('nutritionists')
 @Controller('nutritionists')
@@ -134,5 +137,21 @@ export class NutritionistsController {
   })
   remove(@Param('id') id: string) {
     return this.nutritionistsService.remove(id);
+  }
+
+  @Post(':id/photo')
+  @UseInterceptors(FileInterceptor('file'))
+  @ApiOperation({ summary: 'Upload de foto de perfil do nutricionista' })
+  @ApiParam({ name: 'id', description: 'ID do nutricionista' })
+  @ApiResponse({
+    status: 200,
+    description: 'Foto de perfil atualizada',
+    type: Nutritionist,
+  })
+  async uploadPhoto(
+    @Param('id') id: string,
+    @UploadedFile() file: Express.Multer.File,
+  ) {
+    return this.nutritionistsService.uploadProfilePhoto(id, file);
   }
 }

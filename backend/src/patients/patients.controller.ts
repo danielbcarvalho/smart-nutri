@@ -11,6 +11,8 @@ import {
   Query,
   UseGuards,
   Request,
+  UseInterceptors,
+  UploadedFile,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -28,6 +30,7 @@ import { CreateMeasurementDto } from './dto/create-measurement.dto';
 import { Patient } from './entities/patient.entity';
 import { Measurement } from './entities/measurement.entity';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { FileInterceptor } from '@nestjs/platform-express';
 
 interface RequestWithUser extends Request {
   user: {
@@ -423,5 +426,21 @@ export class PatientsController {
   })
   search(@Query('query') query: string, @Request() req: RequestWithUser) {
     return this.patientsService.search(query, req.user.id);
+  }
+
+  @Post(':id/photo')
+  @UseInterceptors(FileInterceptor('file'))
+  @ApiOperation({ summary: 'Upload de foto de perfil do paciente' })
+  @ApiParam({ name: 'id', description: 'ID do paciente' })
+  @ApiResponse({
+    status: 200,
+    description: 'Foto de perfil atualizada',
+    type: Patient,
+  })
+  async uploadPhoto(
+    @Param('id') id: string,
+    @UploadedFile() file: Express.Multer.File,
+  ) {
+    return this.patientsService.uploadProfilePhoto(id, file);
   }
 }

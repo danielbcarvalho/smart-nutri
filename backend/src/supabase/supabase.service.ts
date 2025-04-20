@@ -10,16 +10,9 @@ export class SupabaseService implements OnModuleInit {
 
   onModuleInit() {
     const supabaseUrl = this.configService.get<string>('SUPABASE_URL');
-    console.log(
-      '🚀 ~ supabase.service.ts:13 ~ supabaseUrl 🚀🚀🚀:',
-      supabaseUrl,
-    );
+
     const supabaseKey = this.configService.get<string>(
       'SUPABASE_SERVICE_ROLE_KEY',
-    );
-    console.log(
-      '🚀 ~ supabase.service.ts:17 ~ supabaseKey 🚀🚀🚀:',
-      supabaseKey,
     );
 
     if (!supabaseUrl || !supabaseKey) {
@@ -63,7 +56,7 @@ export class SupabaseService implements OnModuleInit {
       .from(bucketName)
       .upload(filePath, file, {
         contentType,
-        upsert: false,
+        upsert: true,
       });
 
     if (error) {

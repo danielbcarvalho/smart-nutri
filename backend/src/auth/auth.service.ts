@@ -43,6 +43,8 @@ export class AuthService {
         email: nutritionist.email,
         crn: nutritionist.crn,
         clinicName: nutritionist.clinicName,
+        photoUrl: nutritionist.photoUrl,
+        instagram: nutritionist.instagram,
       },
     };
   }

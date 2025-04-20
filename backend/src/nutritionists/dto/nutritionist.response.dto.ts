@@ -37,4 +37,12 @@ export class NutritionistResponseDto {
   @ApiProperty()
   @Expose()
   updatedAt: Date;
+
+  @ApiProperty()
+  @Expose()
+  photoUrl?: string;
+
+  @ApiProperty()
+  @Expose()
+  instagram: string;
 }

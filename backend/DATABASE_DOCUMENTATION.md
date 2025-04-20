@@ -23,6 +23,7 @@ erDiagram
         string crn "nullable"
         jsonb specialties "nullable"
         string clinic_name "nullable"
+        string photo_url "nullable"
         timestamp created_at
         timestamp updated_at
     }
@@ -48,6 +49,7 @@ erDiagram
         jsonb healthConditions "nullable"
         jsonb medications "nullable"
         string observations "nullable"
+        string photo_url "nullable"
         timestamp created_at
         timestamp updated_at
     }
@@ -108,12 +110,12 @@ erDiagram
 #### Nutritionists
 
 - Stores nutritionist information.
-- **Fields:** id (PK), name, email (unique), password_hash, phone, crn, specialties, clinic_name, created_at, updated_at
+- **Fields:** id (PK), name, email (unique), password_hash, phone, crn, specialties, clinic_name, photo_url, created_at, updated_at
 
 #### Patients
 
 - Stores patient information.
-- **Fields:** id (PK), nutritionistId (FK), name, email (unique), phone, birthDate, gender, height, weight, crn (unique), last_consultation_at, next_consultation_at, monitoring_status, consultation_frequency, custom_consultation_days, goals, allergies, healthConditions, medications, observations, created_at, updated_at
+- **Fields:** id (PK), nutritionistId (FK), name, email (unique), phone, birthDate, gender, height, weight, crn (unique), last_consultation_at, next_consultation_at, monitoring_status, consultation_frequency, custom_consultation_days, goals, allergies, healthConditions, medications, observations, photo_url, created_at, updated_at
 
 #### Measurements
 
@@ -228,6 +230,50 @@ SELECT
     ROUND((muscleMass - prev_muscleMass) / prev_muscleMass * 100, 2) as muscleMass_change_percent
 FROM measurements_ordered
 ORDER BY measureDate DESC;
+```
+
+---
+
+### Photos
+
+- Armazena metadados das fotos de avaliações de pacientes.
+- **Fields:**
+  - id (PK, uuid)
+  - patient_id (FK, uuid, obrigatório)
+  - assessment_id (FK, uuid, opcional)
+  - type (enum: 'front', 'back', 'left', 'right', obrigatório)
+  - url (string, obrigatório)
+  - thumbnail_url (string, obrigatório)
+  - storage_path (string, obrigatório)
+  - created_at (timestamp, default now)
+  - updated_at (timestamp, default now)
+  - deleted_at (timestamp, nullable, para soft delete)
+
+**Constraints:**
+
+- FK para patients e assessments
+- Soft delete via deleted_at
+- Index em patient_id, assessment_id, created_at
+
+**Exemplo de Query: Buscar fotos de um paciente por período**
+
+```sql
+SELECT * FROM photos
+WHERE patient_id = :patientId
+  AND (deleted_at IS NULL)
+  AND (created_at >= :from OR :from IS NULL)
+  AND (created_at <= :to OR :to IS NULL)
+ORDER BY created_at DESC;
+```
+
+**Exemplo de Query: Buscar fotos de um tipo específico**
+
+```sql
+SELECT * FROM photos
+WHERE patient_id = :patientId
+  AND type = 'front'
+  AND (deleted_at IS NULL)
+ORDER BY created_at DESC;
 ```
 
 ---

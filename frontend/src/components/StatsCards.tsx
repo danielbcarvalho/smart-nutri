@@ -42,49 +42,29 @@ export function StatsCards() {
     queryFn: statsService.getStats,
   });
 
-  if (isLoading) {
-    return (
-      <Grid container spacing={3}>
-        {[...Array(4)].map((_, index) => (
-          <Grid item xs={12} sm={6} md={3} key={index}>
-            <Card>
-              <CardContent>
-                <Skeleton variant="text" width="60%" />
-                <Skeleton variant="text" height={40} />
-                <Skeleton variant="text" width="40%" />
-              </CardContent>
-            </Card>
-          </Grid>
-        ))}
-      </Grid>
-    );
-  }
-
-  if (!stats) return null;
-
   const cards = [
     {
       title: "Total de pacientes",
-      value: stats.totalPatients,
-      growth: stats.lastWeekGrowth.patients,
+      value: stats?.totalPatients ?? 0,
+      growth: stats?.lastWeekGrowth.patients ?? 0,
       color: theme.palette.primary.main,
     },
     {
       title: "Total de planos",
-      value: stats.totalMealPlans,
-      growth: stats.lastWeekGrowth.mealPlans,
+      value: stats?.totalMealPlans ?? 0,
+      growth: stats?.lastWeekGrowth.mealPlans ?? 0,
       color: theme.palette.success.main,
     },
     {
       title: "Total de avaliações",
-      value: stats.totalMeasurements,
-      growth: stats.lastWeekGrowth.measurements,
+      value: stats?.totalMeasurements ?? 0,
+      growth: stats?.lastWeekGrowth.measurements ?? 0,
       color: theme.palette.warning.main,
     },
     {
       title: "Total de documentos",
-      value: stats.totalDocuments,
-      growth: stats.lastWeekGrowth.documents,
+      value: stats?.totalDocuments ?? 0,
+      growth: stats?.lastWeekGrowth.documents ?? 0,
       color: theme.palette.info.main,
     },
   ];
@@ -96,10 +76,12 @@ export function StatsCards() {
           <Card
             sx={{
               height: "100%",
+              minWidth: 220,
               display: "flex",
               flexDirection: "column",
               position: "relative",
               overflow: "hidden",
+              minHeight: 150,
               "&::before": {
                 content: '""',
                 position: "absolute",
@@ -121,26 +103,51 @@ export function StatsCards() {
               >
                 {card.title}
               </Typography>
-              <Typography variant="h4" component="div">
-                {card.value.toLocaleString()}
-              </Typography>
+              {isLoading ? (
+                <Skeleton
+                  variant="text"
+                  width="80%"
+                  height={40}
+                  sx={{ my: 1 }}
+                />
+              ) : (
+                <Typography variant="h4" component="div">
+                  {card.value.toLocaleString()}
+                </Typography>
+              )}
               <Box
                 sx={{
                   mt: 2,
                   display: "flex",
                   alignItems: "center",
                   gap: 0.5,
-                  color: card.growth >= 0 ? "success.main" : "error.main",
+                  color:
+                    !isLoading && card.growth >= 0
+                      ? "success.main"
+                      : !isLoading
+                      ? "error.main"
+                      : undefined,
                 }}
               >
-                {card.growth >= 0 ? (
+                {isLoading ? (
+                  <Skeleton
+                    variant="circular"
+                    width={24}
+                    height={24}
+                    sx={{ mr: 1 }}
+                  />
+                ) : card.growth >= 0 ? (
                   <TrendingUpIcon fontSize="small" />
                 ) : (
                   <TrendingDownIcon fontSize="small" />
                 )}
-                <Typography variant="body2">
-                  {Math.abs(card.growth)}% na última semana
-                </Typography>
+                {isLoading ? (
+                  <Skeleton variant="text" width="40%" height={24} />
+                ) : (
+                  <Typography variant="body2">
+                    {Math.abs(card.growth)}% na última semana
+                  </Typography>
+                )}
               </Box>
             </CardContent>
           </Card>

@@ -146,6 +146,19 @@ graph TD
 - **Layout**: Root layout, provides app-wide structure (header, footer, main content).
 - **PatientLayout**: Specialized layout for patient-related pages, includes sidebar navigation.
 
+### PatientLayout Sidebar Minimization (2024)
+
+O menu lateral do PatientLayout agora pode ser minimizado pelo usuário. Por padrão, ele é exibido expandido (com ícones e textos). O usuário pode clicar no botão de minimizar/expandir no topo do menu para alternar entre os modos:
+
+- **Expandido:** Mostra ícone e texto de cada item de menu, largura padrão (250px).
+- **Minimizado:** Mostra apenas os ícones centralizados, largura reduzida (60px). O nome do menu aparece em tooltip ao passar o mouse.
+- O estado do menu não afeta o Drawer mobile, que mantém o comportamento padrão.
+- **[2024-06]** A linha divisória (borderRight) foi removida do menu lateral esquerdo para melhor integração visual.
+- Novo item de menu lateral **Evolução** (ícone Timeline), posicionado após 'Avaliações', leva diretamente para a tela de evolução corporal do paciente (`/patient/:patientId/assessments/evolution`).
+
+**Localização:**
+`src/layouts/PatientLayout.tsx`
+
 ---
 
 ## Main Pages & Flows
@@ -201,17 +214,29 @@ flowchart TD
 Located in `src/components/`:
 
 - **AssessmentButton**: Triggers assessment actions.
-- **FoodSearch**: Search and select foods.
 - **LoadingBackdrop**: Displays loading overlay.
 - **MealPlan**: UI for creating and displaying meal plans.
 - **MealPlanButton**: Action button for meal plans.
-- **PatientCard**: Displays patient summary.
-- **PatientMeasurements**: Modal for entering/viewing measurements.
 - **PrivateRoute**: Route guard for authenticated pages.
 - **RecentPatients**: List of recently accessed patients.
 - **StatsCards**: Dashboard statistics.
 - **SearchModal**: Modal de pesquisa global, utilizado no Header para busca de pacientes e planos alimentares. Possui feedback visual aprimorado, estado de carregamento, mensagem de vazio e navegação por teclado.
+- **FloatingHelpButton**: Botão flutuante de ajuda exibido no canto inferior direito em todas as páginas. Ao ser clicado, abre o HelpModal com botões para dúvidas frequentes e contato com suporte. Localização: `src/components/FloatingHelpButton.tsx`.
+- **HelpModal**: Modal reutilizável exibindo botões para dúvidas frequentes e contato com suporte. Segue o padrão visual dos outros modais do sistema. Localização: `src/components/Modals/HelpModal.tsx`.
 - **CompositionChart**: Componente responsável por exibir a evolução da composição corporal do paciente ao longo do tempo.
+- **PhotoUpload**: Componente para seleção e pré-visualização de fotos de avaliação (Fase 1: apenas seleção local e preview, sem upload real). Permite ao usuário arrastar ou selecionar arquivos de imagem (JPG, JPEG, PNG, até 5MB por padrão), valida o formato/tamanho e exibe a pré-visualização da imagem escolhida. Localização: `src/components/PhotoUpload/`. Interface:
+
+```tsx
+<PhotoUpload
+  type="front" // ou "back" | "left" | "right"
+  assessmentId="123"
+  patientId="456"
+  onUploadComplete={(photo) => console.log(photo)}
+  onUploadError={(err) => console.error(err)}
+/>
+```
+
+> Limitação atual: não realiza upload real nem integração com backend/Supabase nesta fase inicial. Apenas seleção, validação e preview local.
 
 #### SearchModal
 
@@ -310,6 +335,10 @@ Located in `src/services/`:
 - List, search, and filter patients.
 - Create/edit via PatientForm.
 - View details and measurements in PatientInfo and PatientMeasurements.
+
+### Atualização instantânea da foto de perfil do paciente
+
+Após cadastrar ou editar um paciente (incluindo atualização do Instagram), a foto de perfil será atualizada instantaneamente na tela, sem necessidade de recarregar a página manualmente. Isso é feito via refetch dos dados e bust de cache da imagem (query param timestamp).
 
 ---
 
@@ -531,3 +560,181 @@ interface LocationState {
    - Use proper loading states
    - Implement efficient validation
    - Maintain responsive design
+
+---
+
+## Novo Fluxo de Upload e Listagem de Fotos de Pacientes
+
+A partir de 2024-06, o upload, listagem e remoção de fotos de avaliações de pacientes é feito exclusivamente via endpoints REST do backend, desacoplando o frontend do Supabase.
+
+### Principais mudanças:
+
+- O componente e hook de upload de fotos (`PhotoUpload`, `usePhotoUpload`) agora utilizam apenas os endpoints do backend:
+  - `POST /photos` para upload
+  - `GET /photos` para listagem (com filtros por paciente, avaliação, tipo, datas)
+  - `DELETE /photos/:id` para remoção
+- O frontend envia arquivos e metadados via `FormData` para o backend.
+- URLs de imagens e thumbnails são retornadas pelo backend e consumidas normalmente.
+- Não há mais dependência direta do Supabase no frontend para fotos.
+
+### Exemplo de uso do hook:
+
+```tsx
+const { uploadPhoto, isUploading, error } = usePhotoUpload();
+
+// Para upload:
+await uploadPhoto({
+  file,
+  patientId,
+  assessmentId,
+  type: "front",
+});
+
+// Para listar fotos:
+const { data } = await api.get("/photos", {
+  params: { patientId, type: "front" },
+});
+```
+
+### Benefícios
+
+- Centralização de regras de negócio e segurança no backend
+- Facilidade para implementar filtros, evolução visual e auditoria
+- Menor exposição de chaves e lógica sensível
+
+## Refatoração da Página de Pacientes
+
+A página de listagem de pacientes foi refatorada para melhorar a organização do código e exibição das fotos dos pacientes. As principais mudanças incluem:
+
+### Nova Estrutura de Componentes
+
+A página de pacientes agora está organizada em componentes menores e mais específicos:
+
+- **Patients (index.tsx)**: Componente principal que gerencia estado e lógica
+- **PatientTable**: Componente que exibe a tabela de pacientes, incluindo fotos
+- **PatientActionsMenu**: Menu de ações para cada paciente
+- **DeleteConfirmationDialog**: Diálogo de confirmação para exclusão
+
+### Melhorias na Exibição de Fotos
+
+- Avatar agora exibe adequadamente a foto do paciente quando disponível
+- Fallback para exibir iniciais quando não há foto disponível
+- Cores consistentes baseadas no nome do paciente para os avatares sem foto
+- Melhor interação com o backend para obtenção de fotos
+- **[2024-06]** O Avatar de perfil no HeaderGlobal foi atualizado: agora está maior (44x44px) e possui uma borda moderna com gradiente e cor de destaque do tema, trazendo mais destaque e integração visual ao cabeçalho.
+
+### Como Implementar
+
+```tsx
+// Na tabela de pacientes
+<Avatar
+  src={patient.photoUrl}
+  sx={{
+    bgcolor: !patient.photoUrl ? stringToColor(patient.name) : undefined,
+    width: 40,
+    height: 40,
+  }}
+>
+  {!patient.photoUrl && getInitials(patient.name)}
+</Avatar>
+```
+
+## Container Centralizado (Layout)
+
+### Descrição
+
+O componente `Container` localizado em `src/components/Layout/Container.tsx` é um wrapper reutilizável que centraliza e limita a largura do conteúdo principal da aplicação, garantindo espaçamento consistente nas laterais e responsividade. Ele deve ser utilizado para envolver o header, sidebar e conteúdo principal, conforme o novo padrão de layout centralizado.
+
+### Propriedades
+
+- `children`: Conteúdo a ser renderizado dentro do container.
+- `fullHeight` (opcional): Se verdadeiro, o container ocupa 100% da altura disponível.
+- Aceita todas as propriedades de `BoxProps` do MUI.
+
+### Exemplo de Uso
+
+```tsx
+import { Container } from "../components/Layout/Container";
+
+export function Example() {
+  return (
+    <Container>
+      <h1>Conteúdo centralizado</h1>
+    </Container>
+  );
+}
+```
+
+### Objetivo
+
+- Centralizar o conteúdo da aplicação com largura máxima (ex: 1200px)
+- Garantir padding responsivo nas laterais
+- Facilitar a padronização visual do layout em todas as páginas
+
+## Novo Fluxo de Criação de Pacientes via Modal
+
+A partir de 2024-06, a criação de pacientes é feita exclusivamente via modal, utilizando o componente `PatientFormModal`. Não existe mais navegação para a rota `/patients/new`.
+
+### Como funciona:
+
+- O botão "Novo Paciente" nas telas de listagem e dashboard abre o `PatientFormModal`.
+- O modal é controlado por estado local (`open`, `onClose`, `onSuccess`).
+- Após criar um paciente, o modal é fechado automaticamente e a lista é atualizada via React Query.
+- O componente `PatientFormModal` pode ser importado e utilizado em qualquer tela:
+
+```tsx
+import { PatientFormModal } from "../pages/PatientForm";
+
+const [isPatientModalOpen, setIsPatientModalOpen] = useState(false);
+
+<Button onClick={() => setIsPatientModalOpen(true)}>Novo Paciente</Button>
+<PatientFormModal
+  open={isPatientModalOpen}
+  onClose={() => setIsPatientModalOpen(false)}
+  onSuccess={() => setIsPatientModalOpen(false)}
+/>
+```
+
+### Benefícios
+
+- Experiência mais fluida, sem navegação de rota.
+- Padrão consistente para criação de entidades.
+- Redução de código duplicado e de rotas desnecessárias.
+
+> **Atenção:** Não utilize mais a navegação para `/patients/new`. O fluxo oficial é via modal.
+
+> **Atualização 2024-06:** Ao editar um paciente pelo `PatientFormModal`, apenas os campos preenchidos são enviados ao backend. Assim, é possível atualizar somente os dados desejados, sem obrigatoriedade de preencher todos os campos do formulário.
+
+---
+
+## Padrão de Nomenclatura de Páginas
+
+Para garantir organização e consistência no projeto, **todas as novas páginas devem seguir o seguinte padrão de nomenclatura e estrutura**:
+
+- O diretório da página deve ser criado em `src/pages/NomeDaFeature/`.
+- O arquivo principal da página deve ser nomeado como `NomeDaFeaturePage.tsx`.
+
+**Exemplo:**
+
+```
+src/pages/NewFeature/NewFeaturePage.tsx
+```
+
+> Siga sempre este padrão ao criar novas páginas. Isso facilita a manutenção, busca e entendimento do projeto por toda a equipe.
+
+- O formulário de cadastro de nutricionista agora possui o campo opcional "Instagram" (ex: @exemplo_nutri), que é enviado para o backend e armazenado junto ao perfil do nutricionista.
+
+### AssessmentButton & MealPlanButton
+
+Ambos os botões agora aceitam a propriedade opcional `outline` (boolean):
+
+- Quando `outline={true}`: o botão fica com fundo transparente, borda e cor da fonte `primary`.
+- Quando omitido ou `false`: mantém o padrão anterior (cores de sucesso/info).
+- Ambos possuem largura mínima padronizada para garantir alinhamento visual.
+
+**Exemplo de uso:**
+
+```tsx
+<AssessmentButton patientId="123" outline />
+<MealPlanButton patientId="123" outline />
+```

@@ -154,4 +154,9 @@ export class CreatePatientDto {
   @IsOptional()
   @IsUUID('4', { message: 'ID do nutricionista inválido' })
   nutritionistId?: string;
+
+  @ApiPropertyOptional({ description: 'Instagram do paciente' })
+  @IsString()
+  @IsOptional()
+  instagram?: string;
 }

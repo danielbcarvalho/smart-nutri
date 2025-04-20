@@ -117,6 +117,16 @@ export interface Measurement {
   createdAt: string;
   updatedAt: string;
   notes?: string;
+  photos?: Array<{
+    id: string;
+    type: string;
+    url: string;
+    thumbnailUrl?: string;
+    assessmentId?: string;
+    createdAt?: string;
+    updatedAt?: string;
+    storagePath?: string;
+  }>;
 }
 
 export interface CreateMeasurementDto {
@@ -140,6 +150,7 @@ export interface CreateMeasurementDto {
   boneDiameters?: BoneDiameters;
   skinfoldFormula?: string;
   patientId?: string;
+  sharePhotos?: boolean;
 }
 
 export const patientService = {
@@ -237,6 +248,16 @@ export const patientService = {
       `/patients/${patientId}/measurements/${measurementId}`,
       measurement
     );
+    return response.data;
+  },
+
+  // Upload de foto de perfil do paciente
+  uploadProfilePhoto: async (id: string, file: File): Promise<Patient> => {
+    const formData = new FormData();
+    formData.append("file", file);
+    const response = await api.post(`/patients/${id}/photo`, formData, {
+      headers: { "Content-Type": "multipart/form-data" },
+    });
     return response.data;
   },
 };

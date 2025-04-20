@@ -53,6 +53,12 @@ export class Nutritionist {
   @OneToMany(() => Consultation, (consultation) => consultation.nutritionist)
   consultations: Consultation[];
 
+  @Column({ name: 'photo_url', nullable: true })
+  photoUrl?: string;
+
+  @Column({ nullable: true })
+  instagram: string;
+
   @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;
 

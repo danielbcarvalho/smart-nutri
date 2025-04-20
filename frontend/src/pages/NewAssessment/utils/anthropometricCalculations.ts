@@ -106,20 +106,12 @@ export const calculateBMI = (weight: number, heightCm: number): number => {
 };
 
 /**
- * Classifica o IMC segundo os critérios da OMS
- * Fonte: Organização Mundial da Saúde (OMS)
- * Referência: WHO. Physical status: the use and interpretation of anthropometry. Geneva: WHO, 1995.
- * Classificação:
- * < 18.5: Abaixo do peso
- * 18.5 - 24.9: Peso adequado
- * 25.0 - 29.9: Sobrepeso
- * 30.0 - 34.9: Obesidade grau I
- * 35.0 - 39.9: Obesidade grau II
- * ≥ 40.0: Obesidade grau III
+ * Function to get BMI classification, may receive gender parameter but doesn't use it yet
+ * Kept for future use if gender-specific classifications are added
  */
 export const getBMIClassification = (
   bmi: number,
-  gender?: "M" | "F"
+  _gender?: "M" | "F"
 ): string => {
   if (bmi < 18.5) {
     return "Abaixo do peso";
@@ -244,7 +236,6 @@ export const getCMBClassification = (
   gender: "M" | "F",
   age: number
 ): string => {
-  console.log("🚀 ~ anthropometricCalculations.ts:205 ~ age 🚀🚀🚀:", age);
   // Classificação para homens
   if (gender === "M") {
     if (age >= 20 && age < 30) {
@@ -316,13 +307,9 @@ export const calculateBodyDensity = (
   age: number,
   formulaId: string = "pollock3"
 ): { density: number; referenceUsed: string } => {
-  console.log("Debug - Inputs:", { skinfolds, gender, age, formulaId });
-
   const formula = bodyDensityFormulas.find((f) => f.id === formulaId);
-  console.log("Debug - Selected formula:", formula);
 
   if (!formula) {
-    console.log("Debug - No formula found");
     return { density: 0, referenceUsed: "-" };
   }
 
@@ -332,15 +319,12 @@ export const calculateBodyDensity = (
     gender,
     age
   );
-  console.log("Debug - Validation error:", validationError);
 
   if (validationError) {
-    console.log("Debug - Validation failed");
     return { density: 0, referenceUsed: "-" };
   }
 
   const density = formula.calculate(skinfolds as Skinfolds, gender, age);
-  console.log("Debug - Calculated density:", density);
 
   return {
     density,
@@ -437,71 +421,102 @@ export const calculateMuscleMass = (
 
 /**
  * Função mestra que realiza todos os cálculos antropométricos
- * Integra todas as medidas e fórmulas para gerar um relatório completo
- * Utiliza as seguintes fontes:
- * - OMS para IMC e RCQ
- * - Pollock para densidade corporal
- * - Siri para percentual de gordura
- * - Frisancho para CMB
- * - Matiegka para composição corporal
+ * Recebe os dados de medidas e retorna os resultados calculados
  */
-export const calculateAnthropometricResults = (
-  basicData: BasicData,
-  circumferences: Circumferences,
-  skinfolds: Skinfolds,
-  boneDiameters: BoneDiameters,
-  bioimpedance: Bioimpedance,
-  gender: "M" | "F" = "M",
-  age: number = 30,
-  skinfoldFormula: string = "pollock3"
-): AnthropometricResults => {
-  console.log("Debug - Starting anthropometric calculations with:", {
-    skinfolds,
-    boneDiameters,
-    gender,
-    age,
-    skinfoldFormula,
-  });
-
-  // Valores padrão para resultados
+export const calculateAnthropometricResults = ({
+  gender = "M",
+  age = 30,
+  weight,
+  height,
+  skinfolds,
+  circumferences,
+  boneDiameters,
+  bioimpedance,
+  skinfoldFormula = "pollock3",
+}: {
+  gender?: "M" | "F" | undefined;
+  age: number;
+  weight: number;
+  height: number;
+  skinfolds: {
+    tricipital: number;
+    bicipital: number;
+    abdominal: number;
+    subscapular: number;
+    axillaryMedian: number;
+    thigh: number;
+    thoracic: number;
+    suprailiac: number;
+    calf: number;
+    supraspinal: number;
+  };
+  circumferences: {
+    neck: number;
+    waist: number;
+    abdomen: number;
+    hip: number;
+    relaxedArm: number;
+    contractedArm: number;
+    forearm: number;
+    proximalThigh: number;
+    medialThigh: number;
+    distalThigh: number;
+    calf: number;
+  };
+  boneDiameters: {
+    humerus: number;
+    wrist: number;
+    femur: number;
+  };
+  bioimpedance: {
+    fatPercentage: number;
+    fatMass: number;
+    muscleMassPercentage: number;
+    muscleMass: number;
+    fatFreeMass: number;
+    boneMass: number;
+    visceralFat: number;
+    bodyWater: number;
+    metabolicAge: number;
+  };
+  skinfoldFormula?: string;
+}): AnthropometricResults => {
+  // Resultado padrão com valores vazios
   const results: AnthropometricResults = {
-    currentWeight: "-",
-    currentHeight: "-",
-    bmi: "-",
-    bmiClassification: "-",
-    idealWeightRange: "-",
-    waistHipRatio: "-",
-    waistHipRiskClassification: "-",
-    cmb: "-",
-    cmbClassification: "-",
-    bodyFatPercentage: "-",
-    idealFatPercentage: "-",
-    bodyFatClassification: "-",
-    fatMass: "-",
-    boneMass: "-",
-    muscleMass: "-",
-    residualWeight: "-",
-    fatFreeMass: "-",
-    skinfoldsSum: "-",
-    bodyDensity: "-",
-    referenceUsed: skinfoldFormula === "pollock3" ? "Pollock 3, 1978" : "-",
-    bioimpedanceBodyFatPercentage: "-",
-    bioimpedanceIdealFatPercentage: "-",
-    bioimpedanceBodyFatClassification: "-",
-    bioimpedanceMuscleMassPercentage: "-",
-    bioimpedanceMuscleMass: "-",
-    bioimpedanceBodyWater: "-",
-    bioimpedanceBoneMass: "-",
-    bioimpedanceFatMass: "-",
-    bioimpedanceFatFreeMass: "-",
-    bioimpedanceVisceralFat: "-",
-    bioimpedanceMetabolicAge: "-",
+    currentWeight: "",
+    currentHeight: "",
+    bmi: "",
+    bmiClassification: "",
+    idealWeightRange: "",
+    waistHipRatio: "",
+    waistHipRiskClassification: "",
+    cmb: "",
+    cmbClassification: "",
+    bodyFatPercentage: "",
+    idealFatPercentage: "",
+    bodyFatClassification: "",
+    fatMass: "",
+    boneMass: "",
+    muscleMass: "",
+    residualWeight: "",
+    fatFreeMass: "",
+    skinfoldsSum: "",
+    bodyDensity: "",
+    referenceUsed: "",
+    bioimpedanceBodyFatPercentage: "",
+    bioimpedanceIdealFatPercentage: "",
+    bioimpedanceBodyFatClassification: "",
+    bioimpedanceMuscleMassPercentage: "",
+    bioimpedanceMuscleMass: "",
+    bioimpedanceBodyWater: "",
+    bioimpedanceBoneMass: "",
+    bioimpedanceFatMass: "",
+    bioimpedanceFatFreeMass: "",
+    bioimpedanceVisceralFat: "",
+    bioimpedanceMetabolicAge: "",
   };
 
   // Cálculos básicos de pesos e medidas
-  const weight = parseFloat(basicData.weight);
-  const height = parseFloat(basicData.height);
-
   if (!isNaN(weight)) {
     results.currentWeight = `${weight} kg`;
   }
@@ -522,55 +537,72 @@ export const calculateAnthropometricResults = (
   }
 
   // Relação Cintura/Quadril
-  const waist = parseFloat(circumferences.waist);
-  const hip = parseFloat(circumferences.hip);
-
-  if (!isNaN(waist) && !isNaN(hip)) {
-    const wcr = calculateWaistHipRatio(waist, hip);
+  if (
+    circumferences &&
+    typeof circumferences.waist === "number" &&
+    !isNaN(circumferences.waist) &&
+    typeof circumferences.hip === "number" &&
+    !isNaN(circumferences.hip)
+  ) {
+    const wcr = calculateWaistHipRatio(
+      circumferences.waist,
+      circumferences.hip
+    );
     results.waistHipRatio = wcr.toFixed(2);
     results.waistHipRiskClassification = getWaistHipRiskClassification(
       wcr,
-      gender,
+      gender as "M" | "F",
       age
     );
   }
 
   // Circunferência Muscular do Braço
-  const relaxedArm = parseFloat(circumferences.relaxedArm);
-  const triceps = parseFloat(skinfolds.tricipital);
-
-  if (!isNaN(relaxedArm) && !isNaN(triceps)) {
-    const cmb = calculateCMB(relaxedArm, triceps);
+  if (
+    circumferences &&
+    skinfolds &&
+    !isNaN(circumferences.relaxedArm) &&
+    !isNaN(skinfolds.tricipital)
+  ) {
+    const cmb = calculateCMB(circumferences.relaxedArm, skinfolds.tricipital);
     results.cmb = `${cmb.toFixed(1)} cm`;
-    results.cmbClassification = getCMBClassification(cmb, gender, age);
+    results.cmbClassification = getCMBClassification(
+      cmb,
+      gender as "M" | "F",
+      age
+    );
   }
 
   // Análises por dobras cutâneas
   // Cálculo da densidade corporal e percentual de gordura
-  if (Object.values(skinfolds).some((value) => value !== "")) {
-    console.log("Debug - Has skinfold values");
+  if (
+    skinfolds &&
+    Object.values(skinfolds).some((value) => !isNaN(value) && value > 0)
+  ) {
+    // Convert the numeric skinfolds to the string format expected by calculateBodyDensity
+    const skinfoldValues: Partial<Skinfolds> = {};
+    Object.entries(skinfolds).forEach(([key, value]) => {
+      if (!isNaN(value) && value > 0) {
+        skinfoldValues[key as keyof Skinfolds] = value;
+      }
+    });
+
     const { density, referenceUsed } = calculateBodyDensity(
-      skinfolds,
-      gender,
+      skinfoldValues,
+      gender as "M" | "F",
       age,
       skinfoldFormula
     );
-    console.log("Debug - Density calculation result:", {
-      density,
-      referenceUsed,
-    });
 
     if (density > 0) {
       results.bodyDensity = density.toFixed(4);
       results.referenceUsed = referenceUsed;
 
       const bodyFatPercentage = calculateBodyFatPercentage(density);
-      console.log("Debug - Body fat percentage:", bodyFatPercentage);
 
       results.bodyFatPercentage = `${bodyFatPercentage.toFixed(1)}%`;
       results.bodyFatClassification = getBodyFatClassification(
         bodyFatPercentage,
-        gender
+        gender as "M" | "F"
       );
 
       // Valores ideais de percentual de gordura
@@ -579,34 +611,31 @@ export const calculateAnthropometricResults = (
       // Cálculo das massas
       if (!isNaN(weight)) {
         const fatMass = calculateFatMass(weight, bodyFatPercentage);
-        console.log("Debug - Fat mass:", fatMass);
         results.fatMass = `${fatMass.toFixed(1)} kg`;
 
         // Massa livre de gordura (deve ser calculada logo após a massa gorda)
         const fatFreeMass = weight - fatMass;
-        console.log("Debug - Fat free mass:", fatFreeMass);
         results.fatFreeMass = `${fatFreeMass.toFixed(1)} kg`;
 
         // Peso residual (deve ser calculado antes da massa muscular)
-        const residualWeight = calculateResidualWeight(weight, gender);
-        console.log("Debug - Residual weight:", residualWeight);
+        const residualWeight = calculateResidualWeight(
+          weight,
+          gender as "M" | "F"
+        );
         results.residualWeight = `${residualWeight.toFixed(1)} kg`;
 
         // Cálculo da massa óssea se tiver diâmetros
-        const wristDiameter = parseFloat(boneDiameters.wrist);
-        const femurDiameter = parseFloat(boneDiameters.femur);
-        console.log("Debug - Bone diameters:", {
-          wristDiameter,
-          femurDiameter,
-        });
-
-        if (!isNaN(wristDiameter) && !isNaN(femurDiameter) && !isNaN(height)) {
+        if (
+          boneDiameters &&
+          !isNaN(boneDiameters.wrist) &&
+          !isNaN(boneDiameters.femur) &&
+          !isNaN(height)
+        ) {
           const boneMass = calculateBoneMass(
             height,
-            wristDiameter,
-            femurDiameter
+            boneDiameters.wrist,
+            boneDiameters.femur
           );
-          console.log("Debug - Bone mass:", boneMass);
           results.boneMass = `${boneMass.toFixed(1)} kg`;
 
           // Massa muscular (calculada por último pois depende de todas as outras massas)
@@ -616,13 +645,8 @@ export const calculateAnthropometricResults = (
             boneMass,
             residualWeight
           );
-          console.log("Debug - Muscle mass:", muscleMass);
           results.muscleMass = `${muscleMass.toFixed(1)} kg`;
-        } else {
-          console.log("Debug - Missing or invalid bone diameters");
         }
-      } else {
-        console.log("Debug - Invalid weight");
       }
 
       // Somatório de dobras
@@ -630,80 +654,57 @@ export const calculateAnthropometricResults = (
       if (formula) {
         // Pega apenas as dobras do protocolo selecionado
         const protocolSkinfolds = formula.requiredSkinfolds
-          .map((fold) => parseFloat(skinfolds[fold] || "0"))
+          .map((fold) => skinfolds[fold as keyof typeof skinfolds] || 0)
           .filter((value) => !isNaN(value) && value > 0);
-
-        console.log("Dobras do protocolo:", formula.requiredSkinfolds);
-        console.log("Valores das dobras do protocolo:", protocolSkinfolds);
 
         if (protocolSkinfolds.length > 0) {
           const sum = protocolSkinfolds.reduce((acc, curr) => acc + curr, 0);
-          console.log("Somatório das dobras do protocolo:", sum, "mm");
-          results.skinfoldsSum = `${sum.toFixed(1)} mm`;
-        }
-      } else {
-        // Se não encontrar a fórmula, mantém o comportamento anterior
-        const validSkinfolds = Object.values(skinfolds)
-          .filter((v) => v !== "")
-          .map((v) => parseFloat(v));
-
-        console.log("Todas as dobras disponíveis:", skinfolds);
-        console.log("Dobras válidas para soma:", validSkinfolds);
-
-        if (validSkinfolds.length > 0) {
-          const sum = validSkinfolds.reduce((acc, curr) => acc + curr, 0);
-          console.log("Somatório total de todas as dobras:", sum, "mm");
           results.skinfoldsSum = `${sum.toFixed(1)} mm`;
         }
       }
-    } else {
-      console.log("Debug - Invalid density (0 or negative)");
     }
-  } else {
-    console.log("Debug - No skinfold values provided");
   }
 
   // Análises por bioimpedância
-  if (bioimpedance.fatPercentage) {
-    const fatPercentage = parseFloat(bioimpedance.fatPercentage);
-    results.bioimpedanceBodyFatPercentage = `${fatPercentage}%`;
+  if (bioimpedance && !isNaN(bioimpedance.fatPercentage)) {
+    results.bioimpedanceBodyFatPercentage = `${bioimpedance.fatPercentage}%`;
     results.bioimpedanceBodyFatClassification = getBodyFatClassification(
-      fatPercentage,
-      gender
+      bioimpedance.fatPercentage,
+      gender as "M" | "F"
     );
     results.bioimpedanceIdealFatPercentage =
       gender === "M" ? "12% a 18%" : "18% a 25%";
   }
 
-  if (bioimpedance.muscleMassPercentage) {
+  if (bioimpedance && !isNaN(bioimpedance.muscleMassPercentage)) {
     results.bioimpedanceMuscleMassPercentage = `${bioimpedance.muscleMassPercentage}%`;
   }
 
-  if (bioimpedance.muscleMass) {
+  if (bioimpedance && !isNaN(bioimpedance.muscleMass)) {
     results.bioimpedanceMuscleMass = `${bioimpedance.muscleMass} kg`;
   }
 
-  if (bioimpedance.bodyWater) {
+  if (bioimpedance && !isNaN(bioimpedance.bodyWater)) {
     results.bioimpedanceBodyWater = `${bioimpedance.bodyWater}%`;
   }
 
-  if (bioimpedance.boneMass) {
+  if (bioimpedance && !isNaN(bioimpedance.boneMass)) {
     results.bioimpedanceBoneMass = `${bioimpedance.boneMass} kg`;
   }
 
-  if (bioimpedance.fatMass) {
+  if (bioimpedance && !isNaN(bioimpedance.fatMass)) {
     results.bioimpedanceFatMass = `${bioimpedance.fatMass} kg`;
   }
 
-  if (bioimpedance.fatFreeMass) {
+  if (bioimpedance && !isNaN(bioimpedance.fatFreeMass)) {
     results.bioimpedanceFatFreeMass = `${bioimpedance.fatFreeMass} kg`;
   }
 
-  if (bioimpedance.visceralFat) {
-    results.bioimpedanceVisceralFat = bioimpedance.visceralFat;
+  if (bioimpedance && !isNaN(bioimpedance.visceralFat)) {
+    results.bioimpedanceVisceralFat = bioimpedance.visceralFat.toString();
   }
 
-  if (bioimpedance.metabolicAge) {
+  if (bioimpedance && !isNaN(bioimpedance.metabolicAge)) {
     results.bioimpedanceMetabolicAge = `${bioimpedance.metabolicAge} anos`;
   }
 

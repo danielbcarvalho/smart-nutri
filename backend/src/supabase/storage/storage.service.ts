@@ -18,7 +18,7 @@ export class StorageService {
    * @returns The URL of the uploaded file
    */
   async uploadPatientPhoto(
-    patientId: number,
+    patientId: string,
     file: Buffer,
     filename: string,
     contentType: string,
@@ -29,6 +29,36 @@ export class StorageService {
       ) || 'patient-photos';
     const filePath = `${patientId}/${filename}`;
 
+    await this.supabaseService.uploadFile(
+      bucketName,
+      filePath,
+      file,
+      contentType,
+    );
+    return this.supabaseService.getFileUrl(bucketName, filePath);
+  }
+
+  /**
+   * Upload a nutritionist profile photo
+   * @param nutritionistId The ID of the nutritionist
+   * @param file The file buffer
+   * @param filename The name of the file
+   * @param contentType The content type of the file
+   * @returns The URL of the uploaded file
+   */
+  async uploadNutritionistPhoto(
+    nutritionistId: string,
+    file: Buffer,
+    filename: string,
+    contentType: string,
+  ): Promise<string> {
+    const bucketName =
+      this.configService.get<string>(
+        'supabase.storage.buckets.nutritionistPhotos',
+      ) || 'nutritionist-photos';
+    const filePath = `${nutritionistId}/${filename}`;
+
+    console.log('🚀 ~ storage.service.ts:57 ~ bucketName 🚀🚀🚀:', bucketName);
     await this.supabaseService.uploadFile(
       bucketName,
       filePath,

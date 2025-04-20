@@ -10,6 +10,9 @@ import { Nutritionist } from './entities/nutritionist.entity';
 import { CreateNutritionistDto } from './dto/create-nutritionist.dto';
 import { UpdateNutritionistDto } from './dto/update-nutritionist.dto';
 import { SamplePatientService } from '../patients/services/sample-patient.service';
+import { StorageService } from '../supabase/storage/storage.service';
+import { InstagramScrapingService } from '../services/instagram-scraping';
+import axios from 'axios';
 
 @Injectable()
 export class NutritionistsService {
@@ -17,6 +20,8 @@ export class NutritionistsService {
     @InjectRepository(Nutritionist)
     private nutritionistRepository: Repository<Nutritionist>,
     private readonly samplePatientService: SamplePatientService,
+    private readonly storageService: StorageService,
+    private readonly instagramScrapingService: InstagramScrapingService,
   ) {}
 
   private readonly selectFields: (keyof Nutritionist)[] = [
@@ -29,6 +34,8 @@ export class NutritionistsService {
     'clinicName',
     'createdAt',
     'updatedAt',
+    'photoUrl',
+    'instagram',
   ];
 
   async create(
@@ -55,6 +62,36 @@ export class NutritionistsService {
     // Salvar no banco
     const savedNutritionist =
       await this.nutritionistRepository.save(nutritionist);
+
+    // Se foi informado instagram, tenta buscar a foto e salvar no Supabase
+    if (createNutritionistDto.instagram) {
+      try {
+        const username = createNutritionistDto.instagram.replace(/^@/, '');
+        const imageUrl =
+          await this.instagramScrapingService.getProfilePictureUrl(username);
+        if (imageUrl) {
+          // Baixar imagem
+          const response = await axios.get(imageUrl, {
+            responseType: 'arraybuffer',
+          });
+          const buffer = Buffer.from(response.data);
+          const contentType = response.headers['content-type'] || 'image/jpeg';
+          const ext = contentType.split('/')[1] || 'jpg';
+          const filename = `profile-instagram-${Date.now()}.${ext}`;
+          const supabaseUrl = await this.storageService.uploadNutritionistPhoto(
+            savedNutritionist.id,
+            buffer,
+            filename,
+            contentType,
+          );
+          savedNutritionist.photoUrl = supabaseUrl;
+          await this.nutritionistRepository.save(savedNutritionist);
+        }
+      } catch (e) {
+        // Loga mas não impede criação
+        console.warn('Falha ao buscar/salvar foto do Instagram:', e.message);
+      }
+    }
 
     // Retornar sem o passwordHash
     const result = await this.nutritionistRepository.findOne({
@@ -119,6 +156,46 @@ export class NutritionistsService {
       }
     }
 
+    // Se o instagram foi alterado, faz scraping e salva nova foto
+    console.log(
+      '🚀 ~ nutritionists.service.ts:164 ~ updateNutritionistDto.instagram 🚀🚀🚀:',
+      updateNutritionistDto.instagram,
+    );
+    if (
+      updateNutritionistDto.instagram &&
+      updateNutritionistDto.instagram !== nutritionist.instagram
+    ) {
+      try {
+        const username = updateNutritionistDto.instagram.replace(/^@/, '');
+        console.log(
+          '🚀 ~ nutritionists.service.ts:166 ~ username 🚀🚀🚀:',
+          username,
+        );
+        const imageUrl =
+          await this.instagramScrapingService.getProfilePictureUrl(username);
+        if (imageUrl) {
+          const response = await axios.get(imageUrl, {
+            responseType: 'arraybuffer',
+          });
+          const buffer = Buffer.from(response.data);
+          const contentType = response.headers['content-type'] || 'image/jpeg';
+          const ext = contentType.split('/')[1] || 'jpg';
+          const filename = `profile-instagram-${Date.now()}.${ext}`;
+          const supabaseUrl = await this.storageService.uploadNutritionistPhoto(
+            id,
+            buffer,
+            filename,
+            contentType,
+          );
+          updateNutritionistDto.photoUrl = supabaseUrl;
+        }
+      } catch (e) {
+        console.log('🚀 ~ nutritionists.service.ts:187 ~ e) 🚀🚀🚀:', e);
+        // Loga mas não impede atualização
+        console.warn('Falha ao buscar/salvar foto do Instagram:', e.message);
+      }
+    }
+
     // Atualizar nutricionista
     await this.nutritionistRepository.update(id, updateNutritionistDto);
 
@@ -145,5 +222,28 @@ export class NutritionistsService {
     password: string,
   ): Promise<boolean> {
     return bcrypt.compare(password, nutritionist.passwordHash);
+  }
+
+  async uploadProfilePhoto(
+    id: string,
+    file: Express.Multer.File,
+  ): Promise<Nutritionist> {
+    const nutritionist = await this.nutritionistRepository.findOne({
+      where: { id },
+    });
+    if (!nutritionist) {
+      throw new NotFoundException(`Nutricionista com ID ${id} não encontrado`);
+    }
+    const ext = file.originalname.split('.').pop();
+    const filename = `profile-instagram-${Date.now()}.${ext}`;
+    const url = await this.storageService.uploadNutritionistPhoto(
+      id,
+      file.buffer,
+      filename,
+      file.mimetype,
+    );
+    nutritionist.photoUrl = url;
+    await this.nutritionistRepository.save(nutritionist);
+    return nutritionist;
   }
 }

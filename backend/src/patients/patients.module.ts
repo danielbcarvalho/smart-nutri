@@ -14,6 +14,9 @@ import { PatientPhotosService } from './services/patient-photos.service';
 import { PatientPhotosController } from './controllers/patient-photos.controller';
 import { ConsultationsService } from './services/consultations.service';
 import { ConsultationsController } from './controllers/consultations.controller';
+import { StorageService } from '../supabase/storage/storage.service';
+import { SupabaseModule } from '../supabase/supabase.module';
+import { InstagramScrapingService } from '../services/instagram-scraping';
 
 @Module({
   imports: [
@@ -27,6 +30,7 @@ import { ConsultationsController } from './controllers/consultations.controller'
       MealFood,
       Food,
     ]),
+    SupabaseModule,
   ],
   controllers: [
     PatientsController,
@@ -38,6 +42,8 @@ import { ConsultationsController } from './controllers/consultations.controller'
     PatientPhotosService,
     ConsultationsService,
     require('./services/sample-patient.service').SamplePatientService,
+    StorageService,
+    InstagramScrapingService,
   ],
   exports: [
     PatientsService,

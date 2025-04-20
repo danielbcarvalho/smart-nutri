@@ -57,7 +57,6 @@ export const mealPlanService = {
 
   // Adicionar refeição ao plano
   addMeal: async (planId: string, meal: Omit<Meal, "id">) => {
-    console.log("Sending meal data:", meal);
     const response = await api.post<Meal>(`/meal-plans/${planId}/meals`, meal);
     return response.data;
   },
