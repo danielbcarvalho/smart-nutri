@@ -2,7 +2,7 @@ import { useState, useMemo } from "react";
 import { useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { Box, Typography, Paper, Stack, CircularProgress } from "@mui/material";
-import { patientService } from "../../services/patientService";
+import { patientService } from "../../../services/patientService";
 import { DateRangeSelector } from "./components/DateRangeSelector";
 import { CompositionChart } from "./components/CompositionChart";
 import { AnalysisTable } from "./components/AnalysisTable";

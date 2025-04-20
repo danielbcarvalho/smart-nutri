@@ -26,13 +26,13 @@ import {
   PhotoCamera as PhotoCameraIcon,
 } from "@mui/icons-material";
 import { useQuery } from "@tanstack/react-query";
-import { patientService } from "../../services/patientService";
+import { patientService } from "../../../services/patientService";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { AssessmentButton } from "../../components/AssessmentButton";
-import { MealPlanButton } from "../../components/MealPlanButton";
-import { PatientFormModal } from "../../components/PatientForm/PatientFormModal";
-import { notify } from "../../utils/notificationBus";
+import { AssessmentButton } from "../../../components/AssessmentButton";
+import { MealPlanButton } from "../../../components/MealPlanButton";
+import { PatientFormModal } from "../../../components/PatientForm/PatientFormModal";
+import { notify } from "../../../utils/notificationBus";
 import CircularProgress from "@mui/material/CircularProgress";
 
 export function PatientInfo() {

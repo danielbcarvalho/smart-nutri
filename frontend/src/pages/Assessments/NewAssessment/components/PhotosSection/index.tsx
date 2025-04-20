@@ -8,12 +8,12 @@ import {
   AccordionSummary,
   AccordionDetails,
 } from "@mui/material";
-import { PhotoUpload } from "../../../../components/PhotoUpload";
+import { PhotoUpload } from "../../../../../components/PhotoUpload";
 import {
   AssessmentPhoto,
   PhotoService,
-} from "../../../../services/photoService";
-import { Measurement } from "../../../../services/patientService";
+} from "../../../../../services/photoService";
+import { Measurement } from "../../../../../services/patientService";
 import ExpandMoreIcon from "@mui/icons-material/ArrowDropDown";
 
 // Types remain the same

@@ -9,15 +9,15 @@ import {
   Paper,
 } from "@mui/material";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { patientService } from "../../services/patientService";
+import { patientService } from "../../../services/patientService";
 import {
   CreateMeasurementDto,
   Skinfolds,
   BodyMeasurements,
   BoneDiameters,
-} from "../../services/patientService";
+} from "../../../services/patientService";
 
-import { AssessmentPhoto } from "../../services/photoService";
+import { AssessmentPhoto } from "../../../services/photoService";
 
 // Componentes
 import { PhotosSection } from "./components/PhotosSection";
@@ -29,7 +29,6 @@ import { BioimpedanceSection } from "./components/BioimpedanceSection";
 import { AssessmentHeader } from "./components/AssessmentHeader";
 import { AssessmentDate } from "./components/AssessmentDate";
 import { ActionButtons } from "./components/ActionButtons";
-import { FloatingActionButton } from "./components/FloatingActionButton";
 import { AnalyticalResults } from "./components/AnalyticalResults";
 import { calculateAnthropometricResults } from "./utils/anthropometricCalculations";
 

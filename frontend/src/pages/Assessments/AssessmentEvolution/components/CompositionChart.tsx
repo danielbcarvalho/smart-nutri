@@ -12,10 +12,10 @@ import {
   Area,
   TooltipProps,
 } from "recharts";
-import { Measurement } from "../../../services/patientService"; // Ajuste o caminho se necessário
+import { Measurement } from "../../../../services/patientService"; // Ajuste o caminho se necessário
 import { useTheme, Box, Typography, Paper } from "@mui/material";
 import { alpha } from "@mui/material/styles"; // Importar alpha
-import { formatDateToLocal } from "../../../utils/dateUtils"; // Ajuste o caminho se necessário
+import { formatDateToLocal } from "../../../../utils/dateUtils"; // Ajuste o caminho se necessário
 
 // Supondo que a interface Measurement seja algo como:
 // interface Measurement {

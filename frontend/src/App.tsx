@@ -8,15 +8,14 @@ import { Layout } from "./layouts/Layout";
 import { PatientLayout } from "./layouts/PatientLayout";
 import { Home } from "./pages/Home/HomePage";
 import { Patients } from "./pages/Patients/PatientsPage";
-import { PatientInfo } from "./pages/PatientInfo/PatientInfoPage";
-import { NewAssessment } from "./pages/NewAssessment/NewAssessmentPage";
+import { PatientInfo } from "./pages/Patients/PatientInfo/PatientInfoPage";
+import { NewAssessment } from "./pages/Assessments/NewAssessment/NewAssessmentPage";
 import { Login } from "./pages/Login/LoginPage";
 import { Register } from "./pages/Register";
 import { PrivateRoute } from "./components/PrivateRoute";
 import { Box, Typography, Button } from "@mui/material";
 import { Assessments } from "./pages/Assessments/AssessentsPage";
-import { ViewAssessment } from "./pages/ViewAssessment";
-import { AssessmentEvolution } from "./pages/AssessmentEvolution/AssessmentEvolutionPage";
+import { AssessmentEvolution } from "./pages/Assessments/AssessmentEvolution/AssessmentEvolutionPage";
 import { useRouteError, isRouteErrorResponse, Link } from "react-router-dom";
 
 // Placeholder components
@@ -142,10 +141,6 @@ const router = createBrowserRouter([
               {
                 path: "edit/:measurementId",
                 element: <NewAssessment />,
-              },
-              {
-                path: "view/:measurementId",
-                element: <ViewAssessment />,
               },
               {
                 path: "evolution",
