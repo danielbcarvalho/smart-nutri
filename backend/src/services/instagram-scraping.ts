@@ -2,7 +2,6 @@ import { Injectable, Logger } from '@nestjs/common';
 import axios, { AxiosError } from 'axios';
 import * as cheerio from 'cheerio';
 import * as process from 'process';
-import { HttpsProxyAgent } from 'https-proxy-agent';
 
 @Injectable()
 export class InstagramScrapingService {
@@ -55,25 +54,40 @@ export class InstagramScrapingService {
     );
 
     try {
-      // --- Configuração de proxy Bright Data (opcional, HTTPS) ---
-      const proxyHost = process.env.BRIGHTDATA_PROXY_HOST;
-      const proxyPort = process.env.BRIGHTDATA_PROXY_PORT;
-      const proxyUser = process.env.BRIGHTDATA_PROXY_USER;
-      const proxyPass = process.env.BRIGHTDATA_PROXY_PASS;
+      // --- Configuração de Bright Data Web Unlocker (API HTTP) ---
+      const brightDataApiToken = process.env.BRIGHTDATA_API_TOKEN;
+      const brightDataZone = 'web_unlocker1';
+      let html: string;
 
-      let axiosConfig: any = { headers, timeout: 10000 };
-
-      if (proxyHost && proxyPort && proxyUser && proxyPass) {
-        const proxyUrl = `http://${proxyUser}:${proxyPass}@${proxyHost}:${proxyPort}`;
-        axiosConfig.httpsAgent = new HttpsProxyAgent(proxyUrl);
-        axiosConfig.proxy = false; // Desabilita proxy nativo do Axios
-        this.logger.log(
-          `[BrightData] Proxy HTTPS habilitado para scraping Instagram: ${proxyHost}:${proxyPort}`,
+      if (brightDataApiToken) {
+        // Usar API HTTP do Bright Data
+        const apiResponse = await axios.post(
+          'https://api.brightdata.com/request',
+          {
+            zone: brightDataZone,
+            url,
+            format: 'raw',
+          },
+          {
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${brightDataApiToken}`,
+            },
+            timeout: 20000,
+          },
         );
+        html = apiResponse.data;
+        this.logger.log(
+          `[BrightData] Web Unlocker API utilizada para scraping Instagram: ${url}`,
+        );
+      } else {
+        // Fallback: scraping direto (apenas para dev/local)
+        const response = await axios.get(url, {
+          headers,
+          timeout: 10000,
+        });
+        html = response.data;
       }
-
-      const response = await axios.get(url, axiosConfig);
-      const html = response.data;
       const $ = cheerio.load(html);
 
       // --- Estratégia 1: Meta Tag Open Graph (og:image) ---
