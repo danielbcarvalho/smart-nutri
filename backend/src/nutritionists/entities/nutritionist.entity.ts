@@ -29,7 +29,7 @@ export class Nutritionist {
   @Column({ nullable: true })
   phone: string;
 
-  @Column({ nullable: true, unique: true })
+  @Column({ nullable: true })
   crn: string;
 
   @Column({ type: 'jsonb', nullable: true })

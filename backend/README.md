@@ -223,3 +223,20 @@ Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
 ## Novidade: Foto de Perfil do Instagram para Pacientes
 
 Agora, ao cadastrar ou editar um paciente e informar o campo `instagram`, o backend tentará buscar automaticamente a foto de perfil do Instagram e salvar em `photo_url` do paciente, utilizando o Supabase Storage. Isso funciona de forma semelhante ao fluxo já existente para nutricionistas.
+
+## Scraping do Instagram com Proxy Residencial (Bright Data)
+
+Para evitar bloqueios do Instagram em ambientes de produção/cloud, é possível utilizar um proxy residencial da Bright Data. O serviço de scraping do Instagram detecta automaticamente as seguintes variáveis de ambiente para ativar o proxy:
+
+Adicione ao seu arquivo `.env`:
+
+```env
+BRIGHTDATA_PROXY_HOST=zproxy.lum-superproxy.io
+BRIGHTDATA_PROXY_PORT=22225
+BRIGHTDATA_PROXY_USER=lum-customer-USER-zone-YOURZONE
+BRIGHTDATA_PROXY_PASS=YOUR_PASSWORD
+```
+
+- Se essas variáveis não estiverem presentes, o scraping funcionará sem proxy (comportamento padrão).
+- Consulte a documentação da Bright Data para obter seu endpoint, usuário e senha.
+- O uso de proxy pode gerar custos adicionais conforme o volume de tráfego.

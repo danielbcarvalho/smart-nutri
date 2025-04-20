@@ -1,6 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import axios, { AxiosError } from 'axios';
 import * as cheerio from 'cheerio';
+import * as process from 'process';
 
 @Injectable()
 export class InstagramScrapingService {
@@ -53,9 +54,36 @@ export class InstagramScrapingService {
     );
 
     try {
+      // --- Configuração de proxy Bright Data (opcional) ---
+      let axiosProxyConfig:
+        | {
+            host: string;
+            port: number;
+            auth: { username: string; password: string };
+          }
+        | undefined = undefined;
+      const proxyHost = process.env.BRIGHTDATA_PROXY_HOST;
+      const proxyPort = process.env.BRIGHTDATA_PROXY_PORT;
+      const proxyUser = process.env.BRIGHTDATA_PROXY_USER;
+      const proxyPass = process.env.BRIGHTDATA_PROXY_PASS;
+      if (proxyHost && proxyPort && proxyUser && proxyPass) {
+        axiosProxyConfig = {
+          host: proxyHost,
+          port: Number(proxyPort),
+          auth: {
+            username: proxyUser,
+            password: proxyPass,
+          },
+        };
+        this.logger.log(
+          `[BrightData] Proxy habilitado para scraping Instagram: ${proxyHost}:${proxyPort}`,
+        );
+      }
+
       const response = await axios.get(url, {
         headers,
         timeout: 10000, // Timeout de 10 segundos
+        proxy: axiosProxyConfig,
       });
       const html = response.data;
       const $ = cheerio.load(html);
