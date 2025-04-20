@@ -67,4 +67,13 @@ export class CreateNutritionistDto {
   @IsString()
   @IsOptional()
   clinicName?: string;
+
+  @ApiProperty({
+    example: '@exemplo_nutri',
+    description: 'Instagram do nutricionista (ex: @exemplo_nutri)',
+    required: false,
+  })
+  @IsString()
+  @IsOptional()
+  instagram?: string;
 }

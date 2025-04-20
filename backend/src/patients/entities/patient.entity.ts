@@ -149,6 +149,13 @@ export class Patient {
   @Column({ type: 'int', nullable: true })
   customConsultationDays: number;
 
+  @ApiProperty({
+    description: 'URL da foto de perfil do paciente',
+    required: false,
+  })
+  @Column({ name: 'photo_url', nullable: true })
+  photoUrl?: string;
+
   @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;
 

@@ -1,11 +1,13 @@
 import { api } from "./api";
 
-interface Nutritionist {
+export interface Nutritionist {
   id: string;
   name: string;
   email: string;
   crn?: string;
   clinicName?: string;
+  photoUrl?: string;
+  instagram?: string;
 }
 
 interface LoginResponse {
@@ -26,6 +28,8 @@ interface RegisterNutritionistDto {
   crn?: string;
   specialties?: string[];
   clinicName?: string;
+  instagram?: string;
+  photoUrl?: string;
 }
 
 export const authService = {

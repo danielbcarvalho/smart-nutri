@@ -21,6 +21,7 @@ import {
   Phone as PhoneIcon,
   Badge as BadgeIcon,
   Business as BusinessIcon,
+  Instagram as InstagramIcon,
 } from "@mui/icons-material";
 import { useNavigate } from "react-router-dom";
 import { authService } from "../../services/authService";
@@ -46,6 +47,7 @@ export function Register() {
     phone: "",
     crn: "",
     clinicName: "",
+    instagram: "",
   });
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -69,6 +71,7 @@ export function Register() {
         phone: formData.phone || undefined,
         crn: formData.crn || undefined,
         clinicName: formData.clinicName || undefined,
+        instagram: formData.instagram || undefined,
       });
       navigate("/login", {
         state: {
@@ -550,6 +553,49 @@ export function Register() {
                   startAdornment: (
                     <InputAdornment position="start">
                       <BusinessIcon fontSize="small" />
+                    </InputAdornment>
+                  ),
+                }}
+                sx={{
+                  "& .MuiOutlinedInput-root": {
+                    backgroundColor: "#fff",
+                    height: "45px",
+                    "& input": {
+                      padding: "8px 14px",
+                    },
+                    "& .MuiInputAdornment-root": {
+                      marginTop: "0 !important",
+                      marginRight: 0,
+                    },
+                    "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
+                      borderColor: "primary.main",
+                      borderWidth: 2,
+                    },
+                  },
+                  "& .MuiInputLabel-root": {
+                    transform: "translate(40px, 12px) scale(1)",
+                    "&.Mui-focused, &.MuiFormLabel-filled": {
+                      transform: "translate(14px, -9px) scale(0.75)",
+                    },
+                  },
+                }}
+              />
+
+              <TextField
+                fullWidth
+                name="instagram"
+                value={formData.instagram}
+                onChange={(e) =>
+                  setFormData({
+                    ...formData,
+                    instagram: e.target.value,
+                  })
+                }
+                placeholder="@exemplo_nutri"
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <InstagramIcon sx={{ color: "text.secondary" }} />
                     </InputAdornment>
                   ),
                 }}

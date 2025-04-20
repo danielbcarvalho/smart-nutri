@@ -4,8 +4,7 @@ import { Box, Button, TextField, Paper } from "@mui/material";
 import { PersonAdd as PersonAddIcon } from "@mui/icons-material";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { patientService, Patient } from "../../services/patientService";
-import { PatientTable } from "./components/PatientTable";
-import { PatientActionsMenu } from "./components/PatientActionsMenu";
+import { PatientsTable } from "./components/PatientsTable";
 import { DeleteConfirmationDialog } from "./components/DeleteConfirmationDialog";
 import { PatientFormModal } from "../../components/PatientForm/PatientFormModal";
 
@@ -17,11 +16,10 @@ export function Patients() {
   const [orderBy, setOrderBy] = useState<"name" | "email" | "updatedAt">(
     "updatedAt"
   );
-  const [menuAnchorEl, setMenuAnchorEl] = useState<null | HTMLElement>(null);
-  const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [patientToDelete, setPatientToDelete] = useState<Patient | null>(null);
   const [isPatientModalOpen, setIsPatientModalOpen] = useState(false);
+  const [patientToEdit, setPatientToEdit] = useState<Patient | null>(null);
 
   const { data: patients = [] } = useQuery({
     queryKey: ["patients"],
@@ -58,17 +56,9 @@ export function Patients() {
     setOrderBy(property);
   };
 
-  const handleMenuOpen = (
-    event: React.MouseEvent<HTMLElement>,
-    patient: Patient
-  ) => {
-    setSelectedPatient(patient);
-    setMenuAnchorEl(event.currentTarget);
-  };
-
-  const handleMenuClose = () => {
-    setSelectedPatient(null);
-    setMenuAnchorEl(null);
+  const handleEditClick = (patient: Patient) => {
+    setPatientToEdit(patient);
+    setIsPatientModalOpen(true);
   };
 
   // Filter and sort patients
@@ -114,7 +104,10 @@ export function Patients() {
         <Button
           variant="contained"
           startIcon={<PersonAddIcon />}
-          onClick={() => setIsPatientModalOpen(true)}
+          onClick={() => {
+            setIsPatientModalOpen(true);
+            setPatientToEdit(null);
+          }}
           sx={{ bgcolor: "primary.main" }}
         >
           Novo Paciente
@@ -123,25 +116,18 @@ export function Patients() {
 
       {/* Patient Table */}
       <Paper variant="outlined">
-        <PatientTable
+        <PatientsTable
           patients={sortedPatients}
           order={order}
           orderBy={orderBy}
           onRequestSort={handleRequestSort}
           onDeleteClick={handleDeleteClick}
-          onMenuOpen={handleMenuOpen}
           navigate={navigate}
+          onEditClick={handleEditClick}
         />
       </Paper>
 
       {/* Actions Menu */}
-      <PatientActionsMenu
-        anchorEl={menuAnchorEl}
-        open={Boolean(menuAnchorEl)}
-        onClose={handleMenuClose}
-        patient={selectedPatient}
-        navigate={navigate}
-      />
 
       {/* Delete Confirmation Dialog */}
       <DeleteConfirmationDialog
@@ -151,11 +137,12 @@ export function Patients() {
         patientName={patientToDelete?.name || ""}
       />
 
-      {/* PatientFormModal para novo paciente */}
+      {/* PatientFormModal para novo/editar paciente */}
       <PatientFormModal
         open={isPatientModalOpen}
         onClose={() => setIsPatientModalOpen(false)}
         onSuccess={() => setIsPatientModalOpen(false)}
+        patient={patientToEdit}
       />
     </Box>
   );

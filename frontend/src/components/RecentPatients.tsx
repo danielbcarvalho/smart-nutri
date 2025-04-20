@@ -158,7 +158,19 @@ export function PatientList() {
                 }}
               >
                 <ListItemAvatar>
-                  <Avatar>{patient.name.charAt(0)}</Avatar>
+                  <Avatar
+                    src={
+                      patient.photoUrl
+                        ? `${patient.photoUrl}?t=${
+                            patient.updatedAt
+                              ? new Date(patient.updatedAt).getTime()
+                              : Date.now()
+                          }`
+                        : undefined
+                    }
+                  >
+                    {!patient.photoUrl && patient.name.charAt(0)}
+                  </Avatar>
                 </ListItemAvatar>
                 <ListItemText
                   primary={patient.name}

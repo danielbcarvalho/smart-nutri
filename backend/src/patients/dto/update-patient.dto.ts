@@ -43,4 +43,9 @@ export class UpdatePatientDto {
   @IsString()
   @IsOptional()
   instagram?: string;
+
+  @ApiPropertyOptional({ description: 'URL da foto de perfil do paciente' })
+  @IsString()
+  @IsOptional()
+  photoUrl?: string;
 }

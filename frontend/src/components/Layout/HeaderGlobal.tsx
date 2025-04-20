@@ -7,22 +7,22 @@ import {
   IconButton,
   Tooltip,
   Avatar,
-  Modal,
-  Paper,
-  Typography,
-  Divider,
+  useTheme,
 } from "@mui/material";
 import {
   Notifications as NotificationsIcon,
   Search as SearchIcon,
   Groups as GroupsIcon,
-  ExitToApp as LogoutIcon,
   Person as PersonIcon,
-  Close as CloseIcon,
 } from "@mui/icons-material";
-import { authService } from "../../services/authService";
+import { authService, Nutritionist } from "../../services/authService";
 import { SearchModal } from "../SearchModal";
 import { Container } from "./Container";
+import { api } from "../../services/api";
+import { EditProfileModal } from "../Modals/NutritionistEditProfileModal";
+import NotificationsModal from "../Modals/NotificationsModal";
+import AiModal from "../Modals/AiModal";
+import ProfileModal from "../Modals/NutritionistProfileModal";
 
 export const HeaderGlobal = () => {
   const navigate = useNavigate();
@@ -31,6 +31,11 @@ export const HeaderGlobal = () => {
   const [profileOpen, setProfileOpen] = useState(false);
   const [aiOpen, setAiOpen] = useState(false);
   const user = authService.getUser();
+  const [uploading, setUploading] = useState(false);
+  const [avatarUrl, setAvatarUrl] = useState(user?.photoUrl || null);
+  const [editProfileOpen, setEditProfileOpen] = useState(false);
+  const theme = useTheme();
+  console.log("🚀 ~ HeaderGlobal.tsx:37 ~ user 🚀🚀🚀:", user);
 
   const getInitials = (name: string) => {
     return name
@@ -42,6 +47,49 @@ export const HeaderGlobal = () => {
 
   const handleLogout = () => {
     authService.logout();
+  };
+
+  const handlePhotoChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!e.target.files || !user) return;
+    const file = e.target.files[0];
+    if (!file) return;
+    setUploading(true);
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      const response = await api.post(
+        `/nutritionists/${user.id}/photo`,
+        formData,
+        {
+          headers: { "Content-Type": "multipart/form-data" },
+        }
+      );
+      const updatedUser = { ...user, photoUrl: response.data.photoUrl };
+      localStorage.setItem("@smartnutri:user", JSON.stringify(updatedUser));
+      console.log(
+        "🚀 ~ HeaderGlobal.tsx:217 ~ updatedUser 🚀🚀🚀:",
+        updatedUser
+      );
+      const updatedUrl = response.data.photoUrl
+        ? `${response.data.photoUrl}?t=${Date.now()}`
+        : null;
+      setAvatarUrl(updatedUrl);
+    } catch (err) {
+      console.log("🚀 ~ HeaderGlobal.tsx:222 ~ err 🚀🚀🚀:", err);
+      // Pode adicionar notificação de erro aqui
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  // Adiciona função para atualizar user local e avatar após edição
+  const handleProfileSave = (updatedUser: Nutritionist) => {
+    localStorage.setItem("@smartnutri:user", JSON.stringify(updatedUser));
+    const updatedUrl = updatedUser.photoUrl
+      ? `${updatedUser.photoUrl}?t=${Date.now()}`
+      : null;
+    setAvatarUrl(updatedUrl);
+    window.location.reload(); // Garante atualização dos dados em toda a UI
   };
 
   return (
@@ -132,14 +180,23 @@ export const HeaderGlobal = () => {
                 }}
               >
                 <Avatar
+                  key={avatarUrl}
+                  src={avatarUrl || undefined}
                   sx={{
-                    width: 32,
-                    height: 32,
+                    width: 44,
+                    height: 44,
                     bgcolor: "primary.main",
-                    fontSize: "0.875rem",
+                    fontSize: "1.15rem",
+                    border: `3px solid ${theme.palette.custom.accent}`,
+                    boxShadow: `0 2px 8px 0 ${theme.palette.custom.lightest}`,
+                    background: `linear-gradient(135deg, ${theme.palette.primary.main} 60%, ${theme.palette.custom.accent} 100%)`,
+                    transition: "box-shadow 0.2s",
+                    "&:hover": {
+                      boxShadow: `0 4px 16px 0 ${theme.palette.custom.light}`,
+                    },
                   }}
                 >
-                  {user ? getInitials(user.name) : <PersonIcon />}
+                  {!avatarUrl && <PersonIcon />}
                 </Avatar>
               </IconButton>
             </Tooltip>
@@ -151,253 +208,38 @@ export const HeaderGlobal = () => {
       <SearchModal open={searchOpen} onClose={() => setSearchOpen(false)} />
 
       {/* Modal de Notificações */}
-      <Modal
+      <NotificationsModal
         open={notificationsOpen}
         onClose={() => setNotificationsOpen(false)}
-        sx={{
-          display: "flex",
-          alignItems: "flex-start",
-          justifyContent: "flex-end",
-          mt: "88px", // Altura do header
-          pr: 2,
-        }}
-      >
-        <Paper
-          sx={{
-            width: "100%",
-            maxWidth: 400,
-            maxHeight: "calc(100vh - 100px)",
-            overflow: "auto",
-            borderRadius: 1,
-            boxShadow: 24,
-          }}
-        >
-          {/* Header do Modal */}
-          <Box
-            sx={{
-              p: 2,
-              borderBottom: "1px solid",
-              borderColor: "divider",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-            }}
-          >
-            <Typography variant="h6">Notificações</Typography>
-            <IconButton
-              size="small"
-              onClick={() => setNotificationsOpen(false)}
-              sx={{ color: "text.secondary" }}
-            >
-              <CloseIcon />
-            </IconButton>
-          </Box>
+      />
 
-          {/* Conteúdo - Estado Vazio */}
-          <Box
-            sx={{
-              p: 4,
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
-              gap: 2,
-              color: "text.secondary",
-            }}
-          >
-            <NotificationsIcon sx={{ fontSize: 48 }} />
-            <Typography variant="body1">
-              Nenhuma notificação no momento
-            </Typography>
-          </Box>
-        </Paper>
-      </Modal>
-
-      {/* Modal de IA - NOVO */}
-      <Modal
-        open={aiOpen}
-        onClose={() => setAiOpen(false)}
-        sx={{
-          display: "flex",
-          alignItems: "flex-start",
-          justifyContent: "flex-end",
-          mt: "88px", // Altura do header
-          pr: 2,
-        }}
-      >
-        <Paper
-          sx={{
-            width: "100%",
-            maxWidth: 400,
-            maxHeight: "calc(100vh - 100px)",
-            overflow: "auto",
-            borderRadius: 1,
-            boxShadow: 24,
-          }}
-        >
-          {/* Header do Modal */}
-          <Box
-            sx={{
-              p: 2,
-              borderBottom: "1px solid",
-              borderColor: "divider",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-            }}
-          >
-            <Typography variant="h6">Inteligência Artificial</Typography>
-            <IconButton
-              size="small"
-              onClick={() => setAiOpen(false)}
-              sx={{ color: "text.secondary" }}
-            >
-              <CloseIcon />
-            </IconButton>
-          </Box>
-
-          {/* Conteúdo do Modal de IA */}
-          <Box
-            sx={{
-              p: 4,
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
-              gap: 2,
-              color: "text.secondary",
-              textAlign: "center",
-            }}
-          >
-            <img
-              src="/images/ai-animated.gif"
-              alt="IA Smart Nutri"
-              style={{ width: 120, height: 120 }}
-            />
-            <Typography
-              variant="h5"
-              color="primary.main"
-              sx={{ fontWeight: "bold" }}
-            >
-              Em breve
-            </Typography>
-            <Typography variant="body1" sx={{ mb: 1 }}>
-              Inteligência Artificial Smart Nutri
-            </Typography>
-            <Typography variant="body2" color="text.secondary">
-              Nossa IA especializada está chegando para auxiliar na criação de
-              planos alimentares, relatórios nutricionais, insights de pacientes
-              e aumentar sua produtividade.
-            </Typography>
-          </Box>
-        </Paper>
-      </Modal>
+      {/* Modal de IA */}
+      <AiModal open={aiOpen} onClose={() => setAiOpen(false)} />
 
       {/* Modal de Perfil */}
-      <Modal
-        open={profileOpen}
-        onClose={() => setProfileOpen(false)}
-        sx={{
-          display: "flex",
-          alignItems: "flex-start",
-          justifyContent: "flex-end",
-          mt: "88px", // Altura do header
-          pr: 2,
-        }}
-      >
-        <Paper
-          sx={{
-            width: "100%",
-            maxWidth: 400,
-            maxHeight: "calc(100vh - 100px)",
-            overflow: "auto",
-            borderRadius: 1,
-            boxShadow: 24,
-          }}
-        >
-          {/* Header do Modal */}
-          <Box
-            sx={{
-              p: 2,
-              borderBottom: "1px solid",
-              borderColor: "divider",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-            }}
-          >
-            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-              <Typography variant="h6">Meu Perfil</Typography>
-            </Box>
-            <Box sx={{ display: "flex", gap: 1 }}>
-              <Tooltip title="Logout">
-                <IconButton
-                  onClick={handleLogout}
-                  size="small"
-                  sx={{ color: "text.secondary" }}
-                >
-                  <LogoutIcon />
-                </IconButton>
-              </Tooltip>
-              <IconButton
-                size="small"
-                onClick={() => setProfileOpen(false)}
-                sx={{ color: "text.secondary" }}
-              >
-                <CloseIcon />
-              </IconButton>
-            </Box>
-          </Box>
+      {user && (
+        <ProfileModal
+          open={profileOpen}
+          onClose={() => setProfileOpen(false)}
+          user={user}
+          avatarUrl={avatarUrl}
+          uploading={uploading}
+          handlePhotoChange={handlePhotoChange}
+          getInitials={getInitials}
+          handleLogout={handleLogout}
+          setEditProfileOpen={setEditProfileOpen}
+        />
+      )}
 
-          {/* Conteúdo do Perfil */}
-          <Box sx={{ p: 3 }}>
-            <Box
-              sx={{
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "center",
-                gap: 2,
-                mb: 3,
-              }}
-            >
-              <Avatar
-                sx={{
-                  width: 100,
-                  height: 100,
-                  bgcolor: "primary.main",
-                  fontSize: "2rem",
-                }}
-              >
-                {user ? getInitials(user.name) : <PersonIcon />}
-              </Avatar>
-              <Typography variant="h6">{user?.name}</Typography>
-              <Typography variant="body2" color="text.secondary">
-                {user?.email}
-              </Typography>
-            </Box>
-
-            <Divider sx={{ my: 2 }} />
-
-            <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-              {user?.crn && (
-                <Box>
-                  <Typography variant="subtitle2" color="text.secondary">
-                    CRN
-                  </Typography>
-                  <Typography variant="body1">{user.crn}</Typography>
-                </Box>
-              )}
-
-              {user?.clinicName && (
-                <Box>
-                  <Typography variant="subtitle2" color="text.secondary">
-                    Clínica
-                  </Typography>
-                  <Typography variant="body1">{user.clinicName}</Typography>
-                </Box>
-              )}
-            </Box>
-          </Box>
-        </Paper>
-      </Modal>
+      {/* Modal de edição de perfil */}
+      {user && (
+        <EditProfileModal
+          open={editProfileOpen}
+          onClose={() => setEditProfileOpen(false)}
+          user={user}
+          onSave={handleProfileSave}
+        />
+      )}
     </AppBar>
   );
 };

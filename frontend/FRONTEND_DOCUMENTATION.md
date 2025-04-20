@@ -221,6 +221,8 @@ Located in `src/components/`:
 - **RecentPatients**: List of recently accessed patients.
 - **StatsCards**: Dashboard statistics.
 - **SearchModal**: Modal de pesquisa global, utilizado no Header para busca de pacientes e planos alimentares. Possui feedback visual aprimorado, estado de carregamento, mensagem de vazio e navegação por teclado.
+- **FloatingHelpButton**: Botão flutuante de ajuda exibido no canto inferior direito em todas as páginas. Ao ser clicado, abre o HelpModal com botões para dúvidas frequentes e contato com suporte. Localização: `src/components/FloatingHelpButton.tsx`.
+- **HelpModal**: Modal reutilizável exibindo botões para dúvidas frequentes e contato com suporte. Segue o padrão visual dos outros modais do sistema. Localização: `src/components/Modals/HelpModal.tsx`.
 - **CompositionChart**: Componente responsável por exibir a evolução da composição corporal do paciente ao longo do tempo.
 - **PhotoUpload**: Componente para seleção e pré-visualização de fotos de avaliação (Fase 1: apenas seleção local e preview, sem upload real). Permite ao usuário arrastar ou selecionar arquivos de imagem (JPG, JPEG, PNG, até 5MB por padrão), valida o formato/tamanho e exibe a pré-visualização da imagem escolhida. Localização: `src/components/PhotoUpload/`. Interface:
 
@@ -333,6 +335,10 @@ Located in `src/services/`:
 - List, search, and filter patients.
 - Create/edit via PatientForm.
 - View details and measurements in PatientInfo and PatientMeasurements.
+
+### Atualização instantânea da foto de perfil do paciente
+
+Após cadastrar ou editar um paciente (incluindo atualização do Instagram), a foto de perfil será atualizada instantaneamente na tela, sem necessidade de recarregar a página manualmente. Isso é feito via refetch dos dados e bust de cache da imagem (query param timestamp).
 
 ---
 
@@ -615,6 +621,7 @@ A página de pacientes agora está organizada em componentes menores e mais espe
 - Fallback para exibir iniciais quando não há foto disponível
 - Cores consistentes baseadas no nome do paciente para os avatares sem foto
 - Melhor interação com o backend para obtenção de fotos
+- **[2024-06]** O Avatar de perfil no HeaderGlobal foi atualizado: agora está maior (44x44px) e possui uma borda moderna com gradiente e cor de destaque do tema, trazendo mais destaque e integração visual ao cabeçalho.
 
 ### Como Implementar
 
@@ -696,6 +703,8 @@ const [isPatientModalOpen, setIsPatientModalOpen] = useState(false);
 
 > **Atenção:** Não utilize mais a navegação para `/patients/new`. O fluxo oficial é via modal.
 
+> **Atualização 2024-06:** Ao editar um paciente pelo `PatientFormModal`, apenas os campos preenchidos são enviados ao backend. Assim, é possível atualizar somente os dados desejados, sem obrigatoriedade de preencher todos os campos do formulário.
+
 ---
 
 ## Padrão de Nomenclatura de Páginas
@@ -712,3 +721,20 @@ src/pages/NewFeature/NewFeaturePage.tsx
 ```
 
 > Siga sempre este padrão ao criar novas páginas. Isso facilita a manutenção, busca e entendimento do projeto por toda a equipe.
+
+- O formulário de cadastro de nutricionista agora possui o campo opcional "Instagram" (ex: @exemplo_nutri), que é enviado para o backend e armazenado junto ao perfil do nutricionista.
+
+### AssessmentButton & MealPlanButton
+
+Ambos os botões agora aceitam a propriedade opcional `outline` (boolean):
+
+- Quando `outline={true}`: o botão fica com fundo transparente, borda e cor da fonte `primary`.
+- Quando omitido ou `false`: mantém o padrão anterior (cores de sucesso/info).
+- Ambos possuem largura mínima padronizada para garantir alinhamento visual.
+
+**Exemplo de uso:**
+
+```tsx
+<AssessmentButton patientId="123" outline />
+<MealPlanButton patientId="123" outline />
+```

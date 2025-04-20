@@ -250,4 +250,14 @@ export const patientService = {
     );
     return response.data;
   },
+
+  // Upload de foto de perfil do paciente
+  uploadProfilePhoto: async (id: string, file: File): Promise<Patient> => {
+    const formData = new FormData();
+    formData.append("file", file);
+    const response = await api.post(`/patients/${id}/photo`, formData, {
+      headers: { "Content-Type": "multipart/form-data" },
+    });
+    return response.data;
+  },
 };

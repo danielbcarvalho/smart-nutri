@@ -10,6 +10,9 @@ import { Measurement } from './entities/measurement.entity';
 import { CreatePatientDto } from './dto/create-patient.dto';
 import { UpdatePatientDto } from './dto/update-patient.dto';
 import { CreateMeasurementDto } from './dto/create-measurement.dto';
+import { StorageService } from '../supabase/storage/storage.service';
+import { InstagramScrapingService } from '../services/instagram-scraping';
+import axios from 'axios';
 
 @Injectable()
 export class PatientsService {
@@ -18,6 +21,8 @@ export class PatientsService {
     private readonly patientRepository: Repository<Patient>,
     @InjectRepository(Measurement)
     private readonly measurementRepository: Repository<Measurement>,
+    private readonly storageService: StorageService,
+    private readonly instagramScrapingService: InstagramScrapingService,
   ) {}
 
   async create(
@@ -65,7 +70,41 @@ export class PatientsService {
     }
 
     const patient = this.patientRepository.create(processedDto);
-    return this.patientRepository.save(patient);
+    const savedPatient = await this.patientRepository.save(patient);
+
+    // Se foi informado instagram, tenta buscar a foto e salvar no Supabase
+    if (createPatientDto.instagram) {
+      try {
+        const username = createPatientDto.instagram.replace(/^@/, '');
+        const imageUrl =
+          await this.instagramScrapingService.getProfilePictureUrl(username);
+        if (imageUrl) {
+          const response = await axios.get(imageUrl, {
+            responseType: 'arraybuffer',
+          });
+          const buffer = Buffer.from(response.data);
+          const contentType = response.headers['content-type'] || 'image/jpeg';
+          const ext = contentType.split('/')[1] || 'jpg';
+          const filename = `profile-instagram-${Date.now()}.${ext}`;
+          const supabaseUrl = await this.storageService.uploadPatientPhoto(
+            savedPatient.id,
+            buffer,
+            filename,
+            contentType,
+          );
+          savedPatient.photoUrl = supabaseUrl;
+          await this.patientRepository.save(savedPatient);
+        }
+      } catch (e) {
+        // Loga mas não impede criação
+        console.warn(
+          'Falha ao buscar/salvar foto do Instagram do paciente:',
+          e.message,
+        );
+      }
+    }
+
+    return savedPatient;
   }
 
   async findAll(nutritionistId: string): Promise<Patient[]> {
@@ -115,6 +154,40 @@ export class PatientsService {
       if (existingPatient) {
         throw new ConflictException(
           'Já existe um paciente com o mesmo CPF ou email',
+        );
+      }
+    }
+
+    // Se o instagram foi alterado, faz scraping e salva nova foto
+    if (
+      updatePatientDto.instagram &&
+      updatePatientDto.instagram !== patient.instagram
+    ) {
+      try {
+        const username = updatePatientDto.instagram.replace(/^@/, '');
+        const imageUrl =
+          await this.instagramScrapingService.getProfilePictureUrl(username);
+        if (imageUrl) {
+          const response = await axios.get(imageUrl, {
+            responseType: 'arraybuffer',
+          });
+          const buffer = Buffer.from(response.data);
+          const contentType = response.headers['content-type'] || 'image/jpeg';
+          const ext = contentType.split('/')[1] || 'jpg';
+          const filename = `profile-instagram-${Date.now()}.${ext}`;
+          const supabaseUrl = await this.storageService.uploadPatientPhoto(
+            id,
+            buffer,
+            filename,
+            contentType,
+          );
+          updatePatientDto.photoUrl = supabaseUrl;
+        }
+      } catch (e) {
+        // Loga mas não impede atualização
+        console.warn(
+          'Falha ao buscar/salvar foto do Instagram do paciente:',
+          e.message,
         );
       }
     }
@@ -264,5 +337,26 @@ export class PatientsService {
       .orderBy('patient.name', 'ASC')
       .take(5)
       .getMany();
+  }
+
+  async uploadProfilePhoto(
+    id: string,
+    file: Express.Multer.File,
+  ): Promise<Patient> {
+    const patient = await this.patientRepository.findOne({ where: { id } });
+    if (!patient) {
+      throw new NotFoundException(`Paciente com ID ${id} não encontrado`);
+    }
+    const ext = file.originalname.split('.').pop();
+    const filename = `profile-${Date.now()}.${ext}`;
+    const url = await this.storageService.uploadPatientPhoto(
+      id,
+      file.buffer,
+      filename,
+      file.mimetype,
+    );
+    patient.photoUrl = url;
+    await this.patientRepository.save(patient);
+    return patient;
   }
 }

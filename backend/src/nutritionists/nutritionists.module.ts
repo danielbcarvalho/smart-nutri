@@ -4,11 +4,17 @@ import { NutritionistsService } from './nutritionists.service';
 import { NutritionistsController } from './nutritionists.controller';
 import { Nutritionist } from './entities/nutritionist.entity';
 import { PatientsModule } from '../patients/patients.module';
+import { SupabaseModule } from '../supabase/supabase.module';
+import { InstagramScrapingService } from '../services/instagram-scraping';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Nutritionist]), PatientsModule],
+  imports: [
+    TypeOrmModule.forFeature([Nutritionist]),
+    PatientsModule,
+    SupabaseModule,
+  ],
   controllers: [NutritionistsController],
-  providers: [NutritionistsService],
+  providers: [NutritionistsService, InstagramScrapingService],
   exports: [NutritionistsService],
 })
 export class NutritionistsModule {}

@@ -219,3 +219,7 @@ Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
 - Possibilidade de processamento adicional (thumbnails, logs, quotas, etc).
 
 ---
+
+## Novidade: Foto de Perfil do Instagram para Pacientes
+
+Agora, ao cadastrar ou editar um paciente e informar o campo `instagram`, o backend tentará buscar automaticamente a foto de perfil do Instagram e salvar em `photo_url` do paciente, utilizando o Supabase Storage. Isso funciona de forma semelhante ao fluxo já existente para nutricionistas.

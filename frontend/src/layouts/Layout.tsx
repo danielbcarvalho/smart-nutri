@@ -3,6 +3,7 @@ import { Outlet } from "react-router-dom";
 import { Container } from "../components/Layout/Container";
 
 import { HeaderGlobal } from "../components/Layout/HeaderGlobal";
+import FloatingHelpButton from "../components/FloatingHelpButton";
 
 export const Layout = () => {
   return (
@@ -30,6 +31,7 @@ export const Layout = () => {
         >
           <Outlet />
         </Box>
+        <FloatingHelpButton />
       </Container>
     </Box>
   );

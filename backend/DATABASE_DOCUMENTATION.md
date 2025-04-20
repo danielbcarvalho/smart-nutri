@@ -23,6 +23,7 @@ erDiagram
         string crn "nullable"
         jsonb specialties "nullable"
         string clinic_name "nullable"
+        string photo_url "nullable"
         timestamp created_at
         timestamp updated_at
     }
@@ -48,6 +49,7 @@ erDiagram
         jsonb healthConditions "nullable"
         jsonb medications "nullable"
         string observations "nullable"
+        string photo_url "nullable"
         timestamp created_at
         timestamp updated_at
     }
@@ -108,12 +110,12 @@ erDiagram
 #### Nutritionists
 
 - Stores nutritionist information.
-- **Fields:** id (PK), name, email (unique), password_hash, phone, crn, specialties, clinic_name, created_at, updated_at
+- **Fields:** id (PK), name, email (unique), password_hash, phone, crn, specialties, clinic_name, photo_url, created_at, updated_at
 
 #### Patients
 
 - Stores patient information.
-- **Fields:** id (PK), nutritionistId (FK), name, email (unique), phone, birthDate, gender, height, weight, crn (unique), last_consultation_at, next_consultation_at, monitoring_status, consultation_frequency, custom_consultation_days, goals, allergies, healthConditions, medications, observations, created_at, updated_at
+- **Fields:** id (PK), nutritionistId (FK), name, email (unique), phone, birthDate, gender, height, weight, crn (unique), last_consultation_at, next_consultation_at, monitoring_status, consultation_frequency, custom_consultation_days, goals, allergies, healthConditions, medications, observations, photo_url, created_at, updated_at
 
 #### Measurements
 

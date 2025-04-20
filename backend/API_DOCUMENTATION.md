@@ -18,7 +18,7 @@ API para gestão completa de nutrição, incluindo:
 #### Criar Paciente
 
 - **POST** `/patients`
-- **Descrição**: Cria um novo paciente com todas as informações necessárias
+- **Descrição**: Cria um novo paciente com todas as informações necessárias. Se o campo `instagram` for informado, o backend tentará buscar a foto de perfil do Instagram e salvar automaticamente em `photo_url`.
 - **Corpo da Requisição**:
   ```json
   {
@@ -44,7 +44,8 @@ API para gestão completa de nutrição, incluindo:
     },
     "occupation": "Engenheiro",
     "maritalStatus": "Solteiro",
-    "education": "Superior Completo"
+    "education": "Superior Completo",
+    "photo_url": "https://storage.example.com/patients/123e4567/photo.jpg"
   }
   ```
 - **Respostas**:
@@ -70,7 +71,7 @@ API para gestão completa de nutrição, incluindo:
 #### Atualizar Paciente
 
 - **PATCH** `/patients/:id`
-- **Descrição**: Atualiza informações de um paciente
+- **Descrição**: Atualiza informações de um paciente. Se o campo `instagram` for alterado, o backend tentará buscar a nova foto de perfil do Instagram e atualizar o campo `photo_url` automaticamente.
 - **Respostas**:
   - 200: Paciente atualizado
   - 400: Dados inválidos
@@ -793,5 +794,18 @@ GET /photos?patientId=123&type=front&from=2024-01-01&to=2024-06-01&page=1&limit=
   - 204: Foto removida
   - 404: Foto não encontrada
   - 401: Não autorizado
+
+---
+
+### Nutricionistas (`/nutritionists`)
+
+#### Upload de Foto de Perfil
+
+- **POST** `/nutritionists/:id/photo`
+- **Descrição**: Faz upload da foto de perfil do nutricionista e armazena a URL no banco de dados.
+- **Request**: multipart/form-data, campo `file` (imagem)
+- **Respostas**:
+  - 200: Nutricionista atualizado com a URL da foto
+  - 404: Nutricionista não encontrado
 
 ---

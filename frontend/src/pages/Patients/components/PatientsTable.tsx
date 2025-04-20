@@ -24,6 +24,8 @@ import {
 } from "@mui/icons-material";
 import { Patient } from "../../../services/patientService";
 import { NavigateFunction } from "react-router-dom";
+import { MealPlanButton } from "../../../components/MealPlanButton";
+import { AssessmentButton } from "../../../components/AssessmentButton";
 
 type Order = "asc" | "desc";
 type OrderBy = "name" | "email" | "updatedAt";
@@ -34,8 +36,9 @@ interface PatientTableProps {
   orderBy: OrderBy;
   onRequestSort: (property: OrderBy) => void;
   onDeleteClick: (patient: Patient) => void;
-  onMenuOpen: (event: React.MouseEvent<HTMLElement>, patient: Patient) => void;
+  onMenuOpen?: (event: React.MouseEvent<HTMLElement>, patient: Patient) => void;
   navigate: NavigateFunction;
+  onEditClick: (patient: Patient) => void;
 }
 
 // Function to generate initials from name
@@ -65,13 +68,14 @@ const stringToColor = (string: string) => {
   return colors[Math.abs(hash) % colors.length];
 };
 
-export const PatientTable: React.FC<PatientTableProps> = ({
+export const PatientsTable: React.FC<PatientTableProps> = ({
   patients,
   order,
   orderBy,
   onRequestSort,
   onDeleteClick,
   navigate,
+  onEditClick,
 }) => {
   return (
     <TableContainer>
@@ -120,7 +124,15 @@ export const PatientTable: React.FC<PatientTableProps> = ({
               <TableCell>
                 <Box sx={{ display: "flex", alignItems: "flex-start", gap: 2 }}>
                   <Avatar
-                    src={patient.photoUrl}
+                    src={
+                      patient.photoUrl
+                        ? `${patient.photoUrl}?t=${
+                            patient.updatedAt
+                              ? new Date(patient.updatedAt).getTime()
+                              : Date.now()
+                          }`
+                        : undefined
+                    }
                     sx={{
                       bgcolor: !patient.photoUrl
                         ? stringToColor(patient.name)
@@ -140,6 +152,7 @@ export const PatientTable: React.FC<PatientTableProps> = ({
                     <Typography
                       variant="subtitle2"
                       sx={{
+                        fontWeight: "bold",
                         cursor: "pointer",
                         "&:hover": {
                           color: "primary.main",
@@ -150,46 +163,16 @@ export const PatientTable: React.FC<PatientTableProps> = ({
                       {patient.name}
                     </Typography>
                     <Stack direction="row" spacing={1} sx={{ mt: 1 }}>
-                      <Button
-                        size="small"
-                        variant="outlined"
-                        startIcon={<AssessmentIcon />}
-                        sx={{
-                          fontSize: "0.75rem",
-                          py: 0.5,
-                          borderColor: "success.main",
-                          color: "success.main",
-                          "&:hover": {
-                            borderColor: "success.dark",
-                            bgcolor: "success.lighter",
-                          },
-                        }}
-                        onClick={() =>
-                          navigate(`/patient/${patient.id}/assessments/new`)
-                        }
-                      >
-                        Nova Avaliação
-                      </Button>
-                      <Button
-                        size="small"
-                        variant="outlined"
-                        onClick={() =>
-                          navigate(`/patient/${patient.id}/meal-plans?new=true`)
-                        }
-                        startIcon={<RestaurantMenuIcon />}
-                        sx={{
-                          borderRadius: 20,
-                          textTransform: "none",
-                          borderColor: "info.main",
-                          color: "info.main",
-                          "&:hover": {
-                            borderColor: "info.dark",
-                            bgcolor: "info.lighter",
-                          },
-                        }}
-                      >
-                        Novo Plano
-                      </Button>
+                      <AssessmentButton
+                        patientId={patient.id}
+                        variant="contained"
+                      />
+
+                      <MealPlanButton
+                        patientId={patient.id}
+                        variant="contained"
+                        color="secondary"
+                      />
                     </Stack>
                   </Box>
                 </Box>
@@ -230,7 +213,7 @@ export const PatientTable: React.FC<PatientTableProps> = ({
                   </IconButton>
                   <IconButton
                     size="small"
-                    onClick={() => navigate(`/patient/${patient.id}/edit`)}
+                    onClick={() => onEditClick(patient)}
                     sx={{ color: "primary.main" }}
                   >
                     <EditIcon fontSize="small" />

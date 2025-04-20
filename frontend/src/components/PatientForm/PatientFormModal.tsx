@@ -16,6 +16,7 @@ import {
   InputAdornment,
   IconButton,
   Avatar,
+  CircularProgress,
 } from "@mui/material";
 import {
   Instagram as InstagramIcon,
@@ -33,12 +34,14 @@ interface PatientFormModalProps {
   open: boolean;
   onClose: () => void;
   onSuccess?: () => void;
+  patient?: Patient | null;
 }
 
 export function PatientFormModal({
   open,
   onClose,
   onSuccess,
+  patient,
 }: PatientFormModalProps) {
   const queryClient = useQueryClient();
 
@@ -63,6 +66,7 @@ export function PatientFormModal({
   });
 
   const [photoPreview, setPhotoPreview] = useState<string>("");
+  const [uploadingPhoto, setUploadingPhoto] = useState(false);
 
   useEffect(() => {
     if (!open) {
@@ -81,14 +85,63 @@ export function PatientFormModal({
       });
       setPhotoPreview("");
       setErrors({ name: "" });
+    } else if (patient) {
+      setFormData({
+        name: patient.name || "",
+        email: patient.email || "",
+        phone: patient.phone || "",
+        cpf: patient.cpf || "",
+        birthDate: patient.birthDate || "",
+        gender: patient.gender || "OTHER",
+        instagram: patient.instagram || "",
+        status: patient.status || "active",
+        monitoringStatus: patient.monitoringStatus || "in_progress",
+        consultationFrequency: patient.consultationFrequency || "monthly",
+        photoUrl: patient.photoUrl || "",
+      });
+      setPhotoPreview(patient.photoUrl || "");
     }
-  }, [open]);
+  }, [open, patient]);
 
   const createMutation = useMutation({
     mutationFn: (data: Omit<Patient, "id" | "createdAt" | "updatedAt">) =>
       patientService.create(data),
-    onSuccess: () => {
+    onSuccess: (createdPatient) => {
       queryClient.invalidateQueries({ queryKey: ["patients"] });
+      if (createdPatient?.photoUrl) {
+        setPhotoPreview(
+          `${createdPatient.photoUrl}?t=${
+            createdPatient.updatedAt
+              ? new Date(createdPatient.updatedAt).getTime()
+              : Date.now()
+          }`
+        );
+      }
+      if (onSuccess) onSuccess();
+      onClose();
+    },
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: (
+      data: Partial<Omit<Patient, "id" | "createdAt" | "updatedAt">>
+    ) => {
+      if (patient) {
+        return patientService.update(patient.id, data);
+      }
+      return Promise.reject(new Error("Paciente não definido para edição"));
+    },
+    onSuccess: (updatedPatient) => {
+      queryClient.invalidateQueries({ queryKey: ["patients"] });
+      if (updatedPatient?.photoUrl) {
+        setPhotoPreview(
+          `${updatedPatient.photoUrl}?t=${
+            updatedPatient.updatedAt
+              ? new Date(updatedPatient.updatedAt).getTime()
+              : Date.now()
+          }`
+        );
+      }
       if (onSuccess) onSuccess();
       onClose();
     },
@@ -117,12 +170,43 @@ export function PatientFormModal({
       });
       return;
     }
-    createMutation.mutate(formData);
+    if (patient) {
+      // Filtra apenas campos preenchidos para edição
+      const filteredData = Object.fromEntries(
+        Object.entries(formData).filter(
+          ([, value]) => value !== undefined && value !== null && value !== ""
+        )
+      ) as Partial<Omit<Patient, "id" | "createdAt" | "updatedAt">>;
+      updateMutation.mutate(filteredData);
+    } else {
+      createMutation.mutate(formData);
+    }
   };
 
-  const handlePhotoChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handlePhotoChange = async (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
     const file = event.target.files?.[0];
-    if (file) {
+    if (file && patient) {
+      setUploadingPhoto(true);
+      try {
+        const updatedPatient = await patientService.uploadProfilePhoto(
+          patient.id,
+          file
+        );
+        setPhotoPreview(updatedPatient.photoUrl || "");
+        setFormData((prev) => ({
+          ...prev,
+          photoUrl: updatedPatient.photoUrl || "",
+        }));
+      } catch {
+        // TODO: exibir erro para o usuário
+        // console.error(err);
+      } finally {
+        setUploadingPhoto(false);
+      }
+    } else if (file) {
+      // Para novo paciente (ainda sem id), só faz preview local
       const reader = new FileReader();
       reader.onloadend = () => {
         setPhotoPreview(reader.result as string);
@@ -133,7 +217,7 @@ export function PatientFormModal({
 
   return (
     <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
-      <DialogTitle>{"Novo paciente"}</DialogTitle>
+      <DialogTitle>{patient ? "Editar paciente" : "Novo paciente"}</DialogTitle>
       <DialogContent>
         <Box
           component="form"
@@ -166,27 +250,47 @@ export function PatientFormModal({
                 <PhotoCameraIcon sx={{ fontSize: 40, color: "custom.light" }} />
               </Avatar>
               <IconButton
+                component="label"
                 sx={{
                   position: "absolute",
-                  right: -8,
                   bottom: -8,
+                  right: -8,
                   bgcolor: "background.paper",
                   boxShadow: 1,
-                  "&:hover": { bgcolor: "custom.lightest" },
+                  width: 40,
+                  height: 40,
+                  zIndex: 2,
                 }}
-                component="label"
+                disabled={uploadingPhoto}
               >
+                <PhotoCameraIcon fontSize="medium" />
                 <input
                   hidden
-                  accept="image/jpeg,image/png,image/gif"
                   type="file"
+                  accept="image/*"
                   onChange={handlePhotoChange}
-                />
-                <PhotoCameraIcon
-                  fontSize="small"
-                  sx={{ color: "custom.main" }}
+                  disabled={uploadingPhoto}
                 />
               </IconButton>
+              {uploadingPhoto && (
+                <Box
+                  sx={{
+                    position: "absolute",
+                    top: 0,
+                    left: 0,
+                    width: "100%",
+                    height: "100%",
+                    bgcolor: "rgba(255,255,255,0.6)",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    borderRadius: "50%",
+                    zIndex: 3,
+                  }}
+                >
+                  <CircularProgress size={80} />
+                </Box>
+              )}
             </Box>
             <Typography variant="caption" color="text.secondary">
               Allowed *.jpeg, *.jpg, *.png, *.gif
@@ -270,7 +374,7 @@ export function PatientFormModal({
                 onChange={(e) =>
                   setFormData({
                     ...formData,
-                    instagram: e.target.value.replace("@", ""),
+                    instagram: e.target.value,
                   })
                 }
                 InputProps={{
@@ -280,7 +384,7 @@ export function PatientFormModal({
                     </InputAdornment>
                   ),
                 }}
-                placeholder="@username"
+                placeholder="@paciente"
               />
             </Box>
             <Box gridColumn={{ xs: "1", sm: "1 / -1" }}>
@@ -337,7 +441,7 @@ export function PatientFormModal({
         <Button
           type="submit"
           variant="contained"
-          disabled={createMutation.isPending}
+          disabled={createMutation.isPending || updateMutation.isPending}
           sx={{
             bgcolor: "custom.main",
             color: "common.white",
@@ -347,7 +451,10 @@ export function PatientFormModal({
           }}
           onClick={handleSubmit}
         >
-          Criar paciente
+          {(createMutation.isPending || updateMutation.isPending) && (
+            <CircularProgress size={20} color="inherit" sx={{ mr: 1 }} />
+          )}
+          {patient ? "Salvar" : "Criar paciente"}
         </Button>
       </DialogActions>
     </Dialog>
