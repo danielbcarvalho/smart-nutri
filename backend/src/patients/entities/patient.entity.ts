@@ -50,12 +50,12 @@ export class Patient {
   name: string;
 
   @ApiProperty({ description: 'Email do paciente' })
-  @Column({ unique: true, nullable: true })
+  @Column({ nullable: true })
   @Index()
   email: string;
 
   @ApiProperty({ description: 'CPF do paciente' })
-  @Column({ unique: true, nullable: true })
+  @Column({ nullable: true })
   @Index()
   cpf: string;
 

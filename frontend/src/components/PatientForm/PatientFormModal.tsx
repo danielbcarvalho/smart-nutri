@@ -33,6 +33,85 @@ const validateName = (name: string) => {
   return /^[A-Za-zÀ-ÖØ-öø-ÿ\s]*$/.test(name);
 };
 
+// Funções de formatação e limpeza de máscaras
+const formatPhone = (value: string) => {
+  if (!value) return "";
+
+  // Remove todos os caracteres não numéricos
+  const cleaned = value.replace(/\D/g, "");
+
+  // Aplica a máscara (XX)XXXXXXXXX
+  if (cleaned.length <= 2) {
+    return `(${cleaned}`;
+  } else if (cleaned.length <= 7) {
+    return `(${cleaned.substring(0, 2)})${cleaned.substring(2)}`;
+  } else {
+    return `(${cleaned.substring(0, 2)})${cleaned.substring(2, 11)}`;
+  }
+};
+
+const formatCPF = (value: string) => {
+  if (!value) return "";
+
+  // Remove todos os caracteres não numéricos
+  const cleaned = value.replace(/\D/g, "");
+
+  // Aplica a máscara XXX.XXX.XXX-XX
+  if (cleaned.length <= 3) {
+    return cleaned;
+  } else if (cleaned.length <= 6) {
+    return `${cleaned.substring(0, 3)}.${cleaned.substring(3)}`;
+  } else if (cleaned.length <= 9) {
+    return `${cleaned.substring(0, 3)}.${cleaned.substring(
+      3,
+      6
+    )}.${cleaned.substring(6)}`;
+  } else {
+    return `${cleaned.substring(0, 3)}.${cleaned.substring(
+      3,
+      6
+    )}.${cleaned.substring(6, 9)}-${cleaned.substring(9, 11)}`;
+  }
+};
+
+const formatDate = (value: string) => {
+  if (!value) return "";
+
+  // Se já estiver no formato yyyy-mm-dd do input date, retorna como está
+  if (value.includes("-")) return value;
+
+  // Remove todos os caracteres não numéricos
+  const cleaned = value.replace(/\D/g, "");
+
+  // Aplica a máscara DD/MM/YYYY
+  if (cleaned.length <= 2) {
+    return cleaned;
+  } else if (cleaned.length <= 4) {
+    return `${cleaned.substring(0, 2)}/${cleaned.substring(2)}`;
+  } else {
+    return `${cleaned.substring(0, 2)}/${cleaned.substring(
+      2,
+      4
+    )}/${cleaned.substring(4, 8)}`;
+  }
+};
+
+// Funções para remover máscaras
+const unformatPhone = (value: string) => value.replace(/\D/g, "");
+const unformatCPF = (value: string) => value.replace(/\D/g, "");
+
+// Função para converter data no formato DD/MM/YYYY para YYYY-MM-DD
+const convertDateToISO = (date: string) => {
+  if (!date || date.includes("-")) return date;
+
+  const parts = date.split("/");
+  if (parts.length === 3) {
+    return `${parts[2]}-${parts[1]}-${parts[0]}`;
+  }
+
+  return date;
+};
+
 interface PatientFormModalProps {
   open: boolean;
   onClose: () => void;
@@ -64,6 +143,13 @@ export function PatientFormModal({
     photoUrl: "",
   });
 
+  // Estado para armazenar valores com máscara apenas para visualização
+  const [displayValues, setDisplayValues] = useState({
+    phone: "",
+    cpf: "",
+    birthDate: "",
+  });
+
   const [errors, setErrors] = useState({
     name: "",
   });
@@ -86,9 +172,26 @@ export function PatientFormModal({
         consultationFrequency: "monthly",
         photoUrl: "",
       });
+      setDisplayValues({
+        phone: "",
+        cpf: "",
+        birthDate: "",
+      });
       setPhotoPreview("");
       setErrors({ name: "" });
     } else if (patient) {
+      const formattedPhone = patient.phone ? formatPhone(patient.phone) : "";
+      const formattedCPF = patient.cpf ? formatCPF(patient.cpf) : "";
+
+      // Para a data, precisamos garantir o formato correto
+      let formattedDate = "";
+      if (patient.birthDate) {
+        const dateParts = patient.birthDate.split("-");
+        if (dateParts.length === 3) {
+          formattedDate = `${dateParts[2]}/${dateParts[1]}/${dateParts[0]}`;
+        }
+      }
+
       setFormData({
         name: patient.name || "",
         email: patient.email || "",
@@ -102,6 +205,13 @@ export function PatientFormModal({
         consultationFrequency: patient.consultationFrequency || "monthly",
         photoUrl: patient.photoUrl || "",
       });
+
+      setDisplayValues({
+        phone: formattedPhone,
+        cpf: formattedCPF,
+        birthDate: formattedDate,
+      });
+
       setPhotoPreview(patient.photoUrl || "");
     }
   }, [open, patient]);
@@ -161,6 +271,42 @@ export function PatientFormModal({
       });
     } else {
       setErrors({ ...errors, name: "" });
+    }
+  };
+
+  const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const formattedValue = formatPhone(e.target.value);
+    const unformattedValue = unformatPhone(formattedValue);
+
+    setDisplayValues({ ...displayValues, phone: formattedValue });
+    setFormData({ ...formData, phone: unformattedValue });
+  };
+
+  const handleCPFChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const formattedValue = formatCPF(e.target.value);
+    const unformattedValue = unformatCPF(formattedValue);
+
+    setDisplayValues({ ...displayValues, cpf: formattedValue });
+    setFormData({ ...formData, cpf: unformattedValue });
+  };
+
+  const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+
+    // Se o valor vier do input date (no formato YYYY-MM-DD)
+    if (value.includes("-")) {
+      const dateParts = value.split("-");
+      const formattedValue = `${dateParts[2]}/${dateParts[1]}/${dateParts[0]}`;
+
+      setDisplayValues({ ...displayValues, birthDate: formattedValue });
+      setFormData({ ...formData, birthDate: value });
+    } else {
+      // Se estiver digitando no formato DD/MM/YYYY
+      const formattedValue = formatDate(value);
+      const isoDate = convertDateToISO(formattedValue);
+
+      setDisplayValues({ ...displayValues, birthDate: formattedValue });
+      setFormData({ ...formData, birthDate: isoDate });
     }
   };
 
@@ -337,36 +483,28 @@ export function PatientFormModal({
               <TextField
                 label="Telefone"
                 fullWidth
-                value={formData.phone}
-                onChange={(e) =>
-                  setFormData({ ...formData, phone: e.target.value })
-                }
-                placeholder="Telefone"
+                value={displayValues.phone}
+                onChange={handlePhoneChange}
+                inputProps={{ maxLength: 13 }}
               />
             </Box>
             <Box>
               <TextField
                 label="CPF"
                 fullWidth
-                value={formData.cpf}
-                onChange={(e) =>
-                  setFormData({ ...formData, cpf: e.target.value })
-                }
-                placeholder="CPF"
+                value={displayValues.cpf}
+                onChange={handleCPFChange}
+                inputProps={{ maxLength: 14 }}
               />
             </Box>
             <Box>
               <TextField
                 label="Data de nascimento"
-                type="date"
                 fullWidth
-                value={formData.birthDate || ""}
-                onChange={(e) => {
-                  const value = e.target.value;
-                  setFormData({ ...formData, birthDate: value || undefined });
-                }}
-                InputLabelProps={{ shrink: true }}
-                placeholder="dd/mm/yyyy"
+                value={displayValues.birthDate}
+                onChange={handleDateChange}
+                placeholder="DD/MM/YYYY"
+                inputProps={{ maxLength: 10 }}
               />
             </Box>
             <Box>
