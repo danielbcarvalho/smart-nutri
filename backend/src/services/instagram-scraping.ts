@@ -2,6 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import axios, { AxiosError } from 'axios';
 import * as cheerio from 'cheerio';
 import * as process from 'process';
+import { HttpsProxyAgent } from 'https-proxy-agent';
 
 @Injectable()
 export class InstagramScrapingService {
@@ -81,11 +82,29 @@ export class InstagramScrapingService {
           `[BrightData] Web Unlocker API utilizada para scraping Instagram: ${url}`,
         );
       } else {
-        // Fallback: scraping direto (apenas para dev/local)
-        const response = await axios.get(url, {
+        // Fallback: scraping direto (apenas para dev/local ou proxy residencial)
+        let axiosConfig: any = {
           headers,
           timeout: 10000,
-        });
+        };
+
+        // Suporte ao proxy residencial Bright Data via variáveis de ambiente
+        const proxyHost = process.env.BRIGHTDATA_PROXY_HOST;
+        const proxyPort = process.env.BRIGHTDATA_PROXY_PORT;
+        const proxyUser = process.env.BRIGHTDATA_PROXY_USER;
+        const proxyPass = process.env.BRIGHTDATA_PROXY_PASS;
+        if (proxyHost && proxyPort && proxyUser && proxyPass) {
+          // Exemplo: http://user:pass@host:port
+          const proxyUrl = `http://${proxyUser}:${proxyPass}@${proxyHost}:${proxyPort}`;
+          axiosConfig.httpsAgent = new HttpsProxyAgent(proxyUrl);
+          // Para evitar problemas de SSL com proxies
+          process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
+          this.logger.log(
+            `[BrightData] Proxy residencial ativado para scraping Instagram: ${proxyUrl}`,
+          );
+        }
+
+        const response = await axios.get(url, axiosConfig);
         html = response.data;
       }
       const $ = cheerio.load(html);
