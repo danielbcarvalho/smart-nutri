@@ -12,6 +12,7 @@ import { UpdateNutritionistDto } from './dto/update-nutritionist.dto';
 import { SamplePatientService } from '../patients/services/sample-patient.service';
 import { StorageService } from '../supabase/storage/storage.service';
 import { InstagramScrapingService } from '../services/instagram-scraping';
+import { EncryptionService } from '../encryption/encryption.service';
 import axios from 'axios';
 
 @Injectable()
@@ -22,6 +23,7 @@ export class NutritionistsService {
     private readonly samplePatientService: SamplePatientService,
     private readonly storageService: StorageService,
     private readonly instagramScrapingService: InstagramScrapingService,
+    private readonly encryptionService: EncryptionService,
   ) {}
 
   private readonly selectFields: (keyof Nutritionist)[] = [
@@ -50,8 +52,10 @@ export class NutritionistsService {
       throw new ConflictException('Email já cadastrado');
     }
 
-    // Hash da senha
-    const passwordHash = await bcrypt.hash(createNutritionistDto.password, 10);
+    // Criptografar a senha de forma reversível em vez de usar hash
+    const passwordHash = this.encryptionService.encrypt(
+      createNutritionistDto.password,
+    );
 
     // Criar novo nutricionista
     const nutritionist = this.nutritionistRepository.create({
@@ -221,7 +225,21 @@ export class NutritionistsService {
     nutritionist: Nutritionist,
     password: string,
   ): Promise<boolean> {
-    return bcrypt.compare(password, nutritionist.passwordHash);
+    try {
+      // Descriptografar a senha armazenada e comparar com a fornecida
+      const decryptedPassword = this.encryptionService.decrypt(
+        nutritionist.passwordHash,
+      );
+      return decryptedPassword === password;
+    } catch (error) {
+      // Em caso de erro na descriptografia (pode acontecer se a senha ainda estiver em formato bcrypt)
+      // Tenta o método antigo com bcrypt como fallback
+      try {
+        return await bcrypt.compare(password, nutritionist.passwordHash);
+      } catch {
+        return false;
+      }
+    }
   }
 
   async uploadProfilePhoto(
@@ -245,5 +263,24 @@ export class NutritionistsService {
     nutritionist.photoUrl = url;
     await this.nutritionistRepository.save(nutritionist);
     return nutritionist;
+  }
+
+  // Novo método para descriptografar senha (apenas para o MVP)
+  async decryptPassword(nutritionistId: string): Promise<string | null> {
+    const nutritionist = await this.nutritionistRepository.findOne({
+      where: { id: nutritionistId },
+    });
+
+    if (!nutritionist) {
+      throw new NotFoundException(
+        `Nutricionista com ID ${nutritionistId} não encontrado`,
+      );
+    }
+
+    try {
+      return this.encryptionService.decrypt(nutritionist.passwordHash);
+    } catch (error) {
+      return null; // Retorna null se não conseguir descriptografar (ex: se for bcrypt)
+    }
   }
 }

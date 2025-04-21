@@ -12,6 +12,7 @@ import { join } from 'path';
 import { SearchModule } from './search/search.module';
 import { SupabaseModule } from './supabase/supabase.module';
 import { PhotosModule } from './photos/photos.module';
+import { EncryptionModule } from './encryption/encryption.module';
 
 @Module({
   imports: [
@@ -50,6 +51,7 @@ import { PhotosModule } from './photos/photos.module';
     SearchModule,
     SupabaseModule,
     PhotosModule,
+    EncryptionModule,
   ],
   controllers: [AppController],
   providers: [AppService],

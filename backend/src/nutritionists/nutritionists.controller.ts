@@ -10,6 +10,7 @@ import {
   HttpStatus,
   UseInterceptors,
   UploadedFile,
+  UseGuards,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -17,12 +18,14 @@ import {
   ApiResponse,
   ApiParam,
   ApiBody,
+  ApiBearerAuth,
 } from '@nestjs/swagger';
 import { NutritionistsService } from './nutritionists.service';
 import { CreateNutritionistDto } from './dto/create-nutritionist.dto';
 import { UpdateNutritionistDto } from './dto/update-nutritionist.dto';
 import { Nutritionist } from './entities/nutritionist.entity';
 import { FileInterceptor } from '@nestjs/platform-express';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 
 @ApiTags('nutritionists')
 @Controller('nutritionists')
@@ -153,5 +156,45 @@ export class NutritionistsController {
     @UploadedFile() file: Express.Multer.File,
   ) {
     return this.nutritionistsService.uploadProfilePhoto(id, file);
+  }
+
+  @Get(':id/password')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth('JWT-auth')
+  @ApiOperation({
+    summary: 'Recuperar senha descriptografada (APENAS PARA MVP)',
+    description:
+      'Recupera a senha descriptografada de um nutricionista (funcionalidade temporária para MVP). Requer autenticação com JWT.',
+  })
+  @ApiParam({
+    name: 'id',
+    description: 'ID do nutricionista',
+    required: true,
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Senha descriptografada',
+    schema: {
+      type: 'object',
+      properties: {
+        password: {
+          type: 'string',
+          example: 'senha123',
+          description: 'Senha descriptografada',
+        },
+      },
+    },
+  })
+  @ApiResponse({
+    status: 401,
+    description: 'Não autorizado - Token JWT inválido ou ausente',
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'Nutricionista não encontrado',
+  })
+  async getDecryptedPassword(@Param('id') id: string) {
+    const password = await this.nutritionistsService.decryptPassword(id);
+    return { password };
   }
 }
