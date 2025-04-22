@@ -430,3 +430,34 @@ public async down(queryRunner: QueryRunner): Promise<void> {
     `);
 }
 ```
+
+## 🧹 Limpeza e Reset do Banco de Dados
+
+Para situações em que é necessário limpar todos os dados do banco de dados e começar do zero, o projeto disponibiliza scripts específicos:
+
+### Scripts Disponíveis
+
+- `scripts/clean-dev-db.js`: Limpa todos os dados do banco de desenvolvimento (mantendo a estrutura)
+- `scripts/clean-prod-db.js`: Limpa todos os dados do banco de produção (com confirmações de segurança)
+- `scripts/clean-supabase-storage.js`: Limpa os arquivos armazenados no Supabase Storage
+- `scripts/reset-all.js`: Script completo que limpa os dados do banco de dados, o armazenamento Supabase e executa as migrations para garantir que a estrutura esteja atualizada
+
+### Fluxo Recomendado para Reset Completo
+
+1. Faça backup dos dados importantes se necessário
+2. Execute o script de reset completo:
+
+   ```bash
+   # Para desenvolvimento
+   node backend/scripts/reset-all.js
+
+   # Para produção (com confirmações adicionais de segurança)
+   NODE_ENV=production node backend/scripts/reset-all.js
+   ```
+
+3. O script irá:
+   - Limpar todos os dados das tabelas do banco de dados (preservando a estrutura)
+   - Limpar todos os arquivos do Supabase Storage
+   - Executar as migrations para garantir que a estrutura do banco esteja atualizada
+
+> ⚠️ **ATENÇÃO**: Estes scripts são destrutivos e eliminam permanentemente todos os dados. Eles usam `TRUNCATE TABLE CASCADE` para limpar as tabelas, o que contorna as restrições de chave estrangeira de forma segura. Use com extrema cautela, especialmente em ambiente de produção.

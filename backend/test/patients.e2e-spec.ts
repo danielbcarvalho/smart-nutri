@@ -57,8 +57,10 @@ interface MeasurementResponse {
     chest: number;
     waist: number;
     hip: number;
-    arm: number;
-    thigh: number;
+    relaxedArmLeft: number;
+    relaxedArmRight: number;
+    proximalThighLeft: number;
+    proximalThighRight: number;
   };
   patientId: string;
   nutritionistId: string;
@@ -112,8 +114,10 @@ describe('PatientsController (e2e)', () => {
       chest: 95,
       waist: 80,
       hip: 100,
-      arm: 32,
-      thigh: 55,
+      relaxedArmLeft: 32,
+      relaxedArmRight: 32,
+      proximalThighLeft: 55,
+      proximalThighRight: 55,
     },
   };
 

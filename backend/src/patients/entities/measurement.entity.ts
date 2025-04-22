@@ -68,18 +68,23 @@ export class Measurement {
     chest?: number;
     waist?: number;
     hip?: number;
-    arm?: number;
-    thigh?: number;
     neck?: number;
     shoulder?: number;
     abdomen?: number;
-    relaxedArm?: number;
-    contractedArm?: number;
-    forearm?: number;
-    proximalThigh?: number;
-    medialThigh?: number;
-    distalThigh?: number;
-    calf?: number;
+    relaxedArmLeft?: number;
+    relaxedArmRight?: number;
+    contractedArmLeft?: number;
+    contractedArmRight?: number;
+    forearmLeft?: number;
+    forearmRight?: number;
+    proximalThighLeft?: number;
+    proximalThighRight?: number;
+    medialThighLeft?: number;
+    medialThighRight?: number;
+    distalThighLeft?: number;
+    distalThighRight?: number;
+    calfLeft?: number;
+    calfRight?: number;
   };
 
   // Dobras cutâneas

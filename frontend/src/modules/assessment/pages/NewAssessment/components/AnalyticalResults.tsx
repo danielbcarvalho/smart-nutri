@@ -5,7 +5,6 @@ import { Paper, Box, Typography, Tooltip, Button, Modal } from "@mui/material";
 import HelpIcon from "@mui/icons-material/Help";
 import BarChartIcon from "@mui/icons-material/BarChart";
 import { OssesousAndSkinfoldAnalysis } from "./OssesousAndSkinfoldAnalysis";
-import { BioimpedanceAnalysis } from "./BioimpedanceAnalysis";
 
 interface AnalyticalResultsProps {
   anthropometricResults: Record<string, any>;
@@ -253,63 +252,10 @@ export const AnalyticalResults: React.FC<AnalyticalResultsProps> = ({
             </Typography>
           </Box>
         </Box>
-
-        <Box
-          sx={{
-            bgcolor: "grey.100",
-            borderRadius: 2,
-            mb: 1,
-            p: 0.5,
-            boxShadow: "0 1px 3px rgba(0,0,0,0.1)",
-            "&:hover": {
-              bgcolor: "grey.200",
-            },
-          }}
-        >
-          <Box sx={{ display: "flex", justifyContent: "space-between", p: 2 }}>
-            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-              <Typography sx={{ fontWeight: "bold" }}>CMB (cm)</Typography>
-              <Tooltip title={getReferenceTooltip("cmb")}>
-                <span>
-                  <HelpIcon color="action" fontSize="small" />
-                </span>
-              </Tooltip>
-            </Box>
-            <Typography color="text.secondary">
-              {anthropometricResults.cmb}
-            </Typography>
-          </Box>
-        </Box>
-
-        <Box
-          sx={{
-            bgcolor: "grey.100",
-            borderRadius: 2,
-            mb: 1,
-            p: 0.5,
-            boxShadow: "0 1px 3px rgba(0,0,0,0.1)",
-            "&:hover": {
-              bgcolor: "grey.200",
-            },
-          }}
-        >
-          <Box sx={{ display: "flex", justifyContent: "space-between", p: 2 }}>
-            <Typography sx={{ fontWeight: "bold" }}>
-              Classificação CMB
-            </Typography>
-            <Typography>{anthropometricResults.cmbClassification}</Typography>
-          </Box>
-        </Box>
       </Box>
 
       {/* Análises por dobras e diâmetro ósseo */}
       <OssesousAndSkinfoldAnalysis
-        anthropometricResults={anthropometricResults}
-        getReferenceTooltip={getReferenceTooltip}
-      />
-
-      {/* Análises por bioimpedância */}
-      <BioimpedanceAnalysis
         anthropometricResults={anthropometricResults}
         getReferenceTooltip={getReferenceTooltip}
       />

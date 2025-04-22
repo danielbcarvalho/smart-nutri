@@ -6,6 +6,7 @@ import {
   AccordionSummary,
   Typography,
   Accordion,
+  Box,
 } from "@mui/material";
 import ExpandMoreIcon from "@mui/icons-material/ArrowDropDown";
 
@@ -16,13 +17,20 @@ type Circumferences = {
   waist: string;
   abdomen: string;
   hip: string;
-  relaxedArm: string;
-  contractedArm: string;
-  forearm: string;
-  proximalThigh: string;
-  medialThigh: string;
-  distalThigh: string;
-  calf: string;
+  relaxedArmLeft: string;
+  relaxedArmRight: string;
+  contractedArmLeft: string;
+  contractedArmRight: string;
+  forearmLeft: string;
+  forearmRight: string;
+  proximalThighLeft: string;
+  proximalThighRight: string;
+  medialThighLeft: string;
+  medialThighRight: string;
+  distalThighLeft: string;
+  distalThighRight: string;
+  calfLeft: string;
+  calfRight: string;
 };
 
 interface CircumferenceSectionProps {
@@ -50,13 +58,20 @@ export const CircumferenceSection: React.FC<CircumferenceSectionProps> = ({
     waist: "Cintura",
     abdomen: "Abdominal",
     hip: "Quadril",
-    relaxedArm: "Braço Relaxado",
-    contractedArm: "Braço Contraído",
-    forearm: "Antebraço",
-    proximalThigh: "Proximal da Coxa",
-    medialThigh: "Medial da Coxa",
-    distalThigh: "Distal da Coxa",
-    calf: "Panturrilha",
+    relaxedArmLeft: "Braço Relaxado Esquerdo",
+    relaxedArmRight: "Braço Relaxado Direito",
+    contractedArmLeft: "Braço Contraído Esquerdo",
+    contractedArmRight: "Braço Contraído Direito",
+    forearmLeft: "Antebraço Esquerdo",
+    forearmRight: "Antebraço Direito",
+    proximalThighLeft: "Coxa Proximal Esquerda",
+    proximalThighRight: "Coxa Proximal Direita",
+    medialThighLeft: "Coxa Medial Esquerda",
+    medialThighRight: "Coxa Medial Direita",
+    distalThighLeft: "Coxa Distal Esquerda",
+    distalThighRight: "Coxa Distal Direita",
+    calfLeft: "Panturrilha Esquerda",
+    calfRight: "Panturrilha Direita",
   };
 
   return (
@@ -76,7 +91,10 @@ export const CircumferenceSection: React.FC<CircumferenceSectionProps> = ({
       <AccordionDetails>
         <Grid container spacing={2}>
           {Object.entries(circumferences).map(([key, value]) => (
-            <Grid item xs={12} sm={6} key={key}>
+            <Box
+              sx={{ flex: { xs: "1 1 100%", sm: "1 1 calc(50% - 8px)" } }}
+              key={key}
+            >
               <TextField
                 fullWidth
                 label={`${
@@ -84,8 +102,9 @@ export const CircumferenceSection: React.FC<CircumferenceSectionProps> = ({
                 } (cm)`}
                 value={value}
                 onChange={onCircumferenceChange(key as keyof Circumferences)}
+                InputLabelProps={{ sx: { fontSize: 13 } }}
               />
-            </Grid>
+            </Box>
           ))}
         </Grid>
       </AccordionDetails>

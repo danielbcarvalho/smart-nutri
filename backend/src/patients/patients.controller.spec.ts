@@ -350,8 +350,10 @@ describe('PatientsController', () => {
           chest: 95,
           waist: 80,
           hip: 100,
-          arm: 32,
-          thigh: 55,
+          relaxedArmLeft: 32,
+          relaxedArmRight: 32,
+          proximalThighLeft: 55,
+          proximalThighRight: 55,
         },
         patientId: '1',
         nutritionistId: '123e4567-e89b-12d3-a456-426614174000',
@@ -391,6 +393,7 @@ describe('PatientsController', () => {
         nutritionistId: '123e4567-e89b-12d3-a456-426614174000',
         consultation: {} as any,
         consultationId: '',
+        photos: [],
       };
 
       const createMeasurementSpy = jest.spyOn(service, 'createMeasurement');
@@ -467,8 +470,10 @@ describe('PatientsController', () => {
             chest: 95,
             waist: 80,
             hip: 100,
-            arm: 32,
-            thigh: 55,
+            relaxedArmLeft: 32,
+            relaxedArmRight: 32,
+            proximalThighLeft: 55,
+            proximalThighRight: 55,
           },
           skinfolds: {},
           boneDiameters: {},
@@ -487,6 +492,7 @@ describe('PatientsController', () => {
           nutritionistId: '123e4567-e89b-12d3-a456-426614174000',
           consultation: {} as any,
           consultationId: '',
+          photos: [],
         },
       ];
 

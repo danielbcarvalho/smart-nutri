@@ -254,8 +254,10 @@ describe('PatientsController (e2e)', () => {
           chest: 100,
           waist: 80,
           hip: 90,
-          arm: 30,
-          thigh: 50,
+          relaxedArmLeft: 30,
+          relaxedArmRight: 30,
+          proximalThighLeft: 50,
+          proximalThighRight: 50,
         },
         patientId: patientId,
         nutritionistId: mockNutritionistId,
@@ -317,8 +319,10 @@ describe('PatientsController (e2e)', () => {
           chest: 100,
           waist: 80,
           hip: 90,
-          arm: 30,
-          thigh: 50,
+          relaxedArmLeft: 30,
+          relaxedArmRight: 30,
+          proximalThighLeft: 50,
+          proximalThighRight: 50,
         },
         patientId: patientId,
         nutritionistId: mockNutritionistId,
@@ -347,8 +351,10 @@ describe('PatientsController (e2e)', () => {
           chest: number;
           waist: number;
           hip: number;
-          arm: number;
-          thigh: number;
+          relaxedArmLeft: number;
+          relaxedArmRight: number;
+          proximalThighLeft: number;
+          proximalThighRight: number;
         };
         patientId: string;
         nutritionistId: string;
@@ -368,8 +374,10 @@ describe('PatientsController (e2e)', () => {
       expect(measurement.measurements.chest).toBe(100);
       expect(measurement.measurements.waist).toBe(80);
       expect(measurement.measurements.hip).toBe(90);
-      expect(measurement.measurements.arm).toBe(30);
-      expect(measurement.measurements.thigh).toBe(50);
+      expect(measurement.measurements.relaxedArmLeft).toBe(30);
+      expect(measurement.measurements.relaxedArmRight).toBe(30);
+      expect(measurement.measurements.proximalThighLeft).toBe(50);
+      expect(measurement.measurements.proximalThighRight).toBe(50);
       expect(measurement.patientId).toBe(patientId);
       expect(measurement.nutritionistId).toBe(mockNutritionistId);
     });

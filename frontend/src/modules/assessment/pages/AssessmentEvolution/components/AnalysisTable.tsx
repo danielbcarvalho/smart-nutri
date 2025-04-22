@@ -114,11 +114,7 @@ export function AnalysisTable({ measurements }: AnalysisTableProps) {
       getVariation: (current, previous) => formatVariation(current - previous),
       getClassification: (rcq) => (Number(rcq) > 0.85 ? "Moderado" : "Baixo"),
     },
-    {
-      label: "Circ. Musc. do Braço (CMB) (cm)",
-      getValue: (m) => formatNumber(m.measurements?.arm),
-      getClassification: () => "Adequado",
-    },
+
     {
       label: "Percentual de Gordura (%)",
       getValue: (m) => formatNumber(m.bodyFat),

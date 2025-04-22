@@ -1,3 +1,4 @@
+// pollock7.ts (versão otimizada)
 import { BodyDensityFormula } from "./types";
 
 export const pollock7Formula: BodyDensityFormula = {
@@ -23,15 +24,29 @@ export const pollock7Formula: BodyDensityFormula = {
   reference:
     "Jackson AS, Pollock ML. Generalized equations for predicting body density of men. Br J Nutr. 1978;40:497-504. (Homens) / Jackson AW, Pollock ML, Ward A. Generalized equations for predicting body density of women. Med Sci Sports Exerc. 1980;12:175-182. (Mulheres)",
   calculate: (skinfolds, gender, age) => {
+    // Verifica se todas as dobras necessárias estão presentes
+    const requiredSkinfolds = [
+      "thoracic",
+      "axillaryMedian",
+      "tricipital",
+      "subscapular",
+      "abdominal",
+      "suprailiac",
+      "thigh",
+    ];
+
+    const allSkinfolds = requiredSkinfolds.map((fold) =>
+      parseFloat(skinfolds[fold as keyof typeof skinfolds] || "0")
+    );
+
+    // Se alguma dobra estiver faltando, retorna 0
+    if (allSkinfolds.some((value) => value <= 0)) {
+      console.warn("Pollock 7: Dados de dobras incompletos");
+      return 0;
+    }
+
     // Soma das 7 dobras na ordem correta do protocolo
-    const sum =
-      parseFloat(skinfolds.thoracic || "0") + // Peitoral
-      parseFloat(skinfolds.axillaryMedian || "0") + // Axilar média
-      parseFloat(skinfolds.tricipital || "0") + // Tríceps
-      parseFloat(skinfolds.subscapular || "0") + // Subescapular
-      parseFloat(skinfolds.abdominal || "0") + // Abdominal
-      parseFloat(skinfolds.suprailiac || "0") + // Supra-ilíaca
-      parseFloat(skinfolds.thigh || "0"); // Coxa
+    const sum = allSkinfolds.reduce((acc, curr) => acc + curr, 0);
 
     // Fórmulas específicas por gênero
     let density;

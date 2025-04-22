@@ -158,6 +158,30 @@ export class BodyMeasurements {
   distalThigh?: number;
 
   @ApiPropertyOptional({
+    description: 'Medida da coxa distal esquerda em centímetros',
+    example: 40,
+    type: Number,
+  })
+  @IsOptional()
+  @IsNumber(
+    {},
+    { message: 'A medida da coxa distal esquerda deve ser um número' },
+  )
+  distalThighLeft?: number;
+
+  @ApiPropertyOptional({
+    description: 'Medida da coxa distal direita em centímetros',
+    example: 40,
+    type: Number,
+  })
+  @IsOptional()
+  @IsNumber(
+    {},
+    { message: 'A medida da coxa distal direita deve ser um número' },
+  )
+  distalThighRight?: number;
+
+  @ApiPropertyOptional({
     description: 'Medida da panturrilha em centímetros',
     example: 38,
     type: Number,
@@ -165,6 +189,147 @@ export class BodyMeasurements {
   @IsOptional()
   @IsNumber({}, { message: 'A medida da panturrilha deve ser um número' })
   calf?: number;
+
+  @ApiPropertyOptional({
+    description: 'Medida do braço relaxado esquerdo em centímetros',
+    example: 30,
+    type: Number,
+  })
+  @IsOptional()
+  @IsNumber(
+    {},
+    { message: 'A medida do braço relaxado esquerdo deve ser um número' },
+  )
+  relaxedArmLeft?: number;
+
+  @ApiPropertyOptional({
+    description: 'Medida do braço relaxado direito em centímetros',
+    example: 30,
+    type: Number,
+  })
+  @IsOptional()
+  @IsNumber(
+    {},
+    { message: 'A medida do braço relaxado direito deve ser um número' },
+  )
+  relaxedArmRight?: number;
+
+  @ApiPropertyOptional({
+    description: 'Medida do braço contraído esquerdo em centímetros',
+    example: 33,
+    type: Number,
+  })
+  @IsOptional()
+  @IsNumber(
+    {},
+    { message: 'A medida do braço contraído esquerdo deve ser um número' },
+  )
+  contractedArmLeft?: number;
+
+  @ApiPropertyOptional({
+    description: 'Medida do braço contraído direito em centímetros',
+    example: 33,
+    type: Number,
+  })
+  @IsOptional()
+  @IsNumber(
+    {},
+    { message: 'A medida do braço contraído direito deve ser um número' },
+  )
+  contractedArmRight?: number;
+
+  @ApiPropertyOptional({
+    description: 'Medida do antebraço esquerdo em centímetros',
+    example: 28,
+    type: Number,
+  })
+  @IsOptional()
+  @IsNumber(
+    {},
+    { message: 'A medida do antebraço esquerdo deve ser um número' },
+  )
+  forearmLeft?: number;
+
+  @ApiPropertyOptional({
+    description: 'Medida do antebraço direito em centímetros',
+    example: 28,
+    type: Number,
+  })
+  @IsOptional()
+  @IsNumber({}, { message: 'A medida do antebraço direito deve ser um número' })
+  forearmRight?: number;
+
+  @ApiPropertyOptional({
+    description: 'Medida da coxa proximal esquerda em centímetros',
+    example: 58,
+    type: Number,
+  })
+  @IsOptional()
+  @IsNumber(
+    {},
+    { message: 'A medida da coxa proximal esquerda deve ser um número' },
+  )
+  proximalThighLeft?: number;
+
+  @ApiPropertyOptional({
+    description: 'Medida da coxa proximal direita em centímetros',
+    example: 58,
+    type: Number,
+  })
+  @IsOptional()
+  @IsNumber(
+    {},
+    { message: 'A medida da coxa proximal direita deve ser um número' },
+  )
+  proximalThighRight?: number;
+
+  @ApiPropertyOptional({
+    description: 'Medida da coxa medial esquerda em centímetros',
+    example: 50,
+    type: Number,
+  })
+  @IsOptional()
+  @IsNumber(
+    {},
+    { message: 'A medida da coxa medial esquerda deve ser um número' },
+  )
+  medialThighLeft?: number;
+
+  @ApiPropertyOptional({
+    description: 'Medida da coxa medial direita em centímetros',
+    example: 50,
+    type: Number,
+  })
+  @IsOptional()
+  @IsNumber(
+    {},
+    { message: 'A medida da coxa medial direita deve ser um número' },
+  )
+  medialThighRight?: number;
+
+  @ApiPropertyOptional({
+    description: 'Medida da panturrilha esquerda em centímetros',
+    example: 38,
+    type: Number,
+  })
+  @IsOptional()
+  @IsNumber(
+    {},
+    { message: 'A medida da panturrilha esquerda deve ser um número' },
+  )
+  calfLeft?: number;
+
+  @ApiPropertyOptional({
+    description: 'Medida da panturrilha direita em centímetros',
+    example: 38,
+    type: Number,
+  })
+  @IsOptional()
+  @IsNumber(
+    {},
+    { message: 'A medida da panturrilha direita deve ser um número' },
+  )
+  calfRight?: number;
 }
 
 export class Skinfolds {

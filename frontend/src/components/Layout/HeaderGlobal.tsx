@@ -38,7 +38,6 @@ export const HeaderGlobal = () => {
   const [avatarUrl, setAvatarUrl] = useState(user?.photoUrl || null);
   const [editProfileOpen, setEditProfileOpen] = useState(false);
   const theme = useTheme();
-  console.log("🚀 ~ HeaderGlobal.tsx:37 ~ user 🚀🚀🚀:", user);
 
   const getInitials = (name: string) => {
     return name

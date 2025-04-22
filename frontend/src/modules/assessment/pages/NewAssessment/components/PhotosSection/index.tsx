@@ -92,10 +92,6 @@ export const PhotosSection: React.FC<PhotosSectionProps> = ({
 
   // --- Effect to Process Initial Measurement Photos ---
   useEffect(() => {
-    console.log(
-      "PhotosSection: Measurement changed, processing photos...",
-      measurement?.id
-    );
     setIsLoadingMeasurementPhotos(true); // Set loading true when measurement changes
     setPhotos({ front: null, back: null, left: null, right: null }); // Clear previous photos
     initialPhotosToDeleteRef.current = {
@@ -106,7 +102,6 @@ export const PhotosSection: React.FC<PhotosSectionProps> = ({
     }; // Reset delete list
 
     if (!measurement?.photos || measurement.photos.length === 0) {
-      console.log("PhotosSection: No photos found in measurement.");
       setIsLoadingMeasurementPhotos(false);
       return;
     }
@@ -174,12 +169,6 @@ export const PhotosSection: React.FC<PhotosSectionProps> = ({
     setPhotos(processedPhotos);
     initialPhotosToDeleteRef.current = photoIdsToDelete; // Store IDs that *weren't* the latest
     setIsLoadingMeasurementPhotos(false); // Loading finished
-
-    console.log("PhotosSection: Initial photos processed:", processedPhotos);
-    console.log(
-      "PhotosSection: Initial potentially deletable photos:",
-      photoIdsToDelete
-    );
   }, [measurement]); // Dependency: measurement
 
   // --- Effect to Notify Parent Component of Photo State Changes ---
@@ -442,8 +431,8 @@ export const PhotosSection: React.FC<PhotosSectionProps> = ({
       </AccordionSummary>
       <AccordionDetails>
         <Grid container spacing={2}>
-          {renderPhotoUpload("front", "Frontal")}
-          {renderPhotoUpload("back", "Posterior")}
+          {renderPhotoUpload("front", "Frente")}
+          {renderPhotoUpload("back", "Costas")}
           {renderPhotoUpload("left", "Lateral Esquerda")}
           {renderPhotoUpload("right", "Lateral Direita")}
         </Grid>

@@ -514,18 +514,22 @@ API para gestão completa de nutrição, incluindo:
       "bodyFat": 15.2,
       "muscleMass": 35.8,
       "measurements": {
-        "skinfolds": {
-          "triceps": 10.5,
-          "subscapular": 12.3,
-          "suprailiac": 8.7,
-          "abdominal": 15.2
-        },
-        "circumferences": {
-          "chest": 95.5,
-          "waist": 80.2,
-          "hip": 98.7,
-          "thigh": 55.3
-        }
+        "chest": 95.5,
+        "waist": 80.2,
+        "hip": 98.7,
+        "relaxedArmLeft": 31.2,
+        "relaxedArmRight": 32.1,
+        "contractedArmLeft": 33.5,
+        "contractedArmRight": 34.0,
+        "forearmLeft": 27.0,
+        "forearmRight": 27.5,
+        "proximalThighLeft": 58.0,
+        "proximalThighRight": 58.5,
+        "medialThighLeft": 50.0,
+        "medialThighRight": 50.5,
+        "distalThigh": 40.0,
+        "calfLeft": 38.0,
+        "calfRight": 38.5
       },
       "measureDate": "2024-03-20",
       "createdAt": "2024-03-20T10:00:00Z"
@@ -550,18 +554,22 @@ API para gestão completa de nutrição, incluindo:
     "bodyFat": 15.2,
     "muscleMass": 35.8,
     "measurements": {
-      "skinfolds": {
-        "triceps": 10.5,
-        "subscapular": 12.3,
-        "suprailiac": 8.7,
-        "abdominal": 15.2
-      },
-      "circumferences": {
-        "chest": 95.5,
-        "waist": 80.2,
-        "hip": 98.7,
-        "thigh": 55.3
-      }
+      "chest": 95.5,
+      "waist": 80.2,
+      "hip": 98.7,
+      "relaxedArmLeft": 31.2,
+      "relaxedArmRight": 32.1,
+      "contractedArmLeft": 33.5,
+      "contractedArmRight": 34.0,
+      "forearmLeft": 27.0,
+      "forearmRight": 27.5,
+      "proximalThighLeft": 58.0,
+      "proximalThighRight": 58.5,
+      "medialThighLeft": 50.0,
+      "medialThighRight": 50.5,
+      "distalThigh": 40.0,
+      "calfLeft": 38.0,
+      "calfRight": 38.5
     },
     "measureDate": "2024-03-20"
   }

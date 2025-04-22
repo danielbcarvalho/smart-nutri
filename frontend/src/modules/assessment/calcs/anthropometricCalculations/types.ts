@@ -41,18 +41,6 @@ export interface BoneDiameters {
   femur: string;
 }
 
-export interface Bioimpedance {
-  fatPercentage: string;
-  fatMass: string;
-  muscleMassPercentage: string;
-  muscleMass: string;
-  fatFreeMass: string;
-  boneMass: string;
-  visceralFat: string;
-  bodyWater: string;
-  metabolicAge: string;
-}
-
 export interface AnthropometricResults {
   // Análises de pesos e medidas
   currentWeight: string;
@@ -62,8 +50,6 @@ export interface AnthropometricResults {
   idealWeightRange: string;
   waistHipRatio: string;
   waistHipRiskClassification: string;
-  cmb: string;
-  cmbClassification: string;
 
   // Análises por dobras e diâmetro ósseo
   bodyFatPercentage: string;
@@ -77,17 +63,4 @@ export interface AnthropometricResults {
   skinfoldsSum: string;
   bodyDensity: string;
   referenceUsed: string;
-
-  // Análises por bioimpedância
-  bioimpedanceBodyFatPercentage: string;
-  bioimpedanceIdealFatPercentage: string;
-  bioimpedanceBodyFatClassification: string;
-  bioimpedanceMuscleMassPercentage: string;
-  bioimpedanceMuscleMass: string;
-  bioimpedanceBodyWater: string;
-  bioimpedanceBoneMass: string;
-  bioimpedanceFatMass: string;
-  bioimpedanceFatFreeMass: string;
-  bioimpedanceVisceralFat: string;
-  bioimpedanceMetabolicAge: string;
 }

@@ -38,7 +38,7 @@ import { EncryptionModule } from './encryption/encryption.module';
           database: configService.get('DB_DATABASE'),
           entities: [join(__dirname, '**', '*.entity.{ts,js}')],
           synchronize: false,
-          logging: true,
+          logging: false,
         };
       },
       inject: [ConfigService],

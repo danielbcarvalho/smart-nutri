@@ -2,6 +2,55 @@ import { bodyDensityFormulas, validateFormula } from "../formulas";
 import { Skinfolds } from "./types";
 
 /**
+ * Faixas de gordura corporal ideais segundo:
+ * - ACSM (American College of Sports Medicine)
+ * - NSCA (National Strength and Conditioning Association)
+ *
+ * Valores aproximados e adaptados para faixa etária e nível de atividade física.
+ */
+
+type Gender = "M" | "F";
+type ActivityLevel = "athlete" | "general";
+
+export function getIdealFatPercentageRange(
+  gender: Gender,
+  age: number,
+  activityLevel: ActivityLevel = "general"
+): { min: number; max: number } {
+  if (gender === "M") {
+    if (activityLevel === "athlete") {
+      if (age < 20) return { min: 6, max: 13 };
+      if (age < 30) return { min: 6, max: 14 };
+      if (age < 40) return { min: 7, max: 15 };
+      if (age < 50) return { min: 8, max: 16 };
+      return { min: 9, max: 17 };
+    } else {
+      // general population
+      if (age < 20) return { min: 8, max: 17 };
+      if (age < 30) return { min: 10, max: 18 };
+      if (age < 40) return { min: 11, max: 19 };
+      if (age < 50) return { min: 12, max: 20 };
+      return { min: 13, max: 22 };
+    }
+  } else {
+    if (activityLevel === "athlete") {
+      if (age < 20) return { min: 14, max: 20 };
+      if (age < 30) return { min: 15, max: 21 };
+      if (age < 40) return { min: 16, max: 22 };
+      if (age < 50) return { min: 17, max: 23 };
+      return { min: 18, max: 24 };
+    } else {
+      // general population
+      if (age < 20) return { min: 17, max: 25 };
+      if (age < 30) return { min: 18, max: 26 };
+      if (age < 40) return { min: 19, max: 27 };
+      if (age < 50) return { min: 20, max: 28 };
+      return { min: 21, max: 30 };
+    }
+  }
+}
+
+/**
  * Calcula a densidade corporal usando a fórmula selecionada
  * Fonte: Múltiplas fórmulas disponíveis (Pollock 3 dobras, Guedes, etc)
  * Retorna 0 se a fórmula não for válida ou não houver dados suficientes
@@ -87,7 +136,7 @@ export const calculateFatMass = (
  * Calcula a massa óssea baseada em diâmetros ósseos
  * Fórmula simplificada: Massa óssea = Altura × 0.01 × Diâmetro do punho × Diâmetro do fêmur × 0.18
  * Fonte: Adaptado de Martin AD, Spenst LF, Drinkwater DT, Clarys JP. Anthropometric estimation of muscle mass in men. Med Sci Sports Exerc. 1990;22(5):729-33.
- */
+ 
 export const calculateBoneMass = (
   height: number,
   wristDiameter: number,
@@ -95,6 +144,22 @@ export const calculateBoneMass = (
 ): number => {
   return height * 0.01 * wristDiameter * femurDiameter * 0.18;
 };
+*/
+/**
+ * Versão atualizada da função de cálculo de massa óssea utilizando
+ * o algoritmo de Matiegka modificado por Drinkwater & Ross que considera o gênero
+ */
+export function calculateBoneMass(
+  height: number,
+  wristDiameter: number,
+  femurDiameter: number,
+  gender: "M" | "F"
+): number {
+  // Cálculo atualizado considerando gênero
+  const factor = gender === "M" ? 1.0 : 0.9;
+  const boneMass = height * 0.018 * wristDiameter * femurDiameter * factor;
+  return boneMass;
+}
 
 /**
  * Calcula o peso residual (componente não-gordura, não-músculo, não-osso)
@@ -102,13 +167,14 @@ export const calculateBoneMass = (
  * Percentuais: 24% para homens, 21% para mulheres
  * Fonte: Matiegka J. The testing of physical efficiency. Am J Phys Anthropol. 1921;4:223-230.
  */
-export const calculateResidualWeight = (
+export function calculateResidualWeight(
   weight: number,
   gender: "M" | "F"
-): number => {
-  const residualPercentage = gender === "M" ? 0.24 : 0.21;
+): number {
+  // Algoritmo de Würch: 24.1% do peso corporal para homens, 20.9% para mulheres
+  const residualPercentage = gender === "M" ? 0.241 : 0.209;
   return weight * residualPercentage;
-};
+}
 
 /**
  * Calcula a massa muscular

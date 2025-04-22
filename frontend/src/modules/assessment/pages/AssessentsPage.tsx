@@ -49,6 +49,9 @@ export function Assessments() {
     queryKey: ["measurements", patientId],
     queryFn: () => patientService.findMeasurements(patientId!),
     enabled: !!patientId,
+    staleTime: 0,
+    refetchOnMount: "always",
+    refetchOnWindowFocus: true,
   });
 
   // Mutation para excluir uma avaliação
@@ -56,10 +59,15 @@ export function Assessments() {
     mutationFn: (measurementId: string) => {
       return patientService.deleteMeasurement(patientId!, measurementId);
     },
-    onSuccess: () => {
-      // Invalidar queries para atualizar os dados
-      queryClient.invalidateQueries({ queryKey: ["measurements", patientId] });
-      queryClient.invalidateQueries({ queryKey: ["patient", patientId] });
+    onSuccess: async () => {
+      // Recarregar queries para atualizar os dados imediatamente
+      await queryClient.refetchQueries({
+        queryKey: ["measurements", patientId],
+      });
+      await queryClient.refetchQueries({ queryKey: ["patient", patientId] });
+
+      // Invalidar também outras queries relacionadas
+      queryClient.invalidateQueries({ queryKey: ["all-measurements"] });
 
       setSnackbar({
         open: true,
@@ -82,6 +90,11 @@ export function Assessments() {
   };
 
   const handleEditAssessment = (measurementId: string) => {
+    // Antes de navegar, limpar o cache da avaliação específica
+    queryClient.removeQueries({
+      queryKey: ["measurement", patientId, measurementId],
+    });
+
     // Navegar para a página de edição de avaliação
     navigate(`/patient/${patientId}/assessments/edit/${measurementId}`);
   };

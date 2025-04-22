@@ -92,6 +92,42 @@ npm run migration:run
 
 Para mais detalhes sobre como gerenciar o banco de dados e migrations, consulte o [Guia de Migrations](MIGRATION_GUIDE.md).
 
+## Scripts de Limpeza e Reset
+
+O projeto inclui scripts para limpar os dados do banco de dados e o armazenamento Supabase quando necessário:
+
+### Reset Completo (Banco de Dados + Supabase Storage)
+
+```bash
+# Reset do ambiente de desenvolvimento
+node scripts/reset-all.js
+
+# Reset do ambiente de produção
+NODE_ENV=production node scripts/reset-all.js
+```
+
+### Apenas Banco de Dados
+
+```bash
+# Limpar apenas os dados do banco de desenvolvimento
+node scripts/clean-dev-db.js
+
+# Limpar apenas os dados do banco de produção
+node scripts/clean-prod-db.js
+```
+
+### Apenas Supabase Storage
+
+```bash
+# Limpar apenas o armazenamento de desenvolvimento
+node scripts/clean-supabase-storage.js
+
+# Limpar apenas o armazenamento de produção
+NODE_ENV=production node scripts/clean-supabase-storage.js
+```
+
+> ⚠️ **ATENÇÃO**: Os scripts mantêm a estrutura do banco de dados, mas eliminam permanentemente todos os dados das tabelas e arquivos do armazenamento. Use com extrema cautela, especialmente em ambiente de produção. Agora, os scripts executam imediatamente, sem confirmação manual.
+
 ## Compile and run the project
 
 ```bash
@@ -240,3 +276,5 @@ BRIGHTDATA_PROXY_PASS=YOUR_PASSWORD
 - Se essas variáveis não estiverem presentes, o scraping funcionará sem proxy (comportamento padrão).
 - Consulte a documentação da Bright Data para obter seu endpoint, usuário e senha.
 - O uso de proxy pode gerar custos adicionais conforme o volume de tráfego.
+
+- O log de queries do banco de dados (TypeORM) está desabilitado por padrão para evitar poluição de logs e melhorar a performance. Caso precise ativar para debug, altere a opção 'logging' para true em 'src/app.module.ts' e 'src/config/typeorm.migrations.config.ts'.

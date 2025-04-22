@@ -24,7 +24,6 @@ import { BasicDataSection } from "./components/BasicDataSection";
 import { SkinfoldSection } from "./components/SkinfoldSection";
 import { CircumferenceSection } from "./components/CircumferenceSection";
 import { BoneDiameterSection } from "./components/BoneDiameterSection";
-import { BioimpedanceSection } from "./components/BioimpedanceSection";
 import { AssessmentHeader } from "./components/AssessmentHeader";
 import { AssessmentDate } from "./components/AssessmentDate";
 import { ActionButtons } from "./components/ActionButtons";
@@ -82,13 +81,20 @@ export function NewAssessment() {
     waist: "",
     abdomen: "",
     hip: "",
-    relaxedArm: "",
-    contractedArm: "",
-    forearm: "",
-    proximalThigh: "",
-    medialThigh: "",
-    distalThigh: "",
-    calf: "",
+    relaxedArmLeft: "",
+    relaxedArmRight: "",
+    contractedArmLeft: "",
+    contractedArmRight: "",
+    forearmLeft: "",
+    forearmRight: "",
+    proximalThighLeft: "",
+    proximalThighRight: "",
+    medialThighLeft: "",
+    medialThighRight: "",
+    distalThighLeft: "",
+    distalThighRight: "",
+    calfLeft: "",
+    calfRight: "",
   });
 
   // Estado para diâmetro ósseo
@@ -96,19 +102,6 @@ export function NewAssessment() {
     humerus: "",
     wrist: "",
     femur: "",
-  });
-
-  // Estado para bioimpedância
-  const [bioimpedance, setBioimpedance] = useState({
-    fatPercentage: "",
-    fatMass: "",
-    muscleMassPercentage: "",
-    muscleMass: "",
-    fatFreeMass: "",
-    boneMass: "",
-    visceralFat: "",
-    bodyWater: "",
-    metabolicAge: "",
   });
 
   // Estado local para fotos (utilizado pelo handlePhotosChange)
@@ -127,6 +120,11 @@ export function NewAssessment() {
   // Criar ref para controlar se já preenchemos dados
   const hasFilledDataRef = useRef(false);
 
+  // Resetar o flag hasFilledDataRef quando o measurementId mudar
+  useEffect(() => {
+    hasFilledDataRef.current = false;
+  }, [measurementId]);
+
   // Buscar dados do paciente
   const { data: patient } = useQuery({
     queryKey: ["patient", patientId],
@@ -139,6 +137,9 @@ export function NewAssessment() {
     queryKey: ["measurements", patientId],
     queryFn: () => patientService.findMeasurements(patientId!),
     enabled: !!patientId,
+    staleTime: 0, // Sempre considerar os dados obsoletos e buscar novamente
+    refetchOnMount: true, // Sempre refetching ao montar o componente
+    refetchOnWindowFocus: true, // Refetch quando a janela receber foco
   });
 
   // Buscar a avaliação específica para edição, se estiver no modo de edição
@@ -151,6 +152,10 @@ export function NewAssessment() {
       return undefined;
     },
     enabled: !!patientId && !!measurementId && !!previousMeasurements,
+    staleTime: 0, // Sempre buscar dados atualizados
+    gcTime: 0, // Não manter em cache após uso
+    refetchOnMount: "always", // Sempre refetching ao montar
+    refetchOnWindowFocus: true, // Refetch quando a janela receber foco
   });
 
   // Este useEffect preenche os dados quando estamos editando
@@ -175,19 +180,6 @@ export function NewAssessment() {
         height: toString(measurementToEdit.height),
         sittingHeight: toString(measurementToEdit.sittingHeight),
         kneeHeight: toString(measurementToEdit.kneeHeight),
-      });
-
-      // Preencher dados de bioimpedância
-      setBioimpedance({
-        fatPercentage: toString(measurementToEdit.bodyFat),
-        fatMass: toString(measurementToEdit.fatMass),
-        muscleMassPercentage: toString(measurementToEdit.muscleMassPercentage),
-        muscleMass: toString(measurementToEdit.muscleMass),
-        fatFreeMass: toString(measurementToEdit.fatFreeMass),
-        boneMass: toString(measurementToEdit.boneMass),
-        visceralFat: toString(measurementToEdit.visceralFat),
-        bodyWater: toString(measurementToEdit.bodyWater),
-        metabolicAge: toString(measurementToEdit.metabolicAge),
       });
 
       // Preencher fórmula de dobras cutâneas
@@ -220,13 +212,40 @@ export function NewAssessment() {
           waist: toString(measurementToEdit.measurements.waist),
           abdomen: toString(measurementToEdit.measurements.abdomen),
           hip: toString(measurementToEdit.measurements.hip),
-          relaxedArm: toString(measurementToEdit.measurements.relaxedArm),
-          contractedArm: toString(measurementToEdit.measurements.contractedArm),
-          forearm: toString(measurementToEdit.measurements.forearm),
-          proximalThigh: toString(measurementToEdit.measurements.proximalThigh),
-          medialThigh: toString(measurementToEdit.measurements.medialThigh),
-          distalThigh: toString(measurementToEdit.measurements.distalThigh),
-          calf: toString(measurementToEdit.measurements.calf),
+          relaxedArmLeft: toString(
+            measurementToEdit.measurements.relaxedArmLeft
+          ),
+          relaxedArmRight: toString(
+            measurementToEdit.measurements.relaxedArmRight
+          ),
+          contractedArmLeft: toString(
+            measurementToEdit.measurements.contractedArmLeft
+          ),
+          contractedArmRight: toString(
+            measurementToEdit.measurements.contractedArmRight
+          ),
+          forearmLeft: toString(measurementToEdit.measurements.forearmLeft),
+          forearmRight: toString(measurementToEdit.measurements.forearmRight),
+          proximalThighLeft: toString(
+            measurementToEdit.measurements.proximalThighLeft
+          ),
+          proximalThighRight: toString(
+            measurementToEdit.measurements.proximalThighRight
+          ),
+          medialThighLeft: toString(
+            measurementToEdit.measurements.medialThighLeft
+          ),
+          medialThighRight: toString(
+            measurementToEdit.measurements.medialThighRight
+          ),
+          distalThighLeft: toString(
+            measurementToEdit.measurements.distalThighLeft
+          ),
+          distalThighRight: toString(
+            measurementToEdit.measurements.distalThighRight
+          ),
+          calfLeft: toString(measurementToEdit.measurements.calfLeft),
+          calfRight: toString(measurementToEdit.measurements.calfRight),
         });
       }
 
@@ -258,8 +277,26 @@ export function NewAssessment() {
         return patientService.createMeasurement(patientId!, dto);
       }
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["measurements", patientId] });
+    onSuccess: async () => {
+      // Forçar recarregamento de todas as queries relacionadas a measurements
+      // Usando refetchQueries em vez de invalidateQueries para garantir atualização imediata
+      await queryClient.refetchQueries({
+        queryKey: ["measurements"],
+        exact: false,
+      });
+
+      // Também recarregar a query específica do measurement
+      if (isEditMode && measurementId) {
+        await queryClient.refetchQueries({
+          queryKey: ["measurement", patientId, measurementId],
+        });
+      }
+
+      // Invalidar todas as outras consultas relacionadas
+      await queryClient.invalidateQueries({
+        queryKey: ["all-measurements"],
+      });
+
       setSnackbar({
         open: true,
         message: isEditMode
@@ -325,15 +362,6 @@ export function NewAssessment() {
       }));
     };
 
-  const handleBioimpedanceChange =
-    (field: keyof typeof bioimpedance) =>
-    (event: React.ChangeEvent<HTMLInputElement>) => {
-      setBioimpedance((prev) => ({
-        ...prev,
-        [field]: event.target.value,
-      }));
-    };
-
   const handleSaveAssessment = () => {
     if (!patientId || isSaving.current) return;
 
@@ -380,20 +408,52 @@ export function NewAssessment() {
     if (circumferences.abdomen)
       measurementsData.abdomen = toNumber(circumferences.abdomen);
     if (circumferences.hip) measurementsData.hip = toNumber(circumferences.hip);
-    if (circumferences.relaxedArm)
-      measurementsData.relaxedArm = toNumber(circumferences.relaxedArm);
-    if (circumferences.contractedArm)
-      measurementsData.contractedArm = toNumber(circumferences.contractedArm);
-    if (circumferences.forearm)
-      measurementsData.forearm = toNumber(circumferences.forearm);
-    if (circumferences.proximalThigh)
-      measurementsData.proximalThigh = toNumber(circumferences.proximalThigh);
-    if (circumferences.medialThigh)
-      measurementsData.medialThigh = toNumber(circumferences.medialThigh);
-    if (circumferences.distalThigh)
-      measurementsData.distalThigh = toNumber(circumferences.distalThigh);
-    if (circumferences.calf)
-      measurementsData.calf = toNumber(circumferences.calf);
+    if (circumferences.relaxedArmLeft)
+      measurementsData.relaxedArmLeft = toNumber(circumferences.relaxedArmLeft);
+    if (circumferences.relaxedArmRight)
+      measurementsData.relaxedArmRight = toNumber(
+        circumferences.relaxedArmRight
+      );
+    if (circumferences.contractedArmLeft)
+      measurementsData.contractedArmLeft = toNumber(
+        circumferences.contractedArmLeft
+      );
+    if (circumferences.contractedArmRight)
+      measurementsData.contractedArmRight = toNumber(
+        circumferences.contractedArmRight
+      );
+    if (circumferences.forearmLeft)
+      measurementsData.forearmLeft = toNumber(circumferences.forearmLeft);
+    if (circumferences.forearmRight)
+      measurementsData.forearmRight = toNumber(circumferences.forearmRight);
+    if (circumferences.proximalThighLeft)
+      measurementsData.proximalThighLeft = toNumber(
+        circumferences.proximalThighLeft
+      );
+    if (circumferences.proximalThighRight)
+      measurementsData.proximalThighRight = toNumber(
+        circumferences.proximalThighRight
+      );
+    if (circumferences.medialThighLeft)
+      measurementsData.medialThighLeft = toNumber(
+        circumferences.medialThighLeft
+      );
+    if (circumferences.medialThighRight)
+      measurementsData.medialThighRight = toNumber(
+        circumferences.medialThighRight
+      );
+    if (circumferences.distalThighLeft)
+      measurementsData.distalThighLeft = toNumber(
+        circumferences.distalThighLeft
+      );
+    if (circumferences.distalThighRight)
+      measurementsData.distalThighRight = toNumber(
+        circumferences.distalThighRight
+      );
+    if (circumferences.calfLeft)
+      measurementsData.calfLeft = toNumber(circumferences.calfLeft);
+    if (circumferences.calfRight)
+      measurementsData.calfRight = toNumber(circumferences.calfRight);
 
     // Preparar diâmetros ósseos
     const boneDiametersData: BoneDiameters = {};
@@ -417,15 +477,6 @@ export function NewAssessment() {
       height: toNumber(basicData.height),
       sittingHeight: toNumber(basicData.sittingHeight),
       kneeHeight: toNumber(basicData.kneeHeight),
-      bodyFat: toNumber(bioimpedance.fatPercentage),
-      fatMass: toNumber(bioimpedance.fatMass),
-      muscleMassPercentage: toNumber(bioimpedance.muscleMassPercentage),
-      muscleMass: toNumber(bioimpedance.muscleMass),
-      fatFreeMass: toNumber(bioimpedance.fatFreeMass),
-      boneMass: toNumber(bioimpedance.boneMass),
-      visceralFat: toNumber(bioimpedance.visceralFat),
-      bodyWater: toNumber(bioimpedance.bodyWater),
-      metabolicAge: toNumber(bioimpedance.metabolicAge),
 
       // Objetos complexos
       skinfolds: skinfoldData,
@@ -498,30 +549,32 @@ export function NewAssessment() {
         waist: parseFloat(circumferences.waist),
         abdomen: parseFloat(circumferences.abdomen),
         hip: parseFloat(circumferences.hip),
-        relaxedArm: parseFloat(circumferences.relaxedArm),
-        contractedArm: parseFloat(circumferences.contractedArm),
-        forearm: parseFloat(circumferences.forearm),
-        proximalThigh: parseFloat(circumferences.proximalThigh),
-        medialThigh: parseFloat(circumferences.medialThigh),
-        distalThigh: parseFloat(circumferences.distalThigh),
-        calf: parseFloat(circumferences.calf),
+        relaxedArm: parseFloat(
+          circumferences.relaxedArmLeft + circumferences.relaxedArmRight
+        ),
+        contractedArm: parseFloat(
+          circumferences.contractedArmLeft + circumferences.contractedArmRight
+        ),
+        forearm: parseFloat(
+          circumferences.forearmLeft + circumferences.forearmRight
+        ),
+        proximalThigh: parseFloat(
+          circumferences.proximalThighLeft + circumferences.proximalThighRight
+        ),
+        medialThigh: parseFloat(
+          circumferences.medialThighLeft + circumferences.medialThighRight
+        ),
+        distalThigh: parseFloat(
+          circumferences.distalThighLeft + circumferences.distalThighRight
+        ),
+        calf: parseFloat(circumferences.calfLeft + circumferences.calfRight),
       },
       boneDiameters: {
         humerus: parseFloat(boneDiameters.humerus),
         wrist: parseFloat(boneDiameters.wrist),
         femur: parseFloat(boneDiameters.femur),
       },
-      bioimpedance: {
-        fatPercentage: parseFloat(bioimpedance.fatPercentage),
-        fatMass: parseFloat(bioimpedance.fatMass),
-        muscleMassPercentage: parseFloat(bioimpedance.muscleMassPercentage),
-        muscleMass: parseFloat(bioimpedance.muscleMass),
-        fatFreeMass: parseFloat(bioimpedance.fatFreeMass),
-        boneMass: parseFloat(bioimpedance.boneMass),
-        visceralFat: parseFloat(bioimpedance.visceralFat),
-        bodyWater: parseFloat(bioimpedance.bodyWater),
-        metabolicAge: parseFloat(bioimpedance.metabolicAge),
-      },
+
       skinfoldFormula,
     });
   }, [
@@ -529,7 +582,6 @@ export function NewAssessment() {
     circumferences,
     skinfolds,
     boneDiameters,
-    bioimpedance,
     patient,
     skinfoldFormula,
   ]);
@@ -540,7 +592,6 @@ export function NewAssessment() {
       bmi: "Índice de Massa Corporal (IMC) - Medida que relaciona peso e altura para avaliar o estado nutricional. Valores entre 18,5 e 24,9 kg/m² indicam peso adequado.\n\nReferência: Organização Mundial da Saúde (OMS). Estado físico: uso e interpretação da antropometria. Genebra: OMS, 1995.",
       waistHipRatio:
         "Relação Cintura/Quadril (RCQ) - Medida que avalia a distribuição de gordura corporal. Valores elevados indicam maior risco de doenças cardiovasculares.\n\nReferência: Organização Mundial da Saúde (OMS). Circunferência da cintura e relação cintura-quadril: relatório de uma consulta de especialistas da OMS. Genebra: OMS, 2008.",
-      cmb: "Circunferência Muscular do Braço (CMB) - Medida que avalia a massa muscular do braço, importante para diagnóstico de desnutrição e sarcopenia.\n\nReferência: Frisancho AR. Novas normas de áreas de gordura e músculo dos membros superiores para avaliação do estado nutricional. Am J Clin Nutr. 1981;34(11):2540-5.",
       bodyDensity:
         "Densidade Corporal - Medida que avalia a composição corporal através da relação entre massa e volume. Valores mais altos indicam maior proporção de massa magra.\n\nReferência: Pollock ML, Schmidt DH, Jackson AS. Medição da aptidão cardiorrespiratória e composição corporal no ambiente clínico. Compr Ther. 1980;6(9):12-27.",
       bodyFatPercentage:
@@ -626,14 +677,6 @@ export function NewAssessment() {
               onAccordionChange={handleAccordionChange}
               boneDiameters={boneDiameters}
               onBoneDiameterChange={handleBoneDiameterChange}
-            />
-
-            {/* Seção de bioimpedância */}
-            <BioimpedanceSection
-              expanded={expanded === "bioimpedance"}
-              onAccordionChange={handleAccordionChange}
-              bioimpedance={bioimpedance}
-              onBioimpedanceChange={handleBioimpedanceChange}
             />
 
             {/* Seção de fotos */}

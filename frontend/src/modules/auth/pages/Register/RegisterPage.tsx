@@ -222,6 +222,9 @@ export function Register() {
                 gap: 1,
               }}
               autoComplete="off"
+              spellCheck="false"
+              data-form-type="other"
+              data-lpignore="true"
             >
               <TextField
                 required
@@ -232,6 +235,10 @@ export function Register() {
                 onChange={(e) =>
                   setFormData({ ...formData, name: e.target.value })
                 }
+                autoComplete="off"
+                inputProps={{
+                  autoComplete: "off",
+                }}
                 InputProps={{
                   startAdornment: (
                     <InputAdornment position="start">
@@ -280,7 +287,7 @@ export function Register() {
                 }
                 autoComplete="off"
                 inputProps={{
-                  autoComplete: "new-email",
+                  autoComplete: "off",
                 }}
                 InputProps={{
                   startAdornment: (
@@ -328,9 +335,10 @@ export function Register() {
                 onChange={(e) =>
                   setFormData({ ...formData, password: e.target.value })
                 }
-                autoComplete="new-password"
+                autoComplete="off"
                 inputProps={{
-                  autoComplete: "new-password",
+                  autoComplete: "off",
+                  "data-lpignore": "true",
                 }}
                 InputProps={{
                   startAdornment: (
@@ -397,9 +405,10 @@ export function Register() {
                     confirmPassword: e.target.value,
                   })
                 }
-                autoComplete="new-password"
+                autoComplete="off"
                 inputProps={{
-                  autoComplete: "new-password",
+                  autoComplete: "off",
+                  "data-lpignore": "true",
                 }}
                 InputProps={{
                   startAdornment: (
@@ -469,6 +478,10 @@ export function Register() {
                 onChange={(e) =>
                   setFormData({ ...formData, phone: e.target.value })
                 }
+                autoComplete="off"
+                inputProps={{
+                  autoComplete: "off",
+                }}
                 InputProps={{
                   startAdornment: (
                     <InputAdornment position="start">
@@ -509,6 +522,10 @@ export function Register() {
                 onChange={(e) =>
                   setFormData({ ...formData, crn: e.target.value })
                 }
+                autoComplete="off"
+                inputProps={{
+                  autoComplete: "off",
+                }}
                 InputProps={{
                   startAdornment: (
                     <InputAdornment position="start">
@@ -549,6 +566,10 @@ export function Register() {
                 onChange={(e) =>
                   setFormData({ ...formData, clinicName: e.target.value })
                 }
+                autoComplete="off"
+                inputProps={{
+                  autoComplete: "off",
+                }}
                 InputProps={{
                   startAdornment: (
                     <InputAdornment position="start">
@@ -592,6 +613,10 @@ export function Register() {
                   })
                 }
                 placeholder="@exemplo_nutri"
+                autoComplete="off"
+                inputProps={{
+                  autoComplete: "off",
+                }}
                 InputProps={{
                   startAdornment: (
                     <InputAdornment position="start">

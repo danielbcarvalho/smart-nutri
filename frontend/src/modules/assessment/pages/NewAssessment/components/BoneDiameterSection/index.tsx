@@ -6,6 +6,7 @@ import {
   AccordionSummary,
   Typography,
   Accordion,
+  Box,
 } from "@mui/material";
 import ExpandMoreIcon from "@mui/icons-material/ArrowDropDown";
 
@@ -56,14 +57,18 @@ export const BoneDiameterSection: React.FC<BoneDiameterSectionProps> = ({
       <AccordionDetails>
         <Grid container spacing={2}>
           {Object.entries(boneDiameters).map(([key, value]) => (
-            <Grid item xs={12} sm={6} key={key}>
+            <Box
+              sx={{ flex: { xs: "1 1 100%", sm: "1 1 calc(50% - 8px)" } }}
+              key={key}
+            >
+              {" "}
               <TextField
                 fullWidth
                 label={`${boneDiameterLabels[key as keyof BoneDiameters]} (cm)`}
                 value={value}
                 onChange={onBoneDiameterChange(key as keyof BoneDiameters)}
               />
-            </Grid>
+            </Box>
           ))}
         </Grid>
       </AccordionDetails>

@@ -167,7 +167,10 @@ export const SkinfoldSection: React.FC<SkinfoldSectionProps> = ({
                 : false);
 
             return (
-              <Grid item xs={12} sm={6} key={key}>
+              <Box
+                sx={{ flex: { xs: "1 1 100%", sm: "1 1 calc(50% - 8px)" } }}
+                key={key}
+              >
                 <TextField
                   fullWidth
                   label={
@@ -197,7 +200,7 @@ export const SkinfoldSection: React.FC<SkinfoldSectionProps> = ({
                     },
                   }}
                 />
-              </Grid>
+              </Box>
             );
           })}
         </Grid>
