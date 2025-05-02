@@ -182,23 +182,14 @@ export const PhotosSection: React.FC<PhotosSectionProps> = ({
   const deletePhotoByIds = useCallback(
     async (ids: string[], type: PhotoType): Promise<boolean> => {
       if (!ids || ids.length === 0) {
-        console.log(
-          `PhotosSection (${type}): No photo IDs provided for deletion.`
-        );
         return true; // Nothing to delete
       }
-      console.log(
-        `PhotosSection (${type}): Attempting to delete ${ids.length} photo(s):`,
-        ids
-      );
+
       setIsProcessing((prev) => ({ ...prev, [type]: true }));
       try {
         const deletePromises = ids.map((id) => PhotoService.deletePhoto(id));
         await Promise.all(deletePromises);
-        console.log(
-          `PhotosSection (${type}): Successfully deleted photo(s):`,
-          ids
-        );
+
         return true;
       } catch (error) {
         console.error(
@@ -220,12 +211,8 @@ export const PhotosSection: React.FC<PhotosSectionProps> = ({
   const handleUploadStart = useCallback(
     async (type: PhotoType): Promise<boolean> => {
       if (isProcessing[type]) {
-        console.log(
-          `PhotosSection (${type}): Processing already in progress, ignoring upload start.`
-        );
         return false; // Prevent concurrent operations for the same type
       }
-      console.log(`PhotosSection (${type}): Preparing for new upload.`);
 
       // Check if there's an *existing* photo in the current state that needs deleting
       const currentPhotoId = photos[type]?.id;
@@ -241,10 +228,6 @@ export const PhotosSection: React.FC<PhotosSectionProps> = ({
       }
 
       if (idsToDelete.length > 0) {
-        console.log(
-          `PhotosSection (${type}): Deleting existing/old photos before new upload:`,
-          idsToDelete
-        );
         const success = await deletePhotoByIds(idsToDelete, type);
         if (!success) {
           console.error(
@@ -266,12 +249,8 @@ export const PhotosSection: React.FC<PhotosSectionProps> = ({
 
       // Optional: Refresh measurement data after deletion, before upload
       if (onRefreshMeasurement) {
-        console.log(
-          `PhotosSection (${type}): Refreshing measurement data after deletion...`
-        );
         try {
           await onRefreshMeasurement();
-          console.log(`PhotosSection (${type}): Measurement data refreshed.`);
         } catch (refreshError) {
           console.error(
             `PhotosSection (${type}): Error refreshing measurement data:`,
@@ -284,9 +263,6 @@ export const PhotosSection: React.FC<PhotosSectionProps> = ({
       // Add a small delay to allow backend processing if needed (optional)
       // await new Promise(resolve => setTimeout(resolve, 200));
 
-      console.log(
-        `PhotosSection (${type}): Preparation complete, allowing upload.`
-      );
       return true; // Allow PhotoUpload to proceed
     },
     [photos, isProcessing, deletePhotoByIds, onRefreshMeasurement]
@@ -296,10 +272,6 @@ export const PhotosSection: React.FC<PhotosSectionProps> = ({
   // Called by PhotoUpload when its upload is successful.
   const handlePhotoChange = useCallback(
     (type: PhotoType) => (uploadedPhoto: AssessmentPhoto) => {
-      console.log(
-        `PhotosSection (${type}): Upload complete. Received photo:`,
-        uploadedPhoto
-      );
       setPhotos((prevPhotos) => ({
         ...prevPhotos,
         [type]: uploadedPhoto, // Update state with the new photo object
@@ -315,25 +287,15 @@ export const PhotosSection: React.FC<PhotosSectionProps> = ({
   const handleRemovePhoto = useCallback(
     async (type: PhotoType): Promise<void> => {
       if (isProcessing[type]) {
-        console.log(
-          `PhotosSection (${type}): Processing already in progress, ignoring remove request.`
-        );
         return; // Prevent concurrent operations
       }
-      console.log(`PhotosSection (${type}): Request to remove photo.`);
       const photoToRemove = photos[type];
 
       if (photoToRemove && photoToRemove.id) {
-        console.log(
-          `PhotosSection (${type}): Found photo with ID ${photoToRemove.id} to remove.`
-        );
         // No need to clear local state here, PhotoUpload did it for immediate feedback.
         // Just call the delete API.
         const success = await deletePhotoByIds([photoToRemove.id], type);
         if (success) {
-          console.log(
-            `PhotosSection (${type}): Successfully removed photo via API.`
-          );
           // Clear the initial deletable list for this type as well, just in case
           initialPhotosToDeleteRef.current[type] = [];
           // Ensure local state is definitely null after successful API delete
@@ -348,9 +310,6 @@ export const PhotosSection: React.FC<PhotosSectionProps> = ({
           // For now, log it. The UI state is already cleared in PhotoUpload.
         }
       } else {
-        console.log(
-          `PhotosSection (${type}): No existing photo or photo ID found in state. Assuming already cleared locally.`
-        );
         // Ensure local state is null if somehow it wasn't cleared by PhotoUpload
         setPhotos((prev) => ({ ...prev, [type]: null }));
       }

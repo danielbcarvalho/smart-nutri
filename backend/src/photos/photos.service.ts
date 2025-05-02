@@ -45,10 +45,6 @@ export class PhotosService {
 
       // Deleta as fotos existentes (caso existam)
       if (existingPhotos.length > 0) {
-        console.log(
-          `Removendo ${existingPhotos.length} fotos antigas do tipo ${type} para avaliação ${assessmentId}`,
-        );
-
         for (const existingPhoto of existingPhotos) {
           await this.removePhoto(existingPhoto.id);
         }

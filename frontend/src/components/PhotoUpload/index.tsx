@@ -247,10 +247,6 @@ export const PhotoUpload: React.FC<ExtendedPhotoUploadProps> = ({
         return; // Don't allow drop while uploading
       }
       if (acceptedFiles && acceptedFiles[0]) {
-        console.log(
-          `PhotoUpload (${type}): File dropped:`,
-          acceptedFiles[0].name
-        );
         processFile(acceptedFiles[0]);
       } else {
         // Handle rejected files (e.g., wrong type/size)

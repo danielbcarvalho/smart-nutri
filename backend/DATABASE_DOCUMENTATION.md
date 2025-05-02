@@ -461,3 +461,98 @@ Para situações em que é necessário limpar todos os dados do banco de dados e
    - Executar as migrations para garantir que a estrutura do banco esteja atualizada
 
 > ⚠️ **ATENÇÃO**: Estes scripts são destrutivos e eliminam permanentemente todos os dados. Eles usam `TRUNCATE TABLE CASCADE` para limpar as tabelas, o que contorna as restrições de chave estrangeira de forma segura. Use com extrema cautela, especialmente em ambiente de produção.
+
+## 2. MongoDB Integration
+
+### Visão Geral
+
+Além do PostgreSQL utilizado como banco principal, o sistema agora utiliza exclusivamente o MongoDB para armazenar e consultar dados de alimentos. O serviço OpenFoodFacts anteriormente utilizado foi substituído por uma base de dados local no MongoDB, oferecendo informações mais precisas e completas sobre alimentos brasileiros.
+
+### Configuração do MongoDB
+
+A conexão com o MongoDB era configurada através do MongooseModule no NestJS, definida no arquivo `app.module.ts`:
+
+```typescript
+// MongooseModule.forRootAsync({
+//   imports: [ConfigModule],
+//   useFactory: (configService: ConfigService) => ({
+//     uri:
+//       configService.get('MONGODB_URI') ||
+//       'mongodb://localhost:27017/tbca_database',
+//   }),
+//   inject: [ConfigService],
+// });
+```
+
+### Bancos e Coleções
+
+#### 1. tbca_database
+
+Base de dados que armazena informações sobre alimentos da TBCA (Tabela Brasileira de Composição de Alimentos).
+
+##### Coleção: alimentos
+
+Armazena informações detalhadas sobre os alimentos brasileiros e suas composições nutricionais.
+
+**Schema:**
+
+```typescript
+@Schema({ timestamps: true })
+export class Alimento {
+  @Prop({ required: true, unique: true })
+  codigo: string;
+
+  @Prop({ required: true })
+  classe: string;
+
+  @Prop({ required: true })
+  descricao: string;
+
+  @Prop()
+  descricao_simplificada: string;
+
+  @Prop([String])
+  tags: string[];
+
+  @Prop({ type: Object })
+  nutrientes: Record<string, Nutriente>;
+
+  @Prop([Object])
+  nutrientes_array: Array<{
+    componente: string;
+    unidade: string;
+    valor_por_100g: number | string;
+  }>;
+
+  @Prop({ type: Object })
+  metadados: {
+    ultima_atualizacao: Date;
+    fonte: string;
+    versao_scraper: string;
+  };
+}
+```
+
+**Índices:**
+
+- `codigo`: Índice único para o código do alimento
+- Índice de texto composto em `descricao`, `descricao_simplificada` e `tags`
+- Índices em nutrientes comuns: proteina, energia_kcal, carboidrato_total, lipidios
+
+**Uso na Aplicação:**
+Esta base de dados é a fonte primária de informações nutricionais no sistema, substituindo completamente a dependência externa do OpenFoodFacts. As principais funcionalidades incluem:
+
+1. **Busca textual**: Pesquisa de alimentos por texto em descrições e tags
+2. **Filtragem por classe**: Busca de alimentos por categoria/classe
+3. **Filtragem por nutrientes**: Busca de alimentos por faixa de valores nutricionais
+4. **Cache local**: Alimentos encontrados são salvos no PostgreSQL para rápido acesso futuro
+
+**Endpoints disponíveis:**
+
+- `POST /foods/save-from-tbca`: Salva um alimento da TBCA no banco local
+- `GET /foods/tbca/:codigo`: Busca um alimento específico por código TBCA
+- `GET /foods/tbca/class/:classe`: Lista alimentos de uma classe específica
+- `GET /foods/tbca/nutrient/:nutrient`: Filtra alimentos por valores de nutriente
+
+**Adaptador:**
+O sistema utiliza o `AlimentoToFoodAdapter` para converter documentos do MongoDB para entidades Food utilizadas no sistema PostgreSQL, garantindo uma integração perfeita entre as bases de dados.

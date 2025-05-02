@@ -68,10 +68,7 @@ export const HeaderGlobal = () => {
       );
       const updatedUser = { ...user, photoUrl: response.data.photoUrl };
       localStorage.setItem("@smartnutri:user", JSON.stringify(updatedUser));
-      console.log(
-        "🚀 ~ HeaderGlobal.tsx:217 ~ updatedUser 🚀🚀🚀:",
-        updatedUser
-      );
+
       const updatedUrl = response.data.photoUrl
         ? `${response.data.photoUrl}?t=${Date.now()}`
         : null;

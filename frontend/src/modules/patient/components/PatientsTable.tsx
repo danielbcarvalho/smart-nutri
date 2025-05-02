@@ -24,7 +24,7 @@ import {
 } from "@mui/icons-material";
 import { Patient } from "@/modules/patient/services/patientService";
 import { NavigateFunction } from "react-router-dom";
-import { MealPlanButton } from "@components/MealPlanButton";
+import { MealPlanButton } from "@/modules/meal-plan/components/MealPlanButton";
 import { AssessmentButton } from "@components/AssessmentButton";
 
 type Order = "asc" | "desc";

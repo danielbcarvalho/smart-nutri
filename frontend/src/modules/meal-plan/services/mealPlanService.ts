@@ -12,6 +12,7 @@ export interface Meal {
 export interface MealPlan {
   id: string;
   patientId: string;
+  nutritionistId: string;
   name: string;
   type: "alimentos" | "equivalentes" | "qualitativa";
   status: "draft" | "active" | "archived";

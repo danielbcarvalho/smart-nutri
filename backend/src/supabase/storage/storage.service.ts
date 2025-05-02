@@ -58,7 +58,6 @@ export class StorageService {
       ) || 'nutritionist-photos';
     const filePath = `${nutritionistId}/${filename}`;
 
-    console.log('🚀 ~ storage.service.ts:57 ~ bucketName 🚀🚀🚀:', bucketName);
     await this.supabaseService.uploadFile(
       bucketName,
       filePath,

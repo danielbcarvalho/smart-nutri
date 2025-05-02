@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { MongooseModule } from '@nestjs/mongoose';
 import { AuthModule } from './auth/auth.module';
 import { NutritionistsModule } from './nutritionists/nutritionists.module';
 import { PatientsModule } from './patients/patients.module';
@@ -13,6 +14,7 @@ import { SearchModule } from './search/search.module';
 import { SupabaseModule } from './supabase/supabase.module';
 import { PhotosModule } from './photos/photos.module';
 import { EncryptionModule } from './encryption/encryption.module';
+import { FoodsModule } from './foods/foods.module';
 
 @Module({
   imports: [
@@ -43,6 +45,25 @@ import { EncryptionModule } from './encryption/encryption.module';
       },
       inject: [ConfigService],
     }),
+    MongooseModule.forRootAsync({
+      imports: [ConfigModule],
+      useFactory: (configService: ConfigService) => {
+        const mongoUri = configService.get('MONGODB_URI');
+
+        const defaultUri = 'mongodb://localhost:27017/tbca_database';
+
+        console.log(
+          'Conectando ao MongoDB usando URI: ' + (mongoUri || defaultUri),
+        );
+
+        return {
+          uri: mongoUri || defaultUri,
+          // Forçar o uso do banco de dados tbca_database
+          dbName: 'tbca_database',
+        };
+      },
+      inject: [ConfigService],
+    }),
     AuthModule,
     NutritionistsModule,
     PatientsModule,
@@ -52,6 +73,7 @@ import { EncryptionModule } from './encryption/encryption.module';
     SupabaseModule,
     PhotosModule,
     EncryptionModule,
+    FoodsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

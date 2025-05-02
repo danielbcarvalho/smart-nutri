@@ -24,10 +24,11 @@ import {
   ChevronRight,
   Timeline as TimelineIcon,
 } from "@mui/icons-material";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { patientService } from "../modules/patient/services/patientService";
 import { Container } from "../components/Layout/Container";
 import { authService } from "../modules/auth/services/authService";
+import { getPreloadFoodDb } from "@/services/useFoodDb";
 
 export function PatientLayout() {
   const { patientId } = useParams<{ patientId: string }>();
@@ -35,6 +36,7 @@ export function PatientLayout() {
   const mobile = useMediaQuery(theme.breakpoints.down("md"));
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [sidebarMinimized, setSidebarMinimized] = useState(false);
+  const queryClient = useQueryClient();
 
   // Buscar os dados do paciente
   const { data: patient } = useQuery({
@@ -70,6 +72,13 @@ export function PatientLayout() {
       path: `/patient/${patientId}/documents`,
     },
   ];
+
+  const handleMenuClick = (item) => {
+    if (item.label === "Planos Alimentares") {
+      getPreloadFoodDb(queryClient);
+    }
+    setDrawerOpen(false);
+  };
 
   const SidebarContent = (
     <Box
@@ -122,7 +131,7 @@ export function PatientLayout() {
             <ListItemButton
               component={NavLink}
               to={item.path}
-              onClick={() => setDrawerOpen(false)}
+              onClick={() => handleMenuClick(item)}
               {...(item.label === "Informações pessoais" ? { end: true } : {})}
               sx={{
                 justifyContent: sidebarMinimized ? "center" : "flex-start",

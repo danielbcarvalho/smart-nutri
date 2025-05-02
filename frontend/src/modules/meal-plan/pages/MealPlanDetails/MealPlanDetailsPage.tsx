@@ -28,6 +28,7 @@ import {
   mealPlanService,
   Meal,
 } from "@/modules/meal-plan/services/mealPlanService";
+import AddFoodToMealModal from "@/modules/meal-plan/components/AddFoodToMealModal";
 
 const DEFAULT_MEALS = [
   { name: "Café da manhã", time: "07:00" },
@@ -48,6 +49,8 @@ export function MealPlanDetails() {
   const [selectedTime, setSelectedTime] = useState("12:00");
   const [expandedMeals, setExpandedMeals] = useState<string[]>([]);
   const defaultMealsCreated = useRef(false);
+  const [openAddFoodModal, setOpenAddFoodModal] = useState(false);
+  const [selectedMealId, setSelectedMealId] = useState<string | null>(null);
 
   const { data: plan, isLoading } = useQuery({
     queryKey: ["mealPlan", planId],
@@ -84,7 +87,7 @@ export function MealPlanDetails() {
               mealFoods: [],
             });
           }
-        } catch (error) {
+        } catch {
           // Não resetamos o defaultMealsCreated aqui, pois queremos tentar apenas uma vez
         }
       }
@@ -123,10 +126,11 @@ export function MealPlanDetails() {
   };
 
   const handleAddFood = (mealId: string) => {
-    // TODO: Implementar adição de alimento
+    setSelectedMealId(mealId);
+    setOpenAddFoodModal(true);
   };
 
-  const handleEditMeal = (meal: Meal) => {
+  const handleEditMeal = () => {
     // TODO: Implementar edição de refeição
   };
 
@@ -222,7 +226,7 @@ export function MealPlanDetails() {
                     Adicionar Alimento
                   </Button>
                   <IconButton
-                    onClick={() => handleEditMeal(meal)}
+                    onClick={() => handleEditMeal()}
                     size="small"
                     color="primary"
                   >
@@ -283,6 +287,17 @@ export function MealPlanDetails() {
           </Button>
         </DialogActions>
       </Dialog>
+
+      <AddFoodToMealModal
+        open={openAddFoodModal}
+        onClose={() => setOpenAddFoodModal(false)}
+        mealName={
+          selectedMealId
+            ? plan.meals?.find((m) => m.id === selectedMealId)?.name ||
+              undefined
+            : undefined
+        }
+      />
     </Box>
   );
 }

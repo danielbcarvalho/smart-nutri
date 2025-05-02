@@ -26,13 +26,13 @@ export class SearchFoodDto {
   @ApiPropertyOptional({
     description: 'Quantidade de itens por página (mínimo 1, máximo 50)',
     example: 20,
-    default: 20,
+    default: 80,
     minimum: 1,
-    maximum: 50,
+    maximum: 80,
   })
   @IsOptional()
   @IsInt()
   @Min(1)
-  @Max(50)
-  pageSize?: number = 20;
+  @Max(80)
+  pageSize?: number = 80;
 }

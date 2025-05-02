@@ -212,6 +212,39 @@ import { StatsCards } from "@components/StatsCards";
 
 ---
 
+## Busca de Alimentos (Food Database)
+
+A busca de alimentos é realizada **localmente** a partir de um arquivo `alimentos.json` hospedado no Supabase Storage. O fluxo é o seguinte:
+
+- O serviço [`foodDbService.ts`](src/services/foodDbService.ts) é responsável por baixar o arquivo JSON diretamente do Supabase Storage, utilizando as variáveis de ambiente `VITE_SUPABASE_URL` e o bucket configurado (`alimentos`).
+  - Função principal: `fetchFoodDb()`
+- O hook [`useFoodDb`](src/services/useFoodDb.ts) utiliza o React Query para fazer o preload e cache do arquivo de alimentos, evitando múltiplos downloads e melhorando a performance.
+  - O cache é válido por 1 hora (`staleTime`) e pode ser reutilizado por até 6 horas (`cacheTime`).
+- O serviço [`foodService.ts`](src/services/foodService.ts) implementa a função de busca local, filtrando os alimentos já baixados e em cache, sem chamadas adicionais à API.
+  - Função principal: `searchFoods(query, foodDb)`
+  - O filtro é feito por substring no nome do alimento, ignorando acentuação e caixa (case/diacrítico insensitive), e priorizando resultados mais relevantes.
+
+**Como atualizar a base de alimentos:**
+
+- Basta substituir o arquivo `alimentos.json` no Supabase Storage (bucket `alimentos`). Não é necessário deploy do frontend.
+
+**Quando o preload ocorre:**
+
+- O preload do arquivo é feito automaticamente ao acessar funcionalidades que dependem da base de alimentos (ex: ao clicar em "Planos Alimentares" no menu do paciente), aproveitando o cache do React Query.
+
+**Resumo dos arquivos envolvidos:**
+
+- `src/services/foodDbService.ts` → Download do JSON do Supabase
+- `src/services/useFoodDb.ts` → Hook de preload/cache com React Query
+- `src/services/foodService.ts` → Busca local e utilitários de alimentos
+
+> **Importante:**
+>
+> - Não há mais busca de alimentos via API REST. Todo o filtro é feito localmente, após o download do arquivo.
+> - Para garantir performance, sempre utilize o hook `useFoodDb` para acessar a base de alimentos nas telas.
+
+---
+
 ## Referências
 
 - [Material-UI](https://mui.com/)

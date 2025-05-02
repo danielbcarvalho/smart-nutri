@@ -1,15 +1,15 @@
 import { IsString, MinLength } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 
-export class SaveApiFoodDto {
+export class SaveTbcaFoodDto {
   @ApiProperty({
     description:
-      'ID do alimento na API do Open Food Facts (mínimo 5 caracteres)',
-    example: '7898926645011',
-    minLength: 5,
-    maxLength: 50,
+      'Código do alimento na base TBCA (Tabela Brasileira de Composição de Alimentos)',
+    example: 'C0001',
+    minLength: 3,
+    maxLength: 80,
   })
   @IsString()
-  @MinLength(5)
-  externalId: string;
+  @MinLength(3)
+  codigo: string;
 }

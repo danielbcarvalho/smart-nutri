@@ -194,7 +194,6 @@ export class NutritionistsService {
           updateNutritionistDto.photoUrl = supabaseUrl;
         }
       } catch (e) {
-        console.log('🚀 ~ nutritionists.service.ts:187 ~ e) 🚀🚀🚀:', e);
         // Loga mas não impede atualização
         console.warn('Falha ao buscar/salvar foto do Instagram:', e.message);
       }

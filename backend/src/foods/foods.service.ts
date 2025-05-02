@@ -1,18 +1,19 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, In } from 'typeorm';
 import { Food } from './entities/food.entity';
 import { CreateFoodDto } from './dto/create-food.dto';
 import { UpdateFoodDto } from './dto/update-food.dto';
 import { SearchFoodDto } from './dto/search-food.dto';
-import { OpenFoodFactsService } from './services/openfoodfacts.service';
+import { TbcaDatabaseService } from './services/tbca-database.service';
+import { AlimentoToFoodAdapter } from './adapters/alimento-to-food.adapter';
 
 @Injectable()
 export class FoodsService {
   constructor(
     @InjectRepository(Food)
     private readonly foodsRepository: Repository<Food>,
-    private readonly openFoodFactsService: OpenFoodFactsService,
+    private readonly tbcaDatabaseService: TbcaDatabaseService,
   ) {}
 
   async saveFromApi(externalId: string): Promise<Food> {
@@ -25,35 +26,28 @@ export class FoodsService {
       return existingFood;
     }
 
-    // Busca o alimento na API
-    const product = await this.openFoodFactsService.getFood(externalId);
+    // Buscar o alimento no TBCA
+    const tbcaAlimento = await this.tbcaDatabaseService.findByCode(externalId);
+    if (!tbcaAlimento) {
+      throw new NotFoundException(
+        `Alimento com código ${externalId} não encontrado na base TBCA`,
+      );
+    }
 
-    // Cria um novo alimento com os dados da API
-    const food = new Food();
-    food.externalId = product._id;
-    food.name = product.product_name;
-    food.servingSize = 100; // Open Food Facts usa 100g como padrão
-    food.servingUnit = 'g';
-    food.calories = product.nutriments['energy-kcal_100g'] || 0;
-    food.protein = product.nutriments.proteins_100g || 0;
-    food.carbohydrates = product.nutriments.carbohydrates_100g || 0;
-    food.fat = product.nutriments.fat_100g || 0;
-    food.fiber = product.nutriments.fiber_100g || 0;
-    food.sugar = product.nutriments.sugars_100g || 0;
-    food.sodium = product.nutriments.sodium_100g || 0;
-    food.categories =
-      product.categories_tags?.map((c) => c.replace('en:', '')) || [];
-
-    // Salva no banco de dados
+    // Converter e salvar no banco local
+    const food = AlimentoToFoodAdapter.adapt(tbcaAlimento);
     return this.foodsRepository.save(food);
   }
 
   async search(searchFoodDto: SearchFoodDto): Promise<Food[]> {
     const { query, page = 0, pageSize = 20 } = searchFoodDto;
 
+    const overallStart = Date.now();
+    console.log('[FoodsService] Valor recebido em query:', query);
     let localFoods: Food[] = [];
 
     try {
+      const localStart = Date.now();
       // Primeiro, procura no cache local
       localFoods = await this.foodsRepository
         .createQueryBuilder('food')
@@ -61,56 +55,166 @@ export class FoodsService {
         .orWhere(':query = ANY(food.categories)', { query })
         .take(pageSize)
         .skip(page * pageSize)
-        .orderBy('food.usageCount', 'DESC')
+        .orderBy('food.usage_count_meal_plans', 'DESC')
         .addOrderBy('food.name', 'ASC')
         .getMany();
+      const localDuration = Date.now() - localStart;
+      console.log(`[FoodsService] Tempo busca local: ${localDuration}ms`);
 
       // Se encontrou resultados suficientes no cache, retorna
       if (localFoods.length >= pageSize) {
+        const overallDuration = Date.now() - overallStart;
+        console.log(
+          `[FoodsService] Tempo total (apenas local): ${overallDuration}ms`,
+        );
         return localFoods;
       }
 
-      // Caso contrário, busca na API do Open Food Facts
-      const openFoodResponse = await this.openFoodFactsService.searchFoods(
+      // Busca no TBCA
+      const tbcaStart = Date.now();
+      const tbcaResponse = await this.tbcaDatabaseService.search(
         query,
-        page + 1, // Open Food Facts usa página 1-based
         pageSize - localFoods.length,
+        page * pageSize,
+      );
+      const tbcaDuration = Date.now() - tbcaStart;
+      console.log(`[FoodsService] Tempo busca TBCA: ${tbcaDuration}ms`);
+
+      if (!tbcaResponse?.items?.length) {
+        const overallDuration = Date.now() - overallStart;
+        console.log(
+          `[FoodsService] Tempo total (local + TBCA vazio): ${overallDuration}ms`,
+        );
+        return localFoods;
+      }
+
+      // Converte os resultados do TBCA para Food entities
+      const convertStart = Date.now();
+      const tbcaFoods = tbcaResponse.items.map((alimento) =>
+        AlimentoToFoodAdapter.adapt(alimento),
+      );
+      const convertDuration = Date.now() - convertStart;
+      console.log(
+        `[FoodsService] Tempo conversão TBCA->Food: ${convertDuration}ms`,
       );
 
-      if (!openFoodResponse?.products?.length) {
-        return localFoods;
+      // Salva os alimentos do TBCA no cache local se ainda não existirem (batch)
+      const saveStart = Date.now();
+      // Buscar todos os externalIds dos alimentos do TBCA
+      const externalIds = tbcaFoods
+        .map((food) => food.externalId)
+        .filter(Boolean);
+      let existingFoods: Food[] = [];
+      if (externalIds.length > 0) {
+        existingFoods = await this.foodsRepository.find({
+          where: { externalId: In(externalIds) },
+          select: ['externalId'],
+        });
       }
-
-      // Transforma os resultados do Open Food Facts em Food entities
-      const openFoodFoods = openFoodResponse.products.map((product) => {
-        const food = new Food();
-        food.externalId = product._id;
-        food.name = product.product_name;
-        food.calories = product.nutriments['energy-kcal_100g'] || 0;
-        food.protein = product.nutriments.proteins_100g || 0;
-        food.carbohydrates = product.nutriments.carbohydrates_100g || 0;
-        food.fat = product.nutriments.fat_100g || 0;
-        food.fiber = product.nutriments.fiber_100g || 0;
-        food.sugar = product.nutriments.sugars_100g || 0;
-        food.sodium = product.nutriments.sodium_100g || 0;
-        food.categories =
-          product.categories_tags?.map((c) => c.replace('en:', '')) || [];
-        return food;
-      });
+      const existingIds = new Set(existingFoods.map((f) => f.externalId));
+      const newFoods = tbcaFoods.filter(
+        (food) => !existingIds.has(food.externalId),
+      );
+      if (newFoods.length > 0) {
+        await this.foodsRepository.save(newFoods);
+      }
+      const saveDuration = Date.now() - saveStart;
+      console.log(
+        `[FoodsService] Tempo salvando TBCA no local (batch): ${saveDuration}ms | novos: ${newFoods.length} | já existiam: ${existingIds.size}`,
+      );
 
       // Combina os resultados
-      const results = [...localFoods, ...openFoodFoods];
-      return results;
+      const results = [...localFoods, ...tbcaFoods];
+      const overallDuration = Date.now() - overallStart;
+      console.log(`[FoodsService] Tempo total da busca: ${overallDuration}ms`);
+      return results.slice(0, pageSize);
     } catch (error) {
       console.error(
         'Erro na busca:',
         error instanceof Error ? error.message : error,
       );
-      // Se houver erro na API externa, retorna ao menos os resultados locais
+      // Se houver erro, retorna ao menos os resultados locais
       return localFoods;
     }
   }
 
+  // Método para buscar alimento diretamente do TBCA por código
+  async findByTbcaCode(codigo: string): Promise<Food | null> {
+    // Primeiro verifica se já existe no cache local
+    const existingFood = await this.foodsRepository.findOne({
+      where: { sourceId: codigo, source: 'TBCA' },
+    });
+
+    if (existingFood) {
+      return existingFood;
+    }
+
+    // Se não existir, busca no TBCA
+    const tbcaAlimento = await this.tbcaDatabaseService.findByCode(codigo);
+    if (!tbcaAlimento) {
+      return null;
+    }
+
+    // Converte e salva no cache local
+    const food = AlimentoToFoodAdapter.adapt(tbcaAlimento);
+    return this.foodsRepository.save(food);
+  }
+
+  // Método para buscar alimentos por classe
+  async findByClass(classe: string, limit = 80, offset = 0): Promise<Food[]> {
+    try {
+      const tbcaResponse = await this.tbcaDatabaseService.findByClass(
+        classe,
+        limit,
+        offset,
+      );
+
+      if (!tbcaResponse?.items?.length) {
+        return [];
+      }
+
+      // Converte os resultados do TBCA para Food entities
+      return tbcaResponse.items.map((alimento) =>
+        AlimentoToFoodAdapter.adapt(alimento),
+      );
+    } catch (error) {
+      console.error('Erro ao buscar alimentos por classe:', error);
+      return [];
+    }
+  }
+
+  // Método para buscar alimentos por faixa de nutriente
+  async findByNutrientRange(
+    nutrient: string,
+    minValue?: number,
+    maxValue?: number,
+    limit = 80,
+    offset = 0,
+  ): Promise<Food[]> {
+    try {
+      const tbcaResponse = await this.tbcaDatabaseService.findByNutrientRange(
+        nutrient,
+        minValue,
+        maxValue,
+        limit,
+        offset,
+      );
+
+      if (!tbcaResponse?.items?.length) {
+        return [];
+      }
+
+      // Converte os resultados do TBCA para Food entities
+      return tbcaResponse.items.map((alimento) =>
+        AlimentoToFoodAdapter.adapt(alimento),
+      );
+    } catch (error) {
+      console.error('Erro ao buscar alimentos por nutriente:', error);
+      return [];
+    }
+  }
+
+  // Métodos existentes abaixo
   async create(createFoodDto: CreateFoodDto): Promise<Food> {
     const food = this.foodsRepository.create(createFoodDto);
     return await this.foodsRepository.save(food);

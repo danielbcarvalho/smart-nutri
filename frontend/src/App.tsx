@@ -17,6 +17,8 @@ import { AssessmentEvolution } from "@modules/assessment/pages/AssessmentEvoluti
 import { useRouteError, isRouteErrorResponse, Link } from "react-router-dom";
 import { Patients } from "./modules/patient/pages/Patients/PatientsPage";
 import { PatientInfo } from "./modules/patient/pages/PatientInfo/PatientInfoPage";
+import { MealPlan } from "./modules/meal-plan/pages/MealPlansPage";
+import { MealPlanDetails } from "./modules/meal-plan/pages/MealPlanDetails/MealPlanDetailsPage";
 
 // Placeholder components
 const DocumentsPlaceholder = () => (
@@ -108,8 +110,8 @@ const router = createBrowserRouter([
             children: [
               {
                 index: true,
-                element: <PlansPlaceholder />,
-                // element: <MealPlan />,
+                // element: <PlansPlaceholder />
+                element: <MealPlan />,
               },
               {
                 path: "new",
@@ -118,8 +120,8 @@ const router = createBrowserRouter([
               },
               {
                 path: ":planId",
-                element: <PlansPlaceholder />,
-                // element: <MealPlanDetails />,
+                // element: <PlansPlaceholder />,
+                element: <MealPlanDetails />,
               },
             ],
           },

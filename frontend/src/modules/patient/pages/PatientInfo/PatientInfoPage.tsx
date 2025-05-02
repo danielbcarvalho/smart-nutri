@@ -33,7 +33,7 @@ import CircularProgress from "@mui/material/CircularProgress";
 import { patientService } from "@/modules/patient/services/patientService";
 import { notify } from "@utils/notificationBus";
 import { PatientFormModal } from "@components/PatientForm/PatientFormModal";
-import { MealPlanButton } from "@components/MealPlanButton";
+import { MealPlanButton } from "@/modules/meal-plan/components/MealPlanButton";
 import { AssessmentButton } from "@components/AssessmentButton";
 
 export function PatientInfo() {
