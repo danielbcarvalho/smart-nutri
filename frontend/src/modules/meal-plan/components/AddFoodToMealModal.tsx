@@ -1,18 +1,13 @@
 import React, { useState, useEffect, useRef } from "react";
 import {
   Dialog,
-  DialogTitle,
   DialogContent,
-  DialogActions,
   Button,
   Paper,
   Typography,
   Box,
-  useTheme,
   TextField,
-  IconButton, // Importar IconButton
 } from "@mui/material";
-import CloseIcon from "@mui/icons-material/Close"; // Importar Ícone de Fechar
 import {
   foodService,
   MacroNutrients,
@@ -99,7 +94,6 @@ export const AddFoodToMealModal: React.FC<AddFoodToMealModalProps> = ({
   initialFoods = [],
   initialNotes = "",
 }) => {
-  const theme = useTheme();
   const [foodSearch, setFoodSearch] = useState("");
   const [searchResults, setSearchResults] = useState<Alimento[]>([]);
   const [selectedFoods, setSelectedFoods] =
@@ -304,94 +298,60 @@ export const AddFoodToMealModal: React.FC<AddFoodToMealModalProps> = ({
     <Dialog
       open={open}
       onClose={onClose}
-      maxWidth="lg"
+      maxWidth={false}
       fullWidth
-      fullScreen={window.innerWidth < 600} // Tela cheia em dispositivos muito pequenos
-      aria-labelledby="add-food-dialog-title" // Melhor usar aria-labelledby
-    >
-      {/* === HEADER MODIFICADO === */}
-      <DialogTitle
-        sx={{
-          m: 0, // Remove margens padrão
-          p: 2, // Padding consistente
-          display: "flex",
-          justifyContent: "space-between",
+      PaperProps={{
+        sx: {
+          backgroundColor: "#fff",
+          borderRadius: 4,
+          boxShadow: "0 4px 32px rgba(0,0,0,0.10)",
+          p: 0,
+          maxWidth: 1100,
+          width: "100%",
+        },
+      }}
+      sx={{
+        "& .MuiDialog-container": {
           alignItems: "center",
-          borderBottom: `1px solid ${theme.palette.divider}`, // Linha divisória
-          // background: theme.palette.background.paper, // Mantém um fundo (opcional)
+        },
+      }}
+      aria-labelledby="add-food-dialog-title"
+    >
+      <DialogContent
+        sx={{
+          p: { xs: 2.5, sm: 4 },
+          backgroundColor: "#fff",
+          borderRadius: 4,
+          boxShadow: "none",
+          minWidth: { xs: 320, sm: 420 },
+          maxWidth: 1040,
+          width: "100%",
+          mx: "auto",
+          overflow: "visible", // Garante que não haverá scroll interno
         }}
-        id="add-food-dialog-title" // ID para aria-labelledby
       >
-        <Typography variant="h6" component="div" fontWeight="bold">
-          {" "}
-          {/* Usar h6 é mais comum para títulos de modal */}
+        {/* Título minimalista */}
+        <Typography
+          variant="h6"
+          fontWeight="bold"
+          sx={{ mb: 2, textAlign: "left", color: "#222", fontSize: 22 }}
+        >
           {mealName ? `Refeição: ${mealName}` : "Adicionar Alimento à Refeição"}
         </Typography>
-        <IconButton
-          aria-label="fechar"
-          onClick={onClose}
-          sx={{
-            color: (theme) => theme.palette.grey[600], // Cor sutil para o ícone
-          }}
-        >
-          <CloseIcon />
-        </IconButton>
-      </DialogTitle>
-      {/* === FIM DO HEADER MODIFICADO === */}
 
-      <DialogContent
-        dividers // Adiciona divisores padrão do MUI (alternativa à borda manual no header/footer)
-        sx={{
-          py: 3, // Ajusta padding vertical se usar dividers
-          px: { xs: 2, sm: 3 },
-          position: "relative",
-          // overflowY: "auto", // 'dividers' pode já cuidar disso
-          backgroundColor: theme.palette.background.default, // Fundo do conteúdo
-          "&::-webkit-scrollbar": {
-            width: 6,
-            background: theme.palette.grey[200],
-            borderRadius: 3,
-          },
-          "&::-webkit-scrollbar-thumb": {
-            background: theme.palette.grey[400],
-            borderRadius: 3,
-            minHeight: 20,
-          },
-          "&::-webkit-scrollbar-thumb:hover": {
-            background: theme.palette.grey[600],
-          },
-          scrollbarWidth: "thin",
-          scrollbarColor: `${theme.palette.grey[400]} ${theme.palette.grey[200]}`,
-        }}
-      >
-        {/* Overlay para foco no dropdown, restrito ao modal */}
-        {showDropdown && (
-          <Box
-            onClick={() => setShowDropdown(false)}
-            sx={{
-              position: "fixed", // Usa fixed para cobrir toda a viewport DENTRO do modal
-              top: 0,
-              left: 0,
-              width: "100%",
-              height: "100%",
-              bgcolor: "rgba(30, 30, 30, 0.2)",
-              zIndex: 1, // Abaixo do dropdown, mas acima do conteúdo
-            }}
-          />
-        )}
         {/* Seção de Adicionar Alimento */}
         <AddFoodSection
           foodSearch={foodSearch}
           setFoodSearch={setFoodSearch}
           searchResults={searchResults}
-          setSearchResults={setSearchResults} // Passando o setter
+          setSearchResults={setSearchResults}
           loadingFoods={loadingFoods}
-          setLoadingFoods={setLoadingFoods} // Passando o setter
+          setLoadingFoods={setLoadingFoods}
           showDropdown={showDropdown}
           setShowDropdown={setShowDropdown}
           anchorRef={anchorRef}
           inputWidth={inputWidth}
-          setInputWidth={setInputWidth} // Passando o setter
+          setInputWidth={setInputWidth}
           handleSelectFood={handleSelectFood}
           handleOpenDetails={handleOpenDetails}
         />
@@ -410,95 +370,90 @@ export const AddFoodToMealModal: React.FC<AddFoodToMealModalProps> = ({
           calories={totalMacros.calories || 0}
           totalWeight={totalWeight}
         />
-        {/* Seção de Observações da Refeição (Usando o componente externo, se existir) */}
-        {/* <MealNotesSection notes={notes} setNotes={setNotes} /> */}
-
-        {/* Ou mantendo o TextField diretamente aqui se MealNotesSection não existir */}
+        {/* Observações da Refeição */}
         <Paper
           elevation={2}
           sx={{
-            p: { xs: 2, sm: 3 },
+            p: { xs: 2, sm: 2.5 },
             borderRadius: 3,
-            backgroundColor: theme.palette.background.paper,
-            mb: 0, // Remover margem inferior se o footer cuida do espaçamento
-            mt: 2, // Adicionar margem superior para separar da Análise
+            backgroundColor: (theme) => theme.palette.background.paper,
+            boxShadow: (theme) => theme.shadows[1],
+            border: (theme) => `1px solid ${theme.palette.divider}`,
+            mb: 0,
+            mt: 2,
           }}
         >
           <Typography
-            variant="h6"
+            variant="subtitle1"
             sx={{
-              mb: 2, // Reduzir margem inferior
-              fontWeight: "bold",
-              color: theme.palette.primary.main, // Manter cor primária
-              textAlign: "left", // Alinhar à esquerda
+              mb: 1.5,
+              fontWeight: 600,
+              color: "#222",
+              textAlign: "left",
+              fontSize: 16,
             }}
           >
             Observações da Refeição
           </Typography>
           <TextField
-            value={notes} // Controlar o valor
-            onChange={(e) => setNotes(e.target.value)} // Atualizar o estado
+            value={notes}
+            onChange={(e) => setNotes(e.target.value)}
             multiline
             minRows={3}
             maxRows={6}
             fullWidth
-            placeholder="Adicione comentários ou orientações sobre esta refeição..."
+            placeholder="Adicione observações sobre esta refeição"
             aria-label="Observações sobre a refeição"
             sx={{
               "& .MuiOutlinedInput-root": {
                 borderRadius: 2,
-                backgroundColor: theme.palette.grey[50], // Fundo leve para destaque
+                backgroundColor: "#fff",
                 "& fieldset": {
-                  borderColor: theme.palette.grey[300], // Borda sutil
+                  borderColor: "#e0e0e0",
                 },
                 "&:hover fieldset": {
-                  borderColor: theme.palette.primary.light, // Interação no hover
+                  borderColor: "#bdbdbd",
                 },
                 "&.Mui-focused fieldset": {
-                  borderColor: theme.palette.primary.main, // Foco
-                  borderWidth: "1px", // Evitar aumento de espessura no foco
+                  borderColor: "#8bc34a",
+                  borderWidth: "1px",
                 },
               },
             }}
           />
         </Paper>
+        {/* Botões de ação minimalistas */}
+        <Box
+          sx={{
+            display: "flex",
+            justifyContent: "flex-end",
+            gap: 2,
+            mt: 4,
+          }}
+        >
+          <Button
+            onClick={onClose}
+            variant="outlined"
+            sx={{ minWidth: 100, borderRadius: 2 }}
+          >
+            Cancelar
+          </Button>
+          <Button
+            onClick={handleSave}
+            variant="contained"
+            color="success"
+            sx={{ minWidth: 100, borderRadius: 2 }}
+          >
+            Confirmar
+          </Button>
+        </Box>
       </DialogContent>
-
-      {/* === FOOTER MODIFICADO === */}
-      <DialogActions
-        sx={{
-          p: 2, // Padding consistente
-          // borderTop: `1px solid ${theme.palette.divider}`, // Linha divisória (redundante se DialogContent tem 'dividers')
-          justifyContent: "flex-end", // Alinha botões à direita
-          gap: 1, // Espaçamento entre botões
-          backgroundColor: theme.palette.background.paper, // Fundo (opcional, para contraste)
-        }}
-      >
-        <Button
-          onClick={onClose}
-          variant="outlined" // Menos destaque que o botão principal
-          sx={{ minWidth: 100, borderRadius: 2 }} // Ajuste de largura mínima
-        >
-          Cancelar
-        </Button>
-        <Button
-          onClick={handleSave}
-          variant="contained"
-          color="success" // Ação principal positiva
-          sx={{ minWidth: 100, borderRadius: 2 }} // Ajuste de largura mínima
-        >
-          Confirmar
-        </Button>
-      </DialogActions>
-      {/* === FIM DO FOOTER MODIFICADO === */}
-
       {/* Modal de Detalhes do Alimento */}
       <FoodDetailsModal
         open={!!selectedFoodForDetails}
         onClose={() => setSelectedFoodForDetails(null)}
         food={selectedFoodForDetails}
         onAdd={(food) => {
-          // Lógica para adicionar vinda dos detalhes, similar ao handleSelectFood
           if (!selectedFoods.find((f) => f.food.id === food.id)) {
             const defaultMcIndex =
               food.mc && food.mc.length > 0 ? 0 : undefined;
@@ -507,7 +462,7 @@ export const AddFoodToMealModal: React.FC<AddFoodToMealModalProps> = ({
               { food, amount: 100, mcIndex: defaultMcIndex },
             ]);
           }
-          setSelectedFoodForDetails(null); // Fecha o modal de detalhes
+          setSelectedFoodForDetails(null);
         }}
       />
     </Dialog>

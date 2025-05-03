@@ -87,13 +87,21 @@ const PrescribedFoodItem: React.FC<PrescribedFoodItemProps> = ({
   const fator = quantidadeGramas / 100;
 
   return (
-    <TableRow sx={{ minHeight: 56 }}>
+    <TableRow
+      sx={{
+        minHeight: 40,
+        borderBottom: "none",
+      }}
+    >
       <TableCell
         sx={{
           fontWeight: 500,
           minWidth: 180,
           maxWidth: 220,
           px: 1,
+          borderBottom: "none",
+          background: "none",
+          fontSize: "1rem",
         }}
       >
         <Tooltip title={food.nome} arrow placement="top">
@@ -123,6 +131,7 @@ const PrescribedFoodItem: React.FC<PrescribedFoodItemProps> = ({
           display: "flex",
           gap: 1,
           alignItems: "center",
+          borderBottom: "none",
         }}
       >
         <input
@@ -138,12 +147,13 @@ const PrescribedFoodItem: React.FC<PrescribedFoodItemProps> = ({
             fontSize: "0.85em",
             width: 60,
             height: 32,
-            border: "1px solid #ccc",
-            borderRadius: 6,
+            border: "1px solid #e0e0e0",
+            borderRadius: 8,
             padding: "0 8px",
             outline: "none",
             backgroundColor: "#fff",
             color: "#222",
+            boxShadow: "none",
           }}
           min={0.01}
           inputMode="decimal"
@@ -163,6 +173,8 @@ const PrescribedFoodItem: React.FC<PrescribedFoodItemProps> = ({
               whiteSpace: "nowrap",
               display: "block",
             },
+            background: "#fff",
+            boxShadow: "none",
           }}
         >
           {food.mc?.map((mc, idx) => (
@@ -182,6 +194,7 @@ const PrescribedFoodItem: React.FC<PrescribedFoodItemProps> = ({
           overflow: "hidden",
           textOverflow: "ellipsis",
           whiteSpace: "nowrap",
+          borderBottom: "none",
         }}
       >
         {quantidadeGramas}g
@@ -196,6 +209,7 @@ const PrescribedFoodItem: React.FC<PrescribedFoodItemProps> = ({
           overflow: "hidden",
           textOverflow: "ellipsis",
           whiteSpace: "nowrap",
+          borderBottom: "none",
         }}
       >
         {(Number(food.ptn ?? 0) * fator).toFixed(1)}g
@@ -210,6 +224,7 @@ const PrescribedFoodItem: React.FC<PrescribedFoodItemProps> = ({
           overflow: "hidden",
           textOverflow: "ellipsis",
           whiteSpace: "nowrap",
+          borderBottom: "none",
         }}
       >
         {(Number(food.lip ?? 0) * fator).toFixed(1)}g
@@ -224,6 +239,7 @@ const PrescribedFoodItem: React.FC<PrescribedFoodItemProps> = ({
           overflow: "hidden",
           textOverflow: "ellipsis",
           whiteSpace: "nowrap",
+          borderBottom: "none",
         }}
       >
         {(Number(food.cho ?? 0) * fator).toFixed(1)}g
@@ -238,11 +254,15 @@ const PrescribedFoodItem: React.FC<PrescribedFoodItemProps> = ({
           overflow: "hidden",
           textOverflow: "ellipsis",
           whiteSpace: "nowrap",
+          borderBottom: "none",
         }}
       >
         {Math.round(Number(food.kcal ?? 0) * fator)} Kcal
       </TableCell>
-      <TableCell align="right" sx={{ minWidth: 40, px: 1 }}>
+      <TableCell
+        align="right"
+        sx={{ minWidth: 40, px: 1, borderBottom: "none" }}
+      >
         <div
           style={{
             display: "flex",

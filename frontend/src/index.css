@@ -75,3 +75,22 @@ button:focus-visible {
     background-color: #f9f9f9;
   }
 }
+
+/* Scrollbar minimalista global */
+::-webkit-scrollbar {
+  width: 8px;
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: #e0e0e0;
+  border-radius: 8px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #bdbdbd;
+}
+
+/* Firefox */
+html {
+  scrollbar-width: thin;
+  scrollbar-color: #e0e0e0 transparent;
+}

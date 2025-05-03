@@ -12,7 +12,6 @@ import {
   Pie,
   Cell,
   ResponsiveContainer,
-  Legend,
   Tooltip as RechartsTooltip,
 } from "recharts";
 import InfoIcon from "@mui/icons-material/Info";
@@ -39,44 +38,6 @@ function getCaloricDensityClass(density: number) {
   if (density <= 5.0) return { label: "Alta", color: "#FFD93F" };
   return { label: "Muito Alta", color: "#FF6B6B" };
 }
-
-// Label aprimorada com posicionamento refinado
-const renderCustomLabel = (props: any) => {
-  const { cx, cy, midAngle, innerRadius, outerRadius, percent, index, value } =
-    props;
-
-  // Raio aumentado para posicionar o label mais para fora
-  const RADIAN = Math.PI / 180;
-  const radius = outerRadius * 1.35;
-
-  // Ajuste para melhor posicionamento angular
-  const sin = Math.sin(-RADIAN * midAngle);
-  const cos = Math.cos(-RADIAN * midAngle);
-
-  // Coordenadas calculadas
-  const x = cx + radius * cos;
-  const y = cy + radius * sin;
-
-  // Determinar o ancoramento de texto com base na posição
-  const textAnchor = cos >= 0 ? "start" : "end";
-
-  // Não mostrar percentuais muito pequenos
-  if (percent < 0.05) return null;
-
-  return (
-    <text
-      x={x}
-      y={y}
-      fill={COLORS[index % COLORS.length]}
-      textAnchor={textAnchor}
-      dominantBaseline="central"
-      fontWeight="500"
-      fontSize="14px"
-    >
-      {`${(percent * 100).toFixed(0)}%`}
-    </text>
-  );
-};
 
 export const NutrientAnalysis: React.FC<NutrientAnalysisProps> = ({
   protein,
@@ -109,54 +70,68 @@ export const NutrientAnalysis: React.FC<NutrientAnalysisProps> = ({
         flexDirection: "column",
         alignItems: "flex-start",
         justifyContent: "center",
-        pt: 2,
         gap: 1,
         width: "100%",
       }}
     >
-      {macroData.map((entry, idx) => (
-        <Box
-          key={entry.name}
-          sx={{
-            display: "flex",
-            alignItems: "center",
-            width: "100%",
-            px: 1,
-          }}
-        >
+      {macroData.map((entry, idx) => {
+        const percent =
+          totalKcalMacros > 0 ? (entry.value / totalKcalMacros) * 100 : 0;
+        return (
           <Box
-            component="span"
+            key={entry.name}
             sx={{
-              width: 10,
-              height: 10,
-              borderRadius: "50%",
-              backgroundColor: COLORS[idx],
-              marginRight: 1.5,
-            }}
-          />
-          <Typography
-            variant="body2"
-            sx={{
-              color: theme.palette.text.primary,
-              fontWeight: 400,
-              fontSize: "0.875rem",
+              display: "flex",
+              alignItems: "center",
+              width: "100%",
+              px: 1,
             }}
           >
-            {entry.name}
-          </Typography>
-          <Typography
-            variant="body2"
-            sx={{
-              marginLeft: "auto",
-              color: COLORS[idx],
-              fontWeight: "500",
-              fontSize: "0.875rem",
-            }}
-          >
-            {Math.round(entry.value)} kcal
-          </Typography>
-        </Box>
-      ))}
+            <Box
+              component="span"
+              sx={{
+                width: 10,
+                height: 10,
+                borderRadius: "50%",
+                backgroundColor: COLORS[idx],
+                marginRight: 1.5,
+              }}
+            />
+            <Typography
+              variant="body2"
+              sx={{
+                color: theme.palette.text.primary,
+                fontWeight: 400,
+                fontSize: "0.875rem",
+              }}
+            >
+              {entry.name}
+            </Typography>
+            <Typography
+              variant="body2"
+              sx={{
+                marginLeft: 1,
+                color: COLORS[idx],
+                fontWeight: "500",
+                fontSize: "0.875rem",
+              }}
+            >
+              {Math.round(entry.value)} kcal
+            </Typography>
+            <Typography
+              variant="body2"
+              sx={{
+                marginLeft: 1,
+                color: COLORS[idx],
+                fontWeight: 400,
+                fontSize: "0.875rem",
+              }}
+            >
+              ({percent.toFixed(0)}%)
+            </Typography>
+          </Box>
+        );
+      })}
     </Box>
   );
 
@@ -174,13 +149,12 @@ export const NutrientAnalysis: React.FC<NutrientAnalysisProps> = ({
       sx={{
         p: { xs: 2, sm: 3 },
         borderRadius: 3,
-        background: "linear-gradient(145deg, #ffffff, #f9f9f9)",
+        backgroundColor: theme.palette.background.paper,
         mb: 2,
-        boxShadow: "0 4px 10px rgba(0, 0, 0, 0.1)",
-        transition: "transform 0.3s ease",
-        "&:hover": {
-          transform: "translateY(-2px)",
-        },
+        boxShadow: theme.shadows[1],
+        border: `1px solid ${theme.palette.divider}`,
+        transition: "none",
+        "&:hover": { transform: "none" },
       }}
     >
       <Typography
@@ -208,9 +182,10 @@ export const NutrientAnalysis: React.FC<NutrientAnalysisProps> = ({
             minWidth: { xs: "100%", sm: 200 },
             p: 2.5,
             borderRadius: 2,
-            background: "linear-gradient(135deg, #f5f5f5 0%, #eaeaea 100%)",
-            boxShadow: "0 2px 6px rgba(0, 0, 0, 0.05)",
-            minHeight: 410,
+            backgroundColor: theme.palette.background.paper,
+            boxShadow: theme.shadows[1],
+            border: `1px solid ${theme.palette.divider}`,
+            minHeight: 330,
             display: "flex",
             flexDirection: "column",
             alignItems: "stretch",
@@ -344,10 +319,11 @@ export const NutrientAnalysis: React.FC<NutrientAnalysisProps> = ({
             flex: 1,
             minWidth: { xs: "100%", sm: 240 },
             p: 2.5,
-            borderRadius: 2,
-            background: "linear-gradient(135deg, #f5f5f5 0%, #eaeaea 100%)",
-            boxShadow: "0 2px 6px rgba(0, 0, 0, 0.05)",
-            minHeight: 410,
+            borderRadius: 3,
+            backgroundColor: theme.palette.background.paper,
+            boxShadow: theme.shadows[1],
+            border: `1px solid ${theme.palette.divider}`,
+            minHeight: 330,
             display: "flex",
             flexDirection: "column",
             alignItems: "stretch",
@@ -489,10 +465,12 @@ export const NutrientAnalysis: React.FC<NutrientAnalysisProps> = ({
             flex: 1,
             minWidth: { xs: "100%", sm: 240 },
             p: 2.5,
-            borderRadius: 2,
-            background: "linear-gradient(135deg, #f5f5f5 0%, #eaeaea 100%)",
-            boxShadow: "0 2px 6px rgba(0, 0, 0, 0.05)",
-            minHeight: 410,
+            borderRadius: 3,
+            backgroundColor: theme.palette.background.paper,
+            boxShadow: theme.shadows[1],
+            border: `1px solid ${theme.palette.divider}`,
+            minHeight: 330,
+            maxHeight: 300,
             display: "flex",
             flexDirection: "column",
           }}
@@ -502,7 +480,6 @@ export const NutrientAnalysis: React.FC<NutrientAnalysisProps> = ({
             sx={{
               fontWeight: "bold",
               color: theme.palette.text.primary,
-              mb: 1,
               textAlign: "left",
             }}
           >
@@ -514,12 +491,14 @@ export const NutrientAnalysis: React.FC<NutrientAnalysisProps> = ({
               flex: 1,
               display: "flex",
               flexDirection: "column",
+              alignItems: "center",
+              justifyContent: "center",
             }}
           >
             {hasMacroData ? (
               <>
                 {/* Gráfico em container separado com altura fixa para evitar problemas de proporção */}
-                <Box sx={{ height: 220, width: "100%", mt: 1 }}>
+                <Box sx={{ height: 180, width: "100%" }}>
                   <ResponsiveContainer width="100%" height="100%">
                     <PieChart>
                       <Pie
@@ -532,7 +511,6 @@ export const NutrientAnalysis: React.FC<NutrientAnalysisProps> = ({
                         outerRadius={65}
                         paddingAngle={2}
                         labelLine={false}
-                        label={renderCustomLabel}
                         stroke="#fff"
                         strokeWidth={2}
                       >
@@ -556,19 +534,14 @@ export const NutrientAnalysis: React.FC<NutrientAnalysisProps> = ({
                 </Box>
 
                 {/* Legenda separada do gráfico para melhor controle de layout */}
-                <Box sx={{ mt: 1 }}>{renderCustomLegend()}</Box>
+                <Box>{renderCustomLegend()}</Box>
               </>
             ) : (
               <Box
                 sx={{
                   textAlign: "center",
+                  py: 3,
                   color: theme.palette.text.secondary,
-                  height: "100%",
-                  p: 2,
-                  display: "flex",
-                  flexDirection: "column",
-                  alignItems: "center",
-                  justifyContent: "center",
                 }}
               >
                 <LocalDiningIcon

@@ -9,6 +9,7 @@ import {
   TableRow,
   TableContainer,
   useTheme,
+  Tooltip,
 } from "@mui/material";
 import AddCircleOutlineIcon from "@mui/icons-material/AddCircleOutline";
 import PrescribedFoodItem from "./PrescribedFoodItem";
@@ -74,17 +75,25 @@ const PrescribedFoodsSection: React.FC<PrescribedFoodsSectionProps> = ({
           acima para começar.
         </Typography>
       ) : (
-        <TableContainer sx={{ maxHeight: 400, overflowX: "auto" }}>
+        <TableContainer
+          sx={{
+            maxHeight: 400,
+            overflowX: "auto",
+            boxShadow: "none",
+            background: "none",
+          }}
+        >
           <Table size="small" aria-label="Tabela de alimentos prescritos">
             <TableHead>
-              <TableRow sx={{ backgroundColor: theme.palette.grey[100] }}>
+              <TableRow>
                 <TableCell
                   sx={{
                     fontWeight: "bold",
-                    px: 1.5,
-                    py: 1,
+                    px: 1,
+                    py: 0.5,
                     width: { xs: "30%", md: "20%" },
                     color: theme.palette.text.primary,
+                    borderBottom: "none",
                   }}
                 >
                   Nome do Alimento
@@ -93,10 +102,11 @@ const PrescribedFoodsSection: React.FC<PrescribedFoodsSectionProps> = ({
                   align="center"
                   sx={{
                     fontWeight: "bold",
-                    px: 1.5,
-                    py: 1,
+                    px: 1,
+                    py: 0.5,
                     width: { xs: "20%", md: "15%" },
                     color: theme.palette.text.primary,
+                    borderBottom: "none",
                   }}
                 >
                   Medida Caseira
@@ -105,73 +115,90 @@ const PrescribedFoodsSection: React.FC<PrescribedFoodsSectionProps> = ({
                   align="center"
                   sx={{
                     fontWeight: "bold",
-                    px: 1.5,
-                    py: 1,
-                    width: { xs: "10%", md: "10%" },
+                    px: 1,
+                    py: 0.5,
+                    minWidth: 30,
+                    maxWidth: 25,
                     color: theme.palette.text.primary,
+                    borderBottom: "none",
                   }}
                 >
-                  Qtd.
+                  <Tooltip title="Quantidade" arrow>
+                    <span>Qtd.</span>
+                  </Tooltip>
                 </TableCell>
                 <TableCell
                   align="center"
                   sx={{
                     fontWeight: "bold",
-                    px: 1.5,
-                    py: 1,
-                    width: { xs: "10%", md: "10%" },
-                    color: theme.palette.text.primary,
-                    display: { xs: "none", sm: "table-cell" },
-                  }}
-                >
-                  Prot.
-                </TableCell>
-                <TableCell
-                  align="center"
-                  sx={{
-                    fontWeight: "bold",
-                    px: 1.5,
-                    py: 1,
-                    width: { xs: "10%", md: "10%" },
+                    px: 1,
+                    py: 0.5,
+                    maxWidth: 25,
                     color: theme.palette.text.primary,
                     display: { xs: "none", sm: "table-cell" },
+                    borderBottom: "none",
                   }}
                 >
-                  Lip.
+                  <Tooltip title="Proteína" arrow>
+                    <span>Prot.</span>
+                  </Tooltip>
                 </TableCell>
                 <TableCell
                   align="center"
                   sx={{
                     fontWeight: "bold",
-                    px: 1.5,
-                    py: 1,
-                    width: { xs: "10%", md: "10%" },
+                    px: 1,
+                    py: 0.5,
+                    maxWidth: 25,
                     color: theme.palette.text.primary,
                     display: { xs: "none", sm: "table-cell" },
+                    borderBottom: "none",
                   }}
                 >
-                  Carb.
+                  <Tooltip title="Lipídios (gorduras)" arrow>
+                    <span>Lip.</span>
+                  </Tooltip>
                 </TableCell>
                 <TableCell
                   align="center"
                   sx={{
                     fontWeight: "bold",
-                    px: 1.5,
-                    py: 1,
-                    width: { xs: "10%", md: "10%" },
+                    px: 1,
+                    py: 0.5,
+                    maxWidth: 25,
+                    color: theme.palette.text.primary,
+                    display: { xs: "none", sm: "table-cell" },
+                    borderBottom: "none",
+                  }}
+                >
+                  <Tooltip title="Carboidratos" arrow>
+                    <span>Carb.</span>
+                  </Tooltip>
+                </TableCell>
+                <TableCell
+                  align="center"
+                  sx={{
+                    fontWeight: "bold",
+                    px: 1,
+                    py: 0.5,
+                    maxWidth: 25,
                     color: theme.palette.text.primary,
                     display: { xs: "none", md: "table-cell" },
+                    borderBottom: "none",
                   }}
                 >
-                  Cal.
+                  <Tooltip title="Calorias" arrow>
+                    <span>Cal.</span>
+                  </Tooltip>
                 </TableCell>
                 <TableCell
                   align="right"
                   sx={{
                     fontWeight: "bold",
-                    px: 1.5,
-                    py: 1,
+                    px: 1,
+                    py: 0.5,
                     width: { xs: "10%", md: "5%" },
+                    borderBottom: "none",
                   }}
                 />
               </TableRow>
