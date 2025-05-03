@@ -5,7 +5,7 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { AuthModule } from './auth/auth.module';
 import { NutritionistsModule } from './nutritionists/nutritionists.module';
 import { PatientsModule } from './patients/patients.module';
-import { MealPlansModule } from './meal-plans/meal-plans.module';
+import { MealPlansModule } from './modules/meal-plan/meal-plans.module';
 import { StatsModule } from './stats/stats.module';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';

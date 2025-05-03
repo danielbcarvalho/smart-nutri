@@ -21,15 +21,15 @@ import {
   ApiQuery,
   ApiBearerAuth,
 } from '@nestjs/swagger';
-import { MealPlansService } from './meal-plans.service';
-import { CreateMealPlanDto } from './dto/create-meal-plan.dto';
-import { UpdateMealPlanDto } from './dto/update-meal-plan.dto';
-import { CreateMealDto } from './dto/create-meal.dto';
-import { MealPlan } from './entities/meal-plan.entity';
-import { Meal } from './entities/meal.entity';
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
-import { CurrentUser } from '../auth/decorators/current-user.decorator';
-import { AuthenticatedUser } from '../auth/interfaces/authenticated-user.interface';
+import { MealPlansService } from '../services/meal-plans.service';
+import { CreateMealPlanDto } from '../dto/create-meal-plan.dto';
+import { UpdateMealPlanDto } from '../dto/update-meal-plan.dto';
+import { CreateMealDto } from '../dto/create-meal.dto';
+import { MealPlan } from '../entities/meal-plan.entity';
+import { Meal } from '../entities/meal.entity';
+import { JwtAuthGuard } from '../../../auth/guards/jwt-auth.guard';
+import { CurrentUser } from '../../../auth/decorators/current-user.decorator';
+import { AuthenticatedUser } from '../../../auth/interfaces/authenticated-user.interface';
 
 interface RequestWithUser extends Request {
   user: {

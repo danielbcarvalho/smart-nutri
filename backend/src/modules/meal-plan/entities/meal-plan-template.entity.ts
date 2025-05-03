@@ -9,7 +9,7 @@ import {
   JoinColumn,
 } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
-import { Nutritionist } from '../../nutritionists/entities/nutritionist.entity';
+import { Nutritionist } from '../../../nutritionists/entities/nutritionist.entity';
 import { MealTemplate } from './meal-template.entity';
 
 @Entity('meal_plan_templates')

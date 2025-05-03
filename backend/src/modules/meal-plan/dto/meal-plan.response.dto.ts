@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Expose, Type } from 'class-transformer';
-import { PatientResponseDto } from '../../patients/dto/patient.response.dto';
+import { PatientResponseDto } from '../../../patients/dto/patient.response.dto';
 
 export class FoodResponseDto {
   @ApiProperty()

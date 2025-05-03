@@ -11,13 +11,13 @@ import {
   ParseUUIDPipe,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
-import { CurrentUser } from '../auth/decorators/current-user.decorator';
-import { MealPlanTemplatesService } from './meal-plan-templates.service';
-import { CreateMealPlanTemplateDto } from './dto/create-meal-plan-template.dto';
-import { UpdateMealPlanTemplateDto } from './dto/update-meal-plan-template.dto';
-import { MealPlanTemplateResponseDto } from './dto/meal-plan-template.response.dto';
-import { FoodTemplateResponseDto } from './dto/meal-plan-template.response.dto';
+import { JwtAuthGuard } from '../../../auth/guards/jwt-auth.guard';
+import { CurrentUser } from '../../../auth/decorators/current-user.decorator';
+import { MealPlanTemplatesService } from '../services/meal-plan-templates.service';
+import { CreateMealPlanTemplateDto } from '../dto/create-meal-plan-template.dto';
+import { UpdateMealPlanTemplateDto } from '../dto/update-meal-plan-template.dto';
+import { MealPlanTemplateResponseDto } from '../dto/meal-plan-template.response.dto';
+import { FoodTemplateResponseDto } from '../dto/meal-plan-template.response.dto';
 import { plainToClass } from 'class-transformer';
 
 @ApiTags('Meal Plan Templates')

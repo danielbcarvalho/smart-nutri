@@ -13,9 +13,9 @@ import {
   ConsultationStatus,
   ConsultationType,
 } from '../entities/consultation.entity';
-import { MealPlan } from '../../meal-plans/entities/meal-plan.entity';
-import { Meal } from '../../meal-plans/entities/meal.entity';
-import { MealFood } from '../../meal-plans/entities/meal-food.entity';
+import { MealPlan } from '../../modules/meal-plan/entities/meal-plan.entity';
+import { Meal } from '../../modules/meal-plan/entities/meal.entity';
+import { MealFood } from '../../modules/meal-plan/entities/meal-food.entity';
 import { Food } from '../../foods/entities/food.entity';
 import { Gender } from '../enums/gender.enum';
 import { CreateMeasurementDto } from '../dto/create-measurement.dto';

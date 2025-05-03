@@ -14,7 +14,7 @@ import { Measurement } from './measurement.entity';
 import { PatientPhoto } from './patient-photo.entity';
 import { Consultation } from './consultation.entity';
 import { Gender } from '../enums/gender.enum';
-import { MealPlan } from '../../meal-plans/entities/meal-plan.entity';
+import { MealPlan } from '../../modules/meal-plan/entities/meal-plan.entity';
 import { Nutritionist } from '../../nutritionists/entities/nutritionist.entity';
 
 export enum PatientStatus {

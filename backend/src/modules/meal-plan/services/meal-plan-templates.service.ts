@@ -1,13 +1,13 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { MealPlanTemplate } from './entities/meal-plan-template.entity';
-import { MealTemplate } from './entities/meal-template.entity';
-import { FoodTemplate } from './entities/food-template.entity';
-import { MealPlan } from './entities/meal-plan.entity';
-import { Meal } from './entities/meal.entity';
-import { Food } from '../foods/entities/food.entity';
-import { CreateMealPlanTemplateDto } from './dto/create-meal-plan-template.dto';
+import { MealPlanTemplate } from '../entities/meal-plan-template.entity';
+import { MealTemplate } from '../entities/meal-template.entity';
+import { FoodTemplate } from '../entities/food-template.entity';
+import { MealPlan } from '../entities/meal-plan.entity';
+import { Meal } from '../entities/meal.entity';
+import { Food } from '../../../foods/entities/food.entity';
+import { CreateMealPlanTemplateDto } from '../dto/create-meal-plan-template.dto';
 import { PartialType } from '@nestjs/swagger';
 
 // Use PartialType from swagger since we're using it in other places

@@ -1,13 +1,13 @@
 import { Injectable, NotFoundException, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, ILike } from 'typeorm';
-import { MealPlan } from './entities/meal-plan.entity';
-import { Meal } from './entities/meal.entity';
-import { MealFood } from './entities/meal-food.entity';
-import { CreateMealPlanDto } from './dto/create-meal-plan.dto';
-import { UpdateMealPlanDto } from './dto/update-meal-plan.dto';
-import { CreateMealDto } from './dto/create-meal.dto';
-import { PatientsService } from '../patients/patients.service';
+import { MealPlan } from '../entities/meal-plan.entity';
+import { Meal } from '../entities/meal.entity';
+import { MealFood } from '../entities/meal-food.entity';
+import { CreateMealPlanDto } from '../dto/create-meal-plan.dto';
+import { UpdateMealPlanDto } from '../dto/update-meal-plan.dto';
+import { CreateMealDto } from '../dto/create-meal.dto';
+import { PatientsService } from '../../../patients/patients.service';
 
 @Injectable()
 export class MealPlansService {
