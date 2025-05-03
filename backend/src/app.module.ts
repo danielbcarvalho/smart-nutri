@@ -1,20 +1,19 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { MongooseModule } from '@nestjs/mongoose';
-import { AuthModule } from './auth/auth.module';
-import { NutritionistsModule } from './nutritionists/nutritionists.module';
-import { PatientsModule } from './patients/patients.module';
+import { NutritionistsModule } from './modules/nutritionists/nutritionists.module';
 import { MealPlansModule } from './modules/meal-plan/meal-plans.module';
-import { StatsModule } from './stats/stats.module';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { join } from 'path';
-import { SearchModule } from './search/search.module';
+import { SearchModule } from './modules/search/search.module';
 import { SupabaseModule } from './supabase/supabase.module';
-import { PhotosModule } from './photos/photos.module';
 import { EncryptionModule } from './encryption/encryption.module';
-import { FoodsModule } from './foods/foods.module';
+import { FoodsModule } from './modules/foods/foods.module';
+import { AuthModule } from './modules/auth/auth.module';
+import { PatientsModule } from './modules/patients/patients.module';
+import { StatsModule } from './modules/stats/stats.module';
+import { PhotosModule } from './modules/photos/photos.module';
 
 @Module({
   imports: [
@@ -24,13 +23,16 @@ import { FoodsModule } from './foods/foods.module';
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
       useFactory: (configService: ConfigService) => {
-        const dbHost = configService.get('DB_HOST');
-        const dbPort = configService.get('DB_PORT');
-        const dbUsername = configService.get('DB_USERNAME');
-        const dbPassword = configService.get('DB_PASSWORD');
-        const dbDatabase = configService.get('DB_DATABASE');
-        const supabaseUrl = configService.get('SUPABASE_URL');
-        const supabaseAnonKey = configService.get('SUPABASE_ANON_KEY');
+        const databaseUrl = configService.get<string>('DATABASE_URL');
+        if (databaseUrl) {
+          return {
+            type: 'postgres',
+            url: databaseUrl,
+            entities: [join(__dirname, '**', '*.entity.{ts,js}')],
+            synchronize: false,
+            logging: false,
+          };
+        }
         return {
           type: 'postgres',
           host: configService.get('DB_HOST'),
@@ -41,25 +43,6 @@ import { FoodsModule } from './foods/foods.module';
           entities: [join(__dirname, '**', '*.entity.{ts,js}')],
           synchronize: false,
           logging: false,
-        };
-      },
-      inject: [ConfigService],
-    }),
-    MongooseModule.forRootAsync({
-      imports: [ConfigModule],
-      useFactory: (configService: ConfigService) => {
-        const mongoUri = configService.get('MONGODB_URI');
-
-        const defaultUri = 'mongodb://localhost:27017/tbca_database';
-
-        console.log(
-          'Conectando ao MongoDB usando URI: ' + (mongoUri || defaultUri),
-        );
-
-        return {
-          uri: mongoUri || defaultUri,
-          // Forçar o uso do banco de dados tbca_database
-          dbName: 'tbca_database',
         };
       },
       inject: [ConfigService],

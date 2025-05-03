@@ -18,6 +18,7 @@
     "setup:env": "node scripts/setup-env.js",
     "setup:env:dev": "NODE_ENV=development node scripts/setup-env.js",
     "setup:env:prod": "NODE_ENV=production node scripts/setup-env.js",
+    "setup:env:test": "NODE_ENV=test node scripts/setup-env.js",
     "test": "node scripts/clean-test-db.js && jest",
     "test:watch": "jest --watch",
     "test:cov": "jest --coverage",

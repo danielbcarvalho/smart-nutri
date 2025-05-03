@@ -7,7 +7,7 @@ import { MealFood } from '../entities/meal-food.entity';
 import { CreateMealPlanDto } from '../dto/create-meal-plan.dto';
 import { UpdateMealPlanDto } from '../dto/update-meal-plan.dto';
 import { CreateMealDto } from '../dto/create-meal.dto';
-import { PatientsService } from '../../../patients/patients.service';
+import { PatientsService } from '../../patients/patients.service';
 
 @Injectable()
 export class MealPlansService {

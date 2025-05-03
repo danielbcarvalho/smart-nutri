@@ -10,8 +10,9 @@ import { MealPlansService } from './services/meal-plans.service';
 import { MealPlansController } from './controllers/meal-plans.controller';
 import { MealPlanTemplatesService } from './services/meal-plan-templates.service';
 import { MealPlanTemplatesController } from './controllers/meal-plan-templates.controller';
-import { Food } from '../../foods/entities/food.entity';
-import { PatientsModule } from '../../patients/patients.module';
+import { FoodsModule } from '../foods/foods.module';
+import { Food } from '../foods/entities/food.entity';
+import { PatientsModule } from '../patients/patients.module';
 
 @Module({
   imports: [
@@ -19,12 +20,13 @@ import { PatientsModule } from '../../patients/patients.module';
       MealPlan,
       Meal,
       MealFood,
-      Food,
       MealPlanTemplate,
       MealTemplate,
       FoodTemplate,
+      Food,
     ]),
     PatientsModule,
+    FoodsModule,
   ],
   controllers: [MealPlansController, MealPlanTemplatesController],
   providers: [MealPlansService, MealPlanTemplatesService],

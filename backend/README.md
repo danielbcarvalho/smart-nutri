@@ -66,9 +66,21 @@ $ npm install
 
 ## Configuração do Banco de Dados
 
-O projeto usa PostgreSQL como banco de dados. Para configurar:
+O projeto usa PostgreSQL como banco de dados. Agora, você pode configurar a conexão de duas formas:
 
-1. Crie um arquivo `.env` na raiz do projeto com as seguintes variáveis:
+### 1. Usando DATABASE_URL (recomendado para Railway, Render, Heroku, etc)
+
+Adicione ao seu arquivo `.env`:
+
+```env
+DATABASE_URL=postgres://usuario:senha@host:porta/nome_do_banco
+```
+
+> Se a variável `DATABASE_URL` estiver presente, ela será usada automaticamente para conectar ao banco.
+
+### 2. Usando variáveis separadas (modo legado)
+
+Se preferir, pode continuar usando as variáveis separadas:
 
 ```env
 DB_HOST=localhost
@@ -77,6 +89,8 @@ DB_USERNAME=seu_usuario
 DB_PASSWORD=sua_senha
 DB_DATABASE=smartnutri_db
 ```
+
+> Se `DATABASE_URL` não estiver definida, o sistema usará as variáveis acima.
 
 2. Crie o banco de dados:
 

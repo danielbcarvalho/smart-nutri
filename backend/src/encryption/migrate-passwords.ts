@@ -1,10 +1,10 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from '../app.module';
-import { NutritionistsService } from '../nutritionists/nutritionists.service';
 import { EncryptionService } from './encryption.service';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { Nutritionist } from '../nutritionists/entities/nutritionist.entity';
+import { NutritionistsService } from '../modules/nutritionists/nutritionists.service';
+import { Nutritionist } from '../modules/nutritionists/entities/nutritionist.entity';
 
 /**
  * Este script deve ser usado apenas para fins do MVP, para migrar senhas existentes para

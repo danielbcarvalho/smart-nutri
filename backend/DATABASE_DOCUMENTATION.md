@@ -556,3 +556,139 @@ Esta base de dados é a fonte primária de informações nutricionais no sistema
 
 **Adaptador:**
 O sistema utiliza o `AlimentoToFoodAdapter` para converter documentos do MongoDB para entidades Food utilizadas no sistema PostgreSQL, garantindo uma integração perfeita entre as bases de dados.
+
+## Ambiente de Desenvolvimento Local
+
+### Passo a passo para rodar o banco local e iniciar o backend
+
+1. **(Opcional) Suba o PostgreSQL localmente com Docker:**
+
+   - Se preferir usar Docker, crie o arquivo `docker-compose.yml` conforme exemplo abaixo e rode:
+     ```bash
+     docker compose up -d
+     ```
+   - Se já tem PostgreSQL instalado localmente, pode pular este passo.
+
+2. **Configure o arquivo `.env.development` (ou `.env` local):**
+
+   ```env
+   DB_HOST=localhost
+   DB_PORT=5432
+   DB_USERNAME=postgres
+   DB_PASSWORD=smartnutri
+   DB_DATABASE=smartnutri_db
+   ```
+
+3. **Crie o banco de dados (se ainda não existir):**
+
+   ```bash
+   psql -U postgres -c "CREATE DATABASE smartnutri_db;"
+   ```
+
+   (ou use uma ferramenta gráfica como DBeaver, TablePlus, etc)
+
+4. **Rode as migrations para criar as tabelas e estrutura:**
+
+   ```bash
+   npm run migration:run
+   ```
+
+5. **Inicie o backend em modo desenvolvimento:**
+   ```bash
+   npm run start:dev
+   ```
+
+> Em produção/cloud, utilize a variável `DATABASE_URL` conforme documentado no README.
+
+## ⚠️ Backup obrigatório antes de alterações em produção
+
+> **Sempre gere um backup do banco de produção antes de rodar migrations ou realizar qualquer alteração estrutural.**
+>
+> Isso garante que você pode restaurar o banco em caso de erro, perda de dados ou rollback necessário.
+>
+> Utilize o script `backup-prod-db.sh` conforme instruído na seção de scripts.
+
+## Deploy Seguro de Migrations em Produção (Railway)
+
+Siga este passo a passo sempre que for subir alterações no banco de dados para produção usando Railway:
+
+1. **Gere e revise as migrations localmente**
+
+   - Crie migrations atômicas e bem descritas para cada alteração de schema.
+   - Teste as migrations localmente e, se possível, em um ambiente de staging/homologação.
+
+2. **Garanta que o código e as migrations estejam versionados**
+
+   - Faça commit das migrations junto com o código relacionado.
+   - Nunca edite migrations já aplicadas em produção.
+
+3. **Backup do banco de produção (Railway) — obrigatório!**
+
+   - Gere o backup manualmente usando o script:
+     ```bash
+     export DATABASE_URL="postgresql://..." # Copie do Railway
+     ./backup-prod-db.sh
+     ```
+   - Guarde o arquivo `.backup` em local seguro.
+
+4. **Deploy do código para produção**
+
+   - Faça o deploy do backend para o Railway (merge/push para branch de produção ou deploy manual).
+   - Certifique-se de que o código novo está disponível antes de rodar as migrations.
+
+5. **Acesse o terminal do Railway para rodar as migrations**
+
+   - No painel do Railway, acesse o projeto do backend.
+   - Clique em **"Shell"** ou **"Launch Console"** para abrir um terminal no container do backend.
+
+6. **Rode as migrations no ambiente de produção**
+
+   - No terminal do Railway, execute:
+     ```bash
+     npm run migration:run
+     ```
+   - Aguarde a execução e monitore o log para garantir que todas as migrations foram aplicadas sem erro.
+
+7. **Reinicie o serviço do backend (se necessário)**
+
+   - O Railway normalmente reinicia automaticamente após deploy, mas reinicie manualmente se necessário.
+
+8. **Valide a aplicação**
+
+   - Teste endpoints críticos e funcionalidades principais.
+   - Monitore os logs do Railway para identificar possíveis problemas rapidamente.
+
+9. **Documente a alteração**
+   - Atualize a documentação do banco e do deploy, se necessário.
+   - Anote o número/nome das migrations aplicadas.
+
+> **Dicas:**
+>
+> - Nunca edite migrations já aplicadas em produção. Sempre crie uma nova migration para corrigir ou evoluir o schema.
+> - Evite migrations destrutivas (DROP COLUMN, DROP TABLE) sem backup e validação.
+> - Sempre teste as migrations em um banco de staging idêntico ao de produção antes do deploy real.
+
+## Scripts de Backup e Restauração
+
+Para padronizar e facilitar o processo de backup e restauração do banco de produção Railway, utilize os scripts abaixo:
+
+### Backup do banco de produção Railway
+
+```bash
+cd backend/scripts
+export DATABASE_URL="postgresql://postgres:UXXzlYuDhPjRdXhFoppnNxmmvQSWLCKH@gondola.proxy.rlwy.net:23089/railway" # Copie do Railway
+./backup-prod-db.sh
+```
+
+O backup será salvo no formato `.backup` com data/hora no nome do arquivo.
+
+### Restauração do backup em banco local
+
+```bash
+cd backend/scripts
+./restore-backup-local.sh backup_producao_railway_YYYY-MM-DD_HH-MM-SS.backup
+```
+
+O script irá dropar e recriar o banco local `smartnutri_db` e restaurar o backup nele.
+
+> **Atenção:** É necessário ter o PostgreSQL instalado localmente e os comandos `pg_dump`, `pg_restore`, `dropdb` e `createdb` disponíveis no PATH.

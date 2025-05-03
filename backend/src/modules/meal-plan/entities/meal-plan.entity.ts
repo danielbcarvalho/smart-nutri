@@ -9,9 +9,9 @@ import {
   UpdateDateColumn,
 } from 'typeorm';
 import { Meal } from './meal.entity';
-import { Patient } from '../../../patients/entities/patient.entity';
-import { Nutritionist } from '../../../nutritionists/entities/nutritionist.entity';
 import { ApiProperty } from '@nestjs/swagger';
+import { Nutritionist } from '../../nutritionists/entities/nutritionist.entity';
+import { Patient } from '../../patients/entities/patient.entity';
 
 @Entity('meal_plans')
 export class MealPlan {

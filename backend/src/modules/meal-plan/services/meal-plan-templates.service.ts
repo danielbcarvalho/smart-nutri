@@ -6,9 +6,9 @@ import { MealTemplate } from '../entities/meal-template.entity';
 import { FoodTemplate } from '../entities/food-template.entity';
 import { MealPlan } from '../entities/meal-plan.entity';
 import { Meal } from '../entities/meal.entity';
-import { Food } from '../../../foods/entities/food.entity';
 import { CreateMealPlanTemplateDto } from '../dto/create-meal-plan-template.dto';
 import { PartialType } from '@nestjs/swagger';
+import { Food } from '../../foods/entities/food.entity';
 
 // Use PartialType from swagger since we're using it in other places
 class UpdateMealPlanTemplateDto extends PartialType(

@@ -7,7 +7,7 @@ import {
   UpdateDateColumn,
 } from 'typeorm';
 import { Meal } from './meal.entity';
-import { Food } from '../../../foods/entities/food.entity';
+import { Food } from '../../foods/entities/food.entity';
 
 @Entity('meal_foods')
 export class MealFood {
