@@ -247,3 +247,34 @@ A coluna "Medida caseira" agora permite edição direta: possui dois campos de i
 - Permite casas decimais e valores pequenos sem quebrar o layout.
 - O adornment é dinâmico conforme a unidade selecionada.
 - Padrão visual segue o Material-UI, mantendo responsividade e alinhamento.
+
+## Integração de Alimentos Externos
+
+- O frontend utiliza uma base local de alimentos (ex: TACO, TBCA) com IDs próprios.
+- Ao prescrever um alimento, o frontend envia:
+  - `foodId`: o ID da base local
+  - `source`: a origem do alimento (ex: `"taco"`, `"tbca"`, `"personalizado"`), proveniente do campo `origem` do objeto Alimento. Se não houver, usar fallback `"taco"`.
+- Para alimentos personalizados, o frontend gera um novo ID (ex: UUID) e define `source: "personalizado"`.
+- O frontend não precisa se preocupar com UUIDs do backend para alimentos de base externa.
+- O modal de prescrição de alimentos deve garantir que sempre envia o campo `source` no payload.
+
+### Exemplo de payload enviado ao backend
+
+```json
+{
+  "mealFoods": [
+    {
+      "foodId": "3344",
+      "source": "taco",
+      "amount": 80,
+      "unit": "Pedaço(s) médio(s)"
+    },
+    {
+      "foodId": "uuid-personalizado-123",
+      "source": "personalizado",
+      "amount": 100,
+      "unit": "g"
+    }
+  ]
+}
+```

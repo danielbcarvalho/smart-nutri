@@ -18,17 +18,22 @@ import FoodDetailsModal from "./FoodDetailsModal";
 import NutrientAnalysis from "./NutrientAnalysis";
 import AddFoodSection from "./AddFoodSection";
 import PrescribedFoodsSection from "./PrescribedFoodsSection";
+import { mealPlanService } from "../services/mealPlanService";
+import type { CreateMeal, UpdateMeal } from "../services/mealPlanService";
 
 interface AddFoodToMealModalProps {
   open: boolean;
   onClose: () => void;
+  planId: string;
+  mealId: string;
+  mealName: string;
+  mealTime: string;
+  initialFoods?: Array<{ food: Alimento; amount: number; mcIndex?: number }>;
+  initialNotes?: string;
   onSave?: (
     foods: Array<{ food: Alimento; amount: number; mcIndex?: number }>,
     notes: string
-  ) => void; // Callback para salvar os dados ao confirmar
-  mealName?: string;
-  initialFoods?: Array<{ food: Alimento; amount: number; mcIndex?: number }>; // Alimentos iniciais, se houver
-  initialNotes?: string; // Observações iniciais, se houver
+  ) => void;
 }
 
 // Definição de Alimento e MedidaCaseira (se não vierem de AddFoodToMealModal.ts)
@@ -44,7 +49,11 @@ export interface Alimento {
   grupo?: string;
   unidade?: string;
   mc?: MedidaCaseira[];
-  origem?: string;
+  /**
+   * Origem do alimento (ex: 'taco', 'tbca', 'personalizado').
+   * Obrigatório para integração com backend.
+   */
+  origem: string;
   exibido?: string | null;
   destacado?: string | null;
   substitutos?: string[];
@@ -89,10 +98,13 @@ export interface Alimento {
 export const AddFoodToMealModal: React.FC<AddFoodToMealModalProps> = ({
   open,
   onClose,
-  onSave,
+  planId,
+  mealId,
   mealName,
+  mealTime,
   initialFoods = [],
   initialNotes = "",
+  onSave,
 }) => {
   const [foodSearch, setFoodSearch] = useState("");
   const [searchResults, setSearchResults] = useState<Alimento[]>([]);
@@ -107,6 +119,8 @@ export const AddFoodToMealModal: React.FC<AddFoodToMealModalProps> = ({
   const [inputWidth, setInputWidth] = useState<number | undefined>(undefined);
   const [selectedFoodForDetails, setSelectedFoodForDetails] =
     useState<Alimento | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const { data: foodDb } = useFoodDb();
 
@@ -270,11 +284,76 @@ export const AddFoodToMealModal: React.FC<AddFoodToMealModalProps> = ({
   };
 
   // Handler para salvar os dados ao confirmar
-  const handleSave = () => {
-    if (onSave) {
-      onSave(selectedFoods, notes);
+  const handleSave = async () => {
+    setError(null);
+    if (!planId || !mealName || !mealTime) {
+      setError("Dados obrigatórios ausentes. Tente novamente.");
+      return;
     }
-    onClose(); // Fecha o modal após salvar
+    if (selectedFoods.length === 0) {
+      setError("Selecione pelo menos um alimento.");
+      return;
+    }
+    setLoading(true);
+    const mealFoods = selectedFoods.map(({ food, amount, mcIndex }) => {
+      let unit = food.unidade || "g";
+      if (food.mc && typeof mcIndex === "number" && food.mc[mcIndex]) {
+        unit = food.mc[mcIndex].nome_mc || unit;
+      }
+      let peso = amount;
+      if (food.mc && typeof mcIndex === "number" && food.mc[mcIndex]) {
+        const pesoMc = Number(food.mc[mcIndex].peso) || 1;
+        peso = amount * pesoMc;
+      }
+      return {
+        foodId: food.id,
+        source: food.origem || "taco",
+        amount: peso,
+        unit,
+      };
+    });
+    try {
+      if (mealId) {
+        const updatePayload: UpdateMeal = { mealFoods, notes };
+        await mealPlanService.updateMeal(planId, mealId, updatePayload);
+      } else {
+        const meal: CreateMeal = {
+          name: mealName,
+          time: mealTime,
+          notes,
+          mealFoods,
+        };
+        await mealPlanService.addMeal(planId, meal);
+      }
+      if (onSave) {
+        onSave(selectedFoods, notes);
+      }
+      onClose();
+    } catch (err: unknown) {
+      let msg = "Erro ao salvar refeição.";
+      if (typeof err === "object" && err !== null && "response" in err) {
+        const response = (err as { response: unknown }).response;
+        if (
+          typeof response === "object" &&
+          response !== null &&
+          "data" in response
+        ) {
+          const data = (response as { data: unknown }).data;
+          if (
+            typeof data === "object" &&
+            data !== null &&
+            "message" in data &&
+            Array.isArray((data as { message: unknown }).message) &&
+            typeof (data as { message: unknown[] }).message[0] === "string"
+          ) {
+            msg = (data as { message: string[] }).message[0];
+          }
+        }
+      }
+      setError(msg);
+    } finally {
+      setLoading(false);
+    }
   };
 
   // Resetar estado ao fechar
@@ -443,10 +522,16 @@ export const AddFoodToMealModal: React.FC<AddFoodToMealModalProps> = ({
             variant="contained"
             color="success"
             sx={{ minWidth: 100, borderRadius: 2 }}
+            disabled={loading || selectedFoods.length === 0}
           >
             Confirmar
           </Button>
         </Box>
+        {error && (
+          <Typography color="error" sx={{ mt: 1 }}>
+            {error}
+          </Typography>
+        )}
       </DialogContent>
       {/* Modal de Detalhes do Alimento */}
       <FoodDetailsModal

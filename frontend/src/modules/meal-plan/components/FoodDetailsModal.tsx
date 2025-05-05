@@ -50,7 +50,13 @@ const FoodDetailsModal: React.FC<FoodDetailsModalProps> = ({
 }) => {
   if (!food) return null;
   return (
-    <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
+    <Dialog
+      open={open}
+      onClose={onClose}
+      maxWidth="md"
+      fullWidth
+      sx={{ zIndex: 1400 }}
+    >
       <DialogTitle sx={{ textAlign: "center" }}>{food.nome}</DialogTitle>
       <DialogContent>
         <Typography align="center" sx={{ mb: 2 }}>

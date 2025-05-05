@@ -1,6 +1,17 @@
 import { api } from "@services/api";
 import { MealFood } from "@services/foodService";
 
+export type CreateMealFood = Omit<MealFood, "id">;
+export type CreateMeal = Omit<Meal, "id" | "mealFoods"> & {
+  mealFoods: CreateMealFood[];
+};
+
+export type UpdateMealFood = Omit<MealFood, "id">;
+export type UpdateMeal = Partial<Omit<Meal, "id" | "mealFoods">> & {
+  mealFoods: UpdateMealFood[];
+  notes?: string;
+};
+
 export interface Meal {
   id: string;
   time: string;
@@ -58,13 +69,13 @@ export const mealPlanService = {
   },
 
   // Adicionar refeição ao plano
-  addMeal: async (planId: string, meal: Omit<Meal, "id">) => {
+  addMeal: async (planId: string, meal: CreateMeal) => {
     const response = await api.post<Meal>(`/meal-plans/${planId}/meals`, meal);
     return response.data;
   },
 
   // Atualizar refeição
-  updateMeal: async (planId: string, mealId: string, data: Partial<Meal>) => {
+  updateMeal: async (planId: string, mealId: string, data: UpdateMeal) => {
     const response = await api.patch<Meal>(
       `/meal-plans/${planId}/meals/${mealId}`,
       data

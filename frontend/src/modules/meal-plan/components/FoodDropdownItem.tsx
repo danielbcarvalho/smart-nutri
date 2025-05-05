@@ -47,7 +47,6 @@ const FoodDropdownItem: React.FC<FoodDropdownItemProps> = ({
         {food.origem && (
           <Typography
             variant="caption"
-            color="text.disabled"
             sx={{ display: "block", lineHeight: 1.1 }}
           >
             {food.origem}
@@ -176,6 +175,7 @@ const FoodDropdownItem: React.FC<FoodDropdownItemProps> = ({
               onOpenDetails(food);
             }}
             aria-label={`Ver detalhes de ${food.nome}`}
+            color="primary"
           >
             <InfoIcon fontSize="medium" />
           </IconButton>

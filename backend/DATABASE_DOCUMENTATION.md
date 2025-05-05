@@ -100,6 +100,8 @@ erDiagram
         decimal protein
         decimal carbs
         decimal fat
+        string external_id "nullable"
+        string source "nullable"
         timestamp created_at
         timestamp updated_at
     }
@@ -161,7 +163,7 @@ erDiagram
 #### Foods
 
 - Foods that compose a meal.
-- **Fields:** id (PK), meal_id (FK), name, portion, calories, protein, carbs, fat, created_at, updated_at
+- **Fields:** id (PK), meal_id (FK), name, portion, calories, protein, carbs, fat, external_id, source, created_at, updated_at
 
 ### 🔄 Relationships
 
@@ -692,3 +694,21 @@ cd backend/scripts
 O script irá dropar e recriar o banco local `smartnutri_db` e restaurar o backup nele.
 
 > **Atenção:** É necessário ter o PostgreSQL instalado localmente e os comandos `pg_dump`, `pg_restore`, `dropdb` e `createdb` disponíveis no PATH.
+
+### Alimentos Externos e Personalizados
+
+- A tabela de alimentos (`Food`) deve conter os campos:
+  - `id` (PK, UUID)
+  - `external_id` (string, nullable): ID do alimento na base externa
+  - `source` (string): Origem do alimento (`taco`, `tbca`, `personalizado`, etc)
+  - Demais campos nutricionais
+- A combinação `source + external_id` deve ser única para evitar duplicidade.
+- Para alimentos personalizados, `source = "personalizado"` e `external_id` é um UUID gerado no frontend.
+
+#### Exemplo de estrutura
+
+| id (UUID) | external_id | source        | name         | ... |
+| --------- | ----------- | ------------- | ------------ | --- |
+| ...       | 3344        | taco          | Salame       | ... |
+| ...       | 12394       | tbca          | Coração ...  | ... |
+| ...       | uuid-xyz    | personalizado | Meu Alimento | ... |

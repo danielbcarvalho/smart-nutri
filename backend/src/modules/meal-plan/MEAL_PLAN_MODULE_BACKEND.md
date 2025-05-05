@@ -197,3 +197,69 @@ O diretório `tests/` contém os testes unitários e de integração para este m
     - **A partir de Modelo**: Use `POST /meal-plan-templates/:id/create-plan/:patientId`.
     - **Diretamente**: Use `POST /meal-plans` fornecendo todos os detalhes das refeições e alimentos.
 3.  **Gerenciar Plano**: Use os endpoints de `MealPlansController` (`GET`, `PATCH`, `DELETE`, `/meals`) para visualizar e modificar o plano do paciente.
+
+## Integração de Alimentos Externos e Personalizados
+
+O backend aceita alimentos de diferentes origens (bases públicas, privadas ou personalizados) para prescrição em planos alimentares.
+
+- O campo `foodId` em `MealFood` pode ser:
+  - Um UUID (referência a um alimento cadastrado no backend)
+  - Um ID string/número de uma base externa (ex: TACO, TBCA, etc)
+- O payload de cada alimento deve incluir obrigatoriamente o campo `source`, indicando a origem do alimento:
+  - Exemplos: `"taco"`, `"tbca"`, `"personalizado"`
+- **Fluxo:**
+  1. Se o alimento já existe no backend (UUID), use o UUID e `source: "backend"`.
+  2. Se o alimento é de uma base externa, envie o `id` da base e `source` correspondente.
+  3. Se o alimento não existe em nenhuma base, envie um novo ID (ex: UUID gerado no frontend) e `source: "personalizado"`.
+- O backend garante unicidade pela combinação `source + foodId`.
+- Se um alimento de base externa não existir ainda no backend, ele pode ser cadastrado automaticamente, marcando a origem.
+
+### Exemplo de Payload
+
+```json
+{
+  "mealFoods": [
+    {
+      "foodId": "3344",
+      "source": "taco",
+      "amount": 80,
+      "unit": "Fatia(s) média(s)"
+    },
+    {
+      "foodId": "uuid-gerado-no-frontend",
+      "source": "personalizado",
+      "amount": 50,
+      "unit": "unidade"
+    }
+  ]
+}
+```
+
+### Validações
+
+- O backend valida que `foodId` e `source` estão presentes.
+- Se `source` for `"personalizado"` e o alimento não existir, o backend cadastra automaticamente.
+- Para alimentos de base externa, o backend pode buscar/atualizar os dados conforme necessário.
+
+### Novos Endpoints (2024-06)
+
+- `PATCH /meal-plans/:planId/meals/:mealId`: Atualiza uma refeição específica de um plano alimentar (alimentos, notas, nome, horário). Payload: `{ mealFoods, notes, name?, time? }`.
+
+Exemplo de payload:
+
+```json
+{
+  "mealFoods": [
+    {
+      "foodId": "3344",
+      "source": "taco",
+      "amount": 80,
+      "unit": "Fatia(s) média(s)"
+    }
+  ],
+  "notes": "Sem sal"
+}
+```
+
+- O backend valida e substitui todos os alimentos da refeição pelo novo array enviado.
+- Se a refeição não existir, retorna 404.
