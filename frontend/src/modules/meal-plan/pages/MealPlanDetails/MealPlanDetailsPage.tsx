@@ -19,10 +19,8 @@ import {
   Sort as SortIcon,
   UnfoldMore as UnfoldMoreIcon,
   ContentCopy as ContentCopyIcon,
-  Fastfood as FastfoodIcon,
   Coffee as CoffeeIcon,
   Restaurant as RestaurantIcon,
-  Cake as CakeIcon,
   Search as SearchIcon,
   Save as SaveIcon,
 } from "@mui/icons-material";
@@ -280,8 +278,13 @@ export function MealPlanDetails() {
     mealFoods: MealFood[] | undefined
   ): { food: Alimento; amount: number; mcIndex?: number }[] {
     if (!Array.isArray(mealFoods) || !Array.isArray(foodDb)) return [];
+    const seen = new Set();
     return mealFoods
-      .filter((mf) => !!foodDb.find((f: Alimento) => f.id === mf.foodId))
+      .filter((mf) => {
+        if (seen.has(mf.foodId)) return false;
+        seen.add(mf.foodId);
+        return !!foodDb.find((f: Alimento) => f.id === mf.foodId);
+      })
       .map((mf) => {
         const food = foodDb.find((f: Alimento) => f.id === mf.foodId)!;
         let mcIndex: number | undefined = undefined;
@@ -539,8 +542,8 @@ export function MealPlanDetails() {
         initialFoods={convertMealFoodsToInitialFoods(selectedMeal?.mealFoods)}
         initialNotes={selectedMeal?.notes}
         onSave={() => {
-          queryClient.invalidateQueries({ queryKey: ["mealPlan", planId] });
           setOpenAddFoodModal(false);
+          queryClient.invalidateQueries({ queryKey: ["mealPlan", planId] });
         }}
       />
     </Box>
