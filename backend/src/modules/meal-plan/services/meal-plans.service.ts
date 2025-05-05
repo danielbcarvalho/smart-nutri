@@ -354,12 +354,7 @@ export class MealPlansService {
       where: { id: mealId, mealPlan: { id: planId } },
       relations: ['mealFoods'],
     });
-    if (meal) {
-      console.log(
-        `[BACKEND][updateMeal] Refeição antes da atualização:`,
-        JSON.stringify(meal, null, 2),
-      );
-    }
+
     if (!meal) {
       throw new NotFoundException(`Refeição não encontrada`);
     }
@@ -402,12 +397,7 @@ export class MealPlansService {
       where: { id: meal.id },
       relations: ['mealFoods'],
     });
-    if (updatedMeal) {
-      console.log(
-        `[BACKEND][updateMeal] Refeição após atualização:`,
-        JSON.stringify(updatedMeal, null, 2),
-      );
-    }
+
     if (!updatedMeal) {
       throw new NotFoundException('Refeição não encontrada após atualização');
     }

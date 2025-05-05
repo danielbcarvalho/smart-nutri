@@ -300,15 +300,10 @@ export const AddFoodToMealModal: React.FC<AddFoodToMealModalProps> = ({
       if (food.mc && typeof mcIndex === "number" && food.mc[mcIndex]) {
         unit = food.mc[mcIndex].nome_mc || unit;
       }
-      let peso = amount;
-      if (food.mc && typeof mcIndex === "number" && food.mc[mcIndex]) {
-        const pesoMc = Number(food.mc[mcIndex].peso) || 1;
-        peso = amount * pesoMc;
-      }
       return {
         foodId: food.id,
         source: food.origem || "taco",
-        amount: peso,
+        amount: Number(amount),
         unit,
       };
     });
