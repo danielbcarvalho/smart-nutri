@@ -34,12 +34,6 @@ import AddFoodToMealModal from "@/modules/meal-plan/components/AddFoodToMealModa
 import { useFoodDb } from "@/services/useFoodDb";
 import type { MealFood } from "@/services/foodService";
 import type { Alimento } from "@/modules/meal-plan/components/AddFoodToMealModal";
-import {
-  DragDropContext,
-  Droppable,
-  Draggable,
-  DropResult,
-} from "react-beautiful-dnd";
 import MealCard from "@/modules/meal-plan/components/MealCard";
 import MealMenu from "@/modules/meal-plan/components/MealMenu";
 
@@ -261,22 +255,9 @@ export function MealPlanDetails() {
     }
   };
 
-  const handleDragEnd = (result: DropResult) => {
-    if (!result.destination || !plan?.meals) return;
-    const reorderedMeals = Array.from(plan.meals);
-    const [removed] = reorderedMeals.splice(result.source.index, 1);
-    reorderedMeals.splice(result.destination.index, 0, removed);
-    // Aqui você precisaria implementar uma lógica para atualizar a ordem no servidor
-    // Por enquanto, vamos fingir que temos um endpoint que aceita uma lista de IDs reordenados
-    console.log(
-      "Reordenação: ",
-      reorderedMeals.map((m) => m.id)
-    );
-  };
-
-  function convertMealFoodsToInitialFoods(
+  const convertMealFoodsToInitialFoods = (
     mealFoods: MealFood[] | undefined
-  ): { food: Alimento; amount: number; mcIndex?: number }[] {
+  ): { food: Alimento; amount: number; mcIndex?: number }[] => {
     if (!Array.isArray(mealFoods) || !Array.isArray(foodDb)) return [];
     const seen = new Set();
     return mealFoods
@@ -300,7 +281,7 @@ export function MealPlanDetails() {
           mcIndex,
         };
       });
-  }
+  };
 
   if (isLoading) {
     return (
@@ -393,43 +374,26 @@ export function MealPlanDetails() {
       </Stack>
 
       {/* Lista de Refeições */}
-      <DragDropContext onDragEnd={handleDragEnd}>
-        <Droppable droppableId="meals">
-          {(provided) => (
-            <Box
-              sx={{
-                borderRadius: 2,
-                overflow: "hidden",
-                mb: 3,
-                bgcolor: "transparent",
-              }}
-              ref={provided.innerRef}
-              {...provided.droppableProps}
-            >
-              {sortedMeals.map((meal, index) => (
-                <Draggable key={meal.id} draggableId={meal.id} index={index}>
-                  {(provided) => (
-                    <div ref={provided.innerRef} {...provided.draggableProps}>
-                      <MealCard
-                        meal={meal}
-                        foodDb={foodDb}
-                        expanded={expandedMeals.includes(meal.id)}
-                        onExpand={handleExpandMeal}
-                        onAddFood={handleAddFood}
-                        onOpenMenu={handleOpenMenu}
-                      >
-                        {/* Drag handle */}
-                        <span {...provided.dragHandleProps} />
-                      </MealCard>
-                    </div>
-                  )}
-                </Draggable>
-              ))}
-              {provided.placeholder}
-            </Box>
-          )}
-        </Droppable>
-      </DragDropContext>
+      <Box
+        sx={{
+          borderRadius: 2,
+          overflow: "hidden",
+          mb: 3,
+          bgcolor: "transparent",
+        }}
+      >
+        {sortedMeals.map((meal) => (
+          <MealCard
+            key={meal.id}
+            meal={meal}
+            foodDb={foodDb}
+            expanded={expandedMeals.includes(meal.id)}
+            onExpand={handleExpandMeal}
+            onAddFood={handleAddFood}
+            onOpenMenu={handleOpenMenu}
+          />
+        ))}
+      </Box>
 
       {/* Botão para adicionar nova refeição */}
       <Button
