@@ -30,18 +30,36 @@ const MealNutritionSummary: React.FC<MealNutritionSummaryProps> = ({
       const food = foodDb.find((f) => f.id === mealFood.foodId);
       if (!food) return;
 
-      const amount = mealFood.amount;
-      calories += ((Number(food.kcal) || 0) * amount) / 100;
-      protein += ((Number(food.ptn) || 0) * amount) / 100;
-      carbs += ((Number(food.cho) || 0) * amount) / 100;
-      fat += ((Number(food.lip) || 0) * amount) / 100;
+      // Calcular mcIndex dinamicamente
+      let mcIndex: number | undefined = undefined;
+      if (food.mc && mealFood.unit) {
+        mcIndex = food.mc.findIndex((mc) => mc.nome_mc === mealFood.unit);
+        if (mcIndex === -1) mcIndex = undefined;
+      }
+
+      // Calcular peso real
+      let realWeight = mealFood.amount;
+      if (
+        food.mc &&
+        typeof mcIndex === "number" &&
+        mcIndex >= 0 &&
+        food.mc[mcIndex]
+      ) {
+        const mcWeight = Number(food.mc[mcIndex].peso) || 1;
+        realWeight = mealFood.amount * mcWeight;
+      }
+
+      calories += ((Number(food.kcal) || 0) * realWeight) / 100;
+      protein += ((Number(food.ptn) || 0) * realWeight) / 100;
+      carbs += ((Number(food.cho) || 0) * realWeight) / 100;
+      fat += ((Number(food.lip) || 0) * realWeight) / 100;
     });
 
     return {
-      calories: Math.round(calories),
-      protein: Math.round(protein),
-      carbs: Math.round(carbs),
-      fat: Math.round(fat),
+      calories: calories,
+      protein: protein,
+      carbs: carbs,
+      fat: fat,
       macroDistribution: {
         protein: protein * 4, // 4 kcal por grama de proteína
         carbs: carbs * 4, // 4 kcal por grama de carboidrato
@@ -64,12 +82,12 @@ const MealNutritionSummary: React.FC<MealNutritionSummaryProps> = ({
           Resumo Nutricional
         </Typography>
         <Typography variant="h6" color="primary.main" gutterBottom>
-          {nutritionSummary.calories} kcal
+          {nutritionSummary.calories.toFixed(1)} kcal
         </Typography>
 
         <Box sx={{ display: "flex", justifyContent: "space-between", mb: 1 }}>
           <Typography variant="body2">
-            Proteínas: {nutritionSummary.protein}g
+            Proteínas: {nutritionSummary.protein.toFixed(1)}g
           </Typography>
           <Typography variant="body2" color="text.secondary">
             {Math.round(
@@ -92,7 +110,7 @@ const MealNutritionSummary: React.FC<MealNutritionSummaryProps> = ({
 
         <Box sx={{ display: "flex", justifyContent: "space-between", mb: 1 }}>
           <Typography variant="body2">
-            Carboidratos: {nutritionSummary.carbs}g
+            Carboidratos: {nutritionSummary.carbs.toFixed(1)}g
           </Typography>
           <Typography variant="body2" color="text.secondary">
             {Math.round(
@@ -114,7 +132,7 @@ const MealNutritionSummary: React.FC<MealNutritionSummaryProps> = ({
 
         <Box sx={{ display: "flex", justifyContent: "space-between", mb: 1 }}>
           <Typography variant="body2">
-            Gorduras: {nutritionSummary.fat}g
+            Gorduras: {nutritionSummary.fat.toFixed(1)}g
           </Typography>
           <Typography variant="body2" color="text.secondary">
             {Math.round(

@@ -245,6 +245,21 @@ A busca de alimentos é realizada **localmente** a partir de um arquivo `aliment
 
 ---
 
+## Padrão visual da tabela de alimentos em refeições
+
+A partir de 2024-06, a visualização dos alimentos de cada refeição (MealCard) utiliza uma tabela Material-UI (`<Table>`), responsiva, com as seguintes colunas:
+
+- **Qtde**
+- **Unidade**
+- **Alimento**
+- **Calorias**
+
+Esse padrão segue o visual de `PrescribedFoodsSection`, garantindo alinhamento, espaçamento e responsividade. O cabeçalho é destacado e há scroll horizontal em telas pequenas. Chips e tooltips são usados para detalhamento de calorias.
+
+Essa tabela é usada apenas para visualização dos alimentos prescritos em cada refeição do plano alimentar.
+
+---
+
 ## Referências
 
 - [Material-UI](https://mui.com/)

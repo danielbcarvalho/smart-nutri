@@ -11,9 +11,9 @@ import { PatientsService } from '../../patients/patients.service';
 
 @Injectable()
 export class MealPlansService {
-  constructor(
-    private readonly logger = new Logger(MealPlansService.name);
+  private readonly logger = new Logger(MealPlansService.name);
 
+  constructor(
     @InjectRepository(MealPlan)
     private readonly mealPlanRepository: Repository<MealPlan>,
     @InjectRepository(Meal)

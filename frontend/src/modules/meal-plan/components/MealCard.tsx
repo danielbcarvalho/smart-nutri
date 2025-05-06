@@ -9,6 +9,12 @@ import {
   Badge,
   Button,
   Paper,
+  TableContainer,
+  Table,
+  TableHead,
+  TableBody,
+  TableRow,
+  TableCell,
 } from "@mui/material";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import FastfoodIcon from "@mui/icons-material/Restaurant";
@@ -127,7 +133,7 @@ const MealCard: React.FC<MealCardProps> = ({
                     onAddFood(meal.id);
                   }}
                 >
-                  Adicionar Alimento
+                  Adicionar ou editar alimentos
                 </Button>
               </Box>
               {/* Lista de Alimentos */}
@@ -136,50 +142,71 @@ const MealCard: React.FC<MealCardProps> = ({
                 sx={{ p: meal.mealFoods?.length ? 2 : 0, mb: 2 }}
               >
                 {meal.mealFoods && meal.mealFoods.length > 0 ? (
-                  <Box>
-                    {/* Cabeçalho da Lista */}
-                    <Box
-                      sx={{
-                        display: "flex",
-                        mb: 1,
-                        borderBottom: "1px solid rgba(0,0,0,0.1)",
-                        pb: 1,
-                      }}
+                  <TableContainer
+                    sx={{
+                      maxHeight: 300,
+                      overflowX: "auto",
+                      borderRadius: 2,
+                      boxShadow: "none",
+                      background: "none",
+                      mb: 2,
+                    }}
+                  >
+                    <Table
+                      size="small"
+                      aria-label="Tabela de alimentos da refeição"
                     >
-                      <Typography
-                        variant="caption"
-                        sx={{ width: 70, fontWeight: "bold" }}
-                      >
-                        Qtde
-                      </Typography>
-                      <Typography
-                        variant="caption"
-                        sx={{ width: 70, fontWeight: "bold" }}
-                      >
-                        Unidade
-                      </Typography>
-                      <Typography
-                        variant="caption"
-                        sx={{ flex: 1, fontWeight: "bold" }}
-                      >
-                        Alimento
-                      </Typography>
-                      <Typography
-                        variant="caption"
-                        sx={{ width: 100, fontWeight: "bold" }}
-                      >
-                        Calorias
-                      </Typography>
-                    </Box>
-                    {/* Itens (apenas leitura) */}
-                    {meal.mealFoods.map((mealFood) => (
-                      <MealFoodItem
-                        key={mealFood.id || mealFood.foodId}
-                        mealFood={mealFood}
-                        foodDb={foodDb}
-                      />
-                    ))}
-                  </Box>
+                      <TableHead>
+                        <TableRow>
+                          <TableCell
+                            sx={{
+                              fontWeight: "bold",
+                              px: 1,
+                              py: 0.5,
+                              width: 70,
+                            }}
+                          >
+                            Qtde
+                          </TableCell>
+                          <TableCell
+                            sx={{
+                              fontWeight: "bold",
+                              px: 1,
+                              py: 0.5,
+                              width: 70,
+                            }}
+                          >
+                            Unidade
+                          </TableCell>
+                          <TableCell
+                            sx={{ fontWeight: "bold", px: 1, py: 0.5 }}
+                          >
+                            Alimento
+                          </TableCell>
+                          <TableCell
+                            sx={{
+                              fontWeight: "bold",
+                              px: 1,
+                              py: 0.5,
+                              width: 100,
+                            }}
+                          >
+                            Calorias
+                          </TableCell>
+                        </TableRow>
+                      </TableHead>
+                      <TableBody>
+                        {meal.mealFoods.map((mealFood) => (
+                          <MealFoodItem
+                            key={mealFood.id || mealFood.foodId}
+                            mealFood={mealFood}
+                            foodDb={foodDb}
+                            asTableRow
+                          />
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </TableContainer>
                 ) : (
                   <Box
                     sx={{
