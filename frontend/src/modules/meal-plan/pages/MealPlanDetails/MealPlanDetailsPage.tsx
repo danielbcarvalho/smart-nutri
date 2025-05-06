@@ -36,6 +36,7 @@ import type { MealFood } from "@/services/foodService";
 import type { Alimento } from "@/modules/meal-plan/components/AddFoodToMealModal";
 import MealCard from "@/modules/meal-plan/components/MealCard";
 import MealMenu from "@/modules/meal-plan/components/MealMenu";
+import NutrientAnalysis from "@/modules/meal-plan/components/NutrientAnalysis";
 
 const DEFAULT_MEALS = [
   { name: "Café da manhã", time: "07:00", icon: <CoffeeIcon /> },
@@ -283,6 +284,61 @@ export function MealPlanDetails() {
       });
   };
 
+  // Função para calcular os nutrientes totais do plano
+  const calculateTotalNutrients = () => {
+    if (!plan?.meals)
+      return {
+        protein: 0,
+        fat: 0,
+        carbohydrates: 0,
+        calories: 0,
+        totalWeight: 0,
+      };
+
+    return plan.meals.reduce(
+      (acc, meal) => {
+        const mealNutrients = meal.mealFoods.reduce(
+          (mealAcc, mealFood) => {
+            const food = foodDb.find((f) => f.id === mealFood.foodId);
+            if (!food) return mealAcc;
+
+            const amount = mealFood.amount;
+            const mc = food.mc?.find((m) => m.nome_mc === mealFood.unit);
+            if (!mc) return mealAcc;
+
+            // Calcula o fator de conversão baseado no peso da medida caseira
+            const conversionFactor = Number(mc.peso) / 100;
+
+            return {
+              protein:
+                mealAcc.protein +
+                Number(food.ptn || 0) * amount * conversionFactor,
+              fat:
+                mealAcc.fat + Number(food.lip || 0) * amount * conversionFactor,
+              carbohydrates:
+                mealAcc.carbohydrates +
+                Number(food.cho || 0) * amount * conversionFactor,
+              calories:
+                mealAcc.calories +
+                Number(food.kcal || 0) * amount * conversionFactor,
+              totalWeight: mealAcc.totalWeight + amount * Number(mc.peso),
+            };
+          },
+          { protein: 0, fat: 0, carbohydrates: 0, calories: 0, totalWeight: 0 }
+        );
+
+        return {
+          protein: acc.protein + mealNutrients.protein,
+          fat: acc.fat + mealNutrients.fat,
+          carbohydrates: acc.carbohydrates + mealNutrients.carbohydrates,
+          calories: acc.calories + mealNutrients.calories,
+          totalWeight: acc.totalWeight + mealNutrients.totalWeight,
+        };
+      },
+      { protein: 0, fat: 0, carbohydrates: 0, calories: 0, totalWeight: 0 }
+    );
+  };
+
   if (isLoading) {
     return (
       <Box sx={{ maxWidth: 1200, mx: "auto", p: 3 }}>
@@ -310,67 +366,55 @@ export function MealPlanDetails() {
 
   return (
     <Box sx={{ maxWidth: 1200, mx: "auto", p: 3 }}>
-      <Typography
-        variant="h5"
-        sx={{ mb: 2, display: "flex", alignItems: "center" }}
-      >
-        <RestaurantIcon sx={{ mr: 1 }} /> Plano Alimentar
-      </Typography>
-
-      {/* Barra de Ferramentas */}
       <Stack
         direction={{ xs: "column", sm: "row" }}
-        spacing={1}
-        sx={{
-          mb: 3,
-          flexWrap: "wrap",
-          gap: 1,
-          bgcolor: "background.paper",
-          borderRadius: 1,
-          p: 1,
-          boxShadow: 1,
-        }}
+        alignItems={{ xs: "flex-start", sm: "center" }}
+        justifyContent="space-between"
+        spacing={2}
+        sx={{ mb: 2 }}
       >
-        <Button
-          variant="outlined"
-          startIcon={
-            expandedMeals.length === sortedMeals.length ? (
-              <ExpandMoreIcon />
-            ) : (
-              <UnfoldMoreIcon />
-            )
-          }
-          onClick={
-            expandedMeals.length === sortedMeals.length
-              ? handleCollapseAll
-              : handleExpandAll
-          }
-          size="small"
+        <Typography
+          variant="h5"
+          sx={{ display: "flex", alignItems: "center", mb: { xs: 1, sm: 0 } }}
         >
-          {expandedMeals.length === sortedMeals.length
-            ? "Recolher tudo"
-            : "Expandir tudo"}
-        </Button>
-        <Button variant="outlined" startIcon={<SortIcon />} size="small">
-          Ordenar por horário
-        </Button>
-        <Button variant="outlined" startIcon={<ContentCopyIcon />} size="small">
-          Duplicar plano
-        </Button>
-        <TextField
-          placeholder="Buscar alimentos..."
-          size="small"
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          sx={{ ml: { sm: "auto" } }}
-          InputProps={{
-            startAdornment: (
-              <InputAdornment position="start">
-                <SearchIcon fontSize="small" />
-              </InputAdornment>
-            ),
-          }}
-        />
+          <RestaurantIcon sx={{ mr: 1 }} /> Plano Alimentar
+        </Typography>
+        <Stack direction="row" spacing={1}>
+          <Button
+            variant="outlined"
+            startIcon={
+              expandedMeals.length === sortedMeals.length ? (
+                <ExpandMoreIcon />
+              ) : (
+                <UnfoldMoreIcon />
+              )
+            }
+            onClick={
+              expandedMeals.length === sortedMeals.length
+                ? handleCollapseAll
+                : handleExpandAll
+            }
+            size="small"
+          >
+            {expandedMeals.length === sortedMeals.length
+              ? "Recolher tudo"
+              : "Expandir tudo"}
+          </Button>
+          <Button
+            variant="contained"
+            startIcon={<AddIcon />}
+            onClick={() => {
+              setNewMealName("");
+              setSelectedTime("12:00");
+              setMealMenuId("");
+              setOpenMealDialog(true);
+            }}
+            size="small"
+            color="success"
+          >
+            Nova refeição ou hábito
+          </Button>
+        </Stack>
       </Stack>
 
       {/* Lista de Refeições */}
@@ -395,24 +439,19 @@ export function MealPlanDetails() {
         ))}
       </Box>
 
-      {/* Botão para adicionar nova refeição */}
+      {/* Análise de Nutrientes Total */}
+      <Box sx={{ mb: 3 }}>
+        <NutrientAnalysis {...calculateTotalNutrients()} />
+      </Box>
+
+      {/* Botão Salvar e ver planejamento */}
       <Button
         variant="contained"
-        startIcon={<AddIcon />}
-        onClick={() => {
-          setNewMealName("");
-          setSelectedTime("12:00");
-          setMealMenuId("");
-          setOpenMealDialog(true);
-        }}
-        sx={{
-          width: "100%",
-          py: 1.5,
-          bgcolor: "success.main",
-          "&:hover": { bgcolor: "success.dark" },
-        }}
+        color="primary"
+        sx={{ width: "100%", py: 1.5, fontWeight: 600, fontSize: 18 }}
+        // onClick: aqui você pode definir a ação desejada
       >
-        Nova refeição ou hábito
+        Salvar e ver planejamento
       </Button>
 
       {/* Dialog para adicionar/editar refeição */}
