@@ -23,7 +23,7 @@ export class MealPlan {
   @ApiProperty({ example: 'Plano Alimentar Semanal' })
   name: string;
 
-  @Column({ type: 'text', nullable: true, name: 'notes' })
+  @Column({ type: 'text', nullable: true, name: 'description' })
   @ApiProperty({ example: 'Plano alimentar para perda de peso' })
   description: string;
 

@@ -36,7 +36,7 @@ export class CreateMealDto {
   })
   @IsString()
   @IsOptional()
-  notes?: string;
+  description?: string;
 
   @ApiProperty({
     description: 'Lista de alimentos da refeição',

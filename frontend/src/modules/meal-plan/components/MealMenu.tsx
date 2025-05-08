@@ -55,29 +55,7 @@ const MealMenu: React.FC<MealMenuProps> = ({
       </ListItemIcon>
       Adicionar alimento
     </MenuItem>
-    <MenuItem
-      onClick={() => {
-        onDuplicate();
-        onClose();
-      }}
-    >
-      <ListItemIcon>
-        <ContentCopyIcon fontSize="small" />
-      </ListItemIcon>
-      Duplicar refeição
-    </MenuItem>
-    <Divider />
-    <MenuItem
-      onClick={() => {
-        onSaveAsTemplate();
-        onClose();
-      }}
-    >
-      <ListItemIcon>
-        <SaveIcon fontSize="small" />
-      </ListItemIcon>
-      Salvar como template
-    </MenuItem>
+
     {hasTemplates && (
       <MenuItem
         onClick={(e) => {

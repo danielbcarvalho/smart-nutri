@@ -191,11 +191,14 @@ export function MealPlanDetails() {
           ...mealToUpdate,
           name: newMealName,
           time: formatTime(selectedTime),
-          mealFoods: mealToUpdate.mealFoods.map(({ foodId, amount, unit }) => ({
-            foodId,
-            amount,
-            unit,
-          })),
+          mealFoods: mealToUpdate.mealFoods.map(
+            ({ foodId, amount, unit, source }) => ({
+              foodId,
+              amount: Number(amount),
+              unit,
+              source: source || "manual",
+            })
+          ),
         },
       });
       setOpenMealDialog(false);
@@ -373,12 +376,17 @@ export function MealPlanDetails() {
         spacing={2}
         sx={{ mb: 2 }}
       >
-        <Typography
-          variant="h5"
-          sx={{ display: "flex", alignItems: "center", mb: { xs: 1, sm: 0 } }}
-        >
-          <RestaurantIcon sx={{ mr: 1 }} /> Plano Alimentar
-        </Typography>
+        <Box>
+          <Typography
+            variant="h5"
+            sx={{ display: "flex", alignItems: "center", mb: 0.5 }}
+          >
+            Plano Alimentar
+          </Typography>
+          <Typography variant="h6" color="text.secondary">
+            {plan.name}
+          </Typography>
+        </Box>
         <Stack direction="row" spacing={1}>
           <Button
             variant="outlined"

@@ -35,7 +35,7 @@ export class Meal {
   time: string; // Horário da refeição
 
   @Column({ type: 'text', nullable: true })
-  notes: string;
+  description: string;
 
   @ManyToOne(() => MealPlan, (mealPlan) => mealPlan.meals, {
     onDelete: 'CASCADE',

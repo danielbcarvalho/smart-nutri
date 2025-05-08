@@ -53,7 +53,7 @@ export class UpdateMealPlanDto {
   })
   @IsOptional()
   @IsString()
-  notes?: string;
+  description?: string;
 
   @ApiProperty({
     description: 'Lista de refeições do plano',

@@ -27,6 +27,14 @@ export class MealPlansService {
     createMealPlanDto: CreateMealPlanDto,
     nutritionistId: string,
   ): Promise<MealPlan> {
+    console.log(
+      '🚀 ~ meal-plans.service.ts:30 ~ nutritionistId 🚀🚀🚀:',
+      nutritionistId,
+    );
+    console.log(
+      '🚀 ~ meal-plans.service.ts:30 ~ createMealPlanDto 🚀🚀🚀:',
+      createMealPlanDto,
+    );
     // Verifica se o paciente existe e pertence ao nutricionista
     await this.patientsService.findOne(
       createMealPlanDto.patientId,
@@ -77,59 +85,23 @@ export class MealPlansService {
     patientId: string,
     nutritionistId: string,
   ): Promise<MealPlan[]> {
+    // Verificar se o paciente existe e pertence ao nutricionista
     try {
-      // Verificar se o paciente existe e pertence ao nutricionista
-      try {
-        await this.patientsService.findOne(patientId, nutritionistId);
-      } catch (error) {
-        if (error instanceof NotFoundException) {
-          return [];
-        }
-        throw error;
-      }
-
-      // Usar SQL bruto para evitar problemas com nomes de colunas
-      const query =
-        this.mealPlanRepository.manager.connection.createQueryRunner();
-      await query.connect();
-
-      try {
-        const result = await query.query(
-          `SELECT * FROM meal_plans WHERE patient_id = $1 AND nutritionist_id = $2`,
-          [patientId, nutritionistId],
-        );
-
-        // Converter os resultados para entidades
-        return result.map((row) => {
-          const mealPlan = new MealPlan();
-          Object.assign(mealPlan, {
-            id: row.id,
-            name: row.name,
-            description: row.notes,
-            patientId: row.patient_id,
-            nutritionistId: row.nutritionist_id,
-            startDate: row.startDate,
-            endDate: row.endDate,
-            dailyCalories: row.daily_calories,
-            dailyProtein: row.daily_protein,
-            dailyCarbs: row.daily_carbs,
-            dailyFat: row.daily_fat,
-            createdAt: row.createdAt,
-            updatedAt: row.updatedAt,
-          });
-          return mealPlan;
-        });
-      } finally {
-        await query.release();
-      }
+      await this.patientsService.findOne(patientId, nutritionistId);
     } catch (error) {
-      this.logger.error(
-        `Error fetching meal plans for patient ${patientId}:`,
-        error.stack,
-      );
-      // Retornar array vazio em vez de propagar o erro
-      return [];
+      console.log('🚀 ~ meal-plans.service.ts:84 ~ error 🚀🚀🚀:', error);
+      if (error instanceof NotFoundException) {
+        return [];
+      }
+      throw error;
     }
+
+    // Buscar planos com todas as relações e campos
+    return this.mealPlanRepository.find({
+      where: { patientId, nutritionistId },
+      relations: ['meals', 'meals.mealFoods'],
+      order: { startDate: 'DESC' },
+    });
   }
 
   async update(
@@ -354,10 +326,10 @@ export class MealPlansService {
       mealUpdated = true;
     }
     if (
-      updateMealDto.notes !== undefined &&
-      meal.notes !== updateMealDto.notes
+      updateMealDto.description !== undefined &&
+      meal.description !== updateMealDto.description
     ) {
-      meal.notes = updateMealDto.notes;
+      meal.description = updateMealDto.description;
       mealUpdated = true;
     }
 
@@ -460,5 +432,39 @@ export class MealPlansService {
     }
 
     return finalMealState;
+  }
+
+  async deleteMeal(
+    planId: string,
+    mealId: string,
+    nutritionistId: string,
+  ): Promise<void> {
+    // Verifica se o plano e a refeição existem e pertencem ao nutricionista
+    const mealPlan = await this.mealPlanRepository.findOne({
+      where: { id: planId, nutritionistId },
+    });
+    if (!mealPlan) {
+      throw new NotFoundException(`Plano alimentar não encontrado`);
+    }
+
+    const meal = await this.mealRepository.findOne({
+      where: { id: mealId, mealPlan: { id: planId } },
+      relations: ['mealFoods'],
+    });
+
+    if (!meal) {
+      throw new NotFoundException(`Refeição não encontrada`);
+    }
+
+    // Remove os alimentos da refeição
+    if (meal.mealFoods && meal.mealFoods.length > 0) {
+      await this.mealFoodRepository.delete(meal.mealFoods.map((mf) => mf.id));
+    }
+
+    // Remove a refeição
+    await this.mealRepository.remove(meal);
+
+    // Atualiza os totais do plano
+    await this.updateMealPlanTotals(planId);
   }
 }

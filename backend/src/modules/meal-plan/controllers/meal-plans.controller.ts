@@ -342,4 +342,36 @@ export class MealPlansController {
       req.user.id,
     );
   }
+
+  @Delete(':planId/meals/:mealId')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiOperation({
+    summary: 'Remover refeição',
+    description: 'Remove uma refeição de um plano alimentar',
+  })
+  @ApiParam({
+    name: 'planId',
+    description: 'ID do plano alimentar',
+    example: '123e4567-e89b-12d3-a456-426614174000',
+  })
+  @ApiParam({
+    name: 'mealId',
+    description: 'ID da refeição',
+    example: '123e4567-e89b-12d3-a456-426614174000',
+  })
+  @ApiResponse({
+    status: 204,
+    description: 'Refeição removida com sucesso',
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'Plano ou refeição não encontrados',
+  })
+  async deleteMeal(
+    @Param('planId') planId: string,
+    @Param('mealId') mealId: string,
+    @Request() req: RequestWithUser,
+  ) {
+    await this.mealPlansService.deleteMeal(planId, mealId, req.user.id);
+  }
 }

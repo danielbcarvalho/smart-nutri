@@ -56,7 +56,7 @@ export class CreateMealDto {
   })
   @IsOptional()
   @IsString()
-  notes?: string;
+  description?: string;
 
   @ApiProperty({
     description: 'Lista de alimentos da refeição',
@@ -83,7 +83,7 @@ export class CreateMealPlanDto {
   })
   @IsString()
   @IsOptional()
-  notes?: string;
+  description?: string;
 
   @ApiProperty({
     description: 'Data de início do plano',

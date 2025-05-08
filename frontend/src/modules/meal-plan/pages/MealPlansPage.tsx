@@ -13,8 +13,6 @@ import {
   CardContent,
   Stack,
   TextField,
-  ToggleButtonGroup,
-  ToggleButton,
   IconButton,
   CardActions,
   Dialog,
@@ -22,11 +20,17 @@ import {
   DialogContent,
   DialogContentText,
   DialogActions,
+  Paper,
+  CircularProgress,
 } from "@mui/material";
 import {
   Add as AddIcon,
   Edit as EditIcon,
   Delete as DeleteIcon,
+  CalendarToday as CalendarTodayIcon, // Ícone para data
+  RestaurantMenu as RestaurantMenuIcon, // Ícone para refeições
+  FlagOutlined as FlagIcon, // Ícone para objetivo
+  InfoOutlined as InfoOutlinedIcon, // Ícone para estado vazio
 } from "@mui/icons-material";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
@@ -35,6 +39,7 @@ import {
 } from "@modules/meal-plan/services/mealPlanService";
 import { patientService } from "@modules/patient/services/patientService";
 import { authService } from "../../auth/services/authService";
+import { alpha, Theme } from "@mui/material/styles"; // Para cores com transparência
 
 export function MealPlan() {
   const navigate = useNavigate();
@@ -57,9 +62,7 @@ export function MealPlan() {
 
   const showNewPlanForm = location.search === "?new=true";
   const [newPlanName, setNewPlanName] = useState("");
-  const [selectedType, setSelectedType] = useState<
-    "alimentos" | "equivalentes" | "qualitativa"
-  >("alimentos");
+  const [newPlanGoal, setNewPlanGoal] = useState("");
   const [startDate, setStartDate] = useState(
     new Date().toISOString().split("T")[0]
   );
@@ -67,7 +70,6 @@ export function MealPlan() {
     new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split("T")[0]
   );
 
-  // Buscar dados do paciente
   const { data: patient, isLoading: isLoadingPatient } = useQuery({
     queryKey: ["patient", patientId],
     queryFn: () => patientService.getById(patientId as string),
@@ -84,26 +86,15 @@ export function MealPlan() {
     },
   });
 
-  // Buscar planos existentes do paciente
   const { data: existingPlans = [], isLoading: isLoadingPlans } = useQuery({
     queryKey: ["mealPlans", patientId],
     queryFn: () => mealPlanService.getPatientPlans(patientId as string),
     enabled: !!patientId,
   });
 
-  // Ordenar planos por data de criação (mais recentes primeiro)
   const sortedPlans = [...(existingPlans || [])].sort((a, b) => {
     return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
   });
-
-  const handleTypeChange = (
-    event: React.MouseEvent<HTMLElement>,
-    newType: "alimentos" | "equivalentes" | "qualitativa"
-  ) => {
-    if (newType !== null) {
-      setSelectedType(newType);
-    }
-  };
 
   const handleCreatePlan = () => {
     if (!patientId) return;
@@ -111,7 +102,8 @@ export function MealPlan() {
     const planName = newPlanName.trim() || "Cardápio personalizado";
     createPlanMutation.mutate({
       name: planName,
-      type: selectedType,
+      description: newPlanGoal.trim() || undefined,
+      type: "alimentos",
       patientId: patientId as string,
       nutritionistId: nutritionistId as string,
       status: "draft",
@@ -141,7 +133,7 @@ export function MealPlan() {
 
   const handleEditClick = (event: React.MouseEvent, planId: string) => {
     event.stopPropagation();
-    navigate(`/patient/${patientId}/meal-plans/${planId}/edit`);
+    navigate(`/patient/${patientId}/meal-plans/${planId}`);
   };
 
   const handleConfirmDelete = () => {
@@ -150,21 +142,71 @@ export function MealPlan() {
     }
   };
 
+  // Estilo dos botões de ação para consistência
+  const actionButtonSx = {
+    borderRadius: "8px",
+    padding: "8px 16px",
+    textTransform: "none",
+    fontWeight: 600,
+  };
+
+  const primaryButtonSx = {
+    ...actionButtonSx,
+    bgcolor: "custom.main",
+    color: "common.white",
+    "&:hover": {
+      bgcolor: "custom.dark",
+    },
+  };
+
+  const outlinedButtonSx = {
+    ...actionButtonSx,
+    borderColor: "custom.main",
+    color: "custom.main",
+    "&:hover": {
+      borderColor: "custom.dark",
+      color: "custom.dark",
+      bgcolor: (theme: Theme) => alpha(theme.palette.custom.main, 0.08),
+    },
+  };
+
   if (!patientId) {
     return (
-      <Box sx={{ maxWidth: 600, mx: "auto", p: 3 }}>
-        <Typography variant="h6" sx={{ color: "error.main" }}>
-          ID do paciente não encontrado
+      <Paper
+        elevation={3}
+        sx={{
+          maxWidth: 800,
+          mx: "auto",
+          p: { xs: 2, sm: 4 },
+          mt: 4,
+          borderRadius: 3,
+        }}
+      >
+        <Typography
+          variant="h6"
+          sx={{ color: "error.main", textAlign: "center" }}
+        >
+          ID do paciente não encontrado na URL.
         </Typography>
-      </Box>
+      </Paper>
     );
   }
 
   if (isLoadingPatient || isLoadingPlans) {
     return (
-      <Box sx={{ maxWidth: 600, mx: "auto", p: 3 }}>
-        <Typography variant="h6" color="text.secondary">
-          Carregando...
+      <Box
+        sx={{
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          justifyContent: "center",
+          minHeight: "calc(100vh - 200px)",
+          p: 3,
+        }}
+      >
+        <CircularProgress color="primary" />
+        <Typography variant="h6" color="text.secondary" sx={{ mt: 2 }}>
+          Carregando dados...
         </Typography>
       </Box>
     );
@@ -172,38 +214,87 @@ export function MealPlan() {
 
   if (!patient) {
     return (
-      <Box sx={{ maxWidth: 600, mx: "auto", p: 3 }}>
-        <Typography variant="h6" sx={{ color: "error.main" }}>
-          Paciente não encontrado
+      <Paper
+        elevation={3}
+        sx={{
+          maxWidth: 800,
+          mx: "auto",
+          p: { xs: 2, sm: 4 },
+          mt: 4,
+          borderRadius: 3,
+        }}
+      >
+        <Typography
+          variant="h6"
+          sx={{ color: "error.main", textAlign: "center" }}
+        >
+          Paciente não encontrado. Verifique o ID fornecido.
         </Typography>
-      </Box>
+      </Paper>
     );
   }
 
+  // Container principal estilizado
+  const MainContainer = ({ children }: { children: React.ReactNode }) => (
+    <Paper
+      elevation={0} // Se o fundo da página já for cinza, pode ser 0 ou 1. Se for branco, pode ser 3.
+      sx={{
+        maxWidth: 900, // Ajustado para um layout mais espaçoso
+        mx: "auto",
+        p: { xs: 2, sm: 3, md: 4 }, // Padding responsivo
+        borderRadius: "16px", // Bordas mais arredondadas
+        // boxShadow: '0px 8px 24px rgba(0,0,0,0.08)', // Sombra suave
+        // bgcolor: 'background.paper' // Já é padrão para Paper
+      }}
+    >
+      {children}
+    </Paper>
+  );
+
   if (showNewPlanForm) {
     return (
-      <Box sx={{ maxWidth: 600, mx: "auto", p: 3 }}>
-        <Typography variant="h5" gutterBottom color="text.primary">
-          Novo Plano Alimentar
+      <MainContainer>
+        <Typography
+          variant="h4"
+          component="h1"
+          gutterBottom
+          sx={{ fontWeight: 600, mb: 3, color: "text.primary" }}
+        >
+          Novo Plano Alimentar para {patient.name.split(" ")[0]}
         </Typography>
 
         <Card
+          elevation={2} // Sombra sutil no card do formulário
           sx={{
-            mb: 3,
-            bgcolor: "background.paper",
+            mb: 4,
+            borderRadius: "12px", // Consistência no arredondamento
+            overflow: "visible", // Para que o helperText não seja cortado se o card tiver padding menor
           }}
         >
-          <CardContent>
+          <CardContent sx={{ p: { xs: 2, sm: 3 } }}>
             <Stack spacing={3}>
               <TextField
                 fullWidth
                 label="Nome do plano"
                 value={newPlanName}
                 onChange={(e) => setNewPlanName(e.target.value)}
-                placeholder="Cardápio personalizado"
-                helperText="Se não informado, será usado 'Cardápio personalizado'"
+                placeholder="Ex: Cardápio para ganho de massa"
+                variant="outlined"
+                InputLabelProps={{ shrink: true }}
+                sx={{ "& .MuiOutlinedInput-root": { borderRadius: "8px" } }}
               />
-
+              <TextField
+                fullWidth
+                label="Objetivo do plano (opcional)"
+                value={newPlanGoal}
+                onChange={(e) => setNewPlanGoal(e.target.value)}
+                placeholder="Ex: Melhorar performance e hipertrofia muscular"
+                multiline
+                rows={3}
+                variant="outlined"
+                InputLabelProps={{ shrink: true }}
+                sx={{ "& .MuiOutlinedInput-root": { borderRadius: "8px" } }}
+              />
               <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
                 <TextField
                   fullWidth
@@ -212,6 +303,8 @@ export function MealPlan() {
                   value={startDate}
                   onChange={(e) => setStartDate(e.target.value)}
                   InputLabelProps={{ shrink: true }}
+                  variant="outlined"
+                  sx={{ "& .MuiOutlinedInput-root": { borderRadius: "8px" } }}
                 />
                 <TextField
                   fullWidth
@@ -220,6 +313,8 @@ export function MealPlan() {
                   value={endDate}
                   onChange={(e) => setEndDate(e.target.value)}
                   InputLabelProps={{ shrink: true }}
+                  variant="outlined"
+                  sx={{ "& .MuiOutlinedInput-root": { borderRadius: "8px" } }}
                 />
               </Stack>
             </Stack>
@@ -230,14 +325,7 @@ export function MealPlan() {
           <Button
             variant="outlined"
             onClick={() => navigate(`/patient/${patientId}/meal-plans`)}
-            sx={{
-              borderColor: "custom.main",
-              color: "custom.main",
-              "&:hover": {
-                borderColor: "custom.dark",
-                bgcolor: "transparent",
-              },
-            }}
+            sx={outlinedButtonSx}
           >
             Cancelar
           </Button>
@@ -245,144 +333,253 @@ export function MealPlan() {
             variant="contained"
             onClick={handleCreatePlan}
             disabled={createPlanMutation.isPending}
-            sx={{
-              bgcolor: "custom.main",
-              color: "common.white",
-              "&:hover": {
-                bgcolor: "custom.dark",
-              },
-            }}
+            sx={primaryButtonSx}
           >
-            Criar plano
+            {createPlanMutation.isPending ? "Criando..." : "Criar e Avançar"}
           </Button>
         </Stack>
-      </Box>
+      </MainContainer>
     );
   }
 
   return (
-    <Box sx={{ maxWidth: 600, mx: "auto", p: 3 }}>
-      {!showNewPlanForm && (
-        <>
-          <Box
-            sx={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-              mb: 3,
-            }}
+    <MainContainer>
+      <>
+        <Box
+          sx={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            mb: 4, // Aumentado margin bottom
+          }}
+        >
+          <Typography
+            variant="h4"
+            component="h1"
+            sx={{ fontWeight: 600, color: "text.primary" }}
           >
-            <Typography variant="h5" gutterBottom color="text.primary">
-              Planos Alimentares
-            </Typography>{" "}
-            <Button
-              variant="contained"
-              startIcon={<AddIcon />}
-              onClick={() =>
-                navigate(`/patient/${patientId}/meal-plans?new=true`)
-              }
+            Planos Alimentares
+          </Typography>
+          <Button
+            variant="contained"
+            startIcon={<AddIcon />}
+            onClick={() =>
+              navigate(`/patient/${patientId}/meal-plans?new=true`)
+            }
+            sx={primaryButtonSx}
+          >
+            Criar Novo Plano
+          </Button>
+        </Box>
+
+        <Stack spacing={2.5}>
+          {" "}
+          {/* Aumentado espaçamento entre cards */}
+          {sortedPlans.length === 0 ? (
+            <Box
               sx={{
-                mb: 3,
-                bgcolor: "custom.main",
-                color: "common.white",
-                "&:hover": {
-                  bgcolor: "custom.dark",
-                },
+                textAlign: "center",
+                py: { xs: 6, sm: 8 },
+                bgcolor: (theme) => alpha(theme.palette.grey[500], 0.04),
+                borderRadius: "12px",
               }}
             >
-              Criar Novo Plano
-            </Button>
-          </Box>
-
-          <Stack spacing={2}>
-            {sortedPlans.map((plan) => (
+              <InfoOutlinedIcon
+                sx={{ fontSize: 56, color: "text.secondary", mb: 2 }}
+              />
+              <Typography
+                variant="h6"
+                gutterBottom
+                color="text.primary"
+                sx={{ fontWeight: 500 }}
+              >
+                Nenhum plano alimentar aqui ainda
+              </Typography>
+              <Typography
+                variant="body1"
+                color="text.secondary"
+                sx={{ mb: 3, maxWidth: "400px", mx: "auto" }}
+              >
+                Comece criando o primeiro plano alimentar.
+              </Typography>
+              <Button
+                variant="outlined"
+                startIcon={<AddIcon />}
+                onClick={() =>
+                  navigate(`/patient/${patientId}/meal-plans?new=true`)
+                }
+                sx={outlinedButtonSx}
+              >
+                Criar primeiro plano
+              </Button>
+            </Box>
+          ) : (
+            sortedPlans.map((plan) => (
               <Card
                 key={plan.id}
+                elevation={1} // Sombra mais sutil para os cards da lista
                 onClick={() =>
                   navigate(`/patient/${patientId}/meal-plans/${plan.id}`)
                 }
                 sx={{
-                  bgcolor: "background.paper",
                   cursor: "pointer",
+                  borderRadius: "12px", // Consistência
+                  transition: "all 0.2s ease-in-out",
+                  border: "1px solid",
+                  borderColor: "divider",
                   "&:hover": {
-                    boxShadow: 3,
+                    boxShadow: (theme) =>
+                      `0px 6px 20px ${alpha(theme.palette.custom.main, 0.15)}`,
+                    borderColor: "custom.main",
+                    transform: "translateY(-3px)",
                   },
                 }}
               >
-                <CardContent>
-                  <Typography variant="h6" gutterBottom>
-                    {plan.name}
+                <CardContent sx={{ p: { xs: 2, sm: 2.5 } }}>
+                  {" "}
+                  {/* Padding ajustado */}
+                  <Typography
+                    variant="h6"
+                    component="div"
+                    gutterBottom
+                    sx={{
+                      fontWeight: "bold",
+                      color: "custom.dark" /* Ou text.primary */,
+                    }}
+                  >
+                    {plan.name || "Plano Sem Nome"}
                   </Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    Tipo: {plan.type}
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    Status: {plan.status}
-                  </Typography>
+                  <Stack spacing={1} sx={{ mt: 1.5 }}>
+                    <Stack direction="row" alignItems="center" spacing={1}>
+                      <CalendarTodayIcon
+                        fontSize="small"
+                        sx={{ color: "text.secondary" }}
+                      />
+                      <Typography
+                        variant="body2"
+                        color="text.secondary"
+                        component="div"
+                      >
+                        <Box component="strong" sx={{ fontWeight: 500 }}>
+                          Criado em:
+                        </Box>{" "}
+                        {new Date(plan.createdAt).toLocaleDateString()}
+                      </Typography>
+                    </Stack>
+
+                    <Stack direction="row" alignItems="center" spacing={1}>
+                      <RestaurantMenuIcon
+                        fontSize="small"
+                        sx={{ color: "text.secondary" }}
+                      />
+                      <Typography
+                        variant="body2"
+                        color="text.secondary"
+                        component="div"
+                      >
+                        <Box component="strong" sx={{ fontWeight: 500 }}>
+                          Refeições:
+                        </Box>{" "}
+                        {plan.meals?.length || 0}
+                      </Typography>
+                    </Stack>
+
+                    {plan.description && (
+                      <Stack
+                        direction="row"
+                        alignItems="flex-start"
+                        spacing={1}
+                      >
+                        <FlagIcon
+                          fontSize="small"
+                          sx={{ color: "text.secondary", mt: "3px" }}
+                        />
+                        <Typography
+                          variant="body2"
+                          color="text.secondary"
+                          component="div"
+                        >
+                          <Box component="strong" sx={{ fontWeight: 500 }}>
+                            Objetivo:
+                          </Box>{" "}
+                          {plan.description}
+                        </Typography>
+                      </Stack>
+                    )}
+                  </Stack>
                 </CardContent>
-                <CardActions sx={{ justifyContent: "flex-end", p: 1 }}>
+                <CardActions
+                  sx={{ justifyContent: "flex-end", pt: 0, pb: 1.5, px: 1.5 }}
+                >
                   <IconButton
-                    size="small"
+                    size="medium"
                     onClick={(e) => handleEditClick(e, plan.id)}
+                    title="Ver Detalhes"
                     sx={{
                       color: "custom.main",
                       "&:hover": {
-                        bgcolor: "custom.lightest",
+                        bgcolor: (theme: Theme) =>
+                          alpha(theme.palette.custom.main, 0.1),
                       },
                     }}
                   >
-                    <EditIcon />
+                    <EditIcon fontSize="small" />
                   </IconButton>
                   <IconButton
-                    size="small"
+                    size="medium"
                     onClick={(e) => handleDeleteClick(e, plan)}
+                    title="Excluir Plano"
                     sx={{
                       color: "error.main",
                       "&:hover": {
-                        bgcolor: "error.lightest",
+                        bgcolor: (theme) =>
+                          alpha(theme.palette.error.main, 0.1),
                       },
                     }}
                   >
-                    <DeleteIcon />
+                    <DeleteIcon fontSize="small" />
                   </IconButton>
                 </CardActions>
               </Card>
-            ))}
-          </Stack>
+            ))
+          )}
+        </Stack>
 
-          {/* Delete Confirmation Dialog */}
-          <Dialog
-            open={deleteDialogOpen}
-            onClose={() => setDeleteDialogOpen(false)}
-          >
-            <DialogTitle>Confirmar exclusão</DialogTitle>
-            <DialogContent>
-              <DialogContentText>
-                Tem certeza que deseja excluir o plano "{planToDelete?.name}"?
-                Esta ação não pode ser desfeita.
-              </DialogContentText>
-            </DialogContent>
-            <DialogActions>
-              <Button
-                onClick={() => setDeleteDialogOpen(false)}
-                sx={{
-                  color: "text.secondary",
-                }}
-              >
-                Cancelar
-              </Button>
-              <Button
-                onClick={handleConfirmDelete}
-                color="error"
-                variant="contained"
-                disabled={deletePlanMutation.isPending}
-              >
-                Excluir
-              </Button>
-            </DialogActions>
-          </Dialog>
-        </>
-      )}
-    </Box>
+        <Dialog
+          open={deleteDialogOpen}
+          onClose={() => setDeleteDialogOpen(false)}
+          PaperProps={{ sx: { borderRadius: "12px" } }}
+        >
+          <DialogTitle sx={{ fontWeight: 600 }}>Confirmar Exclusão</DialogTitle>
+          <DialogContent>
+            <DialogContentText>
+              Tem certeza que deseja excluir o plano alimentar "
+              {planToDelete?.name}"? Esta ação não poderá ser desfeita.
+            </DialogContentText>
+          </DialogContent>
+          <DialogActions sx={{ p: 2 }}>
+            <Button
+              onClick={() => setDeleteDialogOpen(false)}
+              sx={{ ...actionButtonSx, color: "text.secondary" }}
+            >
+              Cancelar
+            </Button>
+            <Button
+              onClick={handleConfirmDelete}
+              color="error"
+              variant="contained"
+              disabled={deletePlanMutation.isPending}
+              sx={{
+                ...actionButtonSx,
+                bgcolor: "error.main",
+                "&:hover": { bgcolor: "error.dark" },
+              }}
+            >
+              {deletePlanMutation.isPending ? "Excluindo..." : "Excluir"}
+            </Button>
+          </DialogActions>
+        </Dialog>
+      </>
+    </MainContainer>
   );
 }

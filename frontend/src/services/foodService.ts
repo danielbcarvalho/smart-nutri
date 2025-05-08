@@ -34,6 +34,7 @@ export interface MealFood {
   foodId: string;
   amount: number;
   unit: string;
+  source: string;
 }
 
 export interface Meal {

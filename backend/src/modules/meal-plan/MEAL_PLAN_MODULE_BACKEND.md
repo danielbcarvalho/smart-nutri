@@ -76,10 +76,10 @@ graph TD
   - Campos Chave: `name`, `patientId`, `nutritionistId`, `startDate`, `endDate`, `dailyCalories`, `dailyProtein`, `dailyCarbs`, `dailyFat`.
 - **`Meal`**: Representa uma refeição dentro de um `MealPlan`.
   - Relacionamentos: `MealPlan` (ManyToOne), `MealFood` (OneToMany).
-  - Campos Chave: `name`, `time`, `notes`, `totalCalories`, `totalProtein`, `totalCarbs`, `totalFat`.
+  - Campos Chave: `name`, `time`, `description`, `totalCalories`, `totalProtein`, `totalCarbs`, `totalFat`.
 - **`MealFood`**: Tabela de junção entre `Meal` e `Food`, especificando a quantidade de um alimento em uma refeição.
   - Relacionamentos: `Meal` (ManyToOne), `Food` (ManyToOne).
-  - Campos Chave: `amount`, `unit`, `notes`.
+  - Campos Chave: `amount`, `unit`, `description`.
 - **`MealPlanTemplate`**: Representa um modelo de plano alimentar.
   - Relacionamentos: `Nutritionist`, `MealTemplate` (OneToMany).
   - Campos Chave: `name`, `description`, `nutritionistId`, `isPublic`.

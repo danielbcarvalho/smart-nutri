@@ -59,10 +59,6 @@ const MealFoodItem: React.FC<MealFoodItemProps> = ({
         fat: Math.round(((Number(foodDetails.lip) || 0) * realWeight) / 100),
       }
     : null;
-  console.log(
-    "🚀 ~ MealFoodItem.tsx:33 ~ nutritionInfo 🚀🚀🚀:",
-    nutritionInfo
-  );
 
   if (asTableRow) {
     return (

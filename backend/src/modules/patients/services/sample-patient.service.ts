@@ -776,59 +776,52 @@ export class SamplePatientService {
 
     // Create breakfast
     const breakfast = this.mealRepository.create({
-      name: 'Café da Manhã',
-      time: '07:30',
-      notes: 'Optar por frutas da estação.',
+      name: 'Café da manhã',
+      time: '08:00',
+      description: 'Café da manhã completo',
       mealPlan: savedMealPlan,
     });
 
     const savedBreakfast = await this.mealRepository.save(breakfast);
 
-    // Add foods to breakfast
     await this.addFoodToMeal(savedBreakfast, foods[0], 200, 'g');
     await this.addFoodToMeal(savedBreakfast, foods[1], 30, 'g');
     await this.addFoodToMeal(savedBreakfast, foods[2], 1, 'unidade');
 
-    // Create lunch
     const lunch = this.mealRepository.create({
       name: 'Almoço',
-      time: '12:30',
-      notes: 'Priorizar vegetais coloridos no prato.',
+      time: '12:00',
+      description: 'Almoço balanceado',
       mealPlan: savedMealPlan,
     });
 
     const savedLunch = await this.mealRepository.save(lunch);
 
-    // Add foods to lunch
     await this.addFoodToMeal(savedLunch, foods[3], 120, 'g');
     await this.addFoodToMeal(savedLunch, foods[4], 150, 'g');
     await this.addFoodToMeal(savedLunch, foods[5], 2, 'colher');
 
-    // Create afternoon snack
     const snack = this.mealRepository.create({
-      name: 'Lanche da Tarde',
+      name: 'Lanche da tarde',
       time: '16:00',
-      notes: 'Evitar alimentos processados.',
+      description: 'Lanche leve',
       mealPlan: savedMealPlan,
     });
 
     const savedSnack = await this.mealRepository.save(snack);
 
-    // Add foods to snack
     await this.addFoodToMeal(savedSnack, foods[6], 1, 'unidade');
     await this.addFoodToMeal(savedSnack, foods[7], 20, 'g');
 
-    // Create dinner
     const dinner = this.mealRepository.create({
       name: 'Jantar',
-      time: '19:30',
-      notes: 'Refeição mais leve que o almoço.',
+      time: '19:00',
+      description: 'Jantar leve',
       mealPlan: savedMealPlan,
     });
 
     const savedDinner = await this.mealRepository.save(dinner);
 
-    // Add foods to dinner
     await this.addFoodToMeal(savedDinner, foods[8], 100, 'g');
     await this.addFoodToMeal(savedDinner, foods[9], 50, 'g');
     await this.addFoodToMeal(savedDinner, foods[5], 1, 'colher');

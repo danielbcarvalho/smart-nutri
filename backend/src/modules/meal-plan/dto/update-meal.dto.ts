@@ -27,7 +27,7 @@ export class UpdateMealDto {
   })
   @IsOptional()
   @IsString()
-  notes?: string;
+  description?: string;
 
   @ApiPropertyOptional({
     description: 'Lista de alimentos da refeição',

@@ -32,6 +32,11 @@ export interface MealPlan {
   meals: Meal[];
   createdAt: string;
   updatedAt: string;
+  description?: string;
+  dailyCalories?: number;
+  dailyProtein?: number;
+  dailyCarbs?: number;
+  dailyFat?: number;
 }
 
 export const mealPlanService = {

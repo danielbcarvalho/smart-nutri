@@ -128,7 +128,7 @@ export class MealPlanTemplatesService {
       const meal = new Meal();
       meal.name = mealTemplate.name;
       meal.time = mealTemplate.time || '12:00';
-      meal.notes = mealTemplate.description || '';
+      meal.description = mealTemplate.description || '';
       meal.mealPlan = mealPlan;
 
       await this.mealRepository.save(meal);
