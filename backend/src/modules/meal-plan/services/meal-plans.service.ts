@@ -64,7 +64,7 @@ export class MealPlansService {
   async findAll(nutritionistId: string): Promise<MealPlan[]> {
     return this.mealPlanRepository.find({
       where: { nutritionistId },
-      relations: ['meals', 'meals.mealFoods'],
+      relations: ['meals', 'meals.mealFoods', 'patient', 'nutritionist'],
       order: { startDate: 'DESC' },
     });
   }
@@ -72,7 +72,7 @@ export class MealPlansService {
   async findOne(id: string, nutritionistId: string): Promise<MealPlan> {
     const mealPlan = await this.mealPlanRepository.findOne({
       where: { id, nutritionistId },
-      relations: ['meals', 'meals.mealFoods'],
+      relations: ['meals', 'meals.mealFoods', 'patient', 'nutritionist'],
     });
 
     if (!mealPlan) {

@@ -6,11 +6,22 @@ export class RemovePatientUniqueConstraints1745070000000
   name = 'RemovePatientUniqueConstraints1745070000000';
 
   public async up(queryRunner: QueryRunner): Promise<void> {
-    // Descobrir o nome da constraint de unique para cpf
-    const cpfConstraint = 'UQ_5947301223f5a908fd5e372b0fb'; // Identificada a partir do erro
-    await queryRunner.query(
-      `ALTER TABLE "patients" DROP CONSTRAINT "${cpfConstraint}"`,
-    );
+    // Verificar se a constraint existe
+    const constraintExists = await queryRunner.query(`
+      SELECT EXISTS (
+        SELECT FROM information_schema.table_constraints 
+        WHERE table_schema = 'public' 
+        AND table_name = 'patients' 
+        AND constraint_name = 'UQ_5947301223f5a908fd5e372b0fb'
+      );
+    `);
+
+    // Só remove a constraint se ela existir
+    if (constraintExists[0].exists) {
+      await queryRunner.query(`
+        ALTER TABLE "patients" DROP CONSTRAINT "UQ_5947301223f5a908fd5e372b0fb"
+      `);
+    }
 
     // Também remover a constraint de unique para email, se existir
     try {
@@ -33,10 +44,22 @@ export class RemovePatientUniqueConstraints1745070000000
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {
-    // Adicionar as constraints de volta, caso seja necessário reverter
-    await queryRunner.query(
-      `ALTER TABLE "patients" ADD CONSTRAINT "UQ_5947301223f5a908fd5e372b0fb" UNIQUE ("cpf")`,
-    );
+    // Verificar se a constraint existe antes de tentar recriá-la
+    const constraintExists = await queryRunner.query(`
+      SELECT EXISTS (
+        SELECT FROM information_schema.table_constraints 
+        WHERE table_schema = 'public' 
+        AND table_name = 'patients' 
+        AND constraint_name = 'UQ_5947301223f5a908fd5e372b0fb'
+      );
+    `);
+
+    if (!constraintExists[0].exists) {
+      await queryRunner.query(`
+        ALTER TABLE "patients" ADD CONSTRAINT "UQ_5947301223f5a908fd5e372b0fb" UNIQUE ("cpf")
+      `);
+    }
+
     await queryRunner.query(
       `ALTER TABLE "patients" ADD CONSTRAINT "UQ_patients_email" UNIQUE ("email")`,
     );
