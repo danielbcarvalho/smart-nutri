@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback, memo } from "react";
 import {
   useNavigate,
   useParams,
@@ -41,6 +41,177 @@ import { patientService } from "@modules/patient/services/patientService";
 import { authService } from "../../auth/services/authService";
 import { alpha, Theme } from "@mui/material/styles"; // Para cores com transparência
 
+// Container principal estilizado
+const MainContainer = ({ children }: { children: React.ReactNode }) => (
+  <Paper
+    elevation={0}
+    sx={{
+      maxWidth: 900,
+      mx: "auto",
+      p: { xs: 2, sm: 3, md: 4 },
+      borderRadius: "16px",
+    }}
+  >
+    {children}
+  </Paper>
+);
+
+// Estilo dos botões de ação para consistência
+const actionButtonSx = {
+  borderRadius: "8px",
+  padding: "8px 16px",
+  textTransform: "none",
+  fontWeight: 600,
+};
+
+const primaryButtonSx = {
+  ...actionButtonSx,
+  bgcolor: "custom.main",
+  color: "common.white",
+  "&:hover": {
+    bgcolor: "custom.dark",
+  },
+};
+
+const outlinedButtonSx = {
+  ...actionButtonSx,
+  borderColor: "custom.main",
+  color: "custom.main",
+  "&:hover": {
+    borderColor: "custom.dark",
+    color: "custom.dark",
+    bgcolor: (theme: Theme) => alpha(theme.palette.custom.main, 0.08),
+  },
+};
+
+const NewPlanForm = memo(
+  ({
+    onSubmit,
+    onCancel,
+    patientName,
+  }: {
+    onSubmit: (data: {
+      name: string;
+      goal: string;
+      startDate: string;
+      endDate: string;
+    }) => void;
+    onCancel: () => void;
+    patientName: string;
+  }) => {
+    const [formData, setFormData] = useState({
+      name: "",
+      goal: "",
+      startDate: new Date().toISOString().split("T")[0],
+      endDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
+        .toISOString()
+        .split("T")[0],
+    });
+
+    const handleChange = useCallback(
+      (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+        const { name, value } = e.target;
+        setFormData((prev) => ({ ...prev, [name]: value }));
+      },
+      []
+    );
+
+    const handleSubmit = useCallback(() => {
+      onSubmit(formData);
+    }, [formData, onSubmit]);
+
+    return (
+      <MainContainer>
+        <Typography
+          variant="h4"
+          component="h1"
+          gutterBottom
+          sx={{ fontWeight: 600, mb: 3, color: "text.primary" }}
+        >
+          Novo Plano Alimentar para {patientName.split(" ")[0]}
+        </Typography>
+
+        <Card
+          elevation={2}
+          sx={{
+            mb: 4,
+            borderRadius: "12px",
+            overflow: "visible",
+          }}
+        >
+          <CardContent sx={{ p: { xs: 2, sm: 3 } }}>
+            <Stack spacing={3}>
+              <TextField
+                fullWidth
+                name="name"
+                label="Nome do plano"
+                value={formData.name}
+                onChange={handleChange}
+                placeholder="Ex: Cardápio para ganho de massa"
+                variant="outlined"
+                InputLabelProps={{ shrink: true }}
+                sx={{ "& .MuiOutlinedInput-root": { borderRadius: "8px" } }}
+              />
+              <TextField
+                fullWidth
+                name="goal"
+                label="Objetivo do plano (opcional)"
+                value={formData.goal}
+                onChange={handleChange}
+                placeholder="Ex: Melhorar performance e hipertrofia muscular"
+                multiline
+                rows={3}
+                variant="outlined"
+                InputLabelProps={{ shrink: true }}
+                sx={{ "& .MuiOutlinedInput-root": { borderRadius: "8px" } }}
+              />
+              <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
+                <TextField
+                  fullWidth
+                  name="startDate"
+                  label="Data de início"
+                  type="date"
+                  value={formData.startDate}
+                  onChange={handleChange}
+                  InputLabelProps={{ shrink: true }}
+                  variant="outlined"
+                  sx={{ "& .MuiOutlinedInput-root": { borderRadius: "8px" } }}
+                />
+                <TextField
+                  fullWidth
+                  name="endDate"
+                  label="Data de término"
+                  type="date"
+                  value={formData.endDate}
+                  onChange={handleChange}
+                  InputLabelProps={{ shrink: true }}
+                  variant="outlined"
+                  sx={{ "& .MuiOutlinedInput-root": { borderRadius: "8px" } }}
+                />
+              </Stack>
+            </Stack>
+          </CardContent>
+        </Card>
+
+        <Stack direction="row" spacing={2} justifyContent="flex-end">
+          <Button variant="outlined" onClick={onCancel} sx={outlinedButtonSx}>
+            Cancelar
+          </Button>
+          <Button
+            variant="contained"
+            onClick={handleSubmit}
+            sx={primaryButtonSx}
+          >
+            Criar e Avançar
+          </Button>
+        </Stack>
+      </MainContainer>
+    );
+  }
+);
+
+NewPlanForm.displayName = "NewPlanForm";
+
 export function MealPlan() {
   const navigate = useNavigate();
   const location = useLocation();
@@ -61,14 +232,6 @@ export function MealPlan() {
   }, [queryPatientId, patientId, navigate, location.search]);
 
   const showNewPlanForm = location.search === "?new=true";
-  const [newPlanName, setNewPlanName] = useState("");
-  const [newPlanGoal, setNewPlanGoal] = useState("");
-  const [startDate, setStartDate] = useState(
-    new Date().toISOString().split("T")[0]
-  );
-  const [endDate, setEndDate] = useState(
-    new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split("T")[0]
-  );
 
   const { data: patient, isLoading: isLoadingPatient } = useQuery({
     queryKey: ["patient", patientId],
@@ -96,22 +259,30 @@ export function MealPlan() {
     return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
   });
 
-  const handleCreatePlan = () => {
-    if (!patientId) return;
-    const nutritionistId = authService.getUser()?.id;
-    const planName = newPlanName.trim() || "Cardápio personalizado";
-    createPlanMutation.mutate({
-      name: planName,
-      description: newPlanGoal.trim() || undefined,
-      type: "alimentos",
-      patientId: patientId as string,
-      nutritionistId: nutritionistId as string,
-      status: "draft",
-      startDate,
-      endDate,
-      meals: [],
-    });
-  };
+  const handleCreatePlan = useCallback(
+    (formData: {
+      name: string;
+      goal: string;
+      startDate: string;
+      endDate: string;
+    }) => {
+      if (!patientId) return;
+      const nutritionistId = authService.getUser()?.id;
+      const planName = formData.name.trim() || "Cardápio personalizado";
+      createPlanMutation.mutate({
+        name: planName,
+        description: formData.goal.trim() || undefined,
+        type: "alimentos",
+        patientId: patientId as string,
+        nutritionistId: nutritionistId as string,
+        status: "draft",
+        startDate: formData.startDate,
+        endDate: formData.endDate,
+        meals: [],
+      });
+    },
+    [patientId, createPlanMutation]
+  );
 
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [planToDelete, setPlanToDelete] = useState<MealPlan | null>(null);
@@ -140,34 +311,6 @@ export function MealPlan() {
     if (planToDelete) {
       deletePlanMutation.mutate(planToDelete.id);
     }
-  };
-
-  // Estilo dos botões de ação para consistência
-  const actionButtonSx = {
-    borderRadius: "8px",
-    padding: "8px 16px",
-    textTransform: "none",
-    fontWeight: 600,
-  };
-
-  const primaryButtonSx = {
-    ...actionButtonSx,
-    bgcolor: "custom.main",
-    color: "common.white",
-    "&:hover": {
-      bgcolor: "custom.dark",
-    },
-  };
-
-  const outlinedButtonSx = {
-    ...actionButtonSx,
-    borderColor: "custom.main",
-    color: "custom.main",
-    "&:hover": {
-      borderColor: "custom.dark",
-      color: "custom.dark",
-      bgcolor: (theme: Theme) => alpha(theme.palette.custom.main, 0.08),
-    },
   };
 
   if (!patientId) {
@@ -234,111 +377,13 @@ export function MealPlan() {
     );
   }
 
-  // Container principal estilizado
-  const MainContainer = ({ children }: { children: React.ReactNode }) => (
-    <Paper
-      elevation={0} // Se o fundo da página já for cinza, pode ser 0 ou 1. Se for branco, pode ser 3.
-      sx={{
-        maxWidth: 900, // Ajustado para um layout mais espaçoso
-        mx: "auto",
-        p: { xs: 2, sm: 3, md: 4 }, // Padding responsivo
-        borderRadius: "16px", // Bordas mais arredondadas
-        // boxShadow: '0px 8px 24px rgba(0,0,0,0.08)', // Sombra suave
-        // bgcolor: 'background.paper' // Já é padrão para Paper
-      }}
-    >
-      {children}
-    </Paper>
-  );
-
   if (showNewPlanForm) {
     return (
-      <MainContainer>
-        <Typography
-          variant="h4"
-          component="h1"
-          gutterBottom
-          sx={{ fontWeight: 600, mb: 3, color: "text.primary" }}
-        >
-          Novo Plano Alimentar para {patient.name.split(" ")[0]}
-        </Typography>
-
-        <Card
-          elevation={2} // Sombra sutil no card do formulário
-          sx={{
-            mb: 4,
-            borderRadius: "12px", // Consistência no arredondamento
-            overflow: "visible", // Para que o helperText não seja cortado se o card tiver padding menor
-          }}
-        >
-          <CardContent sx={{ p: { xs: 2, sm: 3 } }}>
-            <Stack spacing={3}>
-              <TextField
-                fullWidth
-                label="Nome do plano"
-                value={newPlanName}
-                onChange={(e) => setNewPlanName(e.target.value)}
-                placeholder="Ex: Cardápio para ganho de massa"
-                variant="outlined"
-                InputLabelProps={{ shrink: true }}
-                sx={{ "& .MuiOutlinedInput-root": { borderRadius: "8px" } }}
-              />
-              <TextField
-                fullWidth
-                label="Objetivo do plano (opcional)"
-                value={newPlanGoal}
-                onChange={(e) => setNewPlanGoal(e.target.value)}
-                placeholder="Ex: Melhorar performance e hipertrofia muscular"
-                multiline
-                rows={3}
-                variant="outlined"
-                InputLabelProps={{ shrink: true }}
-                sx={{ "& .MuiOutlinedInput-root": { borderRadius: "8px" } }}
-              />
-              <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
-                <TextField
-                  fullWidth
-                  label="Data de início"
-                  type="date"
-                  value={startDate}
-                  onChange={(e) => setStartDate(e.target.value)}
-                  InputLabelProps={{ shrink: true }}
-                  variant="outlined"
-                  sx={{ "& .MuiOutlinedInput-root": { borderRadius: "8px" } }}
-                />
-                <TextField
-                  fullWidth
-                  label="Data de término"
-                  type="date"
-                  value={endDate}
-                  onChange={(e) => setEndDate(e.target.value)}
-                  InputLabelProps={{ shrink: true }}
-                  variant="outlined"
-                  sx={{ "& .MuiOutlinedInput-root": { borderRadius: "8px" } }}
-                />
-              </Stack>
-            </Stack>
-          </CardContent>
-        </Card>
-
-        <Stack direction="row" spacing={2} justifyContent="flex-end">
-          <Button
-            variant="outlined"
-            onClick={() => navigate(`/patient/${patientId}/meal-plans`)}
-            sx={outlinedButtonSx}
-          >
-            Cancelar
-          </Button>
-          <Button
-            variant="contained"
-            onClick={handleCreatePlan}
-            disabled={createPlanMutation.isPending}
-            sx={primaryButtonSx}
-          >
-            {createPlanMutation.isPending ? "Criando..." : "Criar e Avançar"}
-          </Button>
-        </Stack>
-      </MainContainer>
+      <NewPlanForm
+        onSubmit={handleCreatePlan}
+        onCancel={() => navigate(`/patient/${patientId}/meal-plans`)}
+        patientName={patient?.name || ""}
+      />
     );
   }
 

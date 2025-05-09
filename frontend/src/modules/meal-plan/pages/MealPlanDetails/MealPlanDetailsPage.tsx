@@ -1,3 +1,4 @@
+// Primeiro, vamos adicionar as importações necessárias para o PDF
 import React, { useState, useEffect, useRef } from "react";
 import { useParams } from "react-router-dom";
 import {
@@ -10,25 +11,25 @@ import {
   DialogContent,
   DialogActions,
   TextField,
-  InputAdornment,
   LinearProgress,
+  Backdrop,
+  CircularProgress,
 } from "@mui/material";
 import {
   ExpandMore as ExpandMoreIcon,
   Add as AddIcon,
-  Sort as SortIcon,
   UnfoldMore as UnfoldMoreIcon,
-  ContentCopy as ContentCopyIcon,
   Coffee as CoffeeIcon,
   Restaurant as RestaurantIcon,
-  Search as SearchIcon,
   Save as SaveIcon,
+  PictureAsPdf as PdfIcon,
 } from "@mui/icons-material";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   mealPlanService,
   Meal,
   UpdateMeal,
+  MealPlan,
 } from "@/modules/meal-plan/services/mealPlanService";
 import AddFoodToMealModal from "@/modules/meal-plan/components/AddFoodToMealModal";
 import { useFoodDb } from "@/services/useFoodDb";
@@ -37,21 +38,19 @@ import type { Alimento } from "@/modules/meal-plan/components/AddFoodToMealModal
 import MealCard from "@/modules/meal-plan/components/MealCard";
 import MealMenu from "@/modules/meal-plan/components/MealMenu";
 import NutrientAnalysis from "@/modules/meal-plan/components/NutrientAnalysis";
+import { PDFViewer, PDFDownloadLink } from "@react-pdf/renderer";
+import { patientService } from "@/modules/patient/services/patientService";
+import type { Patient } from "@/modules/patient/services/patientService";
+import { authService } from "../../../auth/services/authService";
+import { MealPlanPDF } from "@/modules/meal-plan/components/MealPlanPDF";
 
-const DEFAULT_MEALS = [
-  { name: "Café da manhã", time: "07:00", icon: <CoffeeIcon /> },
-  { name: "Almoço", time: "12:00", icon: <RestaurantIcon /> },
-  { name: "Jantar", time: "19:00", icon: <RestaurantIcon /> },
-];
-
-const formatTime = (time: string) => {
-  const [hours, minutes] = time.split(":");
-  return `${hours.padStart(2, "0")}:${minutes.padStart(2, "0")}`;
-};
-
+// Componente principal
 export function MealPlanDetails() {
   const queryClient = useQueryClient();
-  const { planId } = useParams<{ planId: string }>();
+  const { patientId, planId } = useParams<{
+    patientId: string;
+    planId: string;
+  }>();
   const [openMealDialog, setOpenMealDialog] = useState(false);
   const [newMealName, setNewMealName] = useState("");
   const [selectedTime, setSelectedTime] = useState("12:00");
@@ -61,9 +60,30 @@ export function MealPlanDetails() {
   const [selectedMealId, setSelectedMealId] = useState<string | null>(null);
   const { data: foodDbRaw } = useFoodDb();
   const foodDb: Alimento[] = Array.isArray(foodDbRaw) ? foodDbRaw : [];
-  const [searchTerm, setSearchTerm] = useState("");
   const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
   const [mealMenuId, setMealMenuId] = useState("");
+
+  // Estados para o PDF
+  const [showPdfPreview, setShowPdfPreview] = useState(false);
+  const [isPdfGenerating, setIsPdfGenerating] = useState(false);
+  const [pdfData, setPdfData] = useState<{
+    plan: MealPlan;
+    mealsByTime: Meal[];
+    patientData?: Patient;
+    nutritionistData?: {
+      name?: string;
+      crn?: string;
+      email?: string;
+    } | null;
+    totalNutrients: {
+      protein: number;
+      fat: number;
+      carbohydrates: number;
+      calories: number;
+      totalWeight: number;
+    };
+    foodDb: Alimento[];
+  } | null>(null);
 
   // Template de refeições
   const [templates, setTemplates] = useState<
@@ -73,10 +93,28 @@ export function MealPlanDetails() {
   const [templateName, setTemplateName] = useState("");
   const [selectedTemplate, setSelectedTemplate] = useState<Meal | null>(null);
 
+  // Carregar dados do plano alimentar
   const { data: plan, isLoading } = useQuery({
     queryKey: ["mealPlan", planId],
     queryFn: () => mealPlanService.getById(planId as string),
     enabled: !!planId,
+  });
+
+  // Carregar dados do paciente
+  const { data: patient } = useQuery({
+    queryKey: ["patient", patientId],
+    queryFn: () => patientService.getById(patientId as string),
+    enabled: !!patientId,
+  });
+
+  // Obter dados do nutricionista atual
+  const { data: nutritionist } = useQuery({
+    queryKey: ["currentNutritionist"],
+    queryFn: () => {
+      const userId = authService.getUser()?.id;
+      return userId ? authService.getUser() : null;
+    },
+    enabled: !!authService.getUser()?.id,
   });
 
   const addMealMutation = useMutation({
@@ -342,6 +380,41 @@ export function MealPlanDetails() {
     );
   };
 
+  // Função para gerar o PDF
+  const handleGeneratePDF = () => {
+    setIsPdfGenerating(true);
+
+    // Organizar os dados para o PDF
+    if (plan && foodDb) {
+      // Ordenar refeições por horário
+      const sortedMeals = [...(plan.meals || [])].sort((a, b) => {
+        const timeA = a.time.split(":").map(Number);
+        const timeB = b.time.split(":").map(Number);
+        return timeA[0] * 60 + timeA[1] - (timeB[0] * 60 + timeB[1]);
+      });
+
+      const totalNutrients = calculateTotalNutrients();
+
+      // Preparar dados para o PDF
+      const pdfDataObj = {
+        plan,
+        mealsByTime: sortedMeals,
+        patientData: patient,
+        nutritionistData: nutritionist,
+        totalNutrients,
+        foodDb,
+      };
+
+      setPdfData(pdfDataObj);
+      setShowPdfPreview(true);
+      setIsPdfGenerating(false);
+    } else {
+      setIsPdfGenerating(false);
+      // Mostrar mensagem de erro se os dados não estiverem disponíveis
+      alert("Não foi possível gerar o PDF. Dados incompletos.");
+    }
+  };
+
   if (isLoading) {
     return (
       <Box sx={{ maxWidth: 1200, mx: "auto", p: 3 }}>
@@ -456,11 +529,99 @@ export function MealPlanDetails() {
       <Button
         variant="contained"
         color="primary"
-        sx={{ width: "100%", py: 1.5, fontWeight: 600, fontSize: 18 }}
-        // onClick: aqui você pode definir a ação desejada
+        startIcon={<PdfIcon />}
+        onClick={handleGeneratePDF}
+        disabled={isPdfGenerating}
+        sx={{
+          width: "100%",
+          py: 1.5,
+          fontWeight: 600,
+          fontSize: 18,
+          bgcolor: "custom.main",
+          "&:hover": {
+            bgcolor: "custom.dark",
+          },
+        }}
       >
-        Salvar e ver planejamento
+        {isPdfGenerating ? "Gerando PDF..." : "Salvar e ver planejamento"}
       </Button>
+
+      {/* Dialog de visualização do PDF */}
+      <Dialog
+        open={showPdfPreview}
+        onClose={() => setShowPdfPreview(false)}
+        fullScreen
+      >
+        <DialogTitle
+          sx={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            bgcolor: "custom.main",
+            color: "white",
+          }}
+        >
+          <Typography variant="h6">Visualização do Plano Alimentar</Typography>
+          <Stack direction="row" spacing={1}>
+            {pdfData && (
+              <PDFDownloadLink
+                document={<MealPlanPDF {...pdfData} />}
+                fileName={`plano-alimentar-${patient?.name || "paciente"}.pdf`}
+                style={{ textDecoration: "none" }}
+              >
+                {({ loading }) => (
+                  <Button
+                    variant="contained"
+                    color="secondary"
+                    disabled={loading}
+                    startIcon={<SaveIcon />}
+                  >
+                    {loading ? "Carregando..." : "Download PDF"}
+                  </Button>
+                )}
+              </PDFDownloadLink>
+            )}
+            <Button
+              variant="outlined"
+              onClick={() => setShowPdfPreview(false)}
+              sx={{ color: "white", borderColor: "white" }}
+            >
+              Fechar
+            </Button>
+          </Stack>
+        </DialogTitle>
+        <DialogContent sx={{ p: 0, height: "calc(100vh - 64px)" }}>
+          {pdfData ? (
+            <PDFViewer style={{ width: "100%", height: "100%" }}>
+              <MealPlanPDF {...pdfData} />
+            </PDFViewer>
+          ) : (
+            <Box
+              sx={{
+                display: "flex",
+                justifyContent: "center",
+                alignItems: "center",
+                height: "100%",
+              }}
+            >
+              <Typography>Carregando visualização...</Typography>
+            </Box>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Backdrop enquanto gera o PDF */}
+      <Backdrop
+        sx={{ color: "#fff", zIndex: (theme) => theme.zIndex.drawer + 1 }}
+        open={isPdfGenerating}
+      >
+        <Box sx={{ textAlign: "center" }}>
+          <CircularProgress color="inherit" />
+          <Typography sx={{ mt: 2 }}>
+            Gerando PDF do plano alimentar...
+          </Typography>
+        </Box>
+      </Backdrop>
 
       {/* Dialog para adicionar/editar refeição */}
       <Dialog
@@ -560,3 +721,15 @@ export function MealPlanDetails() {
     </Box>
   );
 }
+
+// Constantes necessárias para o componente
+const DEFAULT_MEALS = [
+  { name: "Café da manhã", time: "07:00", icon: <CoffeeIcon /> },
+  { name: "Almoço", time: "12:00", icon: <RestaurantIcon /> },
+  { name: "Jantar", time: "19:00", icon: <RestaurantIcon /> },
+];
+
+const formatTime = (time: string) => {
+  const [hours, minutes] = time.split(":");
+  return `${hours.padStart(2, "0")}:${minutes.padStart(2, "0")}`;
+};
