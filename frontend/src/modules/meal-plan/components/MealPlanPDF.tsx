@@ -150,13 +150,17 @@ const pdfStyles = StyleSheet.create({
     marginBottom: 5,
     fontSize: 11,
     flexDirection: "row",
+    alignItems: "center",
   },
   foodAmount: {
-    width: "15%",
+    width: 70,
     fontWeight: "bold",
+    whiteSpace: "nowrap",
+    marginRight: 8,
+    textAlign: "right",
   },
   foodName: {
-    width: "85%",
+    flex: 1,
   },
   notes: {
     fontSize: 10,
@@ -309,15 +313,13 @@ export const MealPlanPDF: React.FC<MealPlanPDFProps> = ({
             </View>
 
             {meal.mealFoods.map((mealFood) => {
-              console.log(
-                "🚀 ~ MealPlanPDF.tsx:312 ~ mealFood 🚀🚀🚀:",
-                mealFood
-              );
               const food = foodDb.find((f) => f.id === mealFood.foodId);
-              console.log("🚀 ~ MealPlanPDF.tsx:313 ~ food 🚀🚀🚀:", food);
               if (!food) return null;
 
-              const displayAmount = `${mealFood.amount} ${mealFood.unit}`;
+              const amount = parseFloat(String(mealFood.amount));
+              const displayAmount = `${
+                amount % 1 === 0 ? amount : amount.toFixed(2)
+              } ${ajustarUnidade(String(mealFood.unit), amount)}`;
 
               return (
                 <View
@@ -387,3 +389,12 @@ export const MealPlanPDF: React.FC<MealPlanPDFProps> = ({
     </Document>
   );
 };
+
+function ajustarUnidade(unidade: string, quantidade: number) {
+  if (unidade.endsWith("(s)")) {
+    return quantidade === 1
+      ? unidade.replace("(s)", "")
+      : unidade.replace("(s)", "s");
+  }
+  return unidade;
+}

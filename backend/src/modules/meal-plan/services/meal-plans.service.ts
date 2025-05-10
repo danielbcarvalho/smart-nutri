@@ -150,7 +150,7 @@ export class MealPlansService {
               amount: mealFoodDto.amount,
               unit: mealFoodDto.unit,
               foodId: mealFoodDto.foodId,
-              source: mealFoodDto.source,
+              source: mealFoodDto.source.toLowerCase(),
               meal: mealEntity,
               mealId: mealEntity.id,
             });
@@ -352,7 +352,9 @@ export class MealPlansService {
         }
 
         const existingFood = existingMealFoods.find(
-          (mf) => mf.foodId === foodDto.foodId && mf.source === foodDto.source,
+          (mf) =>
+            mf.foodId === foodDto.foodId &&
+            mf.source.toLowerCase() === foodDto.source.toLowerCase(),
         );
 
         if (existingFood) {
@@ -377,7 +379,7 @@ export class MealPlansService {
             amount: dtoAmount, // Save as number
             unit: foodDto.unit,
             foodId: foodDto.foodId,
-            source: foodDto.source,
+            source: foodDto.source.toLowerCase(),
             meal: meal, // Associate with the current meal entity
             mealId: meal.id,
           });
