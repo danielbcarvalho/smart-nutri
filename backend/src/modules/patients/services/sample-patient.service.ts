@@ -18,10 +18,13 @@ import { Meal } from '../../meal-plan/entities/meal.entity';
 import { MealFood } from '../../meal-plan/entities/meal-food.entity';
 import { Gender } from '../enums/gender.enum';
 import { Food } from '../../foods/entities/food.entity';
+import * as fs from 'fs';
+import * as path from 'path';
 
 @Injectable()
 export class SamplePatientService {
   private readonly logger = new Logger(SamplePatientService.name);
+  private foodsData: any[] = [];
 
   constructor(
     @InjectRepository(Patient)
@@ -38,7 +41,77 @@ export class SamplePatientService {
     private readonly mealFoodRepository: Repository<MealFood>,
     @InjectRepository(Food)
     private readonly foodRepository: Repository<Food>,
-  ) {}
+  ) {
+    this.loadFoodsData();
+  }
+
+  /**
+   * Loads foods data from JSON file
+   */
+  private loadFoodsData(): void {
+    try {
+      const filePath = path.join(
+        process.cwd(),
+        'src',
+        'food-db',
+        'alimentos.json',
+      );
+      const fileContent = fs.readFileSync(filePath, 'utf8');
+      const parsed = JSON.parse(fileContent);
+      if (Array.isArray(parsed)) {
+        this.foodsData = parsed;
+      } else if (parsed && Array.isArray(parsed.alimentos)) {
+        this.foodsData = parsed.alimentos;
+      } else if (parsed && typeof parsed === 'object') {
+        // Caso seja um objeto de alimentos (chave = id)
+        this.foodsData = Object.values(parsed);
+      } else {
+        this.logger.error('Formato inesperado em alimentos.json');
+        this.foodsData = [];
+      }
+      this.logger.log(
+        `Foods data loaded: ${Array.isArray(this.foodsData) ? this.foodsData.length : 'N/A'} alimentos`,
+      );
+    } catch (error) {
+      this.logger.error('Error loading foods data:', error);
+      this.foodsData = [];
+    }
+  }
+
+  // Função utilitária para normalizar strings (remove acentos, minúsculas, etc)
+  private normalize(str: string): string {
+    return str
+      ? str
+          .normalize('NFD')
+          .replace(/[\u0300-\u036f]/g, '') // CORRETO: remove apenas acentos
+          .toLowerCase()
+          .replace(/\s+/g, ' ')
+          .trim()
+      : '';
+  }
+
+  /**
+   * Finds a food in the JSON data by name (busca flexível, ignora acentos e caixa)
+   * @param name The name of the food to find
+   * @returns The food data or null if not found
+   */
+  private findFoodInJson(name: string): any {
+    if (!Array.isArray(this.foodsData)) {
+      this.logger.error('foodsData não é um array!');
+      return null;
+    }
+    const normalizedName = this.normalize(name);
+    this.logger.log(`Buscando: "${normalizedName}"`);
+    for (const food of this.foodsData) {
+      const normFoodName = this.normalize(food.nome || '');
+      this.logger.log(`Comparando com: "${normFoodName}"`);
+      if (normFoodName.includes(normalizedName)) {
+        this.logger.log(`Encontrado: "${food.nome}"`);
+        return food;
+      }
+    }
+    return null;
+  }
 
   /**
    * Creates a sample patient for a nutritionist
@@ -784,9 +857,9 @@ export class SamplePatientService {
 
     const savedBreakfast = await this.mealRepository.save(breakfast);
 
-    await this.addFoodToMeal(savedBreakfast, foods[0], 200, 'g');
-    await this.addFoodToMeal(savedBreakfast, foods[1], 30, 'g');
-    await this.addFoodToMeal(savedBreakfast, foods[2], 1, 'unidade');
+    await this.addFoodToMeal(savedBreakfast, foods[0], 200, 'grama(s)');
+    await this.addFoodToMeal(savedBreakfast, foods[1], 30, 'grama(s)');
+    await this.addFoodToMeal(savedBreakfast, foods[2], 150, 'grama(s)');
 
     const lunch = this.mealRepository.create({
       name: 'Almoço',
@@ -797,9 +870,14 @@ export class SamplePatientService {
 
     const savedLunch = await this.mealRepository.save(lunch);
 
-    await this.addFoodToMeal(savedLunch, foods[3], 120, 'g');
-    await this.addFoodToMeal(savedLunch, foods[4], 150, 'g');
-    await this.addFoodToMeal(savedLunch, foods[5], 2, 'colher');
+    await this.addFoodToMeal(savedLunch, foods[3], 120, 'grama(s)');
+    await this.addFoodToMeal(savedLunch, foods[4], 150, 'grama(s)');
+    await this.addFoodToMeal(
+      savedLunch,
+      foods[5],
+      2,
+      'Colher(es) de sopa cheia(s)',
+    );
 
     const snack = this.mealRepository.create({
       name: 'Lanche da tarde',
@@ -810,8 +888,8 @@ export class SamplePatientService {
 
     const savedSnack = await this.mealRepository.save(snack);
 
-    await this.addFoodToMeal(savedSnack, foods[6], 1, 'unidade');
-    await this.addFoodToMeal(savedSnack, foods[7], 20, 'g');
+    await this.addFoodToMeal(savedSnack, foods[6], 150, 'grama(s)');
+    await this.addFoodToMeal(savedSnack, foods[7], 20, 'grama(s)');
 
     const dinner = this.mealRepository.create({
       name: 'Jantar',
@@ -822,9 +900,14 @@ export class SamplePatientService {
 
     const savedDinner = await this.mealRepository.save(dinner);
 
-    await this.addFoodToMeal(savedDinner, foods[8], 100, 'g');
-    await this.addFoodToMeal(savedDinner, foods[9], 50, 'g');
-    await this.addFoodToMeal(savedDinner, foods[5], 1, 'colher');
+    await this.addFoodToMeal(savedDinner, foods[8], 100, 'grama(s)');
+    await this.addFoodToMeal(savedDinner, foods[9], 50, 'grama(s)');
+    await this.addFoodToMeal(
+      savedDinner,
+      foods[5],
+      1,
+      'Colher(es) de sopa cheia(s)',
+    );
 
     // Update meal plan totals
     await this.updateMealPlanTotals(savedMealPlan.id);
@@ -835,146 +918,99 @@ export class SamplePatientService {
    * @returns Array of foods
    */
   private async ensureSampleFoodsExist(): Promise<Food[]> {
-    const sampleFoods = [
-      {
-        name: 'Iogurte Natural Desnatado',
-        servingSize: 100,
-        servingUnit: 'g',
-        calories: 50,
-        protein: 5.3,
-        carbohydrates: 7.2,
-        fat: 0.4,
-        categories: ['Laticínios'],
-        isVerified: true,
-        source: 'TACO',
-      },
-      {
-        name: 'Granola Tradicional',
-        servingSize: 30,
-        servingUnit: 'g',
-        calories: 120,
-        protein: 3.5,
-        carbohydrates: 20.5,
-        fat: 4.2,
-        categories: ['Cereais'],
-        isVerified: true,
-        source: 'TACO',
-      },
-      {
-        name: 'Banana',
-        servingSize: 100,
-        servingUnit: 'g',
-        calories: 89,
-        protein: 1.1,
-        carbohydrates: 22.8,
-        fat: 0.3,
-        categories: ['Frutas'],
-        isVerified: true,
-        source: 'TACO',
-      },
-      {
-        name: 'Peito de Frango Grelhado',
-        servingSize: 100,
-        servingUnit: 'g',
-        calories: 165,
-        protein: 31,
-        carbohydrates: 0,
-        fat: 3.6,
-        categories: ['Carnes', 'Aves'],
-        isVerified: true,
-        source: 'TACO',
-      },
-      {
-        name: 'Arroz Integral Cozido',
-        servingSize: 100,
-        servingUnit: 'g',
-        calories: 124,
-        protein: 2.6,
-        carbohydrates: 25.8,
-        fat: 1,
-        categories: ['Cereais'],
-        isVerified: true,
-        source: 'TACO',
-      },
-      {
-        name: 'Azeite de Oliva Extra Virgem',
-        servingSize: 10,
-        servingUnit: 'ml',
-        calories: 90,
-        protein: 0,
-        carbohydrates: 0,
-        fat: 10,
-        categories: ['Óleos e Gorduras'],
-        isVerified: true,
-        source: 'TACO',
-      },
-      {
-        name: 'Maçã',
-        servingSize: 100,
-        servingUnit: 'g',
-        calories: 52,
-        protein: 0.3,
-        carbohydrates: 13.8,
-        fat: 0.2,
-        categories: ['Frutas'],
-        isVerified: true,
-        source: 'TACO',
-      },
-      {
-        name: 'Castanha do Pará',
-        servingSize: 20,
-        servingUnit: 'g',
-        calories: 132,
-        protein: 2.8,
-        carbohydrates: 2.6,
-        fat: 13.2,
-        categories: ['Oleaginosas'],
-        isVerified: true,
-        source: 'TACO',
-      },
-      {
-        name: 'Salmão Grelhado',
-        servingSize: 100,
-        servingUnit: 'g',
-        calories: 208,
-        protein: 22.1,
-        carbohydrates: 0,
-        fat: 13.4,
-        categories: ['Peixes'],
-        isVerified: true,
-        source: 'TACO',
-      },
-      {
-        name: 'Brócolis Cozido',
-        servingSize: 100,
-        servingUnit: 'g',
-        calories: 35,
-        protein: 3.6,
-        carbohydrates: 4.3,
-        fat: 0.3,
-        categories: ['Vegetais'],
-        isVerified: true,
-        source: 'TACO',
-      },
+    // Nomes dos alimentos que queremos buscar no JSON
+    const sampleFoodNames = [
+      'Iogurte Natural',
+      'Granola',
+      'Banana',
+      'Peito de Frango',
+      'Arroz Integral',
+      'Azeite de Oliva',
+      'Maçã',
+      'Castanha do Pará',
+      'Salmão Grelhado',
+      'Brócolis Cozido',
     ];
 
     const foods: Food[] = [];
 
-    for (const foodData of sampleFoods) {
-      // Check if food already exists
+    for (const foodName of sampleFoodNames) {
+      // Busca no JSON
+      const jsonFood = this.findFoodInJson(foodName);
+      if (!jsonFood) {
+        this.logger.warn(
+          `Alimento de exemplo não encontrado no JSON: ${foodName}`,
+        );
+        continue;
+      }
+      // Padroniza o source para minúsculo
+      const normalizedSource = (jsonFood.origem || 'taco').toLowerCase();
+      // Verifica se já existe no banco pelo sourceId e source do JSON
       let food = await this.foodRepository.findOne({
-        where: { name: foodData.name },
+        where: { sourceId: String(jsonFood.id), source: normalizedSource },
       });
-
       if (!food) {
-        // Create food if it doesn't exist
-        food = this.foodRepository.create(foodData);
+        food = this.foodRepository.create({
+          name: jsonFood.nome,
+          servingSize:
+            jsonFood.porcao ||
+            jsonFood.medida_caseira ||
+            jsonFood.quantidade ||
+            100,
+          servingUnit:
+            jsonFood.unidade || jsonFood.unidade_medida || 'grama(s)',
+          calories: jsonFood.kcal || jsonFood.energia_kcal || 0,
+          protein: jsonFood.ptn || jsonFood.proteina_g || 0,
+          carbohydrates: jsonFood.cho || jsonFood.carboidrato_g || 0,
+          fat: jsonFood.lip || jsonFood.lipideos_g || 0,
+          fiber: jsonFood.fibras || jsonFood.fibra_g || 0,
+          sugar: jsonFood.acucar_g || jsonFood.acucares || 0,
+          sodium: jsonFood.na || jsonFood.sodio || jsonFood.sodio_mg || 0,
+          categories: [jsonFood.categoria || jsonFood.grupo || 'Outro'],
+          isVerified: true,
+          source: normalizedSource,
+          sourceId: String(jsonFood.id),
+          additionalNutrients: {
+            ...('vitamina_c_mg' in jsonFood
+              ? { vitamina_c: jsonFood.vitamina_c_mg }
+              : {}),
+            ...('potassio_mg' in jsonFood
+              ? { potassio: jsonFood.potassio_mg }
+              : {}),
+            ...('ca' in jsonFood ? { calcio: jsonFood.ca } : {}),
+            ...('mg' in jsonFood ? { magnesio: jsonFood.mg } : {}),
+            ...('p' in jsonFood ? { fosforo: jsonFood.p } : {}),
+            ...('fe' in jsonFood ? { ferro: jsonFood.fe } : {}),
+            ...('zn' in jsonFood ? { zinco: jsonFood.zn } : {}),
+            ...('se' in jsonFood ? { selenio: jsonFood.se } : {}),
+            ...('vitb12' in jsonFood ? { vitb12: jsonFood.vitb12 } : {}),
+            ...('vitb9' in jsonFood ? { vitb9: jsonFood.vitb9 } : {}),
+            ...('vite' in jsonFood ? { vite: jsonFood.vite } : {}),
+            ...('vitd' in jsonFood ? { vitd: jsonFood.vitd } : {}),
+            ...('gorduramono' in jsonFood
+              ? { gorduramono: jsonFood.gorduramono }
+              : {}),
+            ...('gordurapoli' in jsonFood
+              ? { gordurapoli: jsonFood.gordurapoli }
+              : {}),
+            ...('gordurasat' in jsonFood
+              ? { gordurasat: jsonFood.gordurasat }
+              : {}),
+            ...('gorduratrans' in jsonFood
+              ? { gorduratrans: jsonFood.gorduratrans }
+              : {}),
+            ...('colesterol' in jsonFood
+              ? { colesterol: jsonFood.colesterol }
+              : {}),
+            ...('alcool' in jsonFood ? { alcool: jsonFood.alcool } : {}),
+            // Adicione outros micronutrientes relevantes conforme o JSON
+          },
+          ...(jsonFood.mc ? { mc: jsonFood.mc } : {}),
+        });
         food = await this.foodRepository.save(food);
       }
-
       foods.push(food);
     }
-
     return foods;
   }
 
@@ -994,11 +1030,10 @@ export class SamplePatientService {
     const mealFood = this.mealFoodRepository.create({
       amount: amount,
       unit: unit,
-      foodId: food.id,
+      foodId: food.sourceId, // id do JSON, igual ao fluxo normal do frontend
       source: food.source,
       meal: { id: meal.id },
     });
-
     await this.mealFoodRepository.save(mealFood);
   }
 
@@ -1027,11 +1062,30 @@ export class SamplePatientService {
       let mealCarbs = 0;
       let mealFat = 0;
 
-      // Se necessário, buscar dados do alimento manualmente aqui usando mealFood.foodId/source
-      // Exemplo: buscar na tabela de alimentos pelo foodId/source
-      // Por ora, ignorar cálculo se não for possível
+      // Buscar todos os alimentos da refeição
+      for (const mealFood of meal.mealFoods) {
+        // Buscar o alimento no banco pelo sourceId e source
+        const food = await this.foodRepository.findOne({
+          where: { sourceId: String(mealFood.foodId), source: mealFood.source },
+        });
+        if (!food) continue;
 
-      // Update meal totals
+        // Calcular fator de proporção
+        let factor = 1;
+        if (food.servingUnit === mealFood.unit) {
+          factor = Number(mealFood.amount) / Number(food.servingSize);
+        } else {
+          // Se unidade diferente, usar apenas a quantidade (pode ser ajustado conforme regras de conversão)
+          factor = Number(mealFood.amount);
+        }
+
+        mealCalories += Number(food.calories) * factor;
+        mealProtein += Number(food.protein) * factor;
+        mealCarbs += Number(food.carbohydrates) * factor;
+        mealFat += Number(food.fat) * factor;
+      }
+
+      // Atualizar totais da refeição
       await this.mealRepository.update(meal.id, {
         totalCalories: mealCalories,
         totalProtein: mealProtein,
@@ -1045,7 +1099,7 @@ export class SamplePatientService {
       totalFat += mealFat;
     }
 
-    // Calculate daily averages
+    // Calcular médias diárias
     const days = Math.max(
       1,
       Math.ceil(
@@ -1054,7 +1108,7 @@ export class SamplePatientService {
       ),
     );
 
-    // Update meal plan totals
+    // Atualizar totais do plano alimentar
     await this.mealPlanRepository.update(mealPlanId, {
       dailyCalories: totalCalories / days,
       dailyProtein: totalProtein / days,
