@@ -96,16 +96,54 @@ export class InstagramScrapingService {
         if (proxyHost && proxyPort && proxyUser && proxyPass) {
           // Exemplo: http://user:pass@host:port
           const proxyUrl = `http://${proxyUser}:${proxyPass}@${proxyHost}:${proxyPort}`;
+          this.logger.log(
+            `[BrightData] Configurando proxy com URL: ${proxyUrl.replace(proxyPass, '****')}`,
+          );
+
+          // Configurar o agente HTTPS com opções para ignorar erros de certificado
           axiosConfig.httpsAgent = new HttpsProxyAgent(proxyUrl);
+
           // Para evitar problemas de SSL com proxies
           process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
           this.logger.log(
-            `[BrightData] Proxy residencial ativado para scraping Instagram: ${proxyUrl}`,
+            `[BrightData] Proxy residencial ativado para scraping Instagram: ${proxyHost}:${proxyPort}`,
+          );
+        } else {
+          this.logger.warn(
+            '[BrightData] Variáveis de ambiente do proxy não configuradas completamente',
+          );
+          this.logger.debug(
+            `[BrightData] Configuração atual: HOST=${proxyHost}, PORT=${proxyPort}, USER=${proxyUser}, PASS=${proxyPass ? '****' : 'não definido'}`,
           );
         }
 
-        const response = await axios.get(url, axiosConfig);
-        html = response.data;
+        try {
+          this.logger.log(`[BrightData] Iniciando requisição para ${url}`);
+          const response = await axios.get(url, {
+            ...axiosConfig,
+            validateStatus: function (status) {
+              return status >= 200 && status < 500; // Aceita qualquer status entre 200 e 499
+            },
+          });
+          html = response.data;
+          this.logger.log(
+            `[BrightData] Requisição concluída com sucesso (Status: ${response.status})`,
+          );
+        } catch (error) {
+          if (axios.isAxiosError(error)) {
+            const axiosError = error as AxiosError;
+            this.logger.error(
+              `[BrightData] Erro na requisição: ${axiosError.message}`,
+              {
+                status: axiosError.response?.status,
+                statusText: axiosError.response?.statusText,
+                headers: axiosError.response?.headers,
+                data: axiosError.response?.data,
+              },
+            );
+          }
+          throw error;
+        }
       }
       const $ = cheerio.load(html);
 
