@@ -45,7 +45,7 @@ export const AnalyticalResults: React.FC<AnalyticalResultsProps> = ({
           variant="outlined"
           startIcon={<BarChartIcon />}
           onClick={() =>
-            navigate(`/patient/${patientId}/assessments/evolution`)
+            navigate(`/patient/${patientId}/assessments/evolution/measurements`)
           }
           sx={{ borderRadius: 2 }}
         >
