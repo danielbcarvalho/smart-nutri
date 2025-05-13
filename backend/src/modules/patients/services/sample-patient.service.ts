@@ -18,6 +18,8 @@ import { Meal } from '../../meal-plan/entities/meal.entity';
 import { MealFood } from '../../meal-plan/entities/meal-food.entity';
 import { Gender } from '../enums/gender.enum';
 import { Food } from '../../foods/entities/food.entity';
+import { PhotosService } from '../../photos/photos.service';
+import { PhotoType } from '../../photos/entities/photo.entity';
 import * as fs from 'fs';
 import * as path from 'path';
 
@@ -41,6 +43,7 @@ export class SamplePatientService {
     private readonly mealFoodRepository: Repository<MealFood>,
     @InjectRepository(Food)
     private readonly foodRepository: Repository<Food>,
+    private readonly photosService: PhotosService,
   ) {
     this.loadFoodsData();
   }
@@ -151,6 +154,61 @@ export class SamplePatientService {
   }
 
   /**
+   * Recreates the sample patient for a nutritionist
+   * @param nutritionistId The ID of the nutritionist
+   * @returns The newly created sample patient
+   */
+  async recreateSamplePatient(nutritionistId: string): Promise<Patient> {
+    this.logger.log(
+      `Recreating sample patient for nutritionist ${nutritionistId}`,
+    );
+
+    try {
+      // Find existing sample patient
+      const existingSamplePatient = await this.patientRepository.findOne({
+        where: { nutritionistId, isSample: true },
+      });
+
+      if (existingSamplePatient) {
+        // Delete related meal plans first
+        await this.mealPlanRepository.delete({
+          patientId: existingSamplePatient.id,
+        });
+
+        // Delete related measurements
+        await this.measurementRepository.delete({
+          patientId: existingSamplePatient.id,
+        });
+
+        // Delete related consultations
+        await this.consultationRepository.delete({
+          patientId: existingSamplePatient.id,
+        });
+
+        // Now delete the patient
+        await this.patientRepository.remove(existingSamplePatient);
+        this.logger.log(
+          `Deleted existing sample patient for nutritionist ${nutritionistId}`,
+        );
+      }
+
+      // Create new sample patient
+      const newSamplePatient = await this.createSamplePatient(nutritionistId);
+      this.logger.log(
+        `New sample patient created successfully for nutritionist ${nutritionistId}`,
+      );
+
+      return newSamplePatient;
+    } catch (error) {
+      this.logger.error(
+        `Error recreating sample patient: ${error.message}`,
+        error.stack,
+      );
+      throw error;
+    }
+  }
+
+  /**
    * Creates a sample patient with realistic data
    * @param nutritionistId The ID of the nutritionist
    * @returns The created patient
@@ -181,6 +239,97 @@ export class SamplePatientService {
     });
 
     return this.patientRepository.save(patient);
+  }
+
+  /**
+   * Uploads photos for a measurement
+   * @param measurement The measurement to upload photos for
+   * @param isRecent Whether this is the most recent measurement
+   */
+  private async uploadPhotosForMeasurement(
+    measurement: Measurement,
+    isRecent: boolean,
+  ): Promise<void> {
+    const photosDir = path.join(process.cwd(), 'src', 'photos');
+    let prefix: string;
+
+    // Determine prefix based on measurement date
+    const measurementDate = new Date(measurement.date);
+    const now = new Date();
+    const monthsDiff =
+      (now.getFullYear() - measurementDate.getFullYear()) * 12 +
+      (now.getMonth() - measurementDate.getMonth());
+
+    if (isRecent) {
+      prefix = 'atual';
+    } else if (monthsDiff === 6) {
+      prefix = '6meses';
+    } else if (monthsDiff === 3) {
+      prefix = '3meses';
+    } else {
+      this.logger.warn(
+        `No photos available for measurement ${monthsDiff} months ago`,
+      );
+      return;
+    }
+
+    try {
+      // Upload front photo
+      const frontPhotoPath = path.join(photosDir, `${prefix}frente.png`);
+      if (fs.existsSync(frontPhotoPath)) {
+        const frontPhotoBuffer = fs.readFileSync(frontPhotoPath);
+        await this.photosService.uploadPhoto({
+          file: {
+            buffer: frontPhotoBuffer,
+            originalname: `${prefix}frente.png`,
+            mimetype: 'image/png',
+          },
+          patientId: measurement.patientId,
+          assessmentId: measurement.id,
+          type: PhotoType.FRONT,
+        });
+      }
+
+      // Upload back photo
+      const backPhotoPath = path.join(photosDir, `${prefix}costas.png`);
+      if (fs.existsSync(backPhotoPath)) {
+        const backPhotoBuffer = fs.readFileSync(backPhotoPath);
+        await this.photosService.uploadPhoto({
+          file: {
+            buffer: backPhotoBuffer,
+            originalname: `${prefix}costas.png`,
+            mimetype: 'image/png',
+          },
+          patientId: measurement.patientId,
+          assessmentId: measurement.id,
+          type: PhotoType.BACK,
+        });
+      }
+
+      // Upload right side photo
+      const rightPhotoPath = path.join(
+        photosDir,
+        `${prefix}lateraldireita.png`,
+      );
+      if (fs.existsSync(rightPhotoPath)) {
+        const rightPhotoBuffer = fs.readFileSync(rightPhotoPath);
+        await this.photosService.uploadPhoto({
+          file: {
+            buffer: rightPhotoBuffer,
+            originalname: `${prefix}lateraldireita.png`,
+            mimetype: 'image/png',
+          },
+          patientId: measurement.patientId,
+          assessmentId: measurement.id,
+          type: PhotoType.RIGHT,
+        });
+      }
+    } catch (error) {
+      this.logger.error(
+        `Error uploading photos for measurement ${measurement.id}:`,
+        error,
+      );
+    }
   }
 
   /**
@@ -436,6 +585,9 @@ export class SamplePatientService {
 
     await this.measurementRepository.save(measurement6MonthsAgo);
 
+    // After saving the 6-month-old measurement, upload its photos
+    await this.uploadPhotosForMeasurement(measurement6MonthsAgo, false);
+
     // Create measurement 5 months ago (lost 1.5kg)
     const date5MonthsAgo = new Date();
     date5MonthsAgo.setMonth(date5MonthsAgo.getMonth() - 5);
@@ -622,6 +774,9 @@ export class SamplePatientService {
 
     await this.measurementRepository.save(initialMeasurement);
 
+    // After saving the initial measurement (3 months ago), upload its photos
+    await this.uploadPhotosForMeasurement(initialMeasurement, false);
+
     // Create follow-up measurement (2 months ago)
     const followUpDate = new Date();
     followUpDate.setMonth(followUpDate.getMonth() - 2);
@@ -745,6 +900,9 @@ export class SamplePatientService {
     } as DeepPartial<Measurement>);
 
     await this.measurementRepository.save(recentMeasurement);
+
+    // After saving the most recent measurement, upload its photos
+    await this.uploadPhotosForMeasurement(recentMeasurement, true);
   }
 
   /**

@@ -31,6 +31,7 @@ import { Patient } from './entities/patient.entity';
 import { Measurement } from './entities/measurement.entity';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { FileInterceptor } from '@nestjs/platform-express';
+import { SamplePatientService } from './services/sample-patient.service';
 
 interface RequestWithUser extends Request {
   user: {
@@ -43,7 +44,10 @@ interface RequestWithUser extends Request {
 @UseGuards(JwtAuthGuard)
 @ApiBearerAuth()
 export class PatientsController {
-  constructor(private readonly patientsService: PatientsService) {}
+  constructor(
+    private readonly patientsService: PatientsService,
+    private readonly samplePatientService: SamplePatientService,
+  ) {}
 
   @Post()
   @ApiOperation({
@@ -442,5 +446,19 @@ export class PatientsController {
     @UploadedFile() file: Express.Multer.File,
   ) {
     return this.patientsService.uploadProfilePhoto(id, file);
+  }
+
+  @Post('sample/recreate')
+  @ApiOperation({
+    summary: 'Recriar paciente exemplo',
+    description: 'Exclui o paciente exemplo existente e cria um novo.',
+  })
+  @ApiResponse({
+    status: 201,
+    description: 'Paciente exemplo recriado com sucesso',
+    type: Patient,
+  })
+  recreateSamplePatient(@Request() req: RequestWithUser) {
+    return this.samplePatientService.recreateSamplePatient(req.user.id);
   }
 }

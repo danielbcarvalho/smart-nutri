@@ -18,6 +18,7 @@ import { Food } from '../foods/entities/food.entity';
 import { StorageService } from '../../supabase/storage/storage.service';
 import { InstagramScrapingService } from '../../services/instagram-scraping';
 import { SupabaseModule } from '../../supabase/supabase.module';
+import { PhotosModule } from '../photos/photos.module';
 
 @Module({
   imports: [
@@ -33,6 +34,7 @@ import { SupabaseModule } from '../../supabase/supabase.module';
     ]),
     ConfigModule,
     SupabaseModule,
+    PhotosModule,
   ],
   controllers: [
     PatientsController,

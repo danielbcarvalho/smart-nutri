@@ -5,8 +5,8 @@ import {
   Divider,
   IconButton,
   Modal,
-  Tooltip,
   Typography,
+  Button,
 } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
 import EditIcon from "@mui/icons-material/Edit";
@@ -16,6 +16,9 @@ import BadgeIcon from "@mui/icons-material/Badge";
 import InstagramIcon from "@mui/icons-material/Instagram";
 import PhotoCameraIcon from "@mui/icons-material/PhotoCamera";
 import PersonIcon from "@mui/icons-material/Person";
+import RefreshIcon from "@mui/icons-material/Refresh";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { patientService } from "../../modules/patient/services/patientService";
 
 type Props = {
   open: boolean;
@@ -44,6 +47,15 @@ export default function ProfileModal({
   handleLogout,
   setEditProfileOpen,
 }: Props) {
+  const queryClient = useQueryClient();
+
+  const recreateSampleMutation = useMutation({
+    mutationFn: () => patientService.recreateSamplePatient(),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["patients"] });
+    },
+  });
+
   return (
     <Modal open={open} onClose={onClose}>
       <Box
@@ -72,21 +84,9 @@ export default function ProfileModal({
           <Typography variant="h6" fontWeight={600}>
             Meu Perfil
           </Typography>
-          <Box sx={{ display: "flex", gap: 1 }}>
-            <Tooltip title="Editar">
-              <IconButton onClick={() => setEditProfileOpen(true)} size="small">
-                <EditIcon />
-              </IconButton>
-            </Tooltip>
-            <Tooltip title="Sair">
-              <IconButton onClick={handleLogout} size="small">
-                <LogoutIcon />
-              </IconButton>
-            </Tooltip>
-            <IconButton onClick={onClose} size="small">
-              <CloseIcon />
-            </IconButton>
-          </Box>
+          <IconButton onClick={onClose} size="small">
+            <CloseIcon />
+          </IconButton>
         </Box>
 
         {/* Conteúdo */}
@@ -207,6 +207,64 @@ export default function ProfileModal({
               <Typography variant="body1">{user.clinicName}</Typography>
             </Box>
           )}
+
+          <Box sx={{ mt: 3, display: "flex", flexDirection: "column", gap: 2 }}>
+            <Button
+              variant="outlined"
+              onClick={() => recreateSampleMutation.mutate()}
+              disabled={recreateSampleMutation.isPending}
+              startIcon={<RefreshIcon />}
+              fullWidth
+              sx={{
+                borderColor: "custom.main",
+                color: "custom.main",
+                "&:hover": {
+                  borderColor: "custom.dark",
+                  bgcolor: "transparent",
+                },
+              }}
+            >
+              {recreateSampleMutation.isPending ? (
+                <CircularProgress size={20} color="inherit" sx={{ mr: 1 }} />
+              ) : (
+                "Atualizar paciente exemplo"
+              )}
+            </Button>
+
+            <Button
+              variant="outlined"
+              onClick={() => setEditProfileOpen(true)}
+              startIcon={<EditIcon />}
+              fullWidth
+              sx={{
+                borderColor: "custom.main",
+                color: "custom.main",
+                "&:hover": {
+                  borderColor: "custom.dark",
+                  bgcolor: "transparent",
+                },
+              }}
+            >
+              Editar perfil
+            </Button>
+
+            <Button
+              variant="outlined"
+              onClick={handleLogout}
+              startIcon={<LogoutIcon />}
+              fullWidth
+              sx={{
+                borderColor: "error.main",
+                color: "error.main",
+                "&:hover": {
+                  borderColor: "error.dark",
+                  bgcolor: "transparent",
+                },
+              }}
+            >
+              Sair
+            </Button>
+          </Box>
         </Box>
       </Box>
     </Modal>

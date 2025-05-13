@@ -145,7 +145,11 @@ const router = createBrowserRouter([
                 element: <NewAssessment />,
               },
               {
-                path: "evolution",
+                path: "evolution/measurements",
+                element: <AssessmentEvolution />,
+              },
+              {
+                path: "evolution/photos",
                 element: <AssessmentEvolution />,
               },
             ],

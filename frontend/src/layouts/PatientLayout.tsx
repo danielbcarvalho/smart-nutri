@@ -23,11 +23,11 @@ import {
   ChevronLeft,
   ChevronRight,
   Timeline as TimelineIcon,
+  PhotoCamera as PhotoCameraIcon,
 } from "@mui/icons-material";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { patientService } from "../modules/patient/services/patientService";
 import { Container } from "../components/Layout/Container";
-import { authService } from "../modules/auth/services/authService";
 import { getPreloadFoodDb } from "@/services/useFoodDb";
 
 export function PatientLayout() {
@@ -62,9 +62,14 @@ export function PatientLayout() {
       path: `/patient/${patientId}/assessments`,
     },
     {
-      label: "Evolução",
+      label: "Evolução de Medidas",
       icon: <TimelineIcon />,
-      path: `/patient/${patientId}/assessments/evolution`,
+      path: `/patient/${patientId}/assessments/evolution/measurements`,
+    },
+    {
+      label: "Evolução Fotográfica",
+      icon: <PhotoCameraIcon />,
+      path: `/patient/${patientId}/assessments/evolution/photos`,
     },
     {
       label: "Documentos",
@@ -73,7 +78,7 @@ export function PatientLayout() {
     },
   ];
 
-  const handleMenuClick = (item) => {
+  const handleMenuClick = (item: { label: string }) => {
     if (item.label === "Planos Alimentares") {
       getPreloadFoodDb(queryClient);
     }
@@ -160,18 +165,6 @@ export function PatientLayout() {
       </List>
     </Box>
   );
-
-  const getInitials = (name: string) => {
-    return name
-      .split(" ")
-      .map((n) => n[0])
-      .join("")
-      .toUpperCase();
-  };
-
-  const handleLogout = () => {
-    authService.logout();
-  };
 
   return (
     <Container>

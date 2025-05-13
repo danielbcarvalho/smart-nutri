@@ -1,7 +1,15 @@
-import { useState, useMemo } from "react";
-import { useParams } from "react-router-dom";
+import { useState, useMemo, useEffect } from "react";
+import { useParams, useLocation, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { Box, Typography, Paper, Stack, CircularProgress } from "@mui/material";
+import {
+  Box,
+  Typography,
+  Paper,
+  Stack,
+  CircularProgress,
+  Tabs,
+  Tab,
+} from "@mui/material";
 import { patientService } from "@/modules/patient/services/patientService";
 import { DateRangeSelector } from "./components/DateRangeSelector";
 import { CompositionChart } from "./components/CompositionChart";
@@ -17,11 +25,12 @@ import {
   endOfMonth,
   parseISO,
 } from "date-fns";
+import { PhotoEvolutionSection } from "./components/PhotoEvolutionSection";
 
 // 2. Definir a função para calcular o range padrão (fora do componente)
 const getDefaultDateRange = () => {
   const endDate = new Date();
-  const startDate = subMonths(endDate, 3); // Pega 3 meses atrás
+  const startDate = subMonths(endDate, 12); // Pega 12 meses atrás (1 ano)
   return {
     // Usa startOfMonth e endOfMonth para consistência com DateRangeSelector
     startDate: format(startOfMonth(startDate), "yyyy-MM-dd"),
@@ -31,9 +40,30 @@ const getDefaultDateRange = () => {
 
 export function AssessmentEvolution() {
   const { patientId } = useParams<{ patientId: string }>();
-
-  // 3. Inicializar o estado 'dateRange' chamando a função getDefaultDateRange
+  const location = useLocation();
+  const navigate = useNavigate();
   const [dateRange, setDateRange] = useState(getDefaultDateRange);
+  // Define a aba inicial baseada na rota
+  const getTabIndexFromPath = () => {
+    if (location.pathname.endsWith("/photos")) return 1;
+    return 0;
+  };
+  const [tabIndex, setTabIndex] = useState(getTabIndexFromPath());
+
+  // Atualiza a aba se a rota mudar
+  useEffect(() => {
+    setTabIndex(getTabIndexFromPath());
+  }, [location.pathname]);
+
+  // Ao trocar de aba, navega para a rota correspondente
+  const handleTabChange = (_: React.SyntheticEvent, newValue: number) => {
+    setTabIndex(newValue);
+    if (newValue === 0) {
+      navigate(`/patient/${patientId}/assessments/evolution/measurements`);
+    } else {
+      navigate(`/patient/${patientId}/assessments/evolution/photos`);
+    }
+  };
 
   // Buscar dados do paciente
   const { data: patient, isLoading: isLoadingPatient } = useQuery({
@@ -93,7 +123,7 @@ export function AssessmentEvolution() {
         display="flex"
         justifyContent="center"
         alignItems="center"
-        minHeight="calc(100vh - 200px)" // Exemplo de altura
+        minHeight="calc(100vh - 200px)"
       >
         <CircularProgress />
       </Box>
@@ -103,34 +133,42 @@ export function AssessmentEvolution() {
   // Renderização do Componente
   return (
     <Box sx={{ p: { xs: 1, sm: 2, md: 3 } }}>
-      {" "}
-      {/* Padding responsivo */}
       <Stack spacing={3}>
         {/* Cabeçalho */}
         <Stack
-          direction={{ xs: "column", sm: "row" }} // Empilha em telas pequenas
+          direction={{ xs: "column", sm: "row" }}
           justifyContent="space-between"
-          alignItems={{ xs: "flex-start", sm: "center" }} // Alinha diferente em telas pequenas
-          spacing={{ xs: 1, sm: 2 }} // Espaçamento responsivo
+          alignItems={{ xs: "flex-start", sm: "center" }}
+          spacing={{ xs: 1, sm: 2 }}
         >
           <Typography variant="h4" component="h1">
-            {" "}
-            {/* Semântica HTML */}
-            Evolução Corporal
+            Evolução
           </Typography>
           <Typography variant="h6" color="text.secondary" component="p">
             {patient?.name ?? "Paciente não encontrado"}
           </Typography>
         </Stack>
 
-        {/* Seletor de Datas */}
+        {/* Tabs de navegação */}
+        <Paper elevation={2} sx={{ p: 0 }}>
+          <Tabs
+            value={tabIndex}
+            onChange={handleTabChange}
+            indicatorColor="primary"
+            textColor="primary"
+            variant="fullWidth"
+          >
+            <Tab label="Evolução de Medidas" />
+            <Tab label="Evolução Fotográfica" />
+          </Tabs>
+        </Paper>
+
+        {/* Seletor de Datas (compartilhado) */}
         <Paper elevation={2} sx={{ p: 2 }}>
           <LocalizationProvider
             dateAdapter={AdapterDateFns}
             adapterLocale={ptBR}
           >
-            {/* Passa o estado dateRange e o setDateRange */}
-            {/* Passa as medições JÁ FILTRADAS para a contagem no DateRangeSelector */}
             <DateRangeSelector
               value={dateRange}
               onChange={setDateRange}
@@ -139,26 +177,29 @@ export function AssessmentEvolution() {
           </LocalizationProvider>
         </Paper>
 
-        {/* Verifica se há dados filtrados antes de renderizar gráficos/tabelas */}
-        {filteredMeasurements.length > 0 ? (
-          <>
-            {/* Gráfico de Evolução */}
-            <Paper elevation={2} sx={{ p: 2 }}>
-              <CompositionChart measurements={filteredMeasurements} />
+        {/* Conteúdo das abas */}
+        {tabIndex === 0 ? (
+          filteredMeasurements.length > 0 ? (
+            <>
+              <Paper elevation={2} sx={{ p: 2 }}>
+                <CompositionChart measurements={filteredMeasurements} />
+              </Paper>
+              <Paper elevation={2} sx={{ p: 2 }}>
+                <AnalysisTable measurements={filteredMeasurements} />
+              </Paper>
+            </>
+          ) : (
+            <Paper elevation={1} sx={{ p: 3, textAlign: "center" }}>
+              <Typography color="text.secondary">
+                Nenhuma avaliação encontrada para o período selecionado.
+              </Typography>
             </Paper>
-
-            {/* Tabela de Análises */}
-            <Paper elevation={2} sx={{ p: 2 }}>
-              <AnalysisTable measurements={filteredMeasurements} />
-            </Paper>
-          </>
+          )
         ) : (
-          // Mensagem se não houver dados no período selecionado
-          <Paper elevation={1} sx={{ p: 3, textAlign: "center" }}>
-            <Typography color="text.secondary">
-              Nenhuma avaliação encontrada para o período selecionado.
-            </Typography>
-          </Paper>
+          <PhotoEvolutionSection
+            measurements={allMeasurements || []}
+            dateRange={dateRange}
+          />
         )}
       </Stack>
     </Box>

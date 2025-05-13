@@ -68,6 +68,8 @@ export const authService = {
   logout(): void {
     localStorage.removeItem("@smartnutri:token");
     localStorage.removeItem("@smartnutri:user");
+    localStorage.removeItem("@smartnutri:loginError");
+    localStorage.removeItem("@smartnutri:loginSuccess");
     window.location.href = "/login";
   },
 };

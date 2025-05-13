@@ -273,4 +273,10 @@ export const patientService = {
     });
     return response.data;
   },
+
+  // Recriar paciente exemplo
+  recreateSamplePatient: async (): Promise<Patient> => {
+    const response = await api.post("/patients/sample/recreate");
+    return response.data;
+  },
 };
