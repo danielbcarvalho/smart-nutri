@@ -146,7 +146,9 @@ export function Assessments() {
             variant="contained"
             startIcon={<Timeline />}
             onClick={() =>
-              navigate(`/patient/${patientId}/assessments/evolution`)
+              navigate(
+                `/patient/${patientId}/assessments/evolution/measurements`
+              )
             }
           >
             Evolução
