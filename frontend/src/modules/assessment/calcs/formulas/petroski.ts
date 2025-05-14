@@ -4,9 +4,14 @@ export const petroskiFormula: BodyDensityFormula = {
   id: "petroski",
   name: "Petroski (1995/1996)",
   description:
-    "Fórmula de Petroski com variações específicas por gênero e faixa etária. " +
-    "Para homens (20-39,9 anos) usa 4 dobras: subescapular, tricipital, supra-ilíaca e panturrilha medial. " +
-    "Para mulheres (18-51 anos) usa: axilar média, suprailíaca oblíqua, coxa e panturrilha medial.",
+    "Fórmula de Petroski com variações específicas por gênero. " +
+    "Para homens: Tricipital (posterior do braço, ponto médio entre acrômio e olécrano), " +
+    "Subescapular (diagonal abaixo do ângulo inferior da escápula), " +
+    "Supra-ilíaca (diagonal acima da crista ilíaca) e " +
+    "Panturrilha Medial (face medial da perna, nível de maior circunferência). " +
+    "Para mulheres: Axilar Média (vertical na linha axilar média, nível do processo xifoide), " +
+    "Coxa (vertical na face anterior, ponto médio entre ligamento inguinal e borda superior da patela), " +
+    "Supra-ilíaca e Panturrilha Medial (mesmas localizações do masculino).",
   status: "active",
   requiredSkinfolds: [
     "subscapular",
@@ -19,14 +24,14 @@ export const petroskiFormula: BodyDensityFormula = {
   genderSupport: "both",
   ageRange: {
     min: 18,
-    max: 51,
+    max: 60,
   },
   reference:
     "PETROSKI, E.L. (1995). Tese UFSM; " +
     "Petroski & Pires-Neto (1996). Rev Bras Ativ Fís Saude.",
   calculate: (skinfolds, gender, age) => {
     // Validação inicial: idade
-    if (!age || age < 18 || age > 51) return 0;
+    if (!age || age < 18 || age > 60) return 0;
 
     const g = (gender || "").toUpperCase();
     // Parse das dobras, converte string inválida em 0
@@ -41,40 +46,36 @@ export const petroskiFormula: BodyDensityFormula = {
     let density: number;
 
     if (g === "M") {
-      // Petroski (1995) para homens 20-39,9 anos
-      if (age >= 20 && age < 40) {
-        sum = subscapular + tricipital + suprailiac + calf;
-        if (sum <= 0) return 0;
-        density =
-          1.10726863 -
-          0.00081201 * sum +
-          0.00000212 * Math.pow(sum, 2) -
-          0.00041761 * age;
-        return density;
-      }
+      // Petroski (1995) para homens adultos
+      sum = subscapular + tricipital + suprailiac + calf;
+      if (sum <= 0) return 0;
+      density =
+        1.10726863 -
+        0.00081201 * sum +
+        0.00000212 * Math.pow(sum, 2) -
+        0.00041761 * age;
+      return density;
     }
 
     if (g === "F") {
-      // Petroski & Simões (1996) para mulheres 18-51 anos
-      if (age >= 18 && age <= 51) {
-        sum = axillaryMedian + suprailiac + thigh + calf;
-        if (sum <= 0) return 0;
-        density = 1.1954713 - 0.07513507 * Math.log10(sum) - 0.00041072 * age;
-        return density;
-      }
+      // Petroski & Simões (1996) para mulheres adultas
+      sum = axillaryMedian + suprailiac + thigh + calf;
+      if (sum <= 0) return 0;
+      density = 1.1954713 - 0.07513507 * Math.log10(sum) - 0.00041072 * age;
+      return density;
     }
 
-    return 0; // Fora das faixas ou gênero não suportado
+    return 0; // Gênero não suportado
   },
-  // Função para determinar as dobras requeridas com base no gênero e idade
-  getRequiredSkinfolds: (gender: string, age: number) => {
+  // Função para determinar as dobras requeridas com base no gênero
+  getRequiredSkinfolds: (gender: string) => {
     const g = (gender || "").toUpperCase();
 
-    if (g === "M" && age >= 20 && age < 40) {
+    if (g === "M") {
       return ["subscapular", "tricipital", "suprailiac", "calf"];
     }
 
-    if (g === "F" && age >= 18 && age <= 51) {
+    if (g === "F") {
       return ["axillaryMedian", "suprailiac", "thigh", "calf"];
     }
 

@@ -127,14 +127,71 @@ export const SkinfoldSection: React.FC<SkinfoldSectionProps> = ({
             <ToggleButton value="pollock7">Pollock 7</ToggleButton>
             <ToggleButton value="petroski">Petroski</ToggleButton>
             <ToggleButton value="guedes">Guedes</ToggleButton>
-            <ToggleButton value="durnin" disabled>
-              Durnin (Em breve)
-            </ToggleButton>
-            <ToggleButton value="faulkner" disabled>
-              Faulkner (Em breve)
-            </ToggleButton>
+            <ToggleButton value="durnin">Durnin & Womersley</ToggleButton>
+            <ToggleButton value="faulkner">Faulkner</ToggleButton>
             <ToggleButton value="none">Nenhuma</ToggleButton>
           </ToggleButtonGroup>
+
+          {skinfoldFormula === "durnin" &&
+            patient?.birthDate &&
+            (() => {
+              const patientAge = Math.floor(
+                (new Date().getTime() -
+                  new Date(patient.birthDate!).getTime()) /
+                  (1000 * 60 * 60 * 24 * 365.25)
+              );
+              const durninFormulaDef = bodyDensityFormulas.find(
+                (f) => f.id === "durnin"
+              );
+              const durninAgeRange = durninFormulaDef?.ageRange;
+              const isOutsideDurninRange =
+                durninAgeRange &&
+                (patientAge < durninAgeRange.min ||
+                  patientAge > durninAgeRange.max);
+
+              return isOutsideDurninRange ? (
+                <Typography
+                  variant="body2"
+                  color="warning.main"
+                  sx={{ mt: 1, display: "flex", alignItems: "center", gap: 1 }}
+                >
+                  ⚠️ A fórmula de Durnin & Womersley é uma versão simplificada
+                  do protocolo original, que possui constantes específicas por
+                  faixa etária. Considere a aplicabilidade para este paciente
+                  com {patientAge} anos.
+                </Typography>
+              ) : null;
+            })()}
+
+          {skinfoldFormula === "faulkner" &&
+            patient?.birthDate &&
+            (() => {
+              const patientAge = Math.floor(
+                (new Date().getTime() -
+                  new Date(patient.birthDate!).getTime()) /
+                  (1000 * 60 * 60 * 24 * 365.25)
+              );
+              const faulknerFormulaDef = bodyDensityFormulas.find(
+                (f) => f.id === "faulkner"
+              );
+              const faulknerAgeRange = faulknerFormulaDef?.ageRange;
+              const isOutsideFaulknerRange =
+                faulknerAgeRange &&
+                (patientAge < faulknerAgeRange.min ||
+                  patientAge > faulknerAgeRange.max);
+
+              return isOutsideFaulknerRange ? (
+                <Typography
+                  variant="body2"
+                  color="warning.main"
+                  sx={{ mt: 1, display: "flex", alignItems: "center", gap: 1 }}
+                >
+                  ⚠️ A fórmula de Faulkner calcula o percentual de gordura
+                  diretamente, sem usar densidade corporal. Considere a
+                  aplicabilidade para este paciente com {patientAge} anos.
+                </Typography>
+              ) : null;
+            })()}
 
           {skinfoldFormula === "guedes" &&
             patient?.birthDate &&
@@ -262,7 +319,15 @@ export const SkinfoldSection: React.FC<SkinfoldSectionProps> = ({
                     "thigh",
                   ].includes(key);
                 }
-              } else if (skinfoldFormula === "petroski") {
+              } else if (skinfoldFormula === "faulkner") {
+                isSkinfoldRequired =
+                  currentFormulaDef.requiredSkinfolds.includes(
+                    key as keyof SkinfoldsState
+                  );
+              } else if (
+                skinfoldFormula === "durnin" ||
+                skinfoldFormula === "petroski"
+              ) {
                 const patientAge = patient?.birthDate
                   ? Math.floor(
                       (new Date().getTime() -
@@ -276,7 +341,6 @@ export const SkinfoldSection: React.FC<SkinfoldSectionProps> = ({
                     currentPatientGender || "",
                     patientAge
                   ) || [];
-
                 isSkinfoldRequired = requiredSkinfolds.includes(
                   key as keyof SkinfoldsState
                 );
