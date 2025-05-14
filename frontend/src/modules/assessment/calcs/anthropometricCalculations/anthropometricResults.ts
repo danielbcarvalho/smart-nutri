@@ -169,8 +169,8 @@ export const calculateAnthropometricResults = ({
       const requiredSkinfoldsForGender =
         formula.id === "guedes"
           ? validGender === "M"
-            ? ["thoracic", "abdominal", "thigh"]
-            : ["thigh", "suprailiac", "subscapular"]
+            ? ["tricipital", "abdominal", "suprailiac"]
+            : ["subscapular", "suprailiac", "thigh"]
           : formula.id === "petroski"
           ? (() => {
               if (validGender === "M") {

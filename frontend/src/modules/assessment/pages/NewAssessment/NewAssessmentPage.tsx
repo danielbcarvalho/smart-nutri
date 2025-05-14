@@ -12,7 +12,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   patientService,
   CreateMeasurementDto,
-  Skinfolds,
+  Skinfolds as SkinfoldsType, // Renomeado para evitar conflito com estado local
   BodyMeasurements,
   BoneDiameters,
 } from "@/modules/patient/services/patientService";
@@ -29,6 +29,21 @@ import { AssessmentDate } from "./components/AssessmentDate";
 import { ActionButtons } from "./components/ActionButtons";
 import { AnalyticalResults } from "./components/AnalyticalResults";
 import { calculateAnthropometricResults } from "../../calcs/anthropometricCalculations";
+import { bodyDensityFormulas } from "../../calcs/formulas";
+
+// Definindo o tipo para o estado local `skinfolds` explicitamente.
+type LocalSkinfoldsState = {
+  tricipital: string;
+  bicipital: string;
+  abdominal: string;
+  subscapular: string;
+  axillaryMedian: string;
+  thigh: string;
+  thoracic: string;
+  suprailiac: string;
+  calf: string;
+  supraspinal: string;
+};
 
 export function NewAssessment() {
   const { patientId, measurementId } = useParams<{
@@ -61,7 +76,8 @@ export function NewAssessment() {
 
   // Estado para dobras cutâneas
   const [skinfoldFormula, setSkinfoldFormula] = useState<string>("pollock3");
-  const [skinfolds, setSkinfolds] = useState({
+  const [skinfolds, setSkinfolds] = useState<LocalSkinfoldsState>({
+    // Tipo explícito
     tricipital: "",
     bicipital: "",
     abdominal: "",
@@ -107,6 +123,7 @@ export function NewAssessment() {
 
   // Estado local para fotos (utilizado pelo handlePhotosChange)
   const [, setPhotos] = useState<{
+    // photosState não é usado, apenas setPhotos
     front: AssessmentPhoto | null;
     back: AssessmentPhoto | null;
     left: AssessmentPhoto | null;
@@ -138,9 +155,9 @@ export function NewAssessment() {
     queryKey: ["measurements", patientId],
     queryFn: () => patientService.findMeasurements(patientId!),
     enabled: !!patientId,
-    staleTime: 0, // Sempre considerar os dados obsoletos e buscar novamente
-    refetchOnMount: true, // Sempre refetching ao montar o componente
-    refetchOnWindowFocus: true, // Refetch quando a janela receber foco
+    staleTime: 0,
+    refetchOnMount: true,
+    refetchOnWindowFocus: true,
   });
 
   // Buscar a avaliação específica para edição, se estiver no modo de edição
@@ -153,20 +170,18 @@ export function NewAssessment() {
       return undefined;
     },
     enabled: !!patientId && !!measurementId && !!previousMeasurements,
-    staleTime: 0, // Sempre buscar dados atualizados
-    gcTime: 0, // Não manter em cache após uso
-    refetchOnMount: "always", // Sempre refetching ao montar
-    refetchOnWindowFocus: true, // Refetch quando a janela receber foco
+    staleTime: 0,
+    gcTime: 0,
+    refetchOnMount: "always",
+    refetchOnWindowFocus: true,
   });
 
   // Este useEffect preenche os dados quando estamos editando
   useEffect(() => {
     if (isEditMode && measurementToEdit && !hasFilledDataRef.current) {
-      // Converter para string para os inputs
       const toString = (value: number | string | null | undefined): string =>
         value !== null && value !== undefined ? String(value) : "";
 
-      // Preencher data
       if (measurementToEdit.date) {
         const date = new Date(measurementToEdit.date);
         const localDate = new Date(
@@ -175,7 +190,6 @@ export function NewAssessment() {
         setAssessmentDate(localDate);
       }
 
-      // Preencher dados básicos
       setBasicData({
         weight: toString(measurementToEdit.weight),
         height: toString(measurementToEdit.height),
@@ -183,153 +197,115 @@ export function NewAssessment() {
         kneeHeight: toString(measurementToEdit.kneeHeight),
       });
 
-      // Preencher fórmula de dobras cutâneas
       if (measurementToEdit.skinfoldFormula) {
         setSkinfoldFormula(measurementToEdit.skinfoldFormula);
       }
 
-      // Preencher dobras cutâneas
       if (measurementToEdit.skinfolds) {
+        // Garantir que todas as chaves de LocalSkinfoldsState existam
+        const currentSkinfolds = measurementToEdit.skinfolds;
         setSkinfolds({
-          tricipital: toString(measurementToEdit.skinfolds.tricipital),
-          bicipital: toString(measurementToEdit.skinfolds.bicipital),
-          abdominal: toString(measurementToEdit.skinfolds.abdominal),
-          subscapular: toString(measurementToEdit.skinfolds.subscapular),
-          axillaryMedian: toString(measurementToEdit.skinfolds.axillaryMedian),
-          thigh: toString(measurementToEdit.skinfolds.thigh),
-          thoracic: toString(measurementToEdit.skinfolds.thoracic),
-          suprailiac: toString(measurementToEdit.skinfolds.suprailiac),
-          calf: toString(measurementToEdit.skinfolds.calf),
-          supraspinal: toString(measurementToEdit.skinfolds.supraspinal),
+          tricipital: toString(currentSkinfolds.tricipital),
+          bicipital: toString(currentSkinfolds.bicipital),
+          abdominal: toString(currentSkinfolds.abdominal),
+          subscapular: toString(currentSkinfolds.subscapular),
+          axillaryMedian: toString(currentSkinfolds.axillaryMedian),
+          thigh: toString(currentSkinfolds.thigh),
+          thoracic: toString(currentSkinfolds.thoracic),
+          suprailiac: toString(currentSkinfolds.suprailiac),
+          calf: toString(currentSkinfolds.calf),
+          supraspinal: toString(currentSkinfolds.supraspinal),
         });
       }
 
-      // Preencher circunferências
       if (measurementToEdit.measurements) {
+        const currentMeasurements = measurementToEdit.measurements;
         setCircumferences({
-          neck: toString(measurementToEdit.measurements.neck),
-          shoulder: toString(measurementToEdit.measurements.shoulder),
-          chest: toString(measurementToEdit.measurements.chest),
-          waist: toString(measurementToEdit.measurements.waist),
-          abdomen: toString(measurementToEdit.measurements.abdomen),
-          hip: toString(measurementToEdit.measurements.hip),
-          relaxedArmLeft: toString(
-            measurementToEdit.measurements.relaxedArmLeft
-          ),
-          relaxedArmRight: toString(
-            measurementToEdit.measurements.relaxedArmRight
-          ),
-          contractedArmLeft: toString(
-            measurementToEdit.measurements.contractedArmLeft
-          ),
-          contractedArmRight: toString(
-            measurementToEdit.measurements.contractedArmRight
-          ),
-          forearmLeft: toString(measurementToEdit.measurements.forearmLeft),
-          forearmRight: toString(measurementToEdit.measurements.forearmRight),
-          proximalThighLeft: toString(
-            measurementToEdit.measurements.proximalThighLeft
-          ),
-          proximalThighRight: toString(
-            measurementToEdit.measurements.proximalThighRight
-          ),
-          medialThighLeft: toString(
-            measurementToEdit.measurements.medialThighLeft
-          ),
-          medialThighRight: toString(
-            measurementToEdit.measurements.medialThighRight
-          ),
-          distalThighLeft: toString(
-            measurementToEdit.measurements.distalThighLeft
-          ),
-          distalThighRight: toString(
-            measurementToEdit.measurements.distalThighRight
-          ),
-          calfLeft: toString(measurementToEdit.measurements.calfLeft),
-          calfRight: toString(measurementToEdit.measurements.calfRight),
+          neck: toString(currentMeasurements.neck),
+          shoulder: toString(currentMeasurements.shoulder),
+          chest: toString(currentMeasurements.chest),
+          waist: toString(currentMeasurements.waist),
+          abdomen: toString(currentMeasurements.abdomen),
+          hip: toString(currentMeasurements.hip),
+          relaxedArmLeft: toString(currentMeasurements.relaxedArmLeft),
+          relaxedArmRight: toString(currentMeasurements.relaxedArmRight),
+          contractedArmLeft: toString(currentMeasurements.contractedArmLeft),
+          contractedArmRight: toString(currentMeasurements.contractedArmRight),
+          forearmLeft: toString(currentMeasurements.forearmLeft),
+          forearmRight: toString(currentMeasurements.forearmRight),
+          proximalThighLeft: toString(currentMeasurements.proximalThighLeft),
+          proximalThighRight: toString(currentMeasurements.proximalThighRight),
+          medialThighLeft: toString(currentMeasurements.medialThighLeft),
+          medialThighRight: toString(currentMeasurements.medialThighRight),
+          distalThighLeft: toString(currentMeasurements.distalThighLeft),
+          distalThighRight: toString(currentMeasurements.distalThighRight),
+          calfLeft: toString(currentMeasurements.calfLeft),
+          calfRight: toString(currentMeasurements.calfRight),
         });
       }
 
-      // Preencher diâmetros ósseos
       if (measurementToEdit.boneDiameters) {
+        const currentBoneDiameters = measurementToEdit.boneDiameters;
         setBoneDiameters({
-          humerus: toString(measurementToEdit.boneDiameters.humerus),
-          wrist: toString(measurementToEdit.boneDiameters.wrist),
-          femur: toString(measurementToEdit.boneDiameters.femur),
+          humerus: toString(currentBoneDiameters.humerus),
+          wrist: toString(currentBoneDiameters.wrist),
+          femur: toString(currentBoneDiameters.femur),
         });
       }
 
-      // Marcar como preenchido
       hasFilledDataRef.current = true;
-
-      // Verificar se deve compartilhar fotos
       if ("sharePhotos" in measurementToEdit) {
         setSharePhotos(!!measurementToEdit.sharePhotos);
       }
     }
   }, [isEditMode, measurementToEdit]);
 
-  // Calculate anthropometric results at component level
   const anthropometricResults = useMemo(() => {
-    let calculationGender: "M" | "F" = "M";
-    if (patient?.gender === "F" || String(patient?.gender) === "FEMALE") {
-      calculationGender = "F";
-    }
-    const calculationAge = patient?.birthDate
-      ? new Date().getFullYear() - new Date(patient.birthDate).getFullYear()
-      : 30;
+    const patientGenderUpper = patient?.gender?.toUpperCase();
+    const calculationGender: "M" | "F" =
+      patientGenderUpper === "F" || patientGenderUpper === "FEMALE" ? "F" : "M";
 
-    const results = calculateAnthropometricResults({
+    const calculationAge = patient?.birthDate
+      ? Math.floor(
+          (new Date().getTime() - new Date(patient.birthDate).getTime()) /
+            (365.25 * 24 * 60 * 60 * 1000)
+        )
+      : 30; // Default age if not available
+
+    // Convert string skinfold values to numbers for calculation
+    const numericSkinfolds: { [key: string]: number } = {};
+    for (const key in skinfolds) {
+      const typedKey = key as keyof LocalSkinfoldsState;
+      const value = parseFloat(skinfolds[typedKey]);
+      numericSkinfolds[typedKey] = isNaN(value) ? 0 : value; // Use 0 if NaN, Guedes formula handles sum=0
+    }
+
+    // Convert string circumference values to numbers
+    const numericCircumferences: { [key: string]: number } = {};
+    for (const key in circumferences) {
+      const typedKey = key as keyof typeof circumferences;
+      const value = parseFloat(circumferences[typedKey]);
+      numericCircumferences[typedKey] = isNaN(value) ? 0 : value;
+    }
+
+    // Convert string bone diameter values to numbers
+    const numericBoneDiameters: { [key: string]: number } = {};
+    for (const key in boneDiameters) {
+      const typedKey = key as keyof typeof boneDiameters;
+      const value = parseFloat(boneDiameters[typedKey]);
+      numericBoneDiameters[typedKey] = isNaN(value) ? 0 : value;
+    }
+
+    return calculateAnthropometricResults({
       gender: calculationGender,
       age: calculationAge,
-      weight: parseFloat(basicData.weight),
-      height: parseFloat(basicData.height),
-      skinfolds: {
-        tricipital: parseFloat(skinfolds.tricipital),
-        bicipital: parseFloat(skinfolds.bicipital),
-        abdominal: parseFloat(skinfolds.abdominal),
-        subscapular: parseFloat(skinfolds.subscapular),
-        axillaryMedian: parseFloat(skinfolds.axillaryMedian),
-        thigh: parseFloat(skinfolds.thigh),
-        thoracic: parseFloat(skinfolds.thoracic),
-        suprailiac: parseFloat(skinfolds.suprailiac),
-        calf: parseFloat(skinfolds.calf),
-        supraspinal: parseFloat(skinfolds.supraspinal),
-      },
-      circumferences: {
-        neck: parseFloat(circumferences.neck),
-        waist: parseFloat(circumferences.waist),
-        abdomen: parseFloat(circumferences.abdomen),
-        hip: parseFloat(circumferences.hip),
-        relaxedArm: parseFloat(
-          circumferences.relaxedArmLeft + circumferences.relaxedArmRight
-        ),
-        contractedArm: parseFloat(
-          circumferences.contractedArmLeft + circumferences.contractedArmRight
-        ),
-        forearm: parseFloat(
-          circumferences.forearmLeft + circumferences.forearmRight
-        ),
-        proximalThigh: parseFloat(
-          circumferences.proximalThighLeft + circumferences.proximalThighRight
-        ),
-        medialThigh: parseFloat(
-          circumferences.medialThighLeft + circumferences.medialThighRight
-        ),
-        distalThigh: parseFloat(
-          circumferences.distalThighLeft + circumferences.distalThighRight
-        ),
-        calf: parseFloat(circumferences.calfLeft + circumferences.calfRight),
-      },
-      boneDiameters: {
-        humerus: parseFloat(boneDiameters.humerus),
-        wrist: parseFloat(boneDiameters.wrist),
-        femur: parseFloat(boneDiameters.femur),
-      },
+      weight: parseFloat(basicData.weight) || 0,
+      height: parseFloat(basicData.height) || 0,
+      skinfolds: numericSkinfolds as SkinfoldsType, // Cast to expected type
+      circumferences: numericCircumferences as BodyMeasurements, // Cast to expected type
+      boneDiameters: numericBoneDiameters as BoneDiameters, // Cast to expected type
       skinfoldFormula,
     });
-
-    return results;
   }, [
     basicData,
     circumferences,
@@ -339,7 +315,6 @@ export function NewAssessment() {
     skinfoldFormula,
   ]);
 
-  // Mutação para criar/editar avaliação
   const createMutation = useMutation({
     mutationFn: async (dto: CreateMeasurementDto) => {
       if (isEditMode && measurementId) {
@@ -349,24 +324,16 @@ export function NewAssessment() {
       }
     },
     onSuccess: async () => {
-      // Forçar recarregamento de todas as queries relacionadas a measurements
-      // Usando refetchQueries em vez de invalidateQueries para garantir atualização imediata
       await queryClient.refetchQueries({
         queryKey: ["measurements"],
         exact: false,
       });
-
-      // Também recarregar a query específica do measurement
       if (isEditMode && measurementId) {
         await queryClient.refetchQueries({
           queryKey: ["measurement", patientId, measurementId],
         });
       }
-
-      // Invalidar todas as outras consultas relacionadas
-      await queryClient.invalidateQueries({
-        queryKey: ["all-measurements"],
-      });
+      await queryClient.invalidateQueries({ queryKey: ["all-measurements"] });
 
       setSnackbar({
         open: true,
@@ -375,70 +342,60 @@ export function NewAssessment() {
           : "Avaliação criada com sucesso!",
         severity: "success",
       });
-
-      // Navegar para a listagem de avaliações após criação/edição
+      isSaving.current = false; // Reset saving flag on success
       setTimeout(() => {
         navigate(`/patient/${patientId}/assessments`);
       }, 1500);
     },
-    onError: (error) => {
+    onError: (error: Error) => {
+      // Tipo explícito para error
       console.error("Erro ao salvar avaliação:", error);
       setSnackbar({
         open: true,
-        message: `Erro ao salvar: ${error}`,
+        message: `Erro ao salvar: ${
+          error.message || "Ocorreu um erro desconhecido."
+        }`,
         severity: "error",
       });
       isSaving.current = false;
     },
   });
 
-  // Handlers para mudanças nos diversos campos
   const handleAccordionChange =
-    (panel: string) => (event: React.SyntheticEvent, isExpanded: boolean) => {
+    (panel: string) => (_: React.SyntheticEvent, isExpanded: boolean) => {
+      // _ para evento não usado
       setExpanded(isExpanded ? panel : false);
     };
 
   const handleBasicDataChange =
     (field: string) => (event: React.ChangeEvent<HTMLInputElement>) => {
-      setBasicData((prev) => ({
-        ...prev,
-        [field]: event.target.value,
-      }));
+      setBasicData((prev) => ({ ...prev, [field]: event.target.value }));
     };
 
   const handleSkinfoldChange =
-    (field: keyof typeof skinfolds) =>
+    (
+      field: keyof LocalSkinfoldsState // Usar o tipo explícito
+    ) =>
     (event: React.ChangeEvent<HTMLInputElement>) => {
-      setSkinfolds((prev) => ({
-        ...prev,
-        [field]: event.target.value,
-      }));
+      setSkinfolds((prev) => ({ ...prev, [field]: event.target.value }));
     };
 
   const handleCircumferenceChange =
     (field: keyof typeof circumferences) =>
     (event: React.ChangeEvent<HTMLInputElement>) => {
-      setCircumferences((prev) => ({
-        ...prev,
-        [field]: event.target.value,
-      }));
+      setCircumferences((prev) => ({ ...prev, [field]: event.target.value }));
     };
 
   const handleBoneDiameterChange =
     (field: keyof typeof boneDiameters) =>
     (event: React.ChangeEvent<HTMLInputElement>) => {
-      setBoneDiameters((prev) => ({
-        ...prev,
-        [field]: event.target.value,
-      }));
+      setBoneDiameters((prev) => ({ ...prev, [field]: event.target.value }));
     };
 
   const handleSaveAssessment = () => {
     if (!patientId || isSaving.current) return;
-
     isSaving.current = true;
 
-    // Converter dados de string para número
     const toNumber = (value: string): number | undefined => {
       if (!value || value.trim() === "") return undefined;
       const num = parseFloat(value);
@@ -446,145 +403,66 @@ export function NewAssessment() {
     };
 
     // Preparar skinfolds
-    const skinfoldData: Skinfolds = {};
-    if (skinfolds.tricipital)
-      skinfoldData.tricipital = toNumber(skinfolds.tricipital);
-    if (skinfolds.bicipital)
-      skinfoldData.bicipital = toNumber(skinfolds.bicipital);
-    if (skinfolds.abdominal)
-      skinfoldData.abdominal = toNumber(skinfolds.abdominal);
-    if (skinfolds.subscapular)
-      skinfoldData.subscapular = toNumber(skinfolds.subscapular);
-    if (skinfolds.axillaryMedian)
-      skinfoldData.axillaryMedian = toNumber(skinfolds.axillaryMedian);
-    if (skinfolds.thigh) skinfoldData.thigh = toNumber(skinfolds.thigh);
-    if (skinfolds.thoracic)
-      skinfoldData.thoracic = toNumber(skinfolds.thoracic);
-    if (skinfolds.suprailiac)
-      skinfoldData.suprailiac = toNumber(skinfolds.suprailiac);
-    if (skinfolds.calf) skinfoldData.calf = toNumber(skinfolds.calf);
-    if (skinfolds.supraspinal)
-      skinfoldData.supraspinal = toNumber(skinfolds.supraspinal);
+    const skinfoldData: Partial<SkinfoldsType> = {}; // Use Partial
+    (Object.keys(skinfolds) as Array<keyof LocalSkinfoldsState>).forEach(
+      (key) => {
+        const val = toNumber(skinfolds[key]);
+        if (val !== undefined) skinfoldData[key] = val;
+      }
+    );
 
     // Preparar medidas
-    const measurementsData: BodyMeasurements = {};
-    if (circumferences.neck)
-      measurementsData.neck = toNumber(circumferences.neck);
-    if (circumferences.shoulder)
-      measurementsData.shoulder = toNumber(circumferences.shoulder);
-    if (circumferences.chest)
-      measurementsData.chest = toNumber(circumferences.chest);
-    if (circumferences.waist)
-      measurementsData.waist = toNumber(circumferences.waist);
-    if (circumferences.abdomen)
-      measurementsData.abdomen = toNumber(circumferences.abdomen);
-    if (circumferences.hip) measurementsData.hip = toNumber(circumferences.hip);
-    if (circumferences.relaxedArmLeft)
-      measurementsData.relaxedArmLeft = toNumber(circumferences.relaxedArmLeft);
-    if (circumferences.relaxedArmRight)
-      measurementsData.relaxedArmRight = toNumber(
-        circumferences.relaxedArmRight
-      );
-    if (circumferences.contractedArmLeft)
-      measurementsData.contractedArmLeft = toNumber(
-        circumferences.contractedArmLeft
-      );
-    if (circumferences.contractedArmRight)
-      measurementsData.contractedArmRight = toNumber(
-        circumferences.contractedArmRight
-      );
-    if (circumferences.forearmLeft)
-      measurementsData.forearmLeft = toNumber(circumferences.forearmLeft);
-    if (circumferences.forearmRight)
-      measurementsData.forearmRight = toNumber(circumferences.forearmRight);
-    if (circumferences.proximalThighLeft)
-      measurementsData.proximalThighLeft = toNumber(
-        circumferences.proximalThighLeft
-      );
-    if (circumferences.proximalThighRight)
-      measurementsData.proximalThighRight = toNumber(
-        circumferences.proximalThighRight
-      );
-    if (circumferences.medialThighLeft)
-      measurementsData.medialThighLeft = toNumber(
-        circumferences.medialThighLeft
-      );
-    if (circumferences.medialThighRight)
-      measurementsData.medialThighRight = toNumber(
-        circumferences.medialThighRight
-      );
-    if (circumferences.distalThighLeft)
-      measurementsData.distalThighLeft = toNumber(
-        circumferences.distalThighLeft
-      );
-    if (circumferences.distalThighRight)
-      measurementsData.distalThighRight = toNumber(
-        circumferences.distalThighRight
-      );
-    if (circumferences.calfLeft)
-      measurementsData.calfLeft = toNumber(circumferences.calfLeft);
-    if (circumferences.calfRight)
-      measurementsData.calfRight = toNumber(circumferences.calfRight);
+    const measurementsData: Partial<BodyMeasurements> = {};
+    (Object.keys(circumferences) as Array<keyof typeof circumferences>).forEach(
+      (key) => {
+        const val = toNumber(circumferences[key]);
+        if (val !== undefined) measurementsData[key] = val;
+      }
+    );
 
     // Preparar diâmetros ósseos
-    const boneDiametersData: BoneDiameters = {};
-    if (boneDiameters.humerus)
-      boneDiametersData.humerus = toNumber(boneDiameters.humerus);
-    if (boneDiameters.wrist)
-      boneDiametersData.wrist = toNumber(boneDiameters.wrist);
-    if (boneDiameters.femur)
-      boneDiametersData.femur = toNumber(boneDiameters.femur);
+    const boneDiametersData: Partial<BoneDiameters> = {};
+    (Object.keys(boneDiameters) as Array<keyof typeof boneDiameters>).forEach(
+      (key) => {
+        const val = toNumber(boneDiameters[key]);
+        if (val !== undefined) boneDiametersData[key] = val;
+      }
+    );
 
-    // Montar objeto para envio
     const measurementData: CreateMeasurementDto = {
       date: (assessmentDate
         ? new Date(assessmentDate)
         : new Date()
       ).toISOString(),
       weight: toNumber(basicData.weight) || 0,
-
-      // Campos opcionais
-      skinfoldFormula,
+      skinfoldFormula: skinfoldFormula === "none" ? undefined : skinfoldFormula,
       height: toNumber(basicData.height),
       sittingHeight: toNumber(basicData.sittingHeight),
       kneeHeight: toNumber(basicData.kneeHeight),
-
-      // Campos calculados
       fatMass: anthropometricResults.fatMass
-        ? parseFloat(anthropometricResults.fatMass.replace(" kg", ""))
+        ? parseFloat(anthropometricResults.fatMass.replace(/[^\d.-]/g, ""))
         : undefined,
       fatFreeMass: anthropometricResults.fatFreeMass
-        ? parseFloat(anthropometricResults.fatFreeMass.replace(" kg", ""))
+        ? parseFloat(anthropometricResults.fatFreeMass.replace(/[^\d.-]/g, ""))
         : undefined,
       bodyFat: anthropometricResults.bodyFatPercentage
-        ? parseFloat(anthropometricResults.bodyFatPercentage.replace("%", ""))
+        ? parseFloat(
+            anthropometricResults.bodyFatPercentage.replace(/[^\d.-]/g, "")
+          )
         : undefined,
       muscleMass: anthropometricResults.muscleMass
-        ? parseFloat(anthropometricResults.muscleMass.replace(" kg", ""))
+        ? parseFloat(anthropometricResults.muscleMass.replace(/[^\d.-]/g, ""))
         : undefined,
       boneMass: anthropometricResults.boneMass
-        ? parseFloat(anthropometricResults.boneMass.replace(" kg", ""))
+        ? parseFloat(anthropometricResults.boneMass.replace(/[^\d.-]/g, ""))
         : undefined,
-
-      // Objetos complexos
-      skinfolds: skinfoldData,
-      measurements: measurementsData,
-      boneDiameters: boneDiametersData,
-
-      // Adicionar sharePhotos ao objeto
+      skinfolds: skinfoldData as SkinfoldsType,
+      measurements: measurementsData as BodyMeasurements,
+      boneDiameters: boneDiametersData as BoneDiameters,
       sharePhotos,
       patientId: patientId!,
     };
 
-    console.log("Dados a serem salvos:", {
-      fatMass: measurementData.fatMass,
-      fatFreeMass: measurementData.fatFreeMass,
-      bodyFat: measurementData.bodyFat,
-      muscleMass: measurementData.muscleMass,
-      boneMass: measurementData.boneMass,
-    });
-
-    // Executar mutação
     createMutation.mutate(measurementData);
   };
 
@@ -610,17 +488,18 @@ export function NewAssessment() {
     left: AssessmentPhoto | null;
     right: AssessmentPhoto | null;
   }) => {
-    setPhotos(updatedPhotos);
+    setPhotos(updatedPhotos); // Atualiza o estado local de fotos
   };
 
-  // Função auxiliar para formatar as referências bibliográficas
   const getReferenceTooltip = (calculation: string): string => {
     const references: Record<string, string> = {
       bmi: "Índice de Massa Corporal (IMC) - Medida que relaciona peso e altura para avaliar o estado nutricional. Valores entre 18,5 e 24,9 kg/m² indicam peso adequado.\n\nReferência: Organização Mundial da Saúde (OMS). Estado físico: uso e interpretação da antropometria. Genebra: OMS, 1995.",
       waistHipRatio:
         "Relação Cintura/Quadril (RCQ) - Medida que avalia a distribuição de gordura corporal. Valores elevados indicam maior risco de doenças cardiovasculares.\n\nReferência: Organização Mundial da Saúde (OMS). Circunferência da cintura e relação cintura-quadril: relatório de uma consulta de especialistas da OMS. Genebra: OMS, 2008.",
-      bodyDensity:
-        "Densidade Corporal - Medida que avalia a composição corporal através da relação entre massa e volume. Valores mais altos indicam maior proporção de massa magra.\n\nReferência: Pollock ML, Schmidt DH, Jackson AS. Medição da aptidão cardiorrespiratória e composição corporal no ambiente clínico. Compr Ther. 1980;6(9):12-27.",
+      bodyDensity: `Densidade Corporal - Medida que avalia a composição corporal através da relação entre massa e volume. Valores mais altos indicam maior proporção de massa magra.\n\nReferência: ${
+        bodyDensityFormulas.find((f) => f.id === skinfoldFormula)?.reference ||
+        "Consulte a fórmula selecionada."
+      }`,
       bodyFatPercentage:
         "Percentual de Gordura Corporal - Medida que avalia a proporção de gordura em relação ao peso total. Valores ideais variam conforme sexo e idade.\n\nReferência: Siri WE. Composição corporal a partir de espaços fluidos e densidade: análise de métodos. In: Brozek J, Henschel A, eds. Técnicas para medir a composição corporal. Washington, DC: National Academy of Sciences, 1961:223-244.",
       bodyFatClassification:
@@ -635,20 +514,16 @@ export function NewAssessment() {
     return references[calculation] || "Referência não disponível";
   };
 
-  // Este trecho substitui o return atual
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
 
   return (
     <Box sx={{ maxWidth: 1200, mx: "auto", p: { xs: 2, sm: 3 } }}>
-      {/* Cabeçalho fora do card */}
       <AssessmentHeader
         patientName={patient?.name || ""}
         onNavigateBack={handleNavigateBack}
         isEditMode={isEditMode}
       />
-
-      {/* Layout flexível que se adapta para mobile */}
       <Box
         sx={{
           display: "flex",
@@ -656,30 +531,18 @@ export function NewAssessment() {
           gap: 3,
         }}
       >
-        {/* Coluna da esquerda - Formulários */}
         <Box sx={{ flex: isMobile ? "1 1 auto" : "0 0 58.333%" }}>
-          {/* Data da avaliação como um card separado */}
-
           <AssessmentDate
             assessmentDate={assessmentDate}
             onAssessmentDateChange={setAssessmentDate}
           />
-          <Paper
-            elevation={1}
-            sx={{
-              borderRadius: 2,
-              overflow: "hidden",
-            }}
-          >
-            {/* Seção de dados básicos */}
+          <Paper elevation={1} sx={{ borderRadius: 2, overflow: "hidden" }}>
             <BasicDataSection
               expanded={expanded === "basicData"}
               onAccordionChange={handleAccordionChange}
               basicData={basicData}
               onBasicDataChange={handleBasicDataChange}
             />
-
-            {/* Seção de dobras cutâneas */}
             <SkinfoldSection
               expanded={expanded === "skinfolds"}
               onAccordionChange={handleAccordionChange}
@@ -690,44 +553,35 @@ export function NewAssessment() {
               patientGender={patient?.gender}
               patient={patient}
             />
-
-            {/* Seção de circunferências */}
             <CircumferenceSection
               expanded={expanded === "circumferences"}
               onAccordionChange={handleAccordionChange}
               circumferences={circumferences}
               onCircumferenceChange={handleCircumferenceChange}
             />
-
-            {/* Seção de diâmetros ósseos */}
             <BoneDiameterSection
               expanded={expanded === "boneDiameters"}
               onAccordionChange={handleAccordionChange}
               boneDiameters={boneDiameters}
               onBoneDiameterChange={handleBoneDiameterChange}
             />
-
-            {/* Seção de fotos */}
             <PhotosSection
               patientId={patientId!}
               measurementId={measurementId}
               sharePhotos={sharePhotos}
               onSharePhotosChange={setSharePhotos}
-              onPhotosChange={handlePhotosChange}
+              onPhotosChange={handlePhotosChange} // Passando o handler
               measurement={measurementToEdit}
               expanded={expanded === "photos"}
               onAccordionChange={handleAccordionChange}
             />
           </Paper>
-
           <ActionButtons
             onSave={handleSaveAssessment}
             onCancel={handleCancel}
-            isSaving={isSaving.current}
+            isSaving={createMutation.isPending} // Usar createMutation.isPending
           />
         </Box>
-
-        {/* Coluna da direita - Resultados */}
         <Box sx={{ flex: isMobile ? "1 1 auto" : "0 0 41.667%" }}>
           <AnalyticalResults
             anthropometricResults={anthropometricResults}
@@ -737,8 +591,6 @@ export function NewAssessment() {
           />
         </Box>
       </Box>
-
-      {/* Snackbar de feedback */}
       <Snackbar
         open={snackbar.open}
         autoHideDuration={6000}

@@ -2,62 +2,46 @@ import { BodyDensityFormula } from "./types";
 
 export const guedesFormula: BodyDensityFormula = {
   id: "guedes",
-  name: "Guedes (1985)",
+  name: "Guedes",
   description:
-    "Fórmula de Guedes desenvolvida para a população brasileira. Para homens: peitoral, abdômen e coxa. Para mulheres: coxa, suprailíaca e subescapular.",
+    "Fórmula de Guedes. Para homens: tríceps, suprailíaca e abdominal (paraumbilical). Para mulheres: subescapular, suprailíaca e coxa.",
   status: "active",
   requiredSkinfolds: [
-    "thoracic",
-    "abdominal",
-    "thigh",
+    "tricipital",
     "suprailiac",
+    "abdominal",
     "subscapular",
+    "thigh",
   ],
   genderSupport: "both",
   ageRange: {
-    min: 17,
-    max: 30,
+    min: 18,
+    max: 60,
   },
   reference:
-    "GUEDES, D.P. Estudo da gordura corporal através da mensuração dos valores de densidade corporal e da espessura de dobras cutâneas em universitários. Dissertação de Mestrado, Santa Maria: UFSM, 1985.",
+    "Protocolo Guedes conforme Periodization Online (dobras específicas por sexo; D = 1,17136 - 0,06706 * log10(soma)).",
   calculate: (skinfolds, gender) => {
-    console.log("Calculando densidade corporal (Guedes):", {
-      skinfolds,
-      gender,
-    });
+    const genderUpper = gender?.toUpperCase();
+    let sum = 0;
 
-    if (gender === "M") {
-      const chest = parseFloat(skinfolds.thoracic || "0") || 0;
-      const abdomen = parseFloat(skinfolds.abdominal || "0") || 0;
-      const thigh = parseFloat(skinfolds.thigh || "0") || 0;
-
-      console.log("Dobras para homens:", { chest, abdomen, thigh });
-
-      const sum = chest + abdomen + thigh;
-      if (sum === 0) {
-        console.log("Soma das dobras é zero para homens");
-        return 0;
-      }
-
-      const density = 1.17136 - 0.06706 * Math.log10(sum);
-      console.log("Densidade calculada para homens:", density);
-      return density;
-    } else {
-      const thigh = parseFloat(skinfolds.thigh || "0") || 0;
+    if (genderUpper === "M") {
+      const triceps = parseFloat(skinfolds.tricipital || "0") || 0;
       const suprailiac = parseFloat(skinfolds.suprailiac || "0") || 0;
+      const abdominal = parseFloat(skinfolds.abdominal || "0") || 0;
+      sum = triceps + suprailiac + abdominal;
+    } else if (genderUpper === "F") {
       const subscapular = parseFloat(skinfolds.subscapular || "0") || 0;
-
-      console.log("Dobras para mulheres:", { thigh, suprailiac, subscapular });
-
-      const sum = thigh + suprailiac + subscapular;
-      if (sum === 0) {
-        console.log("Soma das dobras é zero para mulheres");
-        return 0;
-      }
-
-      const density = 1.1665 - 0.07063 * Math.log10(sum);
-      console.log("Densidade calculada para mulheres:", density);
-      return density;
+      const suprailiac = parseFloat(skinfolds.suprailiac || "0") || 0;
+      const thigh = parseFloat(skinfolds.thigh || "0") || 0;
+      sum = subscapular + suprailiac + thigh;
+    } else {
+      return NaN;
     }
+
+    if (sum <= 0) {
+      return NaN;
+    }
+
+    return 1.17136 - 0.06706 * Math.log10(sum);
   },
 };
