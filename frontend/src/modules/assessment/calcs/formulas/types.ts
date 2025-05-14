@@ -54,14 +54,20 @@ export function validateFormula(
   }
 
   // Validar dobras necessárias
-  const missingSkinfolds = formula.requiredSkinfolds.filter(
-    (fold) => !skinfolds[fold] || skinfolds[fold] === ""
+  const validSkinfolds = formula.requiredSkinfolds.filter(
+    (fold) =>
+      skinfolds[fold] &&
+      skinfolds[fold] !== "" &&
+      parseFloat(skinfolds[fold]) > 0
   );
 
-  if (missingSkinfolds.length > 0) {
+  // Se não houver nenhuma dobra válida, retorna erro
+  if (validSkinfolds.length === 0) {
     return {
       type: "missing_skinfolds",
-      message: `Necessário preencher as dobras: ${missingSkinfolds.join(", ")}`,
+      message: `É necessário preencher pelo menos uma das dobras: ${formula.requiredSkinfolds.join(
+        ", "
+      )}`,
     };
   }
 

@@ -127,6 +127,8 @@ export function CompositionChart({ measurements }: CompositionChartProps) {
   const data = useMemo(() => {
     if (!measurements) return []; // Retorna array vazio se não houver medições
 
+    console.log("Processando dados para o gráfico:", measurements);
+
     return (
       measurements
         // Garante que as datas sejam objetos Date para ordenação segura
@@ -137,17 +139,29 @@ export function CompositionChart({ measurements }: CompositionChartProps) {
         .map((measurement) => {
           const weight = Number(measurement.weight || 0); // Converte peso para número, default 0
           const fatMass = Number(measurement.fatMass || 0); // Converte massa gorda para número, default 0
-          const fatFreeMass = weight - fatMass; // Calcula massa livre
+          const fatFreeMass = Number(measurement.fatFreeMass || 0); // Usa o valor fatFreeMass da API
+
+          console.log(
+            "Valores processados para data",
+            measurement.date.toISOString(),
+            {
+              weight,
+              fatMass,
+              fatFreeMass,
+            }
+          );
 
           return {
             date: formatDateToLocal(measurement.date), // Formata a data para exibição local (ex: DD/MM/YYYY)
             pesoTotal: weight,
             massaGorda: fatMass,
-            massaLivre: fatFreeMass >= 0 ? fatFreeMass : 0, // Garante que massa livre não seja negativa
+            massaLivre: fatFreeMass, // Usa o valor fatFreeMass diretamente
           };
         })
     );
   }, [measurements]); // Recalcula apenas se 'measurements' mudar
+
+  console.log("Dados processados para o gráfico:", data);
 
   // Define as cores baseadas no tema para fácil manutenção
   const pesoTotalColor = theme.palette.primary.main;

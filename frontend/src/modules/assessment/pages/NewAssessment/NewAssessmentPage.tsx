@@ -43,6 +43,7 @@ export function NewAssessment() {
     message: "",
     severity: "success" as "success" | "error",
   });
+  const [openGraphsModal, setOpenGraphsModal] = useState(false);
   const queryClient = useQueryClient();
   const isEditMode = !!measurementId;
   const isSaving = useRef(false);
@@ -268,6 +269,88 @@ export function NewAssessment() {
     }
   }, [isEditMode, measurementToEdit]);
 
+  // Calculate anthropometric results at component level
+  const anthropometricResults = useMemo(() => {
+    let calculationGender: "M" | "F" = "M";
+    if (patient?.gender === "F" || String(patient?.gender) === "FEMALE") {
+      calculationGender = "F";
+    }
+    const calculationAge = patient?.birthDate
+      ? new Date().getFullYear() - new Date(patient.birthDate).getFullYear()
+      : 30;
+
+    console.log("Dados para cálculo:", {
+      gender: calculationGender,
+      age: calculationAge,
+      weight: parseFloat(basicData.weight),
+      height: parseFloat(basicData.height),
+      skinfolds,
+      circumferences,
+      boneDiameters,
+      skinfoldFormula,
+    });
+
+    const results = calculateAnthropometricResults({
+      gender: calculationGender,
+      age: calculationAge,
+      weight: parseFloat(basicData.weight),
+      height: parseFloat(basicData.height),
+      skinfolds: {
+        tricipital: parseFloat(skinfolds.tricipital),
+        bicipital: parseFloat(skinfolds.bicipital),
+        abdominal: parseFloat(skinfolds.abdominal),
+        subscapular: parseFloat(skinfolds.subscapular),
+        axillaryMedian: parseFloat(skinfolds.axillaryMedian),
+        thigh: parseFloat(skinfolds.thigh),
+        thoracic: parseFloat(skinfolds.thoracic),
+        suprailiac: parseFloat(skinfolds.suprailiac),
+        calf: parseFloat(skinfolds.calf),
+        supraspinal: parseFloat(skinfolds.supraspinal),
+      },
+      circumferences: {
+        neck: parseFloat(circumferences.neck),
+        waist: parseFloat(circumferences.waist),
+        abdomen: parseFloat(circumferences.abdomen),
+        hip: parseFloat(circumferences.hip),
+        relaxedArm: parseFloat(
+          circumferences.relaxedArmLeft + circumferences.relaxedArmRight
+        ),
+        contractedArm: parseFloat(
+          circumferences.contractedArmLeft + circumferences.contractedArmRight
+        ),
+        forearm: parseFloat(
+          circumferences.forearmLeft + circumferences.forearmRight
+        ),
+        proximalThigh: parseFloat(
+          circumferences.proximalThighLeft + circumferences.proximalThighRight
+        ),
+        medialThigh: parseFloat(
+          circumferences.medialThighLeft + circumferences.medialThighRight
+        ),
+        distalThigh: parseFloat(
+          circumferences.distalThighLeft + circumferences.distalThighRight
+        ),
+        calf: parseFloat(circumferences.calfLeft + circumferences.calfRight),
+      },
+      boneDiameters: {
+        humerus: parseFloat(boneDiameters.humerus),
+        wrist: parseFloat(boneDiameters.wrist),
+        femur: parseFloat(boneDiameters.femur),
+      },
+      skinfoldFormula,
+    });
+
+    console.log("Resultados calculados:", results);
+    return results;
+  }, [
+    basicData,
+    circumferences,
+    skinfolds,
+    boneDiameters,
+    patient,
+    skinfoldFormula,
+  ]);
+
   // Mutação para criar/editar avaliação
   const createMutation = useMutation({
     mutationFn: async (dto: CreateMeasurementDto) => {
@@ -478,6 +561,23 @@ export function NewAssessment() {
       sittingHeight: toNumber(basicData.sittingHeight),
       kneeHeight: toNumber(basicData.kneeHeight),
 
+      // Campos calculados
+      fatMass: anthropometricResults.fatMass
+        ? parseFloat(anthropometricResults.fatMass.replace(" kg", ""))
+        : undefined,
+      fatFreeMass: anthropometricResults.fatFreeMass
+        ? parseFloat(anthropometricResults.fatFreeMass.replace(" kg", ""))
+        : undefined,
+      bodyFat: anthropometricResults.bodyFatPercentage
+        ? parseFloat(anthropometricResults.bodyFatPercentage.replace("%", ""))
+        : undefined,
+      muscleMass: anthropometricResults.muscleMass
+        ? parseFloat(anthropometricResults.muscleMass.replace(" kg", ""))
+        : undefined,
+      boneMass: anthropometricResults.boneMass
+        ? parseFloat(anthropometricResults.boneMass.replace(" kg", ""))
+        : undefined,
+
       // Objetos complexos
       skinfolds: skinfoldData,
       measurements: measurementsData,
@@ -487,6 +587,14 @@ export function NewAssessment() {
       sharePhotos,
       patientId: patientId!,
     };
+
+    console.log("Dados a serem salvos:", {
+      fatMass: measurementData.fatMass,
+      fatFreeMass: measurementData.fatFreeMass,
+      bodyFat: measurementData.bodyFat,
+      muscleMass: measurementData.muscleMass,
+      boneMass: measurementData.boneMass,
+    });
 
     // Executar mutação
     createMutation.mutate(measurementData);
@@ -516,75 +624,6 @@ export function NewAssessment() {
   }) => {
     setPhotos(updatedPhotos);
   };
-
-  // Calcular resultados antropométricos
-  const [openGraphsModal, setOpenGraphsModal] = useState(false);
-  const anthropometricResults = useMemo(() => {
-    let calculationGender: "M" | "F" = "M";
-    if (patient?.gender === "F" || String(patient?.gender) === "FEMALE") {
-      calculationGender = "F";
-    }
-    const calculationAge = patient?.birthDate
-      ? new Date().getFullYear() - new Date(patient.birthDate).getFullYear()
-      : 30;
-    return calculateAnthropometricResults({
-      gender: calculationGender,
-      age: calculationAge,
-      weight: parseFloat(basicData.weight),
-      height: parseFloat(basicData.height),
-      skinfolds: {
-        tricipital: parseFloat(skinfolds.tricipital),
-        bicipital: parseFloat(skinfolds.bicipital),
-        abdominal: parseFloat(skinfolds.abdominal),
-        subscapular: parseFloat(skinfolds.subscapular),
-        axillaryMedian: parseFloat(skinfolds.axillaryMedian),
-        thigh: parseFloat(skinfolds.thigh),
-        thoracic: parseFloat(skinfolds.thoracic),
-        suprailiac: parseFloat(skinfolds.suprailiac),
-        calf: parseFloat(skinfolds.calf),
-        supraspinal: parseFloat(skinfolds.supraspinal),
-      },
-      circumferences: {
-        neck: parseFloat(circumferences.neck),
-        waist: parseFloat(circumferences.waist),
-        abdomen: parseFloat(circumferences.abdomen),
-        hip: parseFloat(circumferences.hip),
-        relaxedArm: parseFloat(
-          circumferences.relaxedArmLeft + circumferences.relaxedArmRight
-        ),
-        contractedArm: parseFloat(
-          circumferences.contractedArmLeft + circumferences.contractedArmRight
-        ),
-        forearm: parseFloat(
-          circumferences.forearmLeft + circumferences.forearmRight
-        ),
-        proximalThigh: parseFloat(
-          circumferences.proximalThighLeft + circumferences.proximalThighRight
-        ),
-        medialThigh: parseFloat(
-          circumferences.medialThighLeft + circumferences.medialThighRight
-        ),
-        distalThigh: parseFloat(
-          circumferences.distalThighLeft + circumferences.distalThighRight
-        ),
-        calf: parseFloat(circumferences.calfLeft + circumferences.calfRight),
-      },
-      boneDiameters: {
-        humerus: parseFloat(boneDiameters.humerus),
-        wrist: parseFloat(boneDiameters.wrist),
-        femur: parseFloat(boneDiameters.femur),
-      },
-
-      skinfoldFormula,
-    });
-  }, [
-    basicData,
-    circumferences,
-    skinfolds,
-    boneDiameters,
-    patient,
-    skinfoldFormula,
-  ]);
 
   // Função auxiliar para formatar as referências bibliográficas
   const getReferenceTooltip = (calculation: string): string => {

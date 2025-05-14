@@ -80,17 +80,22 @@ export function AssessmentEvolution() {
     // staleTime: 5 * 60 * 1000, // Opcional: manter dados frescos por 5 min
   });
 
+  console.log(
+    "Medições recebidas da API:",
+    allMeasurements?.map((m) => ({
+      date: m.date,
+      fatMass: m.fatMass,
+      fatFreeMass: m.fatFreeMass,
+      bodyFat: m.bodyFat,
+    }))
+  );
+
   // Filtrar medições localmente com base no período selecionado no estado 'dateRange'
   const filteredMeasurements = useMemo(() => {
     // Se não houver medições totais, retorna array vazio
     if (!allMeasurements) return [];
 
-    // Se não houver datas no range (pouco provável agora com valor default, mas seguro ter)
-    // Poderia retornar tudo ou nada, dependendo do desejado. Vamos retornar tudo.
-    // if (!dateRange.startDate || !dateRange.endDate) {
-    //   return allMeasurements;
-    // }
-    // Com o valor default, este caso se torna menos relevante.
+    console.log("Todas as medições recebidas:", allMeasurements);
 
     // Tenta criar objetos Date a partir das strings do estado dateRange
     // Adiciona hora para garantir inclusão correta do início/fim do dia
@@ -102,7 +107,7 @@ export function AssessmentEvolution() {
       : null;
 
     // Filtra as medições
-    return allMeasurements.filter((measurement) => {
+    const filtered = allMeasurements.filter((measurement) => {
       // Converte a data da medição (assumindo que está em 'yyyy-MM-dd') para Date
       // Adiciona hora do meio-dia para evitar problemas simples de timezone
       const measurementDate = parseISO(measurement.date + "T12:00:00");
@@ -114,6 +119,9 @@ export function AssessmentEvolution() {
       // Se passou pelas verificações, inclui a medição
       return true;
     });
+
+    console.log("Medições filtradas:", filtered);
+    return filtered;
   }, [allMeasurements, dateRange]); // Recalcula SOMENTE se as medições totais ou o dateRange mudarem
 
   // Estado de Carregamento
@@ -185,7 +193,10 @@ export function AssessmentEvolution() {
                 <CompositionChart measurements={filteredMeasurements} />
               </Paper>
               <Paper elevation={2} sx={{ p: 2 }}>
-                <AnalysisTable measurements={filteredMeasurements} />
+                <AnalysisTable
+                  measurements={filteredMeasurements}
+                  patient={patient}
+                />
               </Paper>
             </>
           ) : (

@@ -11,9 +11,20 @@ import { format } from "date-fns";
 import { Measurement } from "@/modules/patient/services/patientService";
 import ArrowUpwardIcon from "@mui/icons-material/ArrowUpward";
 import ArrowDownwardIcon from "@mui/icons-material/ArrowDownward";
+import { bodyDensityFormulas } from "../../../calcs/formulas";
+import {
+  calculateBodyDensity,
+  calculateResidualWeight,
+  calculateFatMass,
+  calculateBodyFatPercentage,
+} from "../../../calcs/anthropometricCalculations/bodyComposition";
 
 interface AnalysisTableProps {
   measurements: Measurement[];
+  patient?: {
+    gender?: string;
+    birthDate?: string;
+  };
 }
 
 interface AnalysisParameter {
@@ -24,9 +35,30 @@ interface AnalysisParameter {
   getClassification?: (value: string | number) => string;
 }
 
-export function AnalysisTable({ measurements }: AnalysisTableProps) {
+export function AnalysisTable({ measurements, patient }: AnalysisTableProps) {
+  console.log("Medições recebidas na AnalysisTable:", measurements);
+
   const sortedMeasurements = [...measurements].sort(
     (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
+  );
+
+  // Calcula a idade do paciente
+  const patientAge = patient?.birthDate
+    ? new Date().getFullYear() - new Date(patient.birthDate).getFullYear()
+    : 30;
+
+  // Determina o gênero do paciente
+  const patientGender =
+    patient?.gender === "F" || patient?.gender === "FEMALE" ? "F" : "M";
+
+  console.log(
+    "Medições ordenadas:",
+    sortedMeasurements.map((m) => ({
+      date: m.date,
+      fatMass: m.fatMass,
+      fatFreeMass: m.fatFreeMass,
+      bodyFat: m.bodyFat,
+    }))
   );
 
   const calculateIMC = (
@@ -117,22 +149,55 @@ export function AnalysisTable({ measurements }: AnalysisTableProps) {
 
     {
       label: "Percentual de Gordura (%)",
-      getValue: (m) => formatNumber(m.bodyFat),
+      getValue: (m) => {
+        if (!m.skinfolds || !m.skinfoldFormula) return "-";
+
+        // Obtém a fórmula selecionada
+        const formula = bodyDensityFormulas.find(
+          (f: { id: string }) => f.id === m.skinfoldFormula
+        );
+        if (!formula) return "-";
+
+        // Calcula a densidade corporal usando a fórmula selecionada
+        const skinfoldValues: Record<string, string> = {};
+        Object.entries(m.skinfolds || {}).forEach(([key, value]) => {
+          if (value !== undefined && value !== null) {
+            skinfoldValues[key] = String(value);
+          }
+        });
+
+        const { density } = calculateBodyDensity(
+          skinfoldValues,
+          patientGender,
+          patientAge,
+          m.skinfoldFormula
+        );
+
+        if (density <= 0) return "-";
+        const bodyFatPercentage = calculateBodyFatPercentage(density);
+        return bodyFatPercentage.toFixed(1);
+      },
       getVariation: (current, previous) => formatVariation(current - previous),
       getClassification: () => "Adequada",
     },
     {
       label: "Massa de gordura (Kg)",
-      getValue: (m) => formatNumber(m.fatMass),
+      getValue: (m) => {
+        const weight = Number(m.weight);
+        const bodyFat = Number(m.bodyFat);
+        if (isNaN(weight) || isNaN(bodyFat)) return "-";
+        const fatMass = calculateFatMass(weight, bodyFat);
+        return fatMass.toFixed(1);
+      },
       getVariation: (current, previous) => formatVariation(current - previous),
     },
     {
       label: "Massa residual (Kg)",
       getValue: (m) => {
         const weight = Number(m.weight);
-        const fatMass = Number(m.fatMass || 0);
-        const residual = weight - fatMass;
-        return isNaN(residual) ? "-" : residual.toFixed(1);
+        if (isNaN(weight)) return "-";
+        const residual = calculateResidualWeight(weight, patientGender);
+        return residual.toFixed(1);
       },
       getVariation: (current, previous) => formatVariation(current - previous),
     },
@@ -144,20 +209,69 @@ export function AnalysisTable({ measurements }: AnalysisTableProps) {
     {
       label: "Somatório de Dobras (mm)",
       getValue: (m) => {
-        if (!m.skinfolds) return "-";
-        const sum = Object.values(m.skinfolds).reduce(
-          (acc, val) => acc + (val || 0),
+        if (!m.skinfolds || !m.skinfoldFormula) return "-";
+
+        // Obtém a fórmula selecionada
+        const formula = bodyDensityFormulas.find(
+          (f: { id: string }) => f.id === m.skinfoldFormula
+        );
+        if (!formula) return "-";
+
+        // Pega apenas as dobras do protocolo selecionado
+        const protocolSkinfolds = formula.requiredSkinfolds
+          .map(
+            (fold: string) =>
+              m.skinfolds?.[fold as keyof typeof m.skinfolds] || 0
+          )
+          .filter((value: number) => !isNaN(value) && value > 0);
+
+        if (protocolSkinfolds.length === 0) return "-";
+
+        const sum = protocolSkinfolds.reduce(
+          (acc: number, curr: number) => acc + curr,
           0
         );
-        return sum.toFixed(0);
+        return sum.toFixed(1);
       },
       getVariation: (current, previous) => formatVariation(current - previous),
     },
     {
       label: "Densidade Corporal (g/mL)",
-      getValue: () => {
-        const bodyDensity = 1.06; // Exemplo fixo, ajuste conforme necessário
-        return bodyDensity.toFixed(3);
+      getValue: (m) => {
+        if (!m.skinfolds || !m.skinfoldFormula) return "-";
+
+        // Obtém a fórmula selecionada
+        const formula = bodyDensityFormulas.find(
+          (f: { id: string }) => f.id === m.skinfoldFormula
+        );
+        if (!formula) return "-";
+
+        // Pega apenas as dobras do protocolo selecionado
+        const protocolSkinfolds = formula.requiredSkinfolds
+          .map(
+            (fold: string) =>
+              m.skinfolds?.[fold as keyof typeof m.skinfolds] || 0
+          )
+          .filter((value: number) => !isNaN(value) && value > 0);
+
+        if (protocolSkinfolds.length === 0) return "-";
+
+        // Calcula a densidade corporal usando a fórmula selecionada
+        const skinfoldValues: Record<string, string> = {};
+        Object.entries(m.skinfolds || {}).forEach(([key, value]) => {
+          if (value !== undefined && value !== null) {
+            skinfoldValues[key] = String(value);
+          }
+        });
+
+        const { density } = calculateBodyDensity(
+          skinfoldValues,
+          patientGender,
+          patientAge,
+          m.skinfoldFormula
+        );
+
+        return density > 0 ? density.toFixed(3) : "-";
       },
       getVariation: (current, previous) => formatVariation(current - previous),
     },

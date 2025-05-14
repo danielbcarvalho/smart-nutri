@@ -24,12 +24,17 @@ export const pollock3Formula: BodyDensityFormula = {
     // Soma das dobras específicas para cada gênero
     const sum =
       gender === "M"
-        ? parseFloat(skinfolds.thoracic || "0") +
-          parseFloat(skinfolds.abdominal || "0") +
-          parseFloat(skinfolds.thigh || "0")
-        : parseFloat(skinfolds.tricipital || "0") +
-          parseFloat(skinfolds.suprailiac || "0") +
-          parseFloat(skinfolds.thigh || "0");
+        ? (parseFloat(skinfolds.thoracic || "0") || 0) +
+          (parseFloat(skinfolds.abdominal || "0") || 0) +
+          (parseFloat(skinfolds.thigh || "0") || 0)
+        : (parseFloat(skinfolds.tricipital || "0") || 0) +
+          (parseFloat(skinfolds.suprailiac || "0") || 0) +
+          (parseFloat(skinfolds.thigh || "0") || 0);
+
+    // Se não houver nenhuma dobra válida, retorna 0
+    if (sum === 0) {
+      return 0;
+    }
 
     // Fórmulas específicas para cada gênero
     if (gender === "M") {

@@ -35,18 +35,18 @@ export const pollock7Formula: BodyDensityFormula = {
       "thigh",
     ];
 
-    const allSkinfolds = requiredSkinfolds.map((fold) =>
-      parseFloat(skinfolds[fold as keyof typeof skinfolds] || "0")
+    const allSkinfolds = requiredSkinfolds.map(
+      (fold) =>
+        parseFloat(skinfolds[fold as keyof typeof skinfolds] || "0") || 0
     );
 
-    // Se alguma dobra estiver faltando, retorna 0
-    if (allSkinfolds.some((value) => value <= 0)) {
-      console.warn("Pollock 7: Dados de dobras incompletos");
+    // Soma das dobras válidas
+    const sum = allSkinfolds.reduce((acc, curr) => acc + curr, 0);
+
+    // Se não houver nenhuma dobra válida, retorna 0
+    if (sum === 0) {
       return 0;
     }
-
-    // Soma das 7 dobras na ordem correta do protocolo
-    const sum = allSkinfolds.reduce((acc, curr) => acc + curr, 0);
 
     // Fórmulas específicas por gênero
     let density;
