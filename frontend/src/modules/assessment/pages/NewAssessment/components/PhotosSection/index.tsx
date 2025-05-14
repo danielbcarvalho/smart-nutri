@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback, useRef } from "react";
 import {
   Box,
   Typography,
+  Grid,
   CircularProgress,
   Accordion,
   AccordionSummary,
@@ -332,7 +333,7 @@ export const PhotosSection: React.FC<PhotosSectionProps> = ({
 
   // --- Render Logic ---
   const renderPhotoUpload = (type: PhotoType, label: string) => (
-    <Box key={type}>
+    <Grid item xs={12} sm={6} md={3} key={type}>
       <Typography variant="body2" gutterBottom sx={{ fontWeight: "medium" }}>
         {label}
       </Typography>
@@ -354,15 +355,21 @@ export const PhotosSection: React.FC<PhotosSectionProps> = ({
           type={type}
           assessmentId={measurementId || ""}
           patientId={patientId}
+          // Pass the correct handler for completion
           onUploadComplete={handlePhotoChange(type)}
+          // Pass the specific error handler for this type
           onUploadError={handlePhotoError(type)}
+          // Pass the prepare handler
           onUploadStart={() => handleUploadStart(type)}
+          // Pass the remove handler
           onRemove={handleRemovePhoto}
+          // Get URL safely from state
           initialPhotoUrl={photos[type]?.url || ""}
+          // Define consistent preview size
           previewSize={{ width: 200, height: 250 }}
         />
       )}
-    </Box>
+    </Grid>
   );
 
   return (
@@ -382,22 +389,12 @@ export const PhotosSection: React.FC<PhotosSectionProps> = ({
         <Typography variant="h6">Fotos</Typography>
       </AccordionSummary>
       <AccordionDetails>
-        <Box
-          sx={{
-            display: "grid",
-            gap: 2,
-            gridTemplateColumns: {
-              xs: "1fr",
-              sm: "repeat(2, 1fr)",
-              md: "repeat(4, 1fr)",
-            },
-          }}
-        >
+        <Grid container spacing={2}>
           {renderPhotoUpload("front", "Frente")}
           {renderPhotoUpload("back", "Costas")}
           {renderPhotoUpload("left", "Lateral Esquerda")}
           {renderPhotoUpload("right", "Lateral Direita")}
-        </Box>
+        </Grid>
       </AccordionDetails>
     </Accordion>
   );
