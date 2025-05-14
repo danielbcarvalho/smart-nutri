@@ -262,52 +262,29 @@ export const SkinfoldSection: React.FC<SkinfoldSectionProps> = ({
                     "thigh",
                   ].includes(key);
                 }
-              } else if (currentFormulaDef.requiredSkinfolds) {
-                if (skinfoldFormula === "petroski") {
-                  const patientAge = patient?.birthDate
-                    ? Math.floor(
-                        (new Date().getTime() -
-                          new Date(patient.birthDate).getTime()) /
-                          (1000 * 60 * 60 * 24 * 365.25)
-                      )
-                    : 0;
-                  if (isMale) {
-                    isSkinfoldRequired =
-                      patientAge >= 20 && patientAge < 40
-                        ? [
-                            "subscapular",
-                            "tricipital",
-                            "suprailiac",
-                            "calf",
-                          ].includes(key as keyof SkinfoldsState)
-                        : false;
-                  } else if (isFemale) {
-                    if (patientAge >= 18 && patientAge < 20) {
-                      isSkinfoldRequired = [
-                        "axillaryMedian",
-                        "suprailiac",
-                        "thigh",
-                        "calf",
-                      ].includes(key as keyof SkinfoldsState);
-                    } else if (patientAge >= 20 && patientAge <= 51) {
-                      isSkinfoldRequired = [
-                        "subscapular",
-                        "tricipital",
-                        "suprailiac",
-                        "calf",
-                      ].includes(key as keyof SkinfoldsState);
-                    } else {
-                      isSkinfoldRequired = false;
-                    }
-                  } else {
-                    isSkinfoldRequired = false;
-                  }
-                } else {
-                  isSkinfoldRequired =
-                    currentFormulaDef.requiredSkinfolds.includes(
-                      key as keyof SkinfoldsState
-                    );
-                }
+              } else if (skinfoldFormula === "petroski") {
+                const patientAge = patient?.birthDate
+                  ? Math.floor(
+                      (new Date().getTime() -
+                        new Date(patient.birthDate).getTime()) /
+                        (1000 * 60 * 60 * 24 * 365.25)
+                    )
+                  : 0;
+
+                const requiredSkinfolds =
+                  currentFormulaDef.getRequiredSkinfolds?.(
+                    currentPatientGender || "",
+                    patientAge
+                  ) || [];
+
+                isSkinfoldRequired = requiredSkinfolds.includes(
+                  key as keyof SkinfoldsState
+                );
+              } else {
+                isSkinfoldRequired =
+                  currentFormulaDef.requiredSkinfolds.includes(
+                    key as keyof SkinfoldsState
+                  );
               }
             }
 

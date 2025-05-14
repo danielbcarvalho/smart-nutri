@@ -25,6 +25,7 @@ export interface BodyDensityFormula {
     weight?: number,
     height?: number
   ) => number;
+  getRequiredSkinfolds?: (gender: string, age: number) => SkinfoldType[];
 }
 
 export interface FormulaValidationError {

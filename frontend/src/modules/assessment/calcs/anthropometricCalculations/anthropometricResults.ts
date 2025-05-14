@@ -171,25 +171,9 @@ export const calculateAnthropometricResults = ({
           ? validGender === "M"
             ? ["tricipital", "abdominal", "suprailiac"]
             : ["subscapular", "suprailiac", "thigh"]
-          : formula.id === "petroski"
-          ? (() => {
-              if (validGender === "M") {
-                // Homens (20-39,9 anos)
-                return age >= 20 && age < 40
-                  ? ["subscapular", "tricipital", "suprailiac", "calf"]
-                  : [];
-              } else {
-                // Mulheres
-                if (age >= 20 && age < 40) {
-                  // Mulheres (20-39,9 anos)
-                  return ["subscapular", "tricipital", "suprailiac", "calf"];
-                } else if (age >= 18 && age <= 51) {
-                  // Mulheres (18-51 anos)
-                  return ["axillaryMedian", "suprailiac", "thigh", "calf"];
-                }
-                return [];
-              }
-            })()
+          : formula.id === "petroski" &&
+            typeof formula.getRequiredSkinfolds === "function"
+          ? formula.getRequiredSkinfolds(validGender, age)
           : formula.requiredSkinfolds;
 
       console.log("3. Dobras necessárias para o gênero:", {
