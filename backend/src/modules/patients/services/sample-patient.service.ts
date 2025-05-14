@@ -351,7 +351,7 @@ export class SamplePatientService {
       fatMass: 27.1,
       muscleMassPercentage: 26.8,
       muscleMass: 20.6,
-      fatFreeMass: undefined,
+      fatFreeMass: 77.0 - 27.1,
       boneMass: undefined,
       visceralFat: 9,
       bodyWater: undefined,
@@ -398,6 +398,9 @@ export class SamplePatientService {
     } as DeepPartial<Measurement>);
 
     await this.measurementRepository.save(oldMeasurement);
+    this.logger.log(
+      `[Sample] Medição 1 ano atrás: weight=77.0, fatMass=27.1, fatFreeMass=${77.0 - 27.1}`,
+    );
 
     // Create measurement 10 months ago (gained 2kg)
     const date10MonthsAgo = new Date();
@@ -413,7 +416,7 @@ export class SamplePatientService {
       fatMass: 28.3,
       muscleMassPercentage: 26.5,
       muscleMass: 20.9,
-      fatFreeMass: undefined,
+      fatFreeMass: 79.0 - 28.3,
       boneMass: undefined,
       visceralFat: 9.2,
       bodyWater: undefined,
@@ -460,6 +463,9 @@ export class SamplePatientService {
     } as DeepPartial<Measurement>);
 
     await this.measurementRepository.save(measurement10MonthsAgo);
+    this.logger.log(
+      `[Sample] Medição 10 meses atrás: weight=79.0, fatMass=28.3, fatFreeMass=${79.0 - 28.3}`,
+    );
 
     // Create measurement 8 months ago (lost 1kg)
     const date8MonthsAgo = new Date();
@@ -475,7 +481,7 @@ export class SamplePatientService {
       fatMass: 27.7,
       muscleMassPercentage: 26.7,
       muscleMass: 20.8,
-      fatFreeMass: undefined,
+      fatFreeMass: 78.0 - 27.7,
       boneMass: undefined,
       visceralFat: 9.1,
       bodyWater: undefined,
@@ -522,6 +528,9 @@ export class SamplePatientService {
     } as DeepPartial<Measurement>);
 
     await this.measurementRepository.save(measurement8MonthsAgo);
+    this.logger.log(
+      `[Sample] Medição 8 meses atrás: weight=78.0, fatMass=27.7, fatFreeMass=${78.0 - 27.7}`,
+    );
 
     // Create measurement 6 months ago (gained 0.5kg)
     const date6MonthsAgo = new Date();
@@ -537,7 +546,7 @@ export class SamplePatientService {
       fatMass: 27.9,
       muscleMassPercentage: 26.6,
       muscleMass: 20.9,
-      fatFreeMass: undefined,
+      fatFreeMass: 78.5 - 27.9,
       boneMass: undefined,
       visceralFat: 9.1,
       bodyWater: undefined,
@@ -584,6 +593,9 @@ export class SamplePatientService {
     } as DeepPartial<Measurement>);
 
     await this.measurementRepository.save(measurement6MonthsAgo);
+    this.logger.log(
+      `[Sample] Medição 6 meses atrás: weight=78.5, fatMass=27.9, fatFreeMass=${78.5 - 27.9}`,
+    );
 
     // After saving the 6-month-old measurement, upload its photos
     await this.uploadPhotosForMeasurement(measurement6MonthsAgo, false);
@@ -602,7 +614,7 @@ export class SamplePatientService {
       fatMass: 27.1,
       muscleMassPercentage: 26.8,
       muscleMass: 20.6,
-      fatFreeMass: undefined,
+      fatFreeMass: 77.0 - 27.1,
       boneMass: undefined,
       visceralFat: 9,
       bodyWater: undefined,
@@ -649,6 +661,9 @@ export class SamplePatientService {
     } as DeepPartial<Measurement>);
 
     await this.measurementRepository.save(measurement5MonthsAgo);
+    this.logger.log(
+      `[Sample] Medição 5 meses atrás: weight=77.0, fatMass=27.1, fatFreeMass=${77.0 - 27.1}`,
+    );
 
     // Create measurement 4 months ago (gained 1kg)
     const date4MonthsAgo = new Date();
@@ -664,7 +679,7 @@ export class SamplePatientService {
       fatMass: 27.7,
       muscleMassPercentage: 26.7,
       muscleMass: 20.8,
-      fatFreeMass: undefined,
+      fatFreeMass: 78.0 - 27.7,
       boneMass: undefined,
       visceralFat: 9.1,
       bodyWater: undefined,
@@ -711,6 +726,9 @@ export class SamplePatientService {
     } as DeepPartial<Measurement>);
 
     await this.measurementRepository.save(measurement4MonthsAgo);
+    this.logger.log(
+      `[Sample] Medição 4 meses atrás: weight=78.0, fatMass=27.7, fatFreeMass=${78.0 - 27.7}`,
+    );
 
     // Create initial measurement (3 months ago)
     const initialDate = new Date();
@@ -726,7 +744,7 @@ export class SamplePatientService {
       fatMass: 23.6,
       muscleMassPercentage: 28.4,
       muscleMass: 20.6,
-      fatFreeMass: undefined,
+      fatFreeMass: 72.5 - 23.6,
       boneMass: undefined,
       visceralFat: 8,
       bodyWater: undefined,
@@ -773,6 +791,9 @@ export class SamplePatientService {
     } as DeepPartial<Measurement>);
 
     await this.measurementRepository.save(initialMeasurement);
+    this.logger.log(
+      `[Sample] Medição 3 meses atrás: weight=72.5, fatMass=23.6, fatFreeMass=${72.5 - 23.6}`,
+    );
 
     // After saving the initial measurement (3 months ago), upload its photos
     await this.uploadPhotosForMeasurement(initialMeasurement, false);
@@ -791,7 +812,7 @@ export class SamplePatientService {
       fatMass: 22.1,
       muscleMassPercentage: 29.1,
       muscleMass: 20.6,
-      fatFreeMass: undefined,
+      fatFreeMass: 70.8 - 22.1,
       boneMass: undefined,
       visceralFat: 7.5,
       bodyWater: undefined,
@@ -838,6 +859,9 @@ export class SamplePatientService {
     } as DeepPartial<Measurement>);
 
     await this.measurementRepository.save(followUpMeasurement);
+    this.logger.log(
+      `[Sample] Medição 2 meses atrás: weight=70.8, fatMass=22.1, fatFreeMass=${70.8 - 22.1}`,
+    );
 
     // Create recent measurement (1 month ago)
     const recentDate = new Date();
@@ -853,7 +877,7 @@ export class SamplePatientService {
       fatMass: 20.4,
       muscleMassPercentage: 30.2,
       muscleMass: 20.7,
-      fatFreeMass: undefined,
+      fatFreeMass: 68.5 - 20.4,
       boneMass: undefined,
       visceralFat: 7,
       bodyWater: undefined,
@@ -900,6 +924,9 @@ export class SamplePatientService {
     } as DeepPartial<Measurement>);
 
     await this.measurementRepository.save(recentMeasurement);
+    this.logger.log(
+      `[Sample] Medição 1 mês atrás: weight=68.5, fatMass=20.4, fatFreeMass=${68.5 - 20.4}`,
+    );
 
     // After saving the most recent measurement, upload its photos
     await this.uploadPhotosForMeasurement(recentMeasurement, true);

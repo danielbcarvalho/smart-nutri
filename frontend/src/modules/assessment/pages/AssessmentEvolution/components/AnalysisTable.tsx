@@ -109,8 +109,6 @@ interface AnalysisParameter {
   getClassification?: (value: string | number) => string;
 }
 
-const MAX_COLUMNS = 3; // Mostrar as últimas 3 medições
-
 export function AnalysisTable({ measurements, patient }: AnalysisTableProps) {
   const theme = useTheme(); // Para zebra striping e cores consistentes
 
@@ -118,8 +116,8 @@ export function AnalysisTable({ measurements, patient }: AnalysisTableProps) {
     (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
   );
 
-  // Pegar apenas as últimas MAX_COLUMNS medições
-  const displayedMeasurements = sortedMeasurements.slice(-MAX_COLUMNS);
+  // Usar todas as medições disponíveis
+  const displayedMeasurements = sortedMeasurements;
 
   const patientAge = patient?.birthDate
     ? new Date().getFullYear() - new Date(patient.birthDate).getFullYear()
@@ -552,7 +550,9 @@ export function AnalysisTable({ measurements, patient }: AnalysisTableProps) {
                   color: "text.primary", // Menos chamativo que primary.main
                   fontSize: "0.875rem",
                   py: 0.5, // Padding vertical menor
-                  minWidth: 150, // Para garantir que o nome do parâmetro caiba
+                  width: "200px", // Largura fixa para a coluna de parâmetros
+                  minWidth: "200px", // Garante a largura mínima
+                  maxWidth: "200px", // Garante a largura máxima
                   borderBottom: `2px solid ${theme.palette.divider}`,
                 }}
               >

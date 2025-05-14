@@ -509,8 +509,7 @@ export const PhotoEvolutionSection: React.FC<PhotoEvolutionSectionProps> = ({
   dateRange,
 }) => {
   const theme = useTheme();
-  const [selectedPhotoType, setSelectedPhotoType] =
-    useState<PhotoType>("front");
+  const [selectedPhotoType, setSelectedPhotoType] = useState<PhotoType>("all");
   const [viewMode, setViewMode] = useState<ViewMode>("grid");
   const [selectedPhotos, setSelectedPhotos] = useState<SelectedPhotos>({});
   const [selectedPhoto, setSelectedPhoto] = useState<{
@@ -574,18 +573,44 @@ export const PhotoEvolutionSection: React.FC<PhotoEvolutionSectionProps> = ({
   // Auto-select the two most recent photos when changing type
   useEffect(() => {
     if (availablePhotos.length >= 2) {
-      setSelectedPhotos({
-        reference: {
-          ...availablePhotos[0].photo,
-          date: availablePhotos[0].date,
-          measurementData: availablePhotos[0].measurementData,
-        },
-        compare: {
-          ...availablePhotos[1].photo,
-          date: availablePhotos[1].date,
-          measurementData: availablePhotos[1].measurementData,
-        },
-      });
+      // Encontrar o tipo mais comum entre as fotos disponíveis
+      const photoTypes = availablePhotos.map((p) => p.photo.type);
+      const typeCount = photoTypes.reduce((acc, type) => {
+        acc[type] = (acc[type] || 0) + 1;
+        return acc;
+      }, {} as Record<string, number>);
+
+      const mostCommonType = Object.entries(typeCount).sort(
+        (a, b) => b[1] - a[1]
+      )[0][0];
+
+      // Filtrar fotos do tipo mais comum
+      const photosOfType = availablePhotos.filter(
+        (p) => p.photo.type === mostCommonType
+      );
+
+      if (photosOfType.length >= 2) {
+        setSelectedPhotos({
+          reference: {
+            ...photosOfType[0].photo,
+            date: photosOfType[0].date,
+            measurementData: photosOfType[0].measurementData,
+          },
+          compare: {
+            ...photosOfType[1].photo,
+            date: photosOfType[1].date,
+            measurementData: photosOfType[1].measurementData,
+          },
+        });
+      } else {
+        setSelectedPhotos({
+          reference: {
+            ...availablePhotos[0].photo,
+            date: availablePhotos[0].date,
+            measurementData: availablePhotos[0].measurementData,
+          },
+        });
+      }
     } else if (availablePhotos.length === 1) {
       setSelectedPhotos({
         reference: {
@@ -597,7 +622,7 @@ export const PhotoEvolutionSection: React.FC<PhotoEvolutionSectionProps> = ({
     } else {
       setSelectedPhotos({});
     }
-  }, [selectedPhotoType]);
+  }, [selectedPhotoType, availablePhotos]);
 
   // Handle photo type change
   const handlePhotoTypeChange = (
