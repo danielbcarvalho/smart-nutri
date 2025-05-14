@@ -31,7 +31,9 @@ export class MealPlan {
   @ApiProperty({ example: '123e4567-e89b-12d3-a456-426614174000' })
   patientId: string;
 
-  @ManyToOne(() => Patient, (patient) => patient.mealPlans)
+  @ManyToOne(() => Patient, (patient) => patient.mealPlans, {
+    onDelete: 'CASCADE',
+  })
   @JoinColumn({ name: 'patient_id' })
   @ApiProperty({ type: () => Patient })
   patient: Patient;

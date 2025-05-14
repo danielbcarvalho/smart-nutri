@@ -40,70 +40,8 @@ export class PatientsService {
       nutritionistId,
     };
 
-    const { email, cpf } = processedDto;
-
-    // Check if patient already exists with same email or CPF only if they are not empty
-    const whereConditions: FindOptionsWhere<Patient>[] = [];
-    if (email) {
-      whereConditions.push({
-        email,
-        nutritionistId,
-      } as FindOptionsWhere<Patient>);
-    }
-    if (cpf) {
-      whereConditions.push({
-        cpf,
-        nutritionistId,
-      } as FindOptionsWhere<Patient>);
-    }
-
-    if (whereConditions.length > 0) {
-      const existingPatient = await this.patientRepository.findOne({
-        where: whereConditions,
-      });
-
-      if (existingPatient) {
-        throw new ConflictException(
-          'Paciente já existe com o mesmo CPF ou email',
-        );
-      }
-    }
-
     const patient = this.patientRepository.create(processedDto);
     const savedPatient = await this.patientRepository.save(patient);
-
-    // Se foi informado instagram, tenta buscar a foto e salvar no Supabase
-    if (createPatientDto.instagram) {
-      try {
-        const username = createPatientDto.instagram.replace(/^@/, '');
-        const imageUrl =
-          await this.instagramScrapingService.getProfilePictureUrl(username);
-        if (imageUrl) {
-          const response = await axios.get(imageUrl, {
-            responseType: 'arraybuffer',
-          });
-          const buffer = Buffer.from(response.data);
-          const contentType = response.headers['content-type'] || 'image/jpeg';
-          const ext = contentType.split('/')[1] || 'jpg';
-          const filename = `profile-instagram-${Date.now()}.${ext}`;
-          const supabaseUrl = await this.storageService.uploadPatientPhoto(
-            savedPatient.id,
-            buffer,
-            filename,
-            contentType,
-          );
-          savedPatient.photoUrl = supabaseUrl;
-          await this.patientRepository.save(savedPatient);
-        }
-      } catch (e) {
-        // Loga mas não impede criação
-        console.warn(
-          'Falha ao buscar/salvar foto do Instagram do paciente:',
-          e.message,
-        );
-      }
-    }
-
     return savedPatient;
   }
 
@@ -132,31 +70,6 @@ export class PatientsService {
     nutritionistId: string,
   ): Promise<Patient> {
     const patient = await this.findOne(id, nutritionistId);
-
-    // Check if email or CPF is being updated and if it conflicts with existing patients
-    if (updatePatientDto.email || updatePatientDto.cpf) {
-      const { email = patient.email, cpf = patient.cpf } = updatePatientDto;
-      const existingPatient = await this.patientRepository.findOne({
-        where: [
-          {
-            email,
-            nutritionistId,
-            id: Not(id),
-          },
-          {
-            cpf,
-            nutritionistId,
-            id: Not(id),
-          },
-        ],
-      });
-
-      if (existingPatient) {
-        throw new ConflictException(
-          'Já existe um paciente com o mesmo CPF ou email',
-        );
-      }
-    }
 
     // Se o instagram foi alterado, faz scraping e salva nova foto
     if (

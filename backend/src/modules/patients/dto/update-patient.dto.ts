@@ -1,5 +1,12 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { IsString, IsOptional, IsEmail, Length, IsEnum } from 'class-validator';
+import {
+  IsString,
+  IsOptional,
+  IsEmail,
+  Length,
+  IsEnum,
+  IsArray,
+} from 'class-validator';
 import { Gender } from '../enums/gender.enum';
 
 export class UpdatePatientDto {
@@ -48,4 +55,22 @@ export class UpdatePatientDto {
   @IsString()
   @IsOptional()
   photoUrl?: string;
+
+  @ApiPropertyOptional({
+    description: 'Alergias do paciente',
+    example: ['Amendoim', 'Lactose'],
+    type: [String],
+  })
+  @IsOptional()
+  @IsArray()
+  allergies?: string[];
+
+  @ApiPropertyOptional({
+    description: 'Condições de saúde do paciente',
+    example: ['Diabetes', 'Hipertensão'],
+    type: [String],
+  })
+  @IsOptional()
+  @IsArray()
+  healthConditions?: string[];
 }

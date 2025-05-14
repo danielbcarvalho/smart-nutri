@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   Dialog,
   DialogTitle,
@@ -17,10 +18,15 @@ import {
   IconButton,
   Avatar,
   CircularProgress,
+  Collapse,
+  Chip,
 } from "@mui/material";
 import {
   Instagram as InstagramIcon,
   PhotoCamera as PhotoCameraIcon,
+  ExpandMore as ExpandMoreIcon,
+  ExpandLess as ExpandLessIcon,
+  Add as AddIcon,
 } from "@mui/icons-material";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import {
@@ -125,8 +131,13 @@ export function PatientFormModal({
   onSuccess,
   patient,
 }: PatientFormModalProps) {
+  const navigate = useNavigate();
   const queryClient = useQueryClient();
   const triggerRef = useRef<HTMLElement | null>(null);
+
+  const [showAdditionalData, setShowAdditionalData] = useState(false);
+  const [newAllergy, setNewAllergy] = useState("");
+  const [newHealthCondition, setNewHealthCondition] = useState("");
 
   const [formData, setFormData] = useState<
     Omit<Patient, "id" | "createdAt" | "updatedAt">
@@ -142,6 +153,10 @@ export function PatientFormModal({
     monitoringStatus: "in_progress",
     consultationFrequency: "monthly",
     photoUrl: "",
+    address: "",
+    observations: "",
+    allergies: [],
+    healthConditions: [],
   });
 
   // Estado para armazenar valores com máscara apenas para visualização
@@ -172,6 +187,10 @@ export function PatientFormModal({
         monitoringStatus: "in_progress",
         consultationFrequency: "monthly",
         photoUrl: "",
+        address: "",
+        observations: "",
+        allergies: [],
+        healthConditions: [],
       });
       setDisplayValues({
         phone: "",
@@ -205,6 +224,10 @@ export function PatientFormModal({
         monitoringStatus: patient.monitoringStatus || "in_progress",
         consultationFrequency: patient.consultationFrequency || "monthly",
         photoUrl: patient.photoUrl || "",
+        address: patient.address || "",
+        observations: patient.observations || "",
+        allergies: patient.allergies || [],
+        healthConditions: patient.healthConditions || [],
       });
 
       setDisplayValues({
@@ -239,6 +262,7 @@ export function PatientFormModal({
       }
       if (onSuccess) onSuccess();
       onClose();
+      navigate("/patients");
     },
   });
 
@@ -382,6 +406,47 @@ export function PatientFormModal({
       };
       reader.readAsDataURL(file);
     }
+  };
+
+  const handleAddAllergy = () => {
+    if (newAllergy.trim()) {
+      setFormData({
+        ...formData,
+        allergies: [...(formData.allergies || []), newAllergy.trim()],
+      });
+      setNewAllergy("");
+    }
+  };
+
+  const handleRemoveAllergy = (allergyToRemove: string) => {
+    setFormData({
+      ...formData,
+      allergies: (formData.allergies || []).filter(
+        (allergy) => allergy !== allergyToRemove
+      ),
+    });
+  };
+
+  const handleAddHealthCondition = () => {
+    if (newHealthCondition.trim()) {
+      setFormData({
+        ...formData,
+        healthConditions: [
+          ...(formData.healthConditions || []),
+          newHealthCondition.trim(),
+        ],
+      });
+      setNewHealthCondition("");
+    }
+  };
+
+  const handleRemoveHealthCondition = (conditionToRemove: string) => {
+    setFormData({
+      ...formData,
+      healthConditions: (formData.healthConditions || []).filter(
+        (condition) => condition !== conditionToRemove
+      ),
+    });
   };
 
   return (
@@ -594,6 +659,132 @@ export function PatientFormModal({
                 </RadioGroup>
               </FormControl>
             </Box>
+          </Box>
+
+          {/* Additional Data Section */}
+          <Box>
+            <Button
+              onClick={() => setShowAdditionalData(!showAdditionalData)}
+              startIcon={
+                showAdditionalData ? <ExpandLessIcon /> : <ExpandMoreIcon />
+              }
+              sx={{
+                color: "text.secondary",
+                justifyContent: "flex-start",
+                pl: 0,
+                "&:hover": {
+                  bgcolor: "transparent",
+                  color: "text.primary",
+                },
+              }}
+            >
+              Dados complementares
+            </Button>
+            <Collapse in={showAdditionalData}>
+              <Box
+                sx={{ mt: 2, display: "flex", flexDirection: "column", gap: 3 }}
+              >
+                <TextField
+                  label="Endereço"
+                  fullWidth
+                  multiline
+                  rows={3}
+                  value={formData.address}
+                  onChange={(e) =>
+                    setFormData({ ...formData, address: e.target.value })
+                  }
+                  placeholder="Digite o endereço completo do paciente"
+                />
+
+                <TextField
+                  label="Observações do Paciente"
+                  fullWidth
+                  multiline
+                  rows={3}
+                  value={formData.observations}
+                  onChange={(e) =>
+                    setFormData({ ...formData, observations: e.target.value })
+                  }
+                  placeholder="Digite observações importantes sobre o paciente"
+                />
+
+                {/* Alergias */}
+                <Box>
+                  <Typography variant="subtitle2" gutterBottom>
+                    Alergias
+                  </Typography>
+                  <Box sx={{ display: "flex", gap: 1, mb: 2 }}>
+                    <TextField
+                      size="small"
+                      fullWidth
+                      value={newAllergy}
+                      onChange={(e) => setNewAllergy(e.target.value)}
+                      placeholder="Adicionar alergia"
+                      onKeyPress={(e) => {
+                        if (e.key === "Enter") {
+                          e.preventDefault();
+                          handleAddAllergy();
+                        }
+                      }}
+                    />
+                    <IconButton
+                      onClick={handleAddAllergy}
+                      disabled={!newAllergy.trim()}
+                      color="primary"
+                    >
+                      <AddIcon />
+                    </IconButton>
+                  </Box>
+                  <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1 }}>
+                    {formData.allergies?.map((allergy) => (
+                      <Chip
+                        key={allergy}
+                        label={allergy}
+                        onDelete={() => handleRemoveAllergy(allergy)}
+                      />
+                    ))}
+                  </Box>
+                </Box>
+
+                {/* Condições de Saúde */}
+                <Box>
+                  <Typography variant="subtitle2" gutterBottom>
+                    Condições de Saúde
+                  </Typography>
+                  <Box sx={{ display: "flex", gap: 1, mb: 2 }}>
+                    <TextField
+                      size="small"
+                      fullWidth
+                      value={newHealthCondition}
+                      onChange={(e) => setNewHealthCondition(e.target.value)}
+                      placeholder="Adicionar condição de saúde"
+                      onKeyPress={(e) => {
+                        if (e.key === "Enter") {
+                          e.preventDefault();
+                          handleAddHealthCondition();
+                        }
+                      }}
+                    />
+                    <IconButton
+                      onClick={handleAddHealthCondition}
+                      disabled={!newHealthCondition.trim()}
+                      color="primary"
+                    >
+                      <AddIcon />
+                    </IconButton>
+                  </Box>
+                  <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1 }}>
+                    {formData.healthConditions?.map((condition) => (
+                      <Chip
+                        key={condition}
+                        label={condition}
+                        onDelete={() => handleRemoveHealthCondition(condition)}
+                      />
+                    ))}
+                  </Box>
+                </Box>
+              </Box>
+            </Collapse>
           </Box>
         </Box>
       </DialogContent>
