@@ -310,7 +310,7 @@ export function PatientFormModal({
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!validateName(formData.name)) {
       setErrors({
@@ -319,16 +319,29 @@ export function PatientFormModal({
       });
       return;
     }
-    if (patient) {
-      // Filtra apenas campos preenchidos para edição
-      const filteredData = Object.fromEntries(
-        Object.entries(formData).filter(
-          ([, value]) => value !== undefined && value !== null && value !== ""
-        )
-      ) as Partial<Omit<Patient, "id" | "createdAt" | "updatedAt">>;
-      updateMutation.mutate(filteredData);
-    } else {
-      createMutation.mutate(formData);
+
+    try {
+      if (patient) {
+        // Filtra apenas campos preenchidos para edição
+        const filteredData = Object.fromEntries(
+          Object.entries(formData).filter(
+            ([, value]) => value !== undefined && value !== null && value !== ""
+          )
+        ) as Partial<Omit<Patient, "id" | "createdAt" | "updatedAt">>;
+
+        await updateMutation.mutateAsync(filteredData);
+      } else {
+        await createMutation.mutateAsync(formData);
+      }
+
+      // Only close the modal after the mutation is complete
+      if (onSuccess) {
+        onSuccess();
+      }
+      onClose();
+    } catch (error) {
+      // Handle error if needed
+      console.error("Error submitting form:", error);
     }
   };
 
@@ -365,7 +378,23 @@ export function PatientFormModal({
   };
 
   return (
-    <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
+    <Dialog
+      open={open}
+      onClose={onClose}
+      maxWidth="md"
+      fullWidth
+      keepMounted={false}
+      disablePortal={false}
+      onTransitionEnd={() => {
+        // Ensure focus is returned to the trigger element when modal closes
+        if (!open) {
+          const triggerElement = document.activeElement;
+          if (triggerElement instanceof HTMLElement) {
+            triggerElement.focus();
+          }
+        }
+      }}
+    >
       <DialogTitle>{patient ? "Editar paciente" : "Novo paciente"}</DialogTitle>
       <DialogContent>
         <Box
