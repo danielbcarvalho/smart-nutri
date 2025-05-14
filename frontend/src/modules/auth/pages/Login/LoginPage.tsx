@@ -65,21 +65,6 @@ export function Login() {
     if (state?.error) {
       setError(state.error);
     }
-
-    // Verificar mensagens no localStorage
-    const storedError = localStorage.getItem("@smartnutri:loginError");
-    if (storedError) {
-      setError(storedError);
-      // Limpar após recuperar
-      localStorage.removeItem("@smartnutri:loginError");
-    }
-
-    const storedSuccess = localStorage.getItem("@smartnutri:loginSuccess");
-    if (storedSuccess) {
-      setSuccess(storedSuccess);
-      // Limpar após recuperar
-      localStorage.removeItem("@smartnutri:loginSuccess");
-    }
   }, [location]);
 
   const validateForm = (): boolean => {
@@ -147,25 +132,16 @@ export function Login() {
       const state = location.state as LocationState;
       const redirectPath = state?.from || "/";
 
-      // Armazenar mensagem de sucesso no localStorage antes do redirecionamento
-      localStorage.setItem(
-        "@smartnutri:loginSuccess",
-        "Login realizado com sucesso!"
-      );
-
-      navigate(redirectPath, { replace: true });
+      // Navegar com a mensagem de sucesso no estado
+      navigate(redirectPath, {
+        replace: true,
+        state: { message: "Login realizado com sucesso!" },
+      });
     } catch (err) {
       const apiError = err as ApiError;
       const errorMessage =
         apiError.response?.data?.message || "Ocorreu um erro ao fazer login";
-
-      // Armazenar mensagem de erro no localStorage
-      localStorage.setItem("@smartnutri:loginError", errorMessage);
-
-      // Definir o erro para exibição imediata (sem recarregar)
       setError(errorMessage);
-
-      // Se houver recarregamento da página, o erro será recuperado do localStorage
     } finally {
       setLoading(false);
     }
