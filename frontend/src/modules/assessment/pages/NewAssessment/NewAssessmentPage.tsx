@@ -279,17 +279,6 @@ export function NewAssessment() {
       ? new Date().getFullYear() - new Date(patient.birthDate).getFullYear()
       : 30;
 
-    console.log("Dados para cálculo:", {
-      gender: calculationGender,
-      age: calculationAge,
-      weight: parseFloat(basicData.weight),
-      height: parseFloat(basicData.height),
-      skinfolds,
-      circumferences,
-      boneDiameters,
-      skinfoldFormula,
-    });
-
     const results = calculateAnthropometricResults({
       gender: calculationGender,
       age: calculationAge,
@@ -340,7 +329,6 @@ export function NewAssessment() {
       skinfoldFormula,
     });
 
-    console.log("Resultados calculados:", results);
     return results;
   }, [
     basicData,

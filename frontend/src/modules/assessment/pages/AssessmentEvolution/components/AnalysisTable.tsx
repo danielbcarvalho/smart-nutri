@@ -166,7 +166,6 @@ export function AnalysisTable({ measurements, patient }: AnalysisTableProps) {
         return bodyFatPercentage.toFixed(1);
       },
       getVariation: (current, previous) => formatVariation(current - previous),
-      getClassification: () => "Adequada",
     },
     {
       label: "Massa de gordura (Kg)",
@@ -265,7 +264,7 @@ export function AnalysisTable({ measurements, patient }: AnalysisTableProps) {
     },
   ];
 
-  const anthropometricParameters: AnalysisParameter[] = [
+  const skinfoldParameters: AnalysisParameter[] = [
     {
       label: "Dobra Tricipital (mm)",
       getValue: (m) => formatNumber(m.skinfolds?.tricipital),
@@ -318,109 +317,232 @@ export function AnalysisTable({ measurements, patient }: AnalysisTableProps) {
     },
   ];
 
-  const renderTable = (title: string, parameters: AnalysisParameter[]) => (
-    <TableContainer sx={{ mb: 4 }}>
-      <Typography variant="h6" sx={{ p: 2, fontWeight: "bold" }}>
-        {title}
-      </Typography>
-      <Table>
-        <TableHead>
-          <TableRow>
-            <TableCell
-              sx={{
-                fontWeight: "bold",
-                color: "primary.main",
-                fontSize: "1rem",
-              }}
-            >
-              Parâmetro
-            </TableCell>
-            {sortedMeasurements.map((m) => (
+  const circumferenceParameters: AnalysisParameter[] = [
+    {
+      label: "Circunferência do Pescoço (cm)",
+      getValue: (m) => formatNumber(m.measurements?.neck),
+      getVariation: (current, previous) => formatVariation(current - previous),
+    },
+    {
+      label: "Circunferência dos Ombros (cm)",
+      getValue: (m) => formatNumber(m.measurements?.shoulder),
+      getVariation: (current, previous) => formatVariation(current - previous),
+    },
+    {
+      label: "Circunferência do Tórax (cm)",
+      getValue: (m) => formatNumber(m.measurements?.chest),
+      getVariation: (current, previous) => formatVariation(current - previous),
+    },
+    {
+      label: "Circunferência da Cintura (cm)",
+      getValue: (m) => formatNumber(m.measurements?.waist),
+      getVariation: (current, previous) => formatVariation(current - previous),
+    },
+    {
+      label: "Circunferência do Abdômen (cm)",
+      getValue: (m) => formatNumber(m.measurements?.abdomen),
+      getVariation: (current, previous) => formatVariation(current - previous),
+    },
+    {
+      label: "Circunferência do Quadril (cm)",
+      getValue: (m) => formatNumber(m.measurements?.hip),
+      getVariation: (current, previous) => formatVariation(current - previous),
+    },
+    {
+      label: "Braço Relaxado Esquerdo (cm)",
+      getValue: (m) => formatNumber(m.measurements?.relaxedArmLeft),
+      getVariation: (current, previous) => formatVariation(current - previous),
+    },
+    {
+      label: "Braço Relaxado Direito (cm)",
+      getValue: (m) => formatNumber(m.measurements?.relaxedArmRight),
+      getVariation: (current, previous) => formatVariation(current - previous),
+    },
+    {
+      label: "Braço Contraído Esquerdo (cm)",
+      getValue: (m) => formatNumber(m.measurements?.contractedArmLeft),
+      getVariation: (current, previous) => formatVariation(current - previous),
+    },
+    {
+      label: "Braço Contraído Direito (cm)",
+      getValue: (m) => formatNumber(m.measurements?.contractedArmRight),
+      getVariation: (current, previous) => formatVariation(current - previous),
+    },
+    {
+      label: "Antebraço Esquerdo (cm)",
+      getValue: (m) => formatNumber(m.measurements?.forearmLeft),
+      getVariation: (current, previous) => formatVariation(current - previous),
+    },
+    {
+      label: "Antebraço Direito (cm)",
+      getValue: (m) => formatNumber(m.measurements?.forearmRight),
+      getVariation: (current, previous) => formatVariation(current - previous),
+    },
+    {
+      label: "Coxa Proximal Esquerda (cm)",
+      getValue: (m) => formatNumber(m.measurements?.proximalThighLeft),
+      getVariation: (current, previous) => formatVariation(current - previous),
+    },
+    {
+      label: "Coxa Proximal Direita (cm)",
+      getValue: (m) => formatNumber(m.measurements?.proximalThighRight),
+      getVariation: (current, previous) => formatVariation(current - previous),
+    },
+    {
+      label: "Coxa Medial Esquerda (cm)",
+      getValue: (m) => formatNumber(m.measurements?.medialThighLeft),
+      getVariation: (current, previous) => formatVariation(current - previous),
+    },
+    {
+      label: "Coxa Medial Direita (cm)",
+      getValue: (m) => formatNumber(m.measurements?.medialThighRight),
+      getVariation: (current, previous) => formatVariation(current - previous),
+    },
+    {
+      label: "Coxa Distal Esquerda (cm)",
+      getValue: (m) => formatNumber(m.measurements?.distalThighLeft),
+      getVariation: (current, previous) => formatVariation(current - previous),
+    },
+    {
+      label: "Coxa Distal Direita (cm)",
+      getValue: (m) => formatNumber(m.measurements?.distalThighRight),
+      getVariation: (current, previous) => formatVariation(current - previous),
+    },
+    {
+      label: "Panturrilha Esquerda (cm)",
+      getValue: (m) => formatNumber(m.measurements?.calfLeft),
+      getVariation: (current, previous) => formatVariation(current - previous),
+    },
+    {
+      label: "Panturrilha Direita (cm)",
+      getValue: (m) => formatNumber(m.measurements?.calfRight),
+      getVariation: (current, previous) => formatVariation(current - previous),
+    },
+  ];
+
+  const renderTable = (title: string, parameters: AnalysisParameter[]) => {
+    // Filter parameters that have at least one value
+    const filteredParameters = parameters.filter((param) => {
+      return sortedMeasurements.some((measurement) => {
+        const value = param.getValue(measurement);
+        return value !== "-" && value !== null && value !== undefined;
+      });
+    });
+
+    // If no parameters have values, don't render the table
+    if (filteredParameters.length === 0) {
+      return null;
+    }
+
+    return (
+      <TableContainer sx={{ mb: 4 }}>
+        <Typography variant="h6" sx={{ p: 2, fontWeight: "bold" }}>
+          {title}
+        </Typography>
+        <Table>
+          <TableHead>
+            <TableRow>
               <TableCell
-                key={m.id}
-                align="center"
                 sx={{
                   fontWeight: "bold",
                   color: "primary.main",
-                  fontSize: "0.9rem",
+                  fontSize: "1rem",
                 }}
               >
-                {formatDate(m.date)}
+                Parâmetro
               </TableCell>
-            ))}
-          </TableRow>
-        </TableHead>
-        <TableBody>
-          {parameters.map((param, index) => (
-            <TableRow key={index}>
-              <TableCell component="th" scope="row" sx={{ fontWeight: "bold" }}>
-                {param.label}
-              </TableCell>
-              {sortedMeasurements.map((measurement, mIndex) => {
-                const value = param.getValue(measurement);
-                const prevValue =
-                  mIndex > 0
-                    ? param.getValue(sortedMeasurements[mIndex - 1])
-                    : null;
-                const variation =
-                  mIndex > 0 &&
-                  param.getVariation &&
-                  !isNaN(Number(value)) &&
-                  !isNaN(Number(prevValue))
-                    ? param.getVariation(Number(value), Number(prevValue))
-                    : "";
-                const classification = param.getClassification?.(value) || "";
+              {sortedMeasurements.map((m) => (
+                <TableCell
+                  key={m.id}
+                  align="center"
+                  sx={{
+                    fontWeight: "bold",
+                    color: "primary.main",
+                    fontSize: "0.9rem",
+                  }}
+                >
+                  {formatDate(m.date)}
+                </TableCell>
+              ))}
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {filteredParameters.map((param, index) => (
+              <TableRow key={index}>
+                <TableCell
+                  component="th"
+                  scope="row"
+                  sx={{ fontWeight: "bold" }}
+                >
+                  {param.label}
+                </TableCell>
+                {sortedMeasurements.map((measurement, mIndex) => {
+                  const value = param.getValue(measurement);
+                  const prevValue =
+                    mIndex > 0
+                      ? param.getValue(sortedMeasurements[mIndex - 1])
+                      : null;
+                  const variation =
+                    mIndex > 0 &&
+                    param.getVariation &&
+                    !isNaN(Number(value)) &&
+                    !isNaN(Number(prevValue))
+                      ? param.getVariation(Number(value), Number(prevValue))
+                      : "";
+                  const classification = param.getClassification?.(value) || "";
 
-                return (
-                  <TableCell key={measurement.id} align="center">
-                    <span
-                      style={{
-                        display: "inline-flex",
-                        alignItems: "center",
-                        gap: "4px",
-                      }}
-                    >
-                      <Typography component="span" sx={{ fontWeight: 500 }}>
-                        {value}
-                      </Typography>
-                      {variation && (
+                  return (
+                    <TableCell key={measurement.id} align="center">
+                      <span
+                        style={{
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: "4px",
+                        }}
+                      >
+                        <Typography component="span" sx={{ fontWeight: 500 }}>
+                          {value}
+                        </Typography>
+                        {variation && (
+                          <Typography
+                            component="span"
+                            color="text.secondary"
+                            sx={{
+                              fontSize: "0.7em",
+                              display: "inline-flex",
+                              alignItems: "center",
+                            }}
+                          >
+                            {variation}
+                          </Typography>
+                        )}
+                      </span>
+                      {classification && (
                         <Typography
-                          component="span"
+                          component="div"
+                          variant="caption"
                           color="text.secondary"
-                          sx={{
-                            fontSize: "0.7em",
-                            display: "inline-flex",
-                            alignItems: "center",
-                          }}
+                          sx={{ mt: 0.5 }}
                         >
-                          {variation}
+                          {classification}
                         </Typography>
                       )}
-                    </span>
-                    {classification && (
-                      <Typography
-                        component="div"
-                        variant="caption"
-                        color="text.secondary"
-                        sx={{ mt: 0.5 }}
-                      >
-                        {classification}
-                      </Typography>
-                    )}
-                  </TableCell>
-                );
-              })}
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
-    </TableContainer>
-  );
+                    </TableCell>
+                  );
+                })}
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </TableContainer>
+    );
+  };
 
   return (
     <>
       {renderTable("Análises básicas", parameters)}
-      {renderTable("Medidas antropométricas", anthropometricParameters)}
+      {renderTable("Circunferências (cm)", circumferenceParameters)}
+      {renderTable("Dobras cutâneas (mm)", skinfoldParameters)}
     </>
   );
 }
