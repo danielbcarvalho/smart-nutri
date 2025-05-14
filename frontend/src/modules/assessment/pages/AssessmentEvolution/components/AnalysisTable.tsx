@@ -36,8 +36,6 @@ interface AnalysisParameter {
 }
 
 export function AnalysisTable({ measurements, patient }: AnalysisTableProps) {
-  console.log("Medições recebidas na AnalysisTable:", measurements);
-
   const sortedMeasurements = [...measurements].sort(
     (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
   );
@@ -50,16 +48,6 @@ export function AnalysisTable({ measurements, patient }: AnalysisTableProps) {
   // Determina o gênero do paciente
   const patientGender =
     patient?.gender === "F" || patient?.gender === "FEMALE" ? "F" : "M";
-
-  console.log(
-    "Medições ordenadas:",
-    sortedMeasurements.map((m) => ({
-      date: m.date,
-      fatMass: m.fatMass,
-      fatFreeMass: m.fatFreeMass,
-      bodyFat: m.bodyFat,
-    }))
-  );
 
   const calculateIMC = (
     weight: number | string | null | undefined,

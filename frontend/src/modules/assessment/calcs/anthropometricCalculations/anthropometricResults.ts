@@ -146,8 +146,6 @@ export const calculateAnthropometricResults = ({
     skinfolds &&
     Object.values(skinfolds).some((value) => !isNaN(value) && value > 0)
   ) {
-    console.log("Iniciando cálculos com dobras cutâneas:", skinfolds);
-
     // Converte as dobras para o formato esperado
     const skinfoldValues: Record<string, string> = {};
     Object.entries(skinfolds).forEach(([key, value]) => {
@@ -158,7 +156,6 @@ export const calculateAnthropometricResults = ({
 
     // Obtém a fórmula selecionada
     const formula = bodyDensityFormulas.find((f) => f.id === skinfoldFormula);
-    console.log("Fórmula selecionada:", formula?.name);
 
     // Cálculo da densidade corporal
     const { density, referenceUsed } = calculateBodyDensity(
@@ -168,8 +165,6 @@ export const calculateAnthropometricResults = ({
       skinfoldFormula
     );
 
-    console.log("Densidade corporal calculada:", density);
-
     if (density > 0) {
       results.bodyDensity = density.toFixed(3);
       results.referenceUsed = referenceUsed;
@@ -177,7 +172,6 @@ export const calculateAnthropometricResults = ({
       // Cálculo do percentual de gordura usando a equação de Siri
       const bodyFatPercentage = calculateBodyFatPercentage(density);
       results.bodyFatPercentage = `${bodyFatPercentage.toFixed(1)}%`;
-      console.log("Percentual de gordura calculado:", bodyFatPercentage);
 
       // Classificação do percentual de gordura
       results.bodyFatClassification = getBodyFatClassification(
@@ -204,20 +198,13 @@ export const calculateAnthropometricResults = ({
 
       // Cálculos de composição corporal
       if (validWeight) {
-        console.log(
-          "Iniciando cálculos de composição corporal com peso:",
-          validWeight
-        );
-
         // Massa de gordura
         const fatMass = calculateFatMass(validWeight, bodyFatPercentage);
         results.fatMass = `${fatMass.toFixed(1)} kg`;
-        console.log("Massa gorda calculada:", fatMass);
 
         // Massa livre de gordura
         const fatFreeMass = validWeight - fatMass;
         results.fatFreeMass = `${fatFreeMass.toFixed(1)} kg`;
-        console.log("Massa livre de gordura calculada:", fatFreeMass);
 
         // Peso residual (baseado no gênero)
         const residualWeight = calculateResidualWeight(
@@ -251,14 +238,9 @@ export const calculateAnthropometricResults = ({
           );
           results.muscleMass = `${muscleMass.toFixed(1)} kg`;
         }
-      } else {
-        console.log("Não foi possível calcular a densidade corporal");
       }
-    } else {
-      console.log("Não foram encontradas dobras cutâneas válidas");
     }
   }
 
-  console.log("Resultados finais:", results);
   return results;
 };

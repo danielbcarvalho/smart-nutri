@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useMemo } from "react";
 import {
   Box,
   Typography,
@@ -382,6 +382,21 @@ export const PhotoGallery: React.FC<PhotoGalleryProps> = ({
     );
   };
 
+  // Group photos by type when in "all" mode
+  const groupedPhotos = useMemo(() => {
+    if (viewMode === "timeline") return photos;
+
+    const groups: { [key: string]: PhotoWithData[] } = {};
+    photos.forEach((photo) => {
+      const type = photo.photo.type;
+      if (!groups[type]) {
+        groups[type] = [];
+      }
+      groups[type].push(photo);
+    });
+    return groups;
+  }, [photos, viewMode]);
+
   if (isLoading) {
     return (
       <Box sx={{ display: "flex", justifyContent: "center", py: 8 }}>
@@ -427,36 +442,67 @@ export const PhotoGallery: React.FC<PhotoGalleryProps> = ({
           }
         />
       ) : (
-        <Box
-          sx={{
-            display: "grid",
-            gap: 3,
-            gridTemplateColumns: {
-              xs: "1fr",
-              sm: "repeat(2, 1fr)",
-              md: "repeat(3, 1fr)",
-            },
-          }}
-        >
-          {photos.map(({ photo, date, measurementData }, index) => (
-            <Box key={photo.id}>
-              <Slide
-                direction="up"
-                in={true}
-                timeout={300}
-                style={{ transitionDelay: `${index * 50}ms` }}
+        <Box>
+          {Object.entries(groupedPhotos).map(([type, typePhotos]) => (
+            <Box key={type} sx={{ mb: 4 }}>
+              <Typography
+                variant="subtitle1"
+                sx={{
+                  mb: 2,
+                  px: 2,
+                  py: 1,
+                  bgcolor: "primary.lighter",
+                  borderRadius: 1,
+                  color: "primary.dark",
+                }}
               >
-                <Box>
-                  <PhotoThumbnail
-                    photo={photo}
-                    date={formatDate(date)}
-                    measurementData={measurementData}
-                    isSelected={isPhotoSelected(photo.id)}
-                    onSelect={() => onPhotoSelect(photo, date, measurementData)}
-                    onClick={() => onPhotoClick(photo, date, measurementData)}
-                  />
-                </Box>
-              </Slide>
+                {type === "front"
+                  ? "Frente"
+                  : type === "back"
+                  ? "Costas"
+                  : type === "left"
+                  ? "Lateral Esquerda"
+                  : "Lateral Direita"}
+              </Typography>
+              <Box
+                sx={{
+                  display: "grid",
+                  gap: 3,
+                  gridTemplateColumns: {
+                    xs: "1fr",
+                    sm: "repeat(2, 1fr)",
+                    md: "repeat(3, 1fr)",
+                  },
+                }}
+              >
+                {typePhotos.map(
+                  ({ photo, date, measurementData }, index: number) => (
+                    <Box key={photo.id}>
+                      <Slide
+                        direction="up"
+                        in={true}
+                        timeout={300}
+                        style={{ transitionDelay: `${index * 50}ms` }}
+                      >
+                        <Box>
+                          <PhotoThumbnail
+                            photo={photo}
+                            date={formatDate(date)}
+                            measurementData={measurementData}
+                            isSelected={isPhotoSelected(photo.id)}
+                            onSelect={() =>
+                              onPhotoSelect(photo, date, measurementData)
+                            }
+                            onClick={() =>
+                              onPhotoClick(photo, date, measurementData)
+                            }
+                          />
+                        </Box>
+                      </Slide>
+                    </Box>
+                  )
+                )}
+              </Box>
             </Box>
           ))}
         </Box>

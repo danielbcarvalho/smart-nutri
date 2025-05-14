@@ -49,7 +49,7 @@ interface PhotoEvolutionSectionProps {
   };
 }
 
-type PhotoType = "front" | "back" | "left" | "right";
+type PhotoType = "all" | "front" | "back" | "left" | "right";
 type ViewMode = "grid" | "compare" | "timeline";
 
 interface MeasurementPhoto {
@@ -535,6 +535,7 @@ export const PhotoEvolutionSection: React.FC<PhotoEvolutionSectionProps> = ({
   // Get available photo types from measurements
   const availablePhotoTypes = useMemo(() => {
     const types = new Set<PhotoType>();
+    types.add("all"); // Add "all" type
     filteredMeasurements.forEach((measurement) => {
       measurement.photos?.forEach((photo: MeasurementPhoto) => {
         if (["front", "back", "left", "right"].includes(photo.type)) {
@@ -550,7 +551,7 @@ export const PhotoEvolutionSection: React.FC<PhotoEvolutionSectionProps> = ({
     const photos: PhotoWithData[] = [];
     filteredMeasurements.forEach((measurement) => {
       measurement.photos?.forEach((photo: MeasurementPhoto) => {
-        if (photo.type === selectedPhotoType) {
+        if (selectedPhotoType === "all" || photo.type === selectedPhotoType) {
           photos.push({
             photo,
             date: measurement.date,
@@ -799,7 +800,9 @@ export const PhotoEvolutionSection: React.FC<PhotoEvolutionSectionProps> = ({
                       minWidth: 100,
                     }}
                   >
-                    {type === "front"
+                    {type === "all"
+                      ? "Todos os tipos"
+                      : type === "front"
                       ? "Frente"
                       : type === "back"
                       ? "Costas"

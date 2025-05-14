@@ -77,25 +77,12 @@ export function AssessmentEvolution() {
     queryKey: ["all-measurements", patientId],
     queryFn: () => patientService.getMeasurements(patientId!),
     enabled: !!patientId,
-    // staleTime: 5 * 60 * 1000, // Opcional: manter dados frescos por 5 min
   });
-
-  console.log(
-    "Medições recebidas da API:",
-    allMeasurements?.map((m) => ({
-      date: m.date,
-      fatMass: m.fatMass,
-      fatFreeMass: m.fatFreeMass,
-      bodyFat: m.bodyFat,
-    }))
-  );
 
   // Filtrar medições localmente com base no período selecionado no estado 'dateRange'
   const filteredMeasurements = useMemo(() => {
     // Se não houver medições totais, retorna array vazio
     if (!allMeasurements) return [];
-
-    console.log("Todas as medições recebidas:", allMeasurements);
 
     // Tenta criar objetos Date a partir das strings do estado dateRange
     // Adiciona hora para garantir inclusão correta do início/fim do dia
@@ -120,7 +107,6 @@ export function AssessmentEvolution() {
       return true;
     });
 
-    console.log("Medições filtradas:", filtered);
     return filtered;
   }, [allMeasurements, dateRange]); // Recalcula SOMENTE se as medições totais ou o dateRange mudarem
 

@@ -22,12 +22,18 @@ export interface PhotoWithData {
 }
 
 export interface SelectedPhotos {
-  reference?: MeasurementPhoto & {
-    date?: string;
+  reference?: {
+    id: string;
+    type: string;
+    url: string;
+    date: string;
     measurementData?: MeasurementData;
   };
-  compare?: MeasurementPhoto & {
-    date?: string;
+  compare?: {
+    id: string;
+    type: string;
+    url: string;
+    date: string;
     measurementData?: MeasurementData;
   };
 }
