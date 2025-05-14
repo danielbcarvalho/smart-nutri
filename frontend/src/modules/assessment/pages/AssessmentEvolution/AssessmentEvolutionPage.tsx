@@ -178,12 +178,10 @@ export function AssessmentEvolution() {
               <Paper elevation={2} sx={{ p: 2 }}>
                 <CompositionChart measurements={filteredMeasurements} />
               </Paper>
-              <Paper elevation={2} sx={{ p: 2 }}>
-                <AnalysisTable
-                  measurements={filteredMeasurements}
-                  patient={patient}
-                />
-              </Paper>
+              <AnalysisTable
+                measurements={filteredMeasurements}
+                patient={patient}
+              />
             </>
           ) : (
             <Paper elevation={1} sx={{ p: 3, textAlign: "center" }}>

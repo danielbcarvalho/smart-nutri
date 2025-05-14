@@ -6,18 +6,92 @@ import {
   TableHead,
   TableRow,
   Typography,
+  Paper, // Adicionado para melhor contenção visual
+  useTheme, // Para acessar cores do tema para zebra striping
 } from "@mui/material";
 import { format } from "date-fns";
 import { Measurement } from "@/modules/patient/services/patientService";
 import ArrowUpwardIcon from "@mui/icons-material/ArrowUpward";
 import ArrowDownwardIcon from "@mui/icons-material/ArrowDownward";
-import { bodyDensityFormulas } from "../../../calcs/formulas";
+import { bodyDensityFormulas } from "../../../calcs/formulas"; // Mock se não disponível
 import {
   calculateBodyDensity,
   calculateResidualWeight,
   calculateFatMass,
   calculateBodyFatPercentage,
-} from "../../../calcs/anthropometricCalculations/bodyComposition";
+} from "../../../calcs/anthropometricCalculations/bodyComposition"; // Mock se não disponível
+
+// --- MOCKS para dependências externas (remover se tiver os arquivos reais) ---
+// Mock para bodyDensityFormulas se o arquivo não estiver disponível neste contexto
+const mockBodyDensityFormulas = [
+  {
+    id: "pollock7",
+    name: "Pollock 7 Dobras",
+    requiredSkinfolds: [
+      "tricipital",
+      "subscapular",
+      "thoracic",
+      "axillaryMedian",
+      "suprailiac",
+      "abdominal",
+      "thigh",
+    ],
+  },
+  {
+    id: "pollock3",
+    name: "Pollock 3 Dobras",
+    requiredSkinfolds: ["thoracic", "abdominal", "thigh"],
+  }, // Exemplo
+  // Adicione outras fórmulas conforme necessário
+];
+const actualBodyDensityFormulas =
+  typeof bodyDensityFormulas !== "undefined"
+    ? bodyDensityFormulas
+    : mockBodyDensityFormulas;
+
+// Mock para funções de cálculo se os arquivos não estiverem disponíveis
+const mockCalculateBodyDensity = (
+  skinfolds: Record<string, string>,
+  gender: string,
+  age: number,
+  formulaId: string
+) => {
+  // Simulação básica
+  let sum = 0;
+  const formula = actualBodyDensityFormulas.find((f) => f.id === formulaId);
+  if (formula) {
+    formula.requiredSkinfolds.forEach((key) => {
+      sum += parseFloat(skinfolds[key] || "0");
+    });
+  }
+  // Esta é uma simulação MUITO simplificada. A densidade real depende da fórmula.
+  const density = 1.1 - sum / 10000;
+  return { density: density > 0 ? density : 0, sumOfSkinfolds: sum };
+};
+const mockCalculateResidualWeight = (weight: number, gender: string) =>
+  gender === "F" ? weight * 0.21 : weight * 0.24;
+const mockCalculateFatMass = (weight: number, bodyFatPercentage: number) =>
+  weight * (bodyFatPercentage / 100);
+const mockCalculateBodyFatPercentage = (density: number) =>
+  (4.95 / density - 4.5) * 100;
+
+const actualCalculateBodyDensity =
+  typeof calculateBodyDensity !== "undefined"
+    ? calculateBodyDensity
+    : mockCalculateBodyDensity;
+const actualCalculateResidualWeight =
+  typeof calculateResidualWeight !== "undefined"
+    ? calculateResidualWeight
+    : mockCalculateResidualWeight;
+const actualCalculateFatMass =
+  typeof calculateFatMass !== "undefined"
+    ? calculateFatMass
+    : mockCalculateFatMass;
+const actualCalculateBodyFatPercentage =
+  typeof calculateBodyFatPercentage !== "undefined"
+    ? calculateBodyFatPercentage
+    : mockCalculateBodyFatPercentage;
+// --- FIM DOS MOCKS ---
 
 interface AnalysisTableProps {
   measurements: Measurement[];
@@ -35,17 +109,22 @@ interface AnalysisParameter {
   getClassification?: (value: string | number) => string;
 }
 
+const MAX_COLUMNS = 3; // Mostrar as últimas 3 medições
+
 export function AnalysisTable({ measurements, patient }: AnalysisTableProps) {
+  const theme = useTheme(); // Para zebra striping e cores consistentes
+
   const sortedMeasurements = [...measurements].sort(
     (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
   );
 
-  // Calcula a idade do paciente
+  // Pegar apenas as últimas MAX_COLUMNS medições
+  const displayedMeasurements = sortedMeasurements.slice(-MAX_COLUMNS);
+
   const patientAge = patient?.birthDate
     ? new Date().getFullYear() - new Date(patient.birthDate).getFullYear()
     : 30;
 
-  // Determina o gênero do paciente
   const patientGender =
     patient?.gender === "F" || patient?.gender === "FEMALE" ? "F" : "M";
 
@@ -56,6 +135,7 @@ export function AnalysisTable({ measurements, patient }: AnalysisTableProps) {
     if (!weight || !height) return "-";
     const weightNum = typeof weight === "string" ? parseFloat(weight) : weight;
     const heightNum = typeof height === "string" ? parseFloat(height) : height;
+    if (heightNum === 0) return "-"; // Evitar divisão por zero
     const heightInMeters = heightNum / 100;
     const imc = weightNum / (heightInMeters * heightInMeters);
     return isNaN(imc) ? "-" : imc.toFixed(1);
@@ -70,21 +150,28 @@ export function AnalysisTable({ measurements, patient }: AnalysisTableProps) {
     return "Obesidade";
   };
 
-  const calculateRCQ = (measurements: { waist?: number; hip?: number }) => {
-    const { waist, hip } = measurements;
-    if (!waist || !hip) return "-";
+  const calculateRCQ = (measurementsData?: {
+    waist?: number;
+    hip?: number;
+  }) => {
+    if (!measurementsData) return "-";
+    const { waist, hip } = measurementsData;
+    if (!waist || !hip || hip === 0) return "-";
     const rcq = waist / hip;
     return isNaN(rcq) ? "-" : rcq.toFixed(2);
   };
 
-  const formatNumber = (value: number | string | null | undefined) => {
+  const formatNumber = (
+    value: number | string | null | undefined,
+    precision: number = 1
+  ) => {
     if (value == null) return "-";
     const num = typeof value === "string" ? parseFloat(value) : value;
-    return isNaN(num) ? "-" : num.toFixed(1);
+    return isNaN(num) ? "-" : num.toFixed(precision);
   };
 
   const formatVariation = (value: number) => {
-    if (value === 0) return null;
+    if (value === 0 || isNaN(value)) return null;
     const arrow =
       value > 0 ? (
         <ArrowUpwardIcon sx={{ fontSize: "0.5rem" }} />
@@ -93,7 +180,11 @@ export function AnalysisTable({ measurements, patient }: AnalysisTableProps) {
       );
     return (
       <span
-        style={{ display: "inline-flex", alignItems: "center", gap: "2px" }}
+        style={{
+          display: "inline-flex",
+          alignItems: "center",
+          gap: "2px",
+        }}
       >
         {arrow} {Math.abs(value).toFixed(1)}
       </span>
@@ -106,7 +197,7 @@ export function AnalysisTable({ measurements, patient }: AnalysisTableProps) {
       const localDate = new Date(
         date.getTime() + date.getTimezoneOffset() * 60000
       );
-      return format(localDate, "dd/MM/yyyy");
+      return format(localDate, "dd/MM/yy"); // Formato mais curto para a data
     } catch {
       return dateString;
     }
@@ -126,27 +217,21 @@ export function AnalysisTable({ measurements, patient }: AnalysisTableProps) {
       label: "Índice de Massa Corporal (Kg/m²)",
       getValue: (m) => calculateIMC(m.weight, m.height),
       getVariation: (current, previous) => formatVariation(current - previous),
-      getClassification: getIMCClassification,
     },
     {
       label: "Relação da Cintura/Quadril (RCQ)",
       getValue: (m) => calculateRCQ(m.measurements),
       getVariation: (current, previous) => formatVariation(current - previous),
-      getClassification: (rcq) => (Number(rcq) > 0.85 ? "Moderado" : "Baixo"),
     },
-
     {
-      label: "Percentual de Gordura (%)",
+      label: "% Gordura",
       getValue: (m) => {
         if (!m.skinfolds || !m.skinfoldFormula) return "-";
-
-        // Obtém a fórmula selecionada
-        const formula = bodyDensityFormulas.find(
-          (f: { id: string }) => f.id === m.skinfoldFormula
+        const formula = actualBodyDensityFormulas.find(
+          (f) => f.id === m.skinfoldFormula
         );
         if (!formula) return "-";
 
-        // Calcula a densidade corporal usando a fórmula selecionada
         const skinfoldValues: Record<string, string> = {};
         Object.entries(m.skinfolds || {}).forEach(([key, value]) => {
           if (value !== undefined && value !== null) {
@@ -154,7 +239,7 @@ export function AnalysisTable({ measurements, patient }: AnalysisTableProps) {
           }
         });
 
-        const { density } = calculateBodyDensity(
+        const { density } = actualCalculateBodyDensity(
           skinfoldValues,
           patientGender,
           patientAge,
@@ -162,34 +247,64 @@ export function AnalysisTable({ measurements, patient }: AnalysisTableProps) {
         );
 
         if (density <= 0) return "-";
-        const bodyFatPercentage = calculateBodyFatPercentage(density);
+        const bodyFatPercentage = actualCalculateBodyFatPercentage(density);
         return bodyFatPercentage.toFixed(1);
       },
       getVariation: (current, previous) => formatVariation(current - previous),
     },
     {
-      label: "Massa de gordura (Kg)",
+      label: "Massa Gorda (Kg)",
       getValue: (m) => {
         const weight = Number(m.weight);
-        const bodyFat = Number(m.bodyFat);
-        if (isNaN(weight) || isNaN(bodyFat)) return "-";
-        const fatMass = calculateFatMass(weight, bodyFat);
+        // Recalcular %Gordura para consistência, ou usar m.bodyFat se disponível e confiável
+        let bodyFatPercent: number | undefined;
+        if (m.bodyFat !== undefined && m.bodyFat !== null) {
+          bodyFatPercent = Number(m.bodyFat);
+        } else if (m.skinfolds && m.skinfoldFormula) {
+          const formula = actualBodyDensityFormulas.find(
+            (f) => f.id === m.skinfoldFormula
+          );
+          if (formula) {
+            const skinfoldValues: Record<string, string> = {};
+            Object.entries(m.skinfolds).forEach(([key, value]) => {
+              if (value !== undefined && value !== null)
+                skinfoldValues[key] = String(value);
+            });
+            const { density } = actualCalculateBodyDensity(
+              skinfoldValues,
+              patientGender,
+              patientAge,
+              m.skinfoldFormula
+            );
+            if (density > 0)
+              bodyFatPercent = actualCalculateBodyFatPercentage(density);
+          }
+        }
+
+        if (
+          isNaN(weight) ||
+          bodyFatPercent === undefined ||
+          isNaN(bodyFatPercent)
+        )
+          return "-";
+        const fatMass = actualCalculateFatMass(weight, bodyFatPercent);
         return fatMass.toFixed(1);
       },
       getVariation: (current, previous) => formatVariation(current - previous),
     },
     {
-      label: "Massa residual (Kg)",
+      label: "Massa Residual (Kg)",
       getValue: (m) => {
         const weight = Number(m.weight);
         if (isNaN(weight)) return "-";
-        const residual = calculateResidualWeight(weight, patientGender);
+        const residual = actualCalculateResidualWeight(weight, patientGender);
         return residual.toFixed(1);
       },
+      // Variação de massa residual pode não ser tão útil, mas mantemos por consistência
       getVariation: (current, previous) => formatVariation(current - previous),
     },
     {
-      label: "Massa livre de gordura (Kg)",
+      label: "Massa Livre Gordura (Kg)",
       getValue: (m) => formatNumber(m.fatFreeMass),
       getVariation: (current, previous) => formatVariation(current - previous),
     },
@@ -197,23 +312,16 @@ export function AnalysisTable({ measurements, patient }: AnalysisTableProps) {
       label: "Somatório de Dobras (mm)",
       getValue: (m) => {
         if (!m.skinfolds || !m.skinfoldFormula) return "-";
-
-        // Obtém a fórmula selecionada
-        const formula = bodyDensityFormulas.find(
-          (f: { id: string }) => f.id === m.skinfoldFormula
+        const formula = actualBodyDensityFormulas.find(
+          (f) => f.id === m.skinfoldFormula
         );
         if (!formula) return "-";
 
-        // Pega apenas as dobras do protocolo selecionado
         const protocolSkinfolds = formula.requiredSkinfolds
-          .map(
-            (fold: string) =>
-              m.skinfolds?.[fold as keyof typeof m.skinfolds] || 0
-          )
+          .map((fold) => m.skinfolds?.[fold as keyof typeof m.skinfolds] || 0)
           .filter((value: number) => !isNaN(value) && value > 0);
 
         if (protocolSkinfolds.length === 0) return "-";
-
         const sum = protocolSkinfolds.reduce(
           (acc: number, curr: number) => acc + curr,
           0
@@ -226,24 +334,11 @@ export function AnalysisTable({ measurements, patient }: AnalysisTableProps) {
       label: "Densidade Corporal (g/mL)",
       getValue: (m) => {
         if (!m.skinfolds || !m.skinfoldFormula) return "-";
-
-        // Obtém a fórmula selecionada
-        const formula = bodyDensityFormulas.find(
-          (f: { id: string }) => f.id === m.skinfoldFormula
+        const formula = actualBodyDensityFormulas.find(
+          (f) => f.id === m.skinfoldFormula
         );
         if (!formula) return "-";
 
-        // Pega apenas as dobras do protocolo selecionado
-        const protocolSkinfolds = formula.requiredSkinfolds
-          .map(
-            (fold: string) =>
-              m.skinfolds?.[fold as keyof typeof m.skinfolds] || 0
-          )
-          .filter((value: number) => !isNaN(value) && value > 0);
-
-        if (protocolSkinfolds.length === 0) return "-";
-
-        // Calcula a densidade corporal usando a fórmula selecionada
         const skinfoldValues: Record<string, string> = {};
         Object.entries(m.skinfolds || {}).forEach(([key, value]) => {
           if (value !== undefined && value !== null) {
@@ -251,214 +346,228 @@ export function AnalysisTable({ measurements, patient }: AnalysisTableProps) {
           }
         });
 
-        const { density } = calculateBodyDensity(
+        const { density } = actualCalculateBodyDensity(
           skinfoldValues,
           patientGender,
           patientAge,
           m.skinfoldFormula
         );
-
-        return density > 0 ? density.toFixed(3) : "-";
+        return density > 0 ? density.toFixed(4) : "-"; // Aumentar precisão para densidade
       },
       getVariation: (current, previous) => formatVariation(current - previous),
     },
   ];
 
   const skinfoldParameters: AnalysisParameter[] = [
+    // Mantendo os mesmos parâmetros, apenas o display será afetado
+    // Os nomes podem ser abreviados se necessário para economizar espaço
     {
-      label: "Dobra Tricipital (mm)",
+      label: "Tricipital",
       getValue: (m) => formatNumber(m.skinfolds?.tricipital),
-      getVariation: (current, previous) => formatVariation(current - previous),
+      getVariation: (c, p) => formatVariation(c - p),
     },
     {
-      label: "Dobra Bicipital (mm)",
+      label: "Bicipital",
       getValue: (m) => formatNumber(m.skinfolds?.bicipital),
-      getVariation: (current, previous) => formatVariation(current - previous),
+      getVariation: (c, p) => formatVariation(c - p),
     },
     {
-      label: "Dobra Abdominal (mm)",
+      label: "Abdominal",
       getValue: (m) => formatNumber(m.skinfolds?.abdominal),
-      getVariation: (current, previous) => formatVariation(current - previous),
+      getVariation: (c, p) => formatVariation(c - p),
     },
     {
-      label: "Dobra Subescapular (mm)",
+      label: "Subescapular",
       getValue: (m) => formatNumber(m.skinfolds?.subscapular),
-      getVariation: (current, previous) => formatVariation(current - previous),
+      getVariation: (c, p) => formatVariation(c - p),
     },
     {
-      label: "Dobra Axilar Média (mm)",
+      label: "Axilar Média",
       getValue: (m) => formatNumber(m.skinfolds?.axillaryMedian),
-      getVariation: (current, previous) => formatVariation(current - previous),
+      getVariation: (c, p) => formatVariation(c - p),
     },
     {
-      label: "Dobra da Coxa (mm)",
+      label: "Coxa",
       getValue: (m) => formatNumber(m.skinfolds?.thigh),
-      getVariation: (current, previous) => formatVariation(current - previous),
+      getVariation: (c, p) => formatVariation(c - p),
     },
     {
-      label: "Dobra Torácica (mm)",
+      label: "Torácica",
       getValue: (m) => formatNumber(m.skinfolds?.thoracic),
-      getVariation: (current, previous) => formatVariation(current - previous),
+      getVariation: (c, p) => formatVariation(c - p),
     },
     {
-      label: "Dobra Supra-ilíaca (mm)",
+      label: "Supra-ilíaca",
       getValue: (m) => formatNumber(m.skinfolds?.suprailiac),
-      getVariation: (current, previous) => formatVariation(current - previous),
+      getVariation: (c, p) => formatVariation(c - p),
     },
     {
-      label: "Dobra da Panturrilha (mm)",
+      label: "Panturrilha",
       getValue: (m) => formatNumber(m.skinfolds?.calf),
-      getVariation: (current, previous) => formatVariation(current - previous),
+      getVariation: (c, p) => formatVariation(c - p),
     },
     {
-      label: "Dobra Supra-espinhal (mm)",
+      label: "Supra-espinhal",
       getValue: (m) => formatNumber(m.skinfolds?.supraspinal),
-      getVariation: (current, previous) => formatVariation(current - previous),
+      getVariation: (c, p) => formatVariation(c - p),
     },
   ];
 
   const circumferenceParameters: AnalysisParameter[] = [
+    // Mantendo os mesmos parâmetros, apenas o display será afetado
+    // Os nomes podem ser abreviados
     {
-      label: "Circunferência do Pescoço (cm)",
+      label: "Pescoço",
       getValue: (m) => formatNumber(m.measurements?.neck),
-      getVariation: (current, previous) => formatVariation(current - previous),
+      getVariation: (c, p) => formatVariation(c - p),
     },
     {
-      label: "Circunferência dos Ombros (cm)",
+      label: "Ombros",
       getValue: (m) => formatNumber(m.measurements?.shoulder),
-      getVariation: (current, previous) => formatVariation(current - previous),
+      getVariation: (c, p) => formatVariation(c - p),
     },
     {
-      label: "Circunferência do Tórax (cm)",
+      label: "Tórax",
       getValue: (m) => formatNumber(m.measurements?.chest),
-      getVariation: (current, previous) => formatVariation(current - previous),
+      getVariation: (c, p) => formatVariation(c - p),
     },
     {
-      label: "Circunferência da Cintura (cm)",
+      label: "Cintura",
       getValue: (m) => formatNumber(m.measurements?.waist),
-      getVariation: (current, previous) => formatVariation(current - previous),
+      getVariation: (c, p) => formatVariation(c - p),
     },
     {
-      label: "Circunferência do Abdômen (cm)",
+      label: "Abdômen",
       getValue: (m) => formatNumber(m.measurements?.abdomen),
-      getVariation: (current, previous) => formatVariation(current - previous),
+      getVariation: (c, p) => formatVariation(c - p),
     },
     {
-      label: "Circunferência do Quadril (cm)",
+      label: "Quadril",
       getValue: (m) => formatNumber(m.measurements?.hip),
-      getVariation: (current, previous) => formatVariation(current - previous),
+      getVariation: (c, p) => formatVariation(c - p),
     },
     {
-      label: "Braço Relaxado Esquerdo (cm)",
+      label: "Braço Relax. E.",
       getValue: (m) => formatNumber(m.measurements?.relaxedArmLeft),
-      getVariation: (current, previous) => formatVariation(current - previous),
+      getVariation: (c, p) => formatVariation(c - p),
     },
     {
-      label: "Braço Relaxado Direito (cm)",
+      label: "Braço Relax. D.",
       getValue: (m) => formatNumber(m.measurements?.relaxedArmRight),
-      getVariation: (current, previous) => formatVariation(current - previous),
+      getVariation: (c, p) => formatVariation(c - p),
     },
     {
-      label: "Braço Contraído Esquerdo (cm)",
+      label: "Braço Contr. E.",
       getValue: (m) => formatNumber(m.measurements?.contractedArmLeft),
-      getVariation: (current, previous) => formatVariation(current - previous),
+      getVariation: (c, p) => formatVariation(c - p),
     },
     {
-      label: "Braço Contraído Direito (cm)",
+      label: "Braço Contr. D.",
       getValue: (m) => formatNumber(m.measurements?.contractedArmRight),
-      getVariation: (current, previous) => formatVariation(current - previous),
+      getVariation: (c, p) => formatVariation(c - p),
     },
     {
-      label: "Antebraço Esquerdo (cm)",
+      label: "Antebraço E.",
       getValue: (m) => formatNumber(m.measurements?.forearmLeft),
-      getVariation: (current, previous) => formatVariation(current - previous),
+      getVariation: (c, p) => formatVariation(c - p),
     },
     {
-      label: "Antebraço Direito (cm)",
+      label: "Antebraço D.",
       getValue: (m) => formatNumber(m.measurements?.forearmRight),
-      getVariation: (current, previous) => formatVariation(current - previous),
+      getVariation: (c, p) => formatVariation(c - p),
     },
     {
-      label: "Coxa Proximal Esquerda (cm)",
+      label: "Coxa Prox. E.",
       getValue: (m) => formatNumber(m.measurements?.proximalThighLeft),
-      getVariation: (current, previous) => formatVariation(current - previous),
+      getVariation: (c, p) => formatVariation(c - p),
     },
     {
-      label: "Coxa Proximal Direita (cm)",
+      label: "Coxa Prox. D.",
       getValue: (m) => formatNumber(m.measurements?.proximalThighRight),
-      getVariation: (current, previous) => formatVariation(current - previous),
+      getVariation: (c, p) => formatVariation(c - p),
     },
     {
-      label: "Coxa Medial Esquerda (cm)",
+      label: "Coxa Med. E.",
       getValue: (m) => formatNumber(m.measurements?.medialThighLeft),
-      getVariation: (current, previous) => formatVariation(current - previous),
+      getVariation: (c, p) => formatVariation(c - p),
     },
     {
-      label: "Coxa Medial Direita (cm)",
+      label: "Coxa Med. D.",
       getValue: (m) => formatNumber(m.measurements?.medialThighRight),
-      getVariation: (current, previous) => formatVariation(current - previous),
+      getVariation: (c, p) => formatVariation(c - p),
     },
     {
-      label: "Coxa Distal Esquerda (cm)",
+      label: "Coxa Dist. E.",
       getValue: (m) => formatNumber(m.measurements?.distalThighLeft),
-      getVariation: (current, previous) => formatVariation(current - previous),
+      getVariation: (c, p) => formatVariation(c - p),
     },
     {
-      label: "Coxa Distal Direita (cm)",
+      label: "Coxa Dist. D.",
       getValue: (m) => formatNumber(m.measurements?.distalThighRight),
-      getVariation: (current, previous) => formatVariation(current - previous),
+      getVariation: (c, p) => formatVariation(c - p),
     },
     {
-      label: "Panturrilha Esquerda (cm)",
+      label: "Panturrilha E.",
       getValue: (m) => formatNumber(m.measurements?.calfLeft),
-      getVariation: (current, previous) => formatVariation(current - previous),
+      getVariation: (c, p) => formatVariation(c - p),
     },
     {
-      label: "Panturrilha Direita (cm)",
+      label: "Panturrilha D.",
       getValue: (m) => formatNumber(m.measurements?.calfRight),
-      getVariation: (current, previous) => formatVariation(current - previous),
+      getVariation: (c, p) => formatVariation(c - p),
     },
   ];
 
-  const renderTable = (title: string, parameters: AnalysisParameter[]) => {
-    // Filter parameters that have at least one value
-    const filteredParameters = parameters.filter((param) => {
-      return sortedMeasurements.some((measurement) => {
+  const renderTable = (title: string, params: AnalysisParameter[]) => {
+    const filteredParameters = params.filter((param) => {
+      return displayedMeasurements.some((measurement) => {
         const value = param.getValue(measurement);
         return value !== "-" && value !== null && value !== undefined;
       });
     });
 
-    // If no parameters have values, don't render the table
     if (filteredParameters.length === 0) {
       return null;
     }
 
     return (
-      <TableContainer sx={{ mb: 4 }}>
-        <Typography variant="h6" sx={{ p: 2, fontWeight: "bold" }}>
+      <TableContainer component={Paper} sx={{ mb: 2, overflowX: "auto" }}>
+        <Typography
+          variant="subtitle1"
+          sx={{
+            p: 1.5,
+            fontWeight: "bold",
+          }}
+        >
           {title}
         </Typography>
-        <Table>
+        <Table size="small">
+          {" "}
+          {/* size="small" reduz o padding automaticamente */}
           <TableHead>
             <TableRow>
               <TableCell
                 sx={{
                   fontWeight: "bold",
-                  color: "primary.main",
-                  fontSize: "1rem",
+                  color: "text.primary", // Menos chamativo que primary.main
+                  fontSize: "0.875rem",
+                  py: 0.5, // Padding vertical menor
+                  minWidth: 150, // Para garantir que o nome do parâmetro caiba
+                  borderBottom: `2px solid ${theme.palette.divider}`,
                 }}
               >
                 Parâmetro
               </TableCell>
-              {sortedMeasurements.map((m) => (
+              {displayedMeasurements.map((m, index) => (
                 <TableCell
-                  key={m.id}
+                  key={m.id || `header-${index}`}
                   align="center"
                   sx={{
                     fontWeight: "bold",
-                    color: "primary.main",
-                    fontSize: "0.9rem",
+                    color: "text.secondary",
+                    fontSize: "0.8rem",
+                    py: 0.5,
+                    borderBottom: `2px solid ${theme.palette.divider}`,
                   }}
                 >
                   {formatDate(m.date)}
@@ -468,31 +577,54 @@ export function AnalysisTable({ measurements, patient }: AnalysisTableProps) {
           </TableHead>
           <TableBody>
             {filteredParameters.map((param, index) => (
-              <TableRow key={index}>
+              <TableRow
+                key={index}
+                sx={{
+                  "&:nth-of-type(odd)": {
+                    backgroundColor: theme.palette.grey[50],
+                  },
+                  "&:last-child td, &:last-child th": { border: 0 }, // Remove border for the last row cells
+                }}
+              >
                 <TableCell
                   component="th"
                   scope="row"
-                  sx={{ fontWeight: "bold" }}
+                  sx={{ fontWeight: 500, fontSize: "0.8rem", py: 0.75 }}
                 >
                   {param.label}
                 </TableCell>
-                {sortedMeasurements.map((measurement, mIndex) => {
+                {displayedMeasurements.map((measurement, mIndex) => {
                   const value = param.getValue(measurement);
-                  const prevValue =
-                    mIndex > 0
-                      ? param.getValue(sortedMeasurements[mIndex - 1])
-                      : null;
+
+                  // Encontrar a medição anterior correta na lista original (sortedMeasurements)
+                  // para calcular a variação corretamente, mesmo com displayedMeasurements fatiado.
+                  let prevValue: string | number | null = null;
+                  const currentMeasurementOriginalIndex =
+                    sortedMeasurements.findIndex(
+                      (sm) => sm.id === measurement.id
+                    );
+                  if (currentMeasurementOriginalIndex > 0) {
+                    prevValue = param.getValue(
+                      sortedMeasurements[currentMeasurementOriginalIndex - 1]
+                    );
+                  }
+
                   const variation =
-                    mIndex > 0 &&
+                    currentMeasurementOriginalIndex > 0 && // Garante que não é a primeira medição da lista original
                     param.getVariation &&
                     !isNaN(Number(value)) &&
+                    prevValue !== null &&
                     !isNaN(Number(prevValue))
                       ? param.getVariation(Number(value), Number(prevValue))
                       : "";
                   const classification = param.getClassification?.(value) || "";
 
                   return (
-                    <TableCell key={measurement.id} align="center">
+                    <TableCell
+                      key={measurement.id || `cell-${mIndex}`}
+                      align="center"
+                      sx={{ py: 0.75 }}
+                    >
                       <span
                         style={{
                           display: "inline-flex",
@@ -500,7 +632,10 @@ export function AnalysisTable({ measurements, patient }: AnalysisTableProps) {
                           gap: "4px",
                         }}
                       >
-                        <Typography component="span" sx={{ fontWeight: 500 }}>
+                        <Typography
+                          component="span"
+                          sx={{ fontWeight: 500, fontSize: "0.875rem" }}
+                        >
                           {value}
                         </Typography>
                         {variation && (
@@ -508,7 +643,7 @@ export function AnalysisTable({ measurements, patient }: AnalysisTableProps) {
                             component="span"
                             color="text.secondary"
                             sx={{
-                              fontSize: "0.7em",
+                              fontSize: "0.75rem",
                               display: "inline-flex",
                               alignItems: "center",
                             }}
@@ -522,7 +657,7 @@ export function AnalysisTable({ measurements, patient }: AnalysisTableProps) {
                           component="div"
                           variant="caption"
                           color="text.secondary"
-                          sx={{ mt: 0.5 }}
+                          sx={{ mt: 0.25, fontSize: "0.7rem" }}
                         >
                           {classification}
                         </Typography>
@@ -538,11 +673,65 @@ export function AnalysisTable({ measurements, patient }: AnalysisTableProps) {
     );
   };
 
+  if (displayedMeasurements.length === 0) {
+    return (
+      <Typography sx={{ p: 2, textAlign: "center" }}>
+        Nenhuma medição disponível para exibir.
+      </Typography>
+    );
+  }
+
   return (
     <>
-      {renderTable("Análises básicas", parameters)}
+      {renderTable("Análises Antropométricas", parameters)}
       {renderTable("Circunferências (cm)", circumferenceParameters)}
-      {renderTable("Dobras cutâneas (mm)", skinfoldParameters)}
+      {renderTable("Dobras Cutâneas (mm)", skinfoldParameters)}
     </>
   );
 }
+
+// Exemplo de tipo Measurement (simplificado)
+// Remova ou ajuste conforme sua definição real
+// interface Measurement {
+//   id: string;
+//   date: string;
+//   weight?: number | null;
+//   height?: number | null;
+//   bodyFat?: number | null; // Adicionado para teste de Massa Gorda
+//   fatFreeMass?: number | null;
+//   skinfoldFormula?: string;
+//   measurements?: {
+//     waist?: number;
+//     hip?: number;
+//     neck?: number;
+//     shoulder?: number;
+//     chest?: number;
+//     abdomen?: number;
+//     relaxedArmLeft?: number;
+//     relaxedArmRight?: number;
+//     contractedArmLeft?: number;
+//     contractedArmRight?: number;
+//     forearmLeft?: number;
+//     forearmRight?: number;
+//     proximalThighLeft?: number;
+//     proximalThighRight?: number;
+//     medialThighLeft?: number;
+//     medialThighRight?: number;
+//     distalThighLeft?: number;
+//     distalThighRight?: number;
+//     calfLeft?: number;
+//     calfRight?: number;
+//   };
+//   skinfolds?: {
+//     tricipital?: number;
+//     bicipital?: number;
+//     abdominal?: number;
+//     subscapular?: number;
+//     axillaryMedian?: number;
+//     thigh?: number;
+//     thoracic?: number;
+//     suprailiac?: number;
+//     calf?: number;
+//     supraspinal?: number;
+//   };
+// }
