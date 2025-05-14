@@ -21,7 +21,7 @@ import { NutritionistsModule } from '../nutritionists/nutritionists.module';
         }
         return {
           secret: jwtSecret,
-          signOptions: { expiresIn: '24h' },
+          signOptions: { expiresIn: '30d' },
         };
       },
     }),
