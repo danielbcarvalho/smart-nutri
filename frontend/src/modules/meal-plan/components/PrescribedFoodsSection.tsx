@@ -204,10 +204,12 @@ const PrescribedFoodsSection: React.FC<PrescribedFoodsSectionProps> = ({
               </TableRow>
             </TableHead>
             <TableBody>
-              {selectedFoods.map(({ food }) => (
+              {selectedFoods.map(({ food, amount, mcIndex }) => (
                 <PrescribedFoodItem
                   key={food.id}
                   food={food}
+                  amount={amount}
+                  mcIndex={mcIndex}
                   onRemove={handleRemoveFood}
                   onUpdate={handleUpdatePrescribedFood}
                   onOpenDetails={handleOpenDetails}

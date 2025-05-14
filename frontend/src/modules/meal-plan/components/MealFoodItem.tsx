@@ -63,7 +63,7 @@ const MealFoodItem: React.FC<MealFoodItemProps> = ({
   if (asTableRow) {
     return (
       <TableRow hover>
-        <TableCell sx={{ width: 70 }}>{mealFood.amount}</TableCell>
+        <TableCell sx={{ width: 70 }}>{Math.round(mealFood.amount)}</TableCell>
         <TableCell sx={{ width: 70 }} color="text.secondary">
           {mealFood.unit}
         </TableCell>
@@ -113,7 +113,7 @@ const MealFoodItem: React.FC<MealFoodItemProps> = ({
       }}
     >
       <Typography variant="body2" sx={{ width: 70 }}>
-        {mealFood.amount}
+        {Math.round(mealFood.amount)}
       </Typography>
       <Typography variant="body2" color="text.secondary" sx={{ width: 70 }}>
         {mealFood.unit}

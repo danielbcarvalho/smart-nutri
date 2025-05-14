@@ -14,6 +14,8 @@ import { Alimento } from "./AddFoodToMealModal";
 
 interface PrescribedFoodItemProps {
   food: Alimento;
+  amount: number;
+  mcIndex?: number;
   onRemove: (foodId: string) => void;
   onUpdate?: (foodId: string, newAmount: number, newMcIndex: number) => void;
   onOpenDetails?: (food: Alimento) => void;
@@ -21,11 +23,16 @@ interface PrescribedFoodItemProps {
 
 const PrescribedFoodItem: React.FC<PrescribedFoodItemProps> = ({
   food,
+  amount,
+  mcIndex: mcIndexProp,
   onRemove,
   onUpdate,
   onOpenDetails,
 }) => {
-  const [mcIndex, setMcIndex] = React.useState(0);
+  const [mcIndex, setMcIndex] = React.useState(mcIndexProp ?? 0);
+  const [mcValue, setMcValue] = React.useState(
+    Number.isNaN(amount) ? 0 : parseInt(amount.toString(), 10)
+  );
   const isCountableUnit = (nome: string) => {
     const keywords = [
       "unidade",
@@ -48,24 +55,13 @@ const PrescribedFoodItem: React.FC<PrescribedFoodItemProps> = ({
     return keywords.some((kw) => nome.includes(kw));
   };
 
-  const getDefaultMcValue = () => {
-    const nome = food.mc?.[0]?.nome_mc?.toLowerCase() || "";
-    if (isCountableUnit(nome)) return 1;
-    return Number(food.mc?.[0]?.peso) || 1;
-  };
-  const [mcValue, setMcValue] = React.useState(getDefaultMcValue());
+  React.useEffect(() => {
+    setMcIndex(mcIndexProp ?? 0);
+  }, [mcIndexProp, food]);
 
   React.useEffect(() => {
-    if (food.mc && food.mc.length > 0) {
-      setMcIndex(0);
-      const nome = food.mc[0].nome_mc?.toLowerCase() || "";
-      if (isCountableUnit(nome)) {
-        setMcValue(1);
-      } else {
-        setMcValue(Number(food.mc[0].peso) || 1);
-      }
-    }
-  }, [food]);
+    setMcValue(Number.isNaN(amount) ? 0 : parseInt(amount.toString(), 10));
+  }, [amount, food]);
 
   const handleMcUnitChange = (e: SelectChangeEvent<number>) => {
     const idx = Number(e.target.value);
@@ -136,11 +132,13 @@ const PrescribedFoodItem: React.FC<PrescribedFoodItemProps> = ({
       >
         <input
           type="text"
-          value={mcValue}
+          value={mcValue === 0 ? "" : mcValue}
           onChange={(e) => {
-            const value = Number(e.target.value.replace(",", "."));
+            // Aceita apenas números inteiros positivos
+            const onlyNumbers = e.target.value.replace(/[^0-9]/g, "");
+            const value = onlyNumbers === "" ? 0 : Number(onlyNumbers);
             setMcValue(value);
-            if (onUpdate) onUpdate(food.id, value, mcIndex);
+            if (onUpdate && value > 0) onUpdate(food.id, value, mcIndex);
           }}
           style={{
             textAlign: "center",
@@ -155,9 +153,9 @@ const PrescribedFoodItem: React.FC<PrescribedFoodItemProps> = ({
             color: "#222",
             boxShadow: "none",
           }}
-          min={0.01}
-          inputMode="decimal"
-          pattern="[0-9]*[.,]?[0-9]*"
+          min={1}
+          inputMode="numeric"
+          pattern="[0-9]*"
         />
         <Select
           size="small"
@@ -197,7 +195,7 @@ const PrescribedFoodItem: React.FC<PrescribedFoodItemProps> = ({
           borderBottom: "none",
         }}
       >
-        {quantidadeGramas}g
+        {Math.round(quantidadeGramas)}g
       </TableCell>
       <TableCell
         align="center"

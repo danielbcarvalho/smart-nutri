@@ -311,14 +311,34 @@ export function MealPlanDetails() {
       .map((mf) => {
         const food = foodDb.find((f: Alimento) => f.id === mf.foodId)!;
         let mcIndex: number | undefined = undefined;
-        if (food.mc && Array.isArray(food.mc)) {
-          mcIndex = food.mc.findIndex(
+        let mcList = food.mc ? [...food.mc] : [];
+
+        if (mcList && Array.isArray(mcList)) {
+          mcIndex = mcList.findIndex(
             (mc: { nome_mc: string }) => mc.nome_mc === mf.unit
           );
-          if (mcIndex === -1) mcIndex = undefined;
+          // Se não encontrou, adiciona medida temporária
+          if (mcIndex === -1) {
+            // Tenta usar o peso do próprio alimento se disponível, senão 1
+            const peso =
+              mf.unit.toLowerCase().includes("ml") ||
+              mf.unit.toLowerCase().includes("mililitro")
+                ? 1 // Para líquidos, normalmente 1ml = 1g
+                : 1;
+            mcList = [
+              ...mcList,
+              {
+                nome_mc: mf.unit,
+                peso: peso,
+              },
+            ];
+            mcIndex = mcList.length - 1;
+          }
         }
+
+        // Retorna o alimento com a lista de medidas atualizada (se necessário)
         return {
-          food,
+          food: { ...food, mc: mcList },
           amount: mf.amount,
           mcIndex,
         };
@@ -713,9 +733,11 @@ export function MealPlanDetails() {
         mealTime={selectedMeal?.time || "08:00"}
         initialFoods={convertMealFoodsToInitialFoods(selectedMeal?.mealFoods)}
         initialNotes={selectedMeal?.notes}
-        onSave={() => {
+        onSave={async () => {
+          await queryClient.invalidateQueries({
+            queryKey: ["mealPlan", planId],
+          });
           setOpenAddFoodModal(false);
-          queryClient.invalidateQueries({ queryKey: ["mealPlan", planId] });
         }}
       />
     </Box>
