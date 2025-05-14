@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   Dialog,
   DialogTitle,
@@ -126,6 +126,7 @@ export function PatientFormModal({
   patient,
 }: PatientFormModalProps) {
   const queryClient = useQueryClient();
+  const triggerRef = useRef<HTMLElement | null>(null);
 
   const [formData, setFormData] = useState<
     Omit<Patient, "id" | "createdAt" | "updatedAt">
@@ -215,6 +216,12 @@ export function PatientFormModal({
       setPhotoPreview(patient.photoUrl || "");
     }
   }, [open, patient]);
+
+  useEffect(() => {
+    if (open) {
+      triggerRef.current = document.activeElement as HTMLElement;
+    }
+  }, [open]);
 
   const createMutation = useMutation({
     mutationFn: (data: Omit<Patient, "id" | "createdAt" | "updatedAt">) =>
@@ -380,20 +387,17 @@ export function PatientFormModal({
   return (
     <Dialog
       open={open}
-      onClose={onClose}
+      onClose={() => {
+        // Return focus to the trigger element before closing
+        if (triggerRef.current) {
+          triggerRef.current.focus();
+        }
+        onClose();
+      }}
       maxWidth="md"
       fullWidth
       keepMounted={false}
       disablePortal={false}
-      onTransitionEnd={() => {
-        // Ensure focus is returned to the trigger element when modal closes
-        if (!open) {
-          const triggerElement = document.activeElement;
-          if (triggerElement instanceof HTMLElement) {
-            triggerElement.focus();
-          }
-        }
-      }}
     >
       <DialogTitle>{patient ? "Editar paciente" : "Novo paciente"}</DialogTitle>
       <DialogContent>

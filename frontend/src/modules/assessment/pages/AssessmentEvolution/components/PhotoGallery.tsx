@@ -3,7 +3,6 @@ import {
   Box,
   Typography,
   Paper,
-  Grid,
   Chip,
   Stack,
   IconButton,
@@ -428,9 +427,19 @@ export const PhotoGallery: React.FC<PhotoGalleryProps> = ({
           }
         />
       ) : (
-        <Grid container spacing={3}>
+        <Box
+          sx={{
+            display: "grid",
+            gap: 3,
+            gridTemplateColumns: {
+              xs: "1fr",
+              sm: "repeat(2, 1fr)",
+              md: "repeat(3, 1fr)",
+            },
+          }}
+        >
           {photos.map(({ photo, date, measurementData }, index) => (
-            <Grid item xs={12} sm={6} md={4} key={photo.id}>
+            <Box key={photo.id}>
               <Slide
                 direction="up"
                 in={true}
@@ -448,9 +457,9 @@ export const PhotoGallery: React.FC<PhotoGalleryProps> = ({
                   />
                 </Box>
               </Slide>
-            </Grid>
+            </Box>
           ))}
-        </Grid>
+        </Box>
       )}
     </Box>
   );

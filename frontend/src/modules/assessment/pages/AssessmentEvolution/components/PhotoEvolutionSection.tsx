@@ -8,7 +8,6 @@ import {
   Dialog,
   DialogContent,
   IconButton,
-  Grid,
   Checkbox,
   Tabs,
   Tab,
@@ -765,96 +764,98 @@ export const PhotoEvolutionSection: React.FC<PhotoEvolutionSectionProps> = ({
         </Box>
 
         <Box sx={{ mb: 3 }}>
-          <Grid container spacing={2} alignItems="center">
-            <Grid item xs={12}>
-              <Box>
-                <Typography
-                  variant="subtitle1"
-                  gutterBottom
-                  fontWeight="medium"
-                >
-                  Tipo de Foto
-                </Typography>
-
-                {/* Improved styling for photo type selection */}
-                <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1 }}>
-                  {availablePhotoTypes.map((type) => (
-                    <Button
-                      key={type}
-                      variant={
-                        selectedPhotoType === type ? "contained" : "outlined"
-                      }
-                      color="primary"
-                      size="small"
-                      onClick={() => handlePhotoTypeChange({} as any, type)}
-                      disabled={!availablePhotoTypes.includes(type)}
-                      sx={{
-                        borderRadius: 2,
-                        px: 2,
-                        transition: "all 0.2s",
-                        minWidth: 100,
-                      }}
-                    >
-                      {type === "front"
-                        ? "Frente"
-                        : type === "back"
-                        ? "Costas"
-                        : type === "left"
-                        ? "Lateral Esquerda"
-                        : "Lateral Direita"}
-                    </Button>
-                  ))}
-                </Box>
-              </Box>
-            </Grid>
-          </Grid>
-          <Grid item xs={12} sx={{ mt: 2 }}>
+          <Box
+            sx={{
+              display: "grid",
+              gap: 2,
+              gridTemplateColumns: {
+                xs: "1fr",
+                sm: "1fr",
+                md: "1fr",
+              },
+            }}
+          >
             <Box>
               <Typography variant="subtitle1" gutterBottom fontWeight="medium">
-                Modo de Visualização
+                Tipo de Foto
               </Typography>
 
-              {/* Improved styling for view mode selection with text and icons */}
-              <Box
-                sx={{
-                  display: "flex",
-                  flexWrap: "wrap",
-                  gap: 1,
-                }}
-              >
-                <Button
-                  variant={viewMode === "grid" ? "contained" : "outlined"}
-                  color="primary"
-                  size="small"
-                  onClick={() => handleViewModeChange({} as any, "grid")}
-                  startIcon={<GridViewIcon />}
-                  sx={{ borderRadius: 2 }}
-                >
-                  Grid
-                </Button>
-                <Button
-                  variant={viewMode === "compare" ? "contained" : "outlined"}
-                  color="primary"
-                  size="small"
-                  onClick={() => handleViewModeChange({} as any, "compare")}
-                  startIcon={<CompareIcon />}
-                  sx={{ borderRadius: 2 }}
-                >
-                  Comparar
-                </Button>
-                <Button
-                  variant={viewMode === "timeline" ? "contained" : "outlined"}
-                  color="primary"
-                  size="small"
-                  onClick={() => handleViewModeChange({} as any, "timeline")}
-                  startIcon={<TimelineIcon />}
-                  sx={{ borderRadius: 2 }}
-                >
-                  Timeline
-                </Button>
+              {/* Improved styling for photo type selection */}
+              <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1 }}>
+                {availablePhotoTypes.map((type) => (
+                  <Button
+                    key={type}
+                    variant={
+                      selectedPhotoType === type ? "contained" : "outlined"
+                    }
+                    color="primary"
+                    size="small"
+                    onClick={() => handlePhotoTypeChange({} as any, type)}
+                    disabled={!availablePhotoTypes.includes(type)}
+                    sx={{
+                      borderRadius: 2,
+                      px: 2,
+                      transition: "all 0.2s",
+                      minWidth: 100,
+                    }}
+                  >
+                    {type === "front"
+                      ? "Frente"
+                      : type === "back"
+                      ? "Costas"
+                      : type === "left"
+                      ? "Lateral Esquerda"
+                      : "Lateral Direita"}
+                  </Button>
+                ))}
               </Box>
             </Box>
-          </Grid>
+          </Box>
+          <Box sx={{ mt: 2 }}>
+            <Typography variant="subtitle1" gutterBottom fontWeight="medium">
+              Modo de Visualização
+            </Typography>
+
+            {/* Improved styling for view mode selection with text and icons */}
+            <Box
+              sx={{
+                display: "flex",
+                flexWrap: "wrap",
+                gap: 1,
+              }}
+            >
+              <Button
+                variant={viewMode === "grid" ? "contained" : "outlined"}
+                color="primary"
+                size="small"
+                onClick={() => handleViewModeChange({} as any, "grid")}
+                startIcon={<GridViewIcon />}
+                sx={{ borderRadius: 2 }}
+              >
+                Grid
+              </Button>
+              <Button
+                variant={viewMode === "compare" ? "contained" : "outlined"}
+                color="primary"
+                size="small"
+                onClick={() => handleViewModeChange({} as any, "compare")}
+                startIcon={<CompareIcon />}
+                sx={{ borderRadius: 2 }}
+              >
+                Comparar
+              </Button>
+              <Button
+                variant={viewMode === "timeline" ? "contained" : "outlined"}
+                color="primary"
+                size="small"
+                onClick={() => handleViewModeChange({} as any, "timeline")}
+                startIcon={<TimelineIcon />}
+                sx={{ borderRadius: 2 }}
+              >
+                Timeline
+              </Button>
+            </Box>
+          </Box>
         </Box>
 
         {/* Comparação de fotos */}

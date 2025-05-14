@@ -260,6 +260,77 @@ Essa tabela é usada apenas para visualização dos alimentos prescritos em cada
 
 ---
 
+## Padrão de Grid
+
+Para layouts responsivos, utilize CSS Grid nativo ao invés do componente Grid do MUI. Isso evita problemas de tipagem e warnings com o MUI Grid v2, além de oferecer melhor performance.
+
+### Exemplo de Implementação
+
+```tsx
+<Box
+  sx={{
+    display: "grid",
+    gap: 3, // Espaçamento entre os itens
+    gridTemplateColumns: {
+      xs: "1fr", // 1 coluna em mobile
+      sm: "repeat(2, 1fr)", // 2 colunas em tablet
+      md: "repeat(4, 1fr)", // 4 colunas em desktop
+    },
+  }}
+>
+  {items.map((item) => (
+    <Box key={item.id}>{/* Conteúdo do item */}</Box>
+  ))}
+</Box>
+```
+
+### Breakpoints Padrão
+
+- `xs`: 0px - 599px (mobile)
+- `sm`: 600px - 899px (tablet)
+- `md`: 900px - 1199px (desktop pequeno)
+- `lg`: 1200px - 1535px (desktop)
+- `xl`: 1536px+ (desktop grande)
+
+### Vantagens
+
+1. **Performance**: CSS Grid nativo é mais performático que o Grid do MUI
+2. **Sem Warnings**: Evita problemas de tipagem e warnings do MUI Grid v2
+3. **Flexibilidade**: Mais controle sobre o layout e responsividade
+4. **Manutenção**: Código mais limpo e fácil de manter
+
+### Quando Usar
+
+- Layouts responsivos com múltiplas colunas
+- Grids de cards ou itens
+- Layouts que precisam de controle preciso sobre o espaçamento
+- Quando precisar evitar problemas com o MUI Grid v2
+
+### Exemplo Real (StatsCards)
+
+```tsx
+// Exemplo do componente StatsCards
+<Box
+  sx={{
+    display: "grid",
+    gap: 3,
+    gridTemplateColumns: {
+      xs: "1fr", // 1 card por linha em mobile
+      sm: "repeat(2, 1fr)", // 2 cards por linha em tablet
+      md: "repeat(4, 1fr)", // 4 cards por linha em desktop
+    },
+  }}
+>
+  {cards.map((card) => (
+    <Box key={card.title}>
+      <Card>{/* Conteúdo do card */}</Card>
+    </Box>
+  ))}
+</Box>
+```
+
+---
+
 ## Referências
 
 - [Material-UI](https://mui.com/)

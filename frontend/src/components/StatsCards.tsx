@@ -3,7 +3,6 @@ import {
   Box,
   Card,
   CardContent,
-  Grid,
   Typography,
   useTheme,
   Skeleton,
@@ -70,9 +69,19 @@ export function StatsCards() {
   ];
 
   return (
-    <Grid container spacing={3}>
+    <Box
+      sx={{
+        display: "grid",
+        gap: 3,
+        gridTemplateColumns: {
+          xs: "1fr",
+          sm: "repeat(2, 1fr)",
+          md: "repeat(4, 1fr)",
+        },
+      }}
+    >
       {cards.map((card) => (
-        <Grid item xs={12} sm={6} md={3} key={card.title}>
+        <Box key={card.title}>
           <Card
             sx={{
               height: "100%",
@@ -151,8 +160,8 @@ export function StatsCards() {
               </Box>
             </CardContent>
           </Card>
-        </Grid>
+        </Box>
       ))}
-    </Grid>
+    </Box>
   );
 }
