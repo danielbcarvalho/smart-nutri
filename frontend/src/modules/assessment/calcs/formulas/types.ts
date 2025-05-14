@@ -30,7 +30,8 @@ export function validateFormula(
   formula: BodyDensityFormula,
   skinfolds: Skinfolds,
   gender: "M" | "F",
-  age: number
+  age: number,
+  strictValidation: boolean = false
 ): FormulaValidationError | null {
   // Validar gênero
   if (
@@ -45,8 +46,11 @@ export function validateFormula(
     };
   }
 
-  // Validar idade
-  if (age < formula.ageRange.min || age > formula.ageRange.max) {
+  // Validar idade (apenas se strictValidation for true)
+  if (
+    strictValidation &&
+    (age < formula.ageRange.min || age > formula.ageRange.max)
+  ) {
     return {
       type: "age",
       message: `Esta fórmula é válida apenas para idades entre ${formula.ageRange.min} e ${formula.ageRange.max} anos`,

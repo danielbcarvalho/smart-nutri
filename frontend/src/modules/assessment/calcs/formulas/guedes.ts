@@ -16,7 +16,7 @@ export const guedesFormula: BodyDensityFormula = {
   genderSupport: "both",
   ageRange: {
     min: 17,
-    max: 27,
+    max: 30,
   },
   reference:
     "GUEDES, D.P. Estudo da gordura corporal através da mensuração dos valores de densidade corporal e da espessura de dobras cutâneas em universitários. Dissertação de Mestrado, Santa Maria: UFSM, 1985.",

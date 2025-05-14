@@ -39,6 +39,7 @@ interface SkinfoldSectionProps {
     field: keyof Skinfolds
   ) => (event: React.ChangeEvent<HTMLInputElement>) => void;
   patientGender?: string;
+  patient?: { birthDate?: string };
 }
 
 export const SkinfoldSection: React.FC<SkinfoldSectionProps> = ({
@@ -49,6 +50,7 @@ export const SkinfoldSection: React.FC<SkinfoldSectionProps> = ({
   onSkinfoldFormulaChange,
   onSkinfoldChange,
   patientGender,
+  patient,
 }) => {
   // Mapeamento das etiquetas das dobras
   const skinfoldLabels: Record<string, string> = {
@@ -128,9 +130,7 @@ export const SkinfoldSection: React.FC<SkinfoldSectionProps> = ({
             <ToggleButton value="petroski" disabled>
               Petroski (Em breve)
             </ToggleButton>
-            <ToggleButton value="guedes" disabled>
-              Guedes (Em breve)
-            </ToggleButton>
+            <ToggleButton value="guedes">Guedes</ToggleButton>
             <ToggleButton value="durnin" disabled>
               Durnin (Em breve)
             </ToggleButton>
@@ -139,6 +139,29 @@ export const SkinfoldSection: React.FC<SkinfoldSectionProps> = ({
             </ToggleButton>
             <ToggleButton value="none">Nenhuma</ToggleButton>
           </ToggleButtonGroup>
+
+          {skinfoldFormula === "guedes" &&
+            patient?.birthDate &&
+            (() => {
+              const patientAge = Math.floor(
+                (new Date().getTime() - new Date(patient.birthDate).getTime()) /
+                  (1000 * 60 * 60 * 24 * 365.25)
+              );
+              const isOutsideRange = patientAge < 17 || patientAge > 30;
+
+              return isOutsideRange ? (
+                <Typography
+                  variant="body2"
+                  color="warning.main"
+                  sx={{ mt: 1, display: "flex", alignItems: "center", gap: 1 }}
+                >
+                  ⚠️ A fórmula de Guedes foi desenvolvida e validada para
+                  adultos jovens (17-30 anos). Para outras faixas etárias,
+                  considere utilizar outras fórmulas mais específicas. (Paciente
+                  com {patientAge} anos)
+                </Typography>
+              ) : null;
+            })()}
         </Box>
 
         <Grid container spacing={2}>
@@ -164,6 +187,10 @@ export const SkinfoldSection: React.FC<SkinfoldSectionProps> = ({
                     "suprailiac",
                     "thigh",
                   ].includes(key)
+                : skinfoldFormula === "guedes"
+                ? patientGender === "M" || String(patientGender) === "MALE"
+                  ? ["thoracic", "abdominal", "thigh"].includes(key)
+                  : ["thigh", "suprailiac", "subscapular"].includes(key)
                 : false);
 
             return (

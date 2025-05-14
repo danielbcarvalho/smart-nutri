@@ -688,6 +688,7 @@ export function NewAssessment() {
               onSkinfoldFormulaChange={handleSkinfoldFormulaChange}
               onSkinfoldChange={handleSkinfoldChange}
               patientGender={patient?.gender}
+              patient={patient}
             />
 
             {/* Seção de circunferências */}
