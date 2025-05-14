@@ -18,7 +18,13 @@ export interface BodyDensityFormula {
   genderSupport: "both" | "male_only" | "female_only";
   ageRange: AgeRange;
   reference: string;
-  calculate: (skinfolds: Skinfolds, gender: Gender, age: number) => number;
+  calculate: (
+    skinfolds: Skinfolds,
+    gender: Gender,
+    age: number,
+    weight?: number,
+    height?: number
+  ) => number;
 }
 
 export interface FormulaValidationError {

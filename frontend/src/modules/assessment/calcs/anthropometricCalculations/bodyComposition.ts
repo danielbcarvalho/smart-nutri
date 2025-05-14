@@ -59,13 +59,17 @@ export const calculateBodyDensity = (
   skinfolds: Partial<Skinfolds>,
   gender: "M" | "F",
   age: number,
-  formulaId: string = "pollock3"
+  formulaId: string = "pollock3",
+  weight: number = 0,
+  height: number = 0
 ): { density: number; referenceUsed: string; ageWarning?: string } => {
   console.log("A. Iniciando cálculo de densidade:", {
     skinfolds,
     gender,
     age,
     formulaId,
+    weight,
+    height,
   });
 
   const formula = bodyDensityFormulas.find((f) => f.id === formulaId);
@@ -82,6 +86,15 @@ export const calculateBodyDensity = (
       ? `Esta fórmula é recomendada para idades entre ${formula.ageRange.min} e ${formula.ageRange.max} anos`
       : undefined;
 
+  console.log("C. Validando fórmula:", {
+    formulaId,
+    gender,
+    age,
+    ageWarning,
+    requiredSkinfolds: formula.requiredSkinfolds,
+    skinfolds,
+  });
+
   const validationError = validateFormula(
     formula,
     skinfolds as Skinfolds,
@@ -96,7 +109,13 @@ export const calculateBodyDensity = (
     return { density: 0, referenceUsed: "-" };
   }
 
-  const density = formula.calculate(skinfolds as Skinfolds, gender, age);
+  const density = formula.calculate(
+    skinfolds as Skinfolds,
+    gender,
+    age,
+    weight,
+    height
+  );
   console.log("F. Densidade calculada:", density);
 
   return {

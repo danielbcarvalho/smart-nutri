@@ -66,6 +66,20 @@ export const SkinfoldSection: React.FC<SkinfoldSectionProps> = ({
     supraspinal: "Supraespinhal",
   };
 
+  const handleSkinfoldValueChange =
+    (field: keyof Skinfolds) =>
+    (event: React.ChangeEvent<HTMLInputElement>) => {
+      const value = event.target.value;
+      console.log("Skinfold change:", {
+        field,
+        value,
+        type: typeof value,
+        parsedValue: parseFloat(value),
+      });
+
+      onSkinfoldChange(field)(event);
+    };
+
   return (
     <Accordion
       expanded={expanded}
@@ -127,9 +141,7 @@ export const SkinfoldSection: React.FC<SkinfoldSectionProps> = ({
           >
             <ToggleButton value="pollock3">Pollock 3</ToggleButton>
             <ToggleButton value="pollock7">Pollock 7</ToggleButton>
-            <ToggleButton value="petroski" disabled>
-              Petroski (Em breve)
-            </ToggleButton>
+            <ToggleButton value="petroski">Petroski</ToggleButton>
             <ToggleButton value="guedes">Guedes</ToggleButton>
             <ToggleButton value="durnin" disabled>
               Durnin (Em breve)
@@ -140,27 +152,70 @@ export const SkinfoldSection: React.FC<SkinfoldSectionProps> = ({
             <ToggleButton value="none">Nenhuma</ToggleButton>
           </ToggleButtonGroup>
 
-          {skinfoldFormula === "guedes" &&
+          {(skinfoldFormula === "guedes" || skinfoldFormula === "petroski") &&
             patient?.birthDate &&
             (() => {
               const patientAge = Math.floor(
                 (new Date().getTime() - new Date(patient.birthDate).getTime()) /
                   (1000 * 60 * 60 * 24 * 365.25)
               );
-              const isOutsideRange = patientAge < 17 || patientAge > 30;
 
-              return isOutsideRange ? (
-                <Typography
-                  variant="body2"
-                  color="warning.main"
-                  sx={{ mt: 1, display: "flex", alignItems: "center", gap: 1 }}
-                >
-                  ⚠️ A fórmula de Guedes foi desenvolvida e validada para
-                  adultos jovens (17-30 anos). Para outras faixas etárias,
-                  considere utilizar outras fórmulas mais específicas. (Paciente
-                  com {patientAge} anos)
-                </Typography>
-              ) : null;
+              if (skinfoldFormula === "guedes") {
+                const isOutsideRange = patientAge < 17 || patientAge > 30;
+                return isOutsideRange ? (
+                  <Typography
+                    variant="body2"
+                    color="warning.main"
+                    sx={{
+                      mt: 1,
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 1,
+                    }}
+                  >
+                    ⚠️ A fórmula de Guedes foi desenvolvida e validada para
+                    adultos jovens (17-30 anos). Para outras faixas etárias,
+                    considere utilizar outras fórmulas mais específicas.
+                    (Paciente com {patientAge} anos)
+                  </Typography>
+                ) : null;
+              }
+
+              if (skinfoldFormula === "petroski") {
+                const isOutsideRange = (() => {
+                  if (
+                    patientGender === "M" ||
+                    String(patientGender) === "MALE"
+                  ) {
+                    return patientAge < 20 || patientAge >= 40;
+                  } else {
+                    return patientAge < 18 || patientAge > 51;
+                  }
+                })();
+
+                return isOutsideRange ? (
+                  <Typography
+                    variant="body2"
+                    color="warning.main"
+                    sx={{
+                      mt: 1,
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 1,
+                    }}
+                  >
+                    ⚠️ A fórmula de Petroski tem variações específicas por
+                    gênero e idade:
+                    {patientGender === "M" || String(patientGender) === "MALE"
+                      ? " para homens é válida entre 20 e 39,9 anos"
+                      : " para mulheres é válida entre 18 e 51 anos"}
+                    . Para outras faixas etárias, considere utilizar outras
+                    fórmulas mais específicas. (Paciente com {patientAge} anos)
+                  </Typography>
+                ) : null;
+              }
+
+              return null;
             })()}
         </Box>
 
@@ -172,26 +227,56 @@ export const SkinfoldSection: React.FC<SkinfoldSectionProps> = ({
 
             const isRequired =
               formula &&
-              formula.requiredSkinfolds.includes(key as SkinfoldType) &&
-              (skinfoldFormula === "pollock3"
-                ? patientGender === "M" || String(patientGender) === "MALE"
-                  ? ["thoracic", "abdominal", "thigh"].includes(key)
-                  : ["tricipital", "suprailiac", "thigh"].includes(key)
-                : skinfoldFormula === "pollock7"
-                ? [
-                    "thoracic",
-                    "axillaryMedian",
-                    "tricipital",
-                    "subscapular",
-                    "abdominal",
-                    "suprailiac",
-                    "thigh",
-                  ].includes(key)
-                : skinfoldFormula === "guedes"
+              (skinfoldFormula === "guedes"
                 ? patientGender === "M" || String(patientGender) === "MALE"
                   ? ["thoracic", "abdominal", "thigh"].includes(key)
                   : ["thigh", "suprailiac", "subscapular"].includes(key)
-                : false);
+                : skinfoldFormula === "petroski"
+                ? (() => {
+                    const patientAge = patient?.birthDate
+                      ? Math.floor(
+                          (new Date().getTime() -
+                            new Date(patient.birthDate).getTime()) /
+                            (1000 * 60 * 60 * 24 * 365.25)
+                        )
+                      : 0;
+
+                    if (
+                      patientGender === "M" ||
+                      String(patientGender) === "MALE"
+                    ) {
+                      // Homens (20-39,9 anos)
+                      return patientAge >= 20 && patientAge < 40
+                        ? [
+                            "subscapular",
+                            "tricipital",
+                            "suprailiac",
+                            "calf",
+                          ].includes(key as keyof Skinfolds)
+                        : false;
+                    } else {
+                      // Mulheres
+                      if (patientAge >= 20 && patientAge < 40) {
+                        // Mulheres (20-39,9 anos)
+                        return [
+                          "subscapular",
+                          "tricipital",
+                          "suprailiac",
+                          "calf",
+                        ].includes(key as keyof Skinfolds);
+                      } else if (patientAge >= 18 && patientAge <= 51) {
+                        // Mulheres (18-51 anos)
+                        return [
+                          "axillaryMedian",
+                          "suprailiac",
+                          "thigh",
+                          "calf",
+                        ].includes(key as keyof Skinfolds);
+                      }
+                      return false;
+                    }
+                  })()
+                : formula.requiredSkinfolds.includes(key as keyof Skinfolds));
 
             return (
               <Box
@@ -212,7 +297,7 @@ export const SkinfoldSection: React.FC<SkinfoldSectionProps> = ({
                     </Typography>
                   }
                   value={value}
-                  onChange={onSkinfoldChange(key as keyof Skinfolds)}
+                  onChange={handleSkinfoldValueChange(key as keyof Skinfolds)}
                   InputProps={{
                     sx: {
                       bgcolor: "background.paper",

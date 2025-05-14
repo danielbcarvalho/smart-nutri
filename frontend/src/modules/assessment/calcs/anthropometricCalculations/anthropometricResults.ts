@@ -150,11 +150,19 @@ export const calculateAnthropometricResults = ({
     console.log("1. Iniciando análise de dobras:", {
       skinfolds,
       skinfoldFormula,
+      gender: validGender,
+      age,
+      rawSkinfolds: JSON.stringify(skinfolds),
     });
 
     // Obtém a fórmula selecionada
     const formula = bodyDensityFormulas.find((f) => f.id === skinfoldFormula);
-    console.log("2. Fórmula encontrada:", formula);
+    console.log("2. Fórmula encontrada:", {
+      formulaId: formula?.id,
+      formulaName: formula?.name,
+      requiredSkinfolds: formula?.requiredSkinfolds,
+      genderSupport: formula?.genderSupport,
+    });
 
     if (formula) {
       // Verifica se todas as dobras necessárias estão presentes e válidas
@@ -163,23 +171,58 @@ export const calculateAnthropometricResults = ({
           ? validGender === "M"
             ? ["thoracic", "abdominal", "thigh"]
             : ["thigh", "suprailiac", "subscapular"]
+          : formula.id === "petroski"
+          ? (() => {
+              if (validGender === "M") {
+                // Homens (20-39,9 anos)
+                return age >= 20 && age < 40
+                  ? ["subscapular", "tricipital", "suprailiac", "calf"]
+                  : [];
+              } else {
+                // Mulheres
+                if (age >= 20 && age < 40) {
+                  // Mulheres (20-39,9 anos)
+                  return ["subscapular", "tricipital", "suprailiac", "calf"];
+                } else if (age >= 18 && age <= 51) {
+                  // Mulheres (18-51 anos)
+                  return ["axillaryMedian", "suprailiac", "thigh", "calf"];
+                }
+                return [];
+              }
+            })()
           : formula.requiredSkinfolds;
+
+      console.log("3. Dobras necessárias para o gênero:", {
+        gender: validGender,
+        requiredSkinfolds: requiredSkinfoldsForGender,
+        formulaId: formula.id,
+        allSkinfolds: Object.keys(skinfolds),
+        age,
+      });
 
       const hasAllRequiredSkinfolds = requiredSkinfoldsForGender.every(
         (fold) => {
           const value = skinfolds[fold as keyof typeof skinfolds];
-          console.log("3. Verificando dobra:", {
+          console.log("4. Verificando dobra:", {
             fold,
             value,
-            gender: validGender,
+            rawValue: skinfolds[fold as keyof typeof skinfolds],
+            type: typeof value,
+            isValid: !isNaN(value) && value > 0,
           });
           return !isNaN(value) && value > 0;
         }
       );
-      console.log("4. Todas as dobras necessárias presentes?", {
+
+      console.log("5. Validação das dobras:", {
         hasAllRequiredSkinfolds,
         requiredSkinfoldsForGender,
         gender: validGender,
+        allSkinfolds: Object.entries(skinfolds).map(([key, value]) => ({
+          key,
+          value,
+          type: typeof value,
+        })),
       });
 
       if (hasAllRequiredSkinfolds) {
@@ -190,19 +233,22 @@ export const calculateAnthropometricResults = ({
             skinfoldValues[key] = String(value);
           }
         });
-        console.log("5. Dobras convertidas:", skinfoldValues);
+        console.log("6. Dobras convertidas para cálculo:", skinfoldValues);
 
         // Cálculo da densidade corporal
         const { density, referenceUsed, ageWarning } = calculateBodyDensity(
           skinfoldValues as Partial<Skinfolds>,
           validGender,
           age,
-          skinfoldFormula
+          skinfoldFormula,
+          validWeight,
+          validHeight
         );
-        console.log("6. Resultado densidade:", {
+        console.log("7. Resultado densidade:", {
           density,
           referenceUsed,
           ageWarning,
+          isValid: density > 0,
         });
 
         if (density > 0) {
@@ -214,7 +260,11 @@ export const calculateAnthropometricResults = ({
 
           // Cálculo do percentual de gordura usando a equação de Siri
           const bodyFatPercentage = calculateBodyFatPercentage(density);
-          console.log("7. Percentual de gordura calculado:", bodyFatPercentage);
+          console.log("8. Percentual de gordura:", {
+            density,
+            bodyFatPercentage,
+            isValid: !isNaN(bodyFatPercentage) && bodyFatPercentage > 0,
+          });
           results.bodyFatPercentage = `${bodyFatPercentage.toFixed(1)}%`;
 
           // Classificação do percentual de gordura
