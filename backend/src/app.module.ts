@@ -14,6 +14,7 @@ import { AuthModule } from './modules/auth/auth.module';
 import { PatientsModule } from './modules/patients/patients.module';
 import { StatsModule } from './modules/stats/stats.module';
 import { PhotosModule } from './modules/photos/photos.module';
+import { EnergyPlanModule } from './modules/energy-plan/energy-plan.module';
 
 @Module({
   imports: [
@@ -57,6 +58,7 @@ import { PhotosModule } from './modules/photos/photos.module';
     PhotosModule,
     EncryptionModule,
     FoodsModule,
+    EnergyPlanModule,
   ],
   controllers: [AppController],
   providers: [AppService],

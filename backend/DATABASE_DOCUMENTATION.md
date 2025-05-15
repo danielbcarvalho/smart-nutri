@@ -638,16 +638,26 @@ Siga este passo a passo sempre que for subir alterações no banco de dados para
    - Faça o deploy do backend para o Railway (merge/push para branch de produção ou deploy manual).
    - Certifique-se de que o código novo está disponível antes de rodar as migrations.
 
-5. **Acesse o terminal do Railway para rodar as migrations**
+5. **Configure o acesso ao Railway via CLI**
 
-   - No painel do Railway, acesse o projeto do backend.
-   - Clique em **"Shell"** ou **"Launch Console"** para abrir um terminal no container do backend.
+   - No terminal local, verifique o status da conexão com o Railway:
+     ```bash
+     railway status
+     ```
+   - Se o status não for positivo, você precisa vincular o projeto:
+     ```bash
+     railway link
+     ```
+   - Após o link bem-sucedido, acesse o shell do Railway:
+     ```bash
+     railway shell
+     ```
 
 6. **Rode as migrations no ambiente de produção**
 
-   - No terminal do Railway, execute:
+   - No shell do Railway, execute:
      ```bash
-     npm run migration:run
+     npm run migration:run:prod
      ```
    - Aguarde a execução e monitore o log para garantir que todas as migrations foram aplicadas sem erro.
 
@@ -669,6 +679,8 @@ Siga este passo a passo sempre que for subir alterações no banco de dados para
 > - Nunca edite migrations já aplicadas em produção. Sempre crie uma nova migration para corrigir ou evoluir o schema.
 > - Evite migrations destrutivas (DROP COLUMN, DROP TABLE) sem backup e validação.
 > - Sempre teste as migrations em um banco de staging idêntico ao de produção antes do deploy real.
+> - Mantenha o Railway CLI atualizado para evitar problemas de conexão.
+> - Se encontrar problemas com o `railway shell`, tente desconectar e reconectar usando `railway link`.
 
 ## Scripts de Backup e Restauração
 

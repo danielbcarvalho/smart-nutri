@@ -2,104 +2,187 @@
 
 ## Overview
 
-This module handles authentication for nutritionists within the application. It provides the login functionality, validates credentials against the `NutritionistsModule`, and generates JSON Web Tokens (JWT) for securing subsequent API requests.
+This module handles authentication and authorization for the application. It provides login functionality, validates credentials, generates JSON Web Tokens (JWT), and implements role-based access control (RBAC) for securing API endpoints.
 
 ## Directory Structure
 
 ```
 backend/src/modules/auth/
-├── auth.controller.ts  # Controller handling the login endpoint
-├── auth.module.ts      # NestJS module definition
-├── auth.service.ts     # Service containing authentication logic
-├── decorators/         # Custom decorators (if any, content not provided)
-├── dto/                # Data Transfer Objects for authentication requests
-│   └── login.dto.ts    # DTO for the login request body
-├── enums/              # Enumerations related to auth (if any, content not provided)
-├── guards/             # Authentication guards (e.g., JwtAuthGuard)
-│   └── jwt-auth.guard.ts # Guard to protect routes using JWT strategy
-├── interfaces/         # TypeScript interfaces for data structures
-│   └── jwt-payload.interface.ts # Interface defining the JWT payload structure
-└── strategies/         # Passport.js strategies for authentication
-    └── jwt.strategy.ts # Strategy for validating JWTs
+├── auth.controller.ts     # Controller handling the login endpoint
+├── auth.module.ts         # NestJS module definition
+├── auth.service.ts        # Service containing authentication logic
+├── decorators/           # Custom decorators
+│   └── roles.decorator.ts # Decorator for role-based access control
+├── dto/                  # Data Transfer Objects
+│   └── login.dto.ts      # DTO for the login request body
+├── enums/                # Enumerations
+│   └── user-role.enum.ts # User roles enumeration
+├── guards/               # Authentication and authorization guards
+│   ├── jwt-auth.guard.ts # Guard for JWT authentication
+│   └── roles.guard.ts    # Guard for role-based access control
+├── interfaces/           # TypeScript interfaces
+│   └── jwt-payload.interface.ts # JWT payload structure
+└── strategies/           # Passport.js strategies
+    └── jwt.strategy.ts   # JWT validation strategy
 ```
 
 ## Key Components
 
-### Entities
+### Enums
 
-- This module does not define its own entities but relies on the `Nutritionist` entity from the `NutritionistsModule`.
+- **`UserRole`**: Defines the available user roles in the system:
+  ```typescript
+  export enum UserRole {
+    ADMIN = 'admin',
+    NUTRITIONIST = 'nutritionist',
+    PATIENT = 'patient',
+  }
+  ```
 
-### DTOs (Data Transfer Objects)
+### Decorators
 
-- **`LoginDto`**: Defines the expected request body for the login endpoint, containing `email` and `password`.
+- **`Roles`**: Custom decorator for role-based access control:
+  ```typescript
+  export const ROLES_KEY = 'roles';
+  export const Roles = (...roles: UserRole[]) => SetMetadata(ROLES_KEY, roles);
+  ```
 
-### Interfaces
+### Guards
 
-- **`JwtPayload`**: Defines the structure of the data encoded within the JWT. It includes the nutritionist's ID (`sub`), email (`email`), and role (`role`).
+- **`JwtAuthGuard`**: Protects routes using JWT authentication:
+
+  ```typescript
+  @Injectable()
+  export class JwtAuthGuard extends AuthGuard('jwt') {}
+  ```
+
+- **`RolesGuard`**: Implements role-based access control:
+
+  ```typescript
+  @Injectable()
+  export class RolesGuard implements CanActivate {
+    constructor(private reflector: Reflector) {}
+
+    canActivate(context: ExecutionContext): boolean {
+      const requiredRoles = this.reflector.getAllAndOverride<UserRole[]>(
+        ROLES_KEY,
+        [context.getHandler(), context.getClass()],
+      );
+
+      if (!requiredRoles) {
+        return true;
+      }
+
+      const { user } = context.switchToHttp().getRequest();
+      return requiredRoles.some((role) => user.role === role);
+    }
+  }
+  ```
 
 ### Services
 
 - **`AuthService`**:
-  - Contains the core logic for the login process.
-  - Injects `NutritionistsService` to find the nutritionist by email and validate the provided password.
-  - Injects `JwtService` to generate the JWT (`access_token`) upon successful authentication.
-  - Returns the `access_token` and selected nutritionist details upon successful login.
-  - Throws `UnauthorizedException` if credentials are invalid.
+  - Handles user authentication
+  - Validates credentials
+  - Generates JWT tokens
+  - Returns user information and access token
 
 ### Controllers
 
 - **`AuthController`**:
-  - Exposes the RESTful API endpoint for nutritionist login (`POST /auth/login`).
-  - Uses `LoginDto` for request body validation.
-  - Injects `AuthService` to handle the login logic.
-  - Uses Swagger decorators (`@ApiTags`, `@ApiOperation`, `@ApiResponse`) for API documentation.
-
-### Strategies
-
-- **`JwtStrategy`**: (Located in `strategies/`)
-  - Implements the Passport.js strategy for validating JWTs.
-  - Configured to extract the JWT from the Authorization header (Bearer token).
-  - Uses the `JWT_SECRET` (from environment variables via `ConfigService`) to verify the token's signature.
-  - Validates the payload structure against `JwtPayload`.
-  - If the token is valid, it typically returns the payload, which NestJS attaches to the `request.user` object for use in protected routes.
-
-### Guards
-
-- **`JwtAuthGuard`**: (Located in `guards/`)
-  - A NestJS guard that utilizes the `JwtStrategy`.
-  - Applied to controllers or specific routes (like in `PatientsController` or `NutritionistsController`) using `@UseGuards(JwtAuthGuard)` to protect them.
-  - Ensures that only requests with a valid JWT can access the protected resource.
-
-### Module Definition (`auth.module.ts`)
-
-- Imports `NutritionistsModule` to access `NutritionistsService`.
-- Imports `PassportModule` for authentication support.
-- Imports and configures `JwtModule.registerAsync` to:
-  - Set up JWT generation and validation.
-  - Asynchronously load the `JWT_SECRET` from `ConfigService` (environment variables).
-  - Configure token options like expiration time (`expiresIn`).
-- Declares the `AuthController`.
-- Provides `AuthService` and `JwtStrategy`.
-- Exports `AuthService` (potentially for use in other modules, although direct use might be limited).
+  - Exposes the login endpoint (`POST /auth/login`)
+  - Uses `LoginDto` for request validation
+  - Returns JWT token and user information
 
 ## API Endpoints
 
-- `POST /auth/login`: Authenticates a nutritionist based on email and password. Returns an `access_token` and nutritionist details on success.
+### POST /auth/login
 
-## Authentication Flow (Login)
+Authenticates a user and returns a JWT token.
 
-1.  A client sends a `POST` request to `/auth/login` with `email` and `password` in the request body (`LoginDto`).
-2.  `AuthController` receives the request and calls `authService.login()`.
-3.  `AuthService` uses `nutritionistsService.findByEmail()` to find the user.
-4.  If the user exists, `AuthService` calls `nutritionistsService.validatePassword()` to compare the provided password with the stored encrypted hash.
-5.  If the password is valid, `AuthService` creates a `JwtPayload` containing user ID, email, and role.
-6.  `AuthService` uses `jwtService.sign()` to generate an `access_token` based on the payload and the configured `JWT_SECRET`.
-7.  `AuthService` returns an object containing the `access_token` and basic nutritionist information.
-8.  The client receives the `access_token` and should include it in the `Authorization: Bearer <token>` header for subsequent requests to protected endpoints.
+**Request Body**:
+
+```typescript
+{
+  email: string;
+  password: string;
+}
+```
+
+**Response**:
+
+```typescript
+{
+  access_token: string;
+  user: {
+    id: string;
+    email: string;
+    role: UserRole;
+  }
+}
+```
+
+## Authentication Flow
+
+1. User sends login request with credentials
+2. `AuthController` receives request and calls `authService.login()`
+3. `AuthService` validates credentials
+4. If valid, generates JWT token with user information
+5. Returns token and user details
+6. Client includes token in subsequent requests
+
+## Authorization Flow
+
+1. Protected route receives request with JWT token
+2. `JwtAuthGuard` validates token and attaches user to request
+3. `RolesGuard` checks user's role against required roles
+4. If authorized, request proceeds to handler
+5. If unauthorized, returns 403 Forbidden
+
+## Security Considerations
+
+1. JWT tokens are signed with a secure secret key
+2. Tokens have expiration time
+3. Role-based access control for all protected routes
+4. Password hashing for secure storage
+5. Input validation using DTOs
+
+## Usage Example
+
+```typescript
+// Protecting a route with authentication and role-based access
+@Controller('energy-plans')
+@UseGuards(JwtAuthGuard, RolesGuard)
+export class EnergyPlanController {
+  @Post()
+  @Roles(UserRole.NUTRITIONIST)
+  create(@Body() createDto: CreateEnergyPlanDto) {
+    // Only authenticated nutritionists can access this endpoint
+  }
+
+  @Get()
+  @Roles(UserRole.NUTRITIONIST, UserRole.PATIENT)
+  findAll() {
+    // Both nutritionists and patients can access this endpoint
+  }
+}
+```
 
 ## Dependencies
 
-- **NestJS**: Core framework, Passport integration (`@nestjs/passport`), JWT module (`@nestjs/jwt`), Config module (`@nestjs/config`).
-- **Passport**: Core authentication library (`passport`).
-- **Passport-JWT**: Strategy for JWT authentication (`passport-jwt`, `@types/passport-jwt`).
-- **Custom Modules**: `NutritionistsModule`.
+- **NestJS**: Core framework
+- **Passport**: Authentication middleware
+- **JWT**: Token generation and validation
+- **Class Validator**: Input validation
+- **Class Transformer**: Object transformation
+
+## Best Practices
+
+1. Always use guards for protected routes
+2. Implement role-based access control
+3. Validate all input data
+4. Use secure password hashing
+5. Implement token expiration
+6. Handle authentication errors gracefully
+7. Log authentication attempts
+8. Implement rate limiting for login attempts

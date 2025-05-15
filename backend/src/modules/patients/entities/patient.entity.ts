@@ -16,6 +16,7 @@ import { Consultation } from './consultation.entity';
 import { Gender } from '../enums/gender.enum';
 import { Nutritionist } from '../../nutritionists/entities/nutritionist.entity';
 import { MealPlan } from '../../meal-plan/entities/meal-plan.entity';
+import { EnergyPlan } from '../../energy-plan/entities/energy-plan.entity';
 
 export enum PatientStatus {
   ACTIVE = 'active',
@@ -125,6 +126,9 @@ export class Patient {
 
   @OneToMany(() => Consultation, (consultation) => consultation.patient)
   consultations: Consultation[];
+
+  @OneToMany(() => EnergyPlan, (energyPlan) => energyPlan.patient)
+  energyPlans: EnergyPlan[];
 
   @Column({ type: 'timestamp', nullable: true })
   lastConsultationAt: Date;

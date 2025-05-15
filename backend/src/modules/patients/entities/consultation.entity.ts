@@ -12,6 +12,7 @@ import { ApiProperty } from '@nestjs/swagger';
 import { Patient } from './patient.entity';
 import { Measurement } from './measurement.entity';
 import { Nutritionist } from '../../nutritionists/entities/nutritionist.entity';
+import { EnergyPlan } from '../../energy-plan/entities/energy-plan.entity';
 
 export enum ConsultationStatus {
   SCHEDULED = 'scheduled',
@@ -88,6 +89,9 @@ export class Consultation {
 
   @OneToMany(() => Measurement, (measurement) => measurement.consultation)
   measurements: Measurement[];
+
+  @OneToMany(() => EnergyPlan, (energyPlan) => energyPlan.consultation)
+  energyPlans: EnergyPlan[];
 
   @ApiProperty({ description: 'Data de criação do registro' })
   @CreateDateColumn({ name: 'created_at' })

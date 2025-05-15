@@ -12,6 +12,7 @@ import { Meal } from './meal.entity';
 import { ApiProperty } from '@nestjs/swagger';
 import { Nutritionist } from '../../nutritionists/entities/nutritionist.entity';
 import { Patient } from '../../patients/entities/patient.entity';
+import { EnergyPlan } from '../../energy-plan/entities/energy-plan.entity';
 
 @Entity('meal_plans')
 export class MealPlan {
@@ -46,6 +47,17 @@ export class MealPlan {
   @JoinColumn({ name: 'nutritionist_id' })
   @ApiProperty({ type: () => Nutritionist })
   nutritionist: Nutritionist;
+
+  @Column({ name: 'energy_plan_id', nullable: true })
+  @ApiProperty({ example: '123e4567-e89b-12d3-a456-426614174000' })
+  energyPlanId?: string;
+
+  @ManyToOne(() => EnergyPlan, (energyPlan) => energyPlan.mealPlans, {
+    onDelete: 'SET NULL',
+  })
+  @JoinColumn({ name: 'energy_plan_id' })
+  @ApiProperty({ type: () => EnergyPlan })
+  energyPlan?: EnergyPlan;
 
   @Column({ name: 'startDate', type: 'timestamp' })
   @ApiProperty({ example: '2024-03-20T10:00:00Z' })
