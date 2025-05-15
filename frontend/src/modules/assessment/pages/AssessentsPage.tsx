@@ -21,8 +21,11 @@ import {
   Snackbar,
   useTheme,
   Alert,
+  useMediaQuery,
+  Menu,
+  MenuItem,
 } from "@mui/material";
-import { Add, Edit, Delete, Timeline } from "@mui/icons-material";
+import { Add, Edit, Delete, Timeline, MoreVert } from "@mui/icons-material";
 import { patientService } from "@/modules/patient/services/patientService";
 import { formatDateToLocal } from "@utils/dateUtils";
 import { LoadingBackdrop } from "@components/LoadingBackdrop";
@@ -30,6 +33,7 @@ import { useState } from "react";
 
 export function Assessments() {
   const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
   const { patientId } = useParams<{ patientId: string }>();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -44,6 +48,8 @@ export function Assessments() {
     message: "",
     severity: "success" as "success" | "error",
   });
+  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+  const [menuRowId, setMenuRowId] = useState<string | null>(null);
 
   const { data: measurements, isLoading } = useQuery({
     queryKey: ["measurements", patientId],
@@ -100,7 +106,6 @@ export function Assessments() {
   };
 
   const handleDeleteClick = (measurementId: string) => {
-    // Abrir diálogo de confirmação
     setMeasurementToDelete(measurementId);
     setDeleteDialogOpen(true);
   };
@@ -126,22 +131,42 @@ export function Assessments() {
     return formatDateToLocal(dateString);
   };
 
+  // Menu de ações mobile
+  const handleMenuOpen = (
+    event: React.MouseEvent<HTMLElement>,
+    rowId: string
+  ) => {
+    setAnchorEl(event.currentTarget);
+    setMenuRowId(rowId);
+  };
+  const handleMenuClose = () => {
+    setAnchorEl(null);
+    setMenuRowId(null);
+  };
+
   if (isLoading) {
     return <LoadingBackdrop open={isLoading} />;
   }
 
   return (
-    <Box sx={{ p: 3 }}>
+    <Box sx={{ p: { xs: 1, sm: 2, md: 3 } }}>
       <Box
         sx={{
           display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
+          flexDirection: { xs: "column", sm: "row" },
+          justifyContent: { xs: "flex-start", sm: "space-between" },
+          alignItems: { xs: "stretch", sm: "center" },
           mb: 3,
+          gap: { xs: 2, sm: 0 },
         }}
       >
-        <Typography variant="h5">Avaliações Antropométricas</Typography>
-        <Stack direction="row" spacing={2}>
+        <Typography
+          variant="h5"
+          sx={{ fontSize: { xs: "1.2rem", sm: "1.5rem" } }}
+        >
+          Avaliações Antropométricas
+        </Typography>
+        <Stack direction={isMobile ? "column" : "row"} spacing={2}>
           <Button
             variant="contained"
             startIcon={<Timeline />}
@@ -150,6 +175,7 @@ export function Assessments() {
                 `/patient/${patientId}/assessments/evolution/measurements`
               )
             }
+            fullWidth={isMobile}
           >
             Evolução
           </Button>
@@ -157,6 +183,7 @@ export function Assessments() {
             variant="contained"
             startIcon={<Add />}
             onClick={handleNewAssessment}
+            fullWidth={isMobile}
           >
             Nova Avaliação
           </Button>
@@ -164,119 +191,208 @@ export function Assessments() {
       </Box>
 
       {measurements && measurements.length > 0 ? (
-        <TableContainer component={Paper}>
-          <Table>
-            <TableHead>
-              <TableRow>
-                <TableCell
-                  sx={{ fontWeight: "bold", color: theme.palette.primary.main }}
-                >
-                  Data
-                </TableCell>
-                <TableCell
-                  sx={{ fontWeight: "bold", color: theme.palette.primary.main }}
-                >
-                  Peso (kg)
-                </TableCell>
-                <TableCell
-                  sx={{ fontWeight: "bold", color: theme.palette.primary.main }}
-                >
-                  Altura (cm)
-                </TableCell>
-                <TableCell
-                  sx={{ fontWeight: "bold", color: theme.palette.primary.main }}
-                >
-                  IMC
-                </TableCell>
-                <TableCell
-                  sx={{ fontWeight: "bold", color: theme.palette.primary.main }}
-                >
-                  % Gordura
-                </TableCell>
-                <TableCell
-                  sx={{ fontWeight: "bold", color: theme.palette.primary.main }}
-                >
-                  Massa Magra (kg)
-                </TableCell>
-                <TableCell
-                  sx={{ fontWeight: "bold", color: theme.palette.primary.main }}
-                >
-                  Ações
-                </TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {measurements.map((measurement) => {
-                // Calcula o IMC se tiver altura e peso
-                const height = Number(measurement.height);
-                const weight = Number(measurement.weight);
-                let imc = "-";
-                if (height && weight) {
-                  // Altura em metros para o cálculo
-                  const heightInMeters = height / 100;
-                  imc = (weight / (heightInMeters * heightInMeters)).toFixed(1);
-                }
-
-                return (
-                  <TableRow
-                    key={measurement.id}
-                    hover
+        <Box sx={{ width: "100%", overflowX: "auto" }}>
+          <TableContainer
+            component={Paper}
+            sx={{ minWidth: isMobile ? 600 : undefined }}
+          >
+            <Table>
+              <TableHead>
+                <TableRow>
+                  <TableCell
                     sx={{
-                      cursor: "pointer",
-                      "&:hover": {
-                        backgroundColor: `${theme.palette.primary.main}08`,
-                      },
+                      fontWeight: "bold",
+                      color: theme.palette.primary.main,
                     }}
-                    onClick={() => handleEditAssessment(measurement.id)}
                   >
-                    <TableCell>
-                      {formatDate(measurement.date as string)}
+                    Data
+                  </TableCell>
+                  <TableCell
+                    sx={{
+                      fontWeight: "bold",
+                      color: theme.palette.primary.main,
+                    }}
+                  >
+                    Peso (kg)
+                  </TableCell>
+                  <TableCell
+                    sx={{
+                      fontWeight: "bold",
+                      color: theme.palette.primary.main,
+                    }}
+                  >
+                    Altura (cm)
+                  </TableCell>
+                  <TableCell
+                    sx={{
+                      fontWeight: "bold",
+                      color: theme.palette.primary.main,
+                    }}
+                  >
+                    IMC
+                  </TableCell>
+                  {!isMobile && (
+                    <TableCell
+                      sx={{
+                        fontWeight: "bold",
+                        color: theme.palette.primary.main,
+                      }}
+                    >
+                      % Gordura
                     </TableCell>
-                    <TableCell>{weight} kg</TableCell>
-                    <TableCell>{height ? `${height} cm` : "-"}</TableCell>
-                    <TableCell>{imc}</TableCell>
-                    <TableCell>
-                      {measurement.bodyFat ? `${measurement.bodyFat}%` : "-"}
+                  )}
+                  {!isMobile && (
+                    <TableCell
+                      sx={{
+                        fontWeight: "bold",
+                        color: theme.palette.primary.main,
+                      }}
+                    >
+                      Massa Magra (kg)
                     </TableCell>
-                    <TableCell>
-                      {measurement.muscleMass
-                        ? `${measurement.muscleMass} kg`
-                        : "-"}
-                    </TableCell>
-                    <TableCell>
-                      <Stack direction="row" spacing={1}>
-                        <IconButton
-                          size="small"
-                          color="primary"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleEditAssessment(measurement.id);
-                          }}
-                          title="Editar"
-                        >
-                          <Edit fontSize="small" />
-                        </IconButton>
-                        <IconButton
-                          size="small"
-                          color="error"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleDeleteClick(measurement.id);
-                          }}
-                          title="Excluir"
-                        >
-                          <Delete fontSize="small" />
-                        </IconButton>
-                      </Stack>
-                    </TableCell>
-                  </TableRow>
-                );
-              })}
-            </TableBody>
-          </Table>
-        </TableContainer>
+                  )}
+                  <TableCell
+                    sx={{
+                      fontWeight: "bold",
+                      color: theme.palette.primary.main,
+                    }}
+                  >
+                    Ações
+                  </TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {measurements.map((measurement) => {
+                  // Calcula o IMC se tiver altura e peso
+                  const height = Number(measurement.height);
+                  const weight = Number(measurement.weight);
+                  let imc = "-";
+                  if (height && weight) {
+                    // Altura em metros para o cálculo
+                    const heightInMeters = height / 100;
+                    imc = (weight / (heightInMeters * heightInMeters)).toFixed(
+                      1
+                    );
+                  }
+
+                  return (
+                    <TableRow
+                      key={measurement.id}
+                      hover
+                      sx={{
+                        cursor: "pointer",
+                        "&:hover": {
+                          backgroundColor: `${theme.palette.primary.main}08`,
+                        },
+                      }}
+                      onClick={() => handleEditAssessment(measurement.id)}
+                    >
+                      <TableCell>
+                        {formatDate(measurement.date as string)}
+                      </TableCell>
+                      <TableCell>{weight} kg</TableCell>
+                      <TableCell>{height ? `${height} cm` : "-"}</TableCell>
+                      <TableCell>{imc}</TableCell>
+                      {!isMobile && (
+                        <TableCell>
+                          {measurement.bodyFat
+                            ? `${measurement.bodyFat}%`
+                            : "-"}
+                        </TableCell>
+                      )}
+                      {!isMobile && (
+                        <TableCell>
+                          {measurement.muscleMass
+                            ? `${measurement.muscleMass} kg`
+                            : "-"}
+                        </TableCell>
+                      )}
+                      <TableCell>
+                        {isMobile ? (
+                          <>
+                            <IconButton
+                              size="small"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleMenuOpen(e, measurement.id);
+                              }}
+                            >
+                              <MoreVert />
+                            </IconButton>
+                            <Menu
+                              anchorEl={anchorEl}
+                              open={menuRowId === measurement.id}
+                              onClose={handleMenuClose}
+                              anchorOrigin={{
+                                vertical: "bottom",
+                                horizontal: "right",
+                              }}
+                              transformOrigin={{
+                                vertical: "top",
+                                horizontal: "right",
+                              }}
+                            >
+                              <MenuItem
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleEditAssessment(measurement.id);
+                                  handleMenuClose();
+                                }}
+                              >
+                                <Edit fontSize="small" sx={{ mr: 1 }} /> Editar
+                              </MenuItem>
+                              <MenuItem
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleDeleteClick(measurement.id);
+                                  handleMenuClose();
+                                }}
+                              >
+                                <Delete
+                                  fontSize="small"
+                                  sx={{ mr: 1 }}
+                                  color="error"
+                                />{" "}
+                                Excluir
+                              </MenuItem>
+                            </Menu>
+                          </>
+                        ) : (
+                          <Stack direction="row" spacing={1}>
+                            <IconButton
+                              size="small"
+                              color="primary"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleEditAssessment(measurement.id);
+                              }}
+                              title="Editar"
+                            >
+                              <Edit fontSize="small" />
+                            </IconButton>
+                            <IconButton
+                              size="small"
+                              color="error"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleDeleteClick(measurement.id);
+                              }}
+                              title="Excluir"
+                            >
+                              <Delete fontSize="small" />
+                            </IconButton>
+                          </Stack>
+                        )}
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
+          </TableContainer>
+        </Box>
       ) : (
-        <Paper sx={{ p: 6, marginTop: 5, textAlign: "center" }}>
+        <Paper sx={{ p: 4, marginTop: 5, textAlign: "center" }}>
           <Typography variant="h6" color="text.secondary" gutterBottom>
             Nenhuma avaliação encontrada
           </Typography>

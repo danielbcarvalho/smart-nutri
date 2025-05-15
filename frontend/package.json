@@ -11,6 +11,8 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "setup:env": "node scripts/setup-env.js",
+    "test": "jest",
+    "test:watch": "jest --watch",
     "setup:env:dev": "NODE_ENV=development node scripts/setup-env.js",
     "setup:env:prod": "NODE_ENV=production node scripts/setup-env.js"
   },
@@ -42,6 +44,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.21.0",
+    "@types/jest": "^29.5.14",
     "@types/lodash": "^4.17.16",
     "@types/react": "^19.0.10",
     "@types/react-dom": "^19.0.4",
@@ -51,6 +54,8 @@
     "eslint-plugin-react-hooks": "^5.1.0",
     "eslint-plugin-react-refresh": "^0.4.19",
     "globals": "^15.15.0",
+    "jest": "^29.7.0",
+    "ts-jest": "^29.3.3",
     "typescript": "~5.7.2",
     "typescript-eslint": "^8.24.1",
     "vite": "^6.2.0",

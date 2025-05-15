@@ -63,4 +63,5 @@ export interface AnthropometricResults {
   skinfoldsSum: string;
   bodyDensity: string;
   referenceUsed: string;
+  ageWarning?: string;
 }

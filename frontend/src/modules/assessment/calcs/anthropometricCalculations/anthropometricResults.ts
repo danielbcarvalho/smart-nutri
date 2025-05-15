@@ -92,6 +92,7 @@ export const calculateAnthropometricResults = ({
     skinfoldsSum: "",
     bodyDensity: "",
     referenceUsed: "",
+    ageWarning: "",
   };
 
   // Validação inicial dos dados
@@ -112,7 +113,10 @@ export const calculateAnthropometricResults = ({
   if (validWeight && validHeight) {
     const bmi = calculateBMI(validWeight, validHeight);
     results.bmi = bmi.toFixed(1);
-    results.bmiClassification = getBMIClassification(bmi, validGender);
+    results.bmiClassification = getBMIClassification(
+      Number(results.bmi),
+      validGender
+    );
 
     // Faixa de peso ideal
     const idealRange = calculateIdealWeightRange(validHeight);
@@ -142,101 +146,183 @@ export const calculateAnthropometricResults = ({
   }
 
   // Análises por dobras cutâneas
-  if (
-    skinfolds &&
-    Object.values(skinfolds).some((value) => !isNaN(value) && value > 0)
-  ) {
-    // Converte as dobras para o formato esperado
-    const skinfoldValues: Record<string, string> = {};
-    Object.entries(skinfolds).forEach(([key, value]) => {
-      if (!isNaN(value) && value >= 0) {
-        skinfoldValues[key] = String(value);
-      }
+  if (skinfolds) {
+    console.log("1. Iniciando análise de dobras:", {
+      skinfolds,
+      skinfoldFormula,
+      gender: validGender,
+      age,
+      rawSkinfolds: JSON.stringify(skinfolds),
     });
 
     // Obtém a fórmula selecionada
     const formula = bodyDensityFormulas.find((f) => f.id === skinfoldFormula);
+    console.log("2. Fórmula encontrada:", {
+      formulaId: formula?.id,
+      formulaName: formula?.name,
+      requiredSkinfolds: formula?.requiredSkinfolds,
+      genderSupport: formula?.genderSupport,
+    });
 
-    // Cálculo da densidade corporal
-    const { density, referenceUsed } = calculateBodyDensity(
-      skinfoldValues as Partial<Skinfolds>,
-      validGender,
-      age,
-      skinfoldFormula
-    );
+    if (formula) {
+      // Verifica se todas as dobras necessárias estão presentes e válidas
+      const requiredSkinfoldsForGender =
+        formula.id === "guedes"
+          ? validGender === "M"
+            ? ["tricipital", "abdominal", "suprailiac"]
+            : ["subscapular", "suprailiac", "thigh"]
+          : formula.id === "petroski" &&
+            typeof formula.getRequiredSkinfolds === "function"
+          ? formula.getRequiredSkinfolds(validGender, age)
+          : formula.getRequiredSkinfolds
+          ? formula.getRequiredSkinfolds(validGender)
+          : formula.requiredSkinfolds;
 
-    if (density > 0) {
-      results.bodyDensity = density.toFixed(3);
-      results.referenceUsed = referenceUsed;
+      console.log("3. Dobras necessárias para o gênero:", {
+        gender: validGender,
+        requiredSkinfolds: requiredSkinfoldsForGender,
+        formulaId: formula.id,
+        allSkinfolds: Object.keys(skinfolds),
+        age,
+      });
 
-      // Cálculo do percentual de gordura usando a equação de Siri
-      const bodyFatPercentage = calculateBodyFatPercentage(density);
-      results.bodyFatPercentage = `${bodyFatPercentage.toFixed(1)}%`;
-
-      // Classificação do percentual de gordura
-      results.bodyFatClassification = getBodyFatClassification(
-        bodyFatPercentage,
-        validGender
+      const hasAllRequiredSkinfolds = requiredSkinfoldsForGender.every(
+        (fold) => {
+          const value = skinfolds[fold as keyof typeof skinfolds];
+          const isValid = !isNaN(value) && value > 0;
+          console.log("4. Verificando dobra:", {
+            fold,
+            value,
+            rawValue: skinfolds[fold as keyof typeof skinfolds],
+            type: typeof value,
+            isValid,
+          });
+          return isValid;
+        }
       );
 
-      // Valores ideais de percentual de gordura baseados em literatura científica
-      const idealRange = getIdealFatPercentageRange(validGender, age);
-      results.idealFatPercentage = `${idealRange.min}% a ${idealRange.max}%`;
+      console.log("5. Validação das dobras:", {
+        hasAllRequiredSkinfolds,
+        requiredSkinfoldsForGender,
+        gender: validGender,
+        allSkinfolds: Object.entries(skinfolds).map(([key, value]) => ({
+          key,
+          value,
+          type: typeof value,
+        })),
+      });
 
-      // Somatório de dobras
-      if (formula) {
-        // Pega apenas as dobras do protocolo selecionado
-        const protocolSkinfolds = formula.requiredSkinfolds
-          .map((fold) => skinfolds[fold as keyof typeof skinfolds] || 0)
-          .filter((value) => !isNaN(value) && value > 0);
+      if (hasAllRequiredSkinfolds) {
+        // Converte as dobras para o formato esperado
+        const skinfoldValues: Record<string, string> = {};
+        Object.entries(skinfolds).forEach(([key, value]) => {
+          if (!isNaN(value) && value >= 0) {
+            skinfoldValues[key] = String(value);
+          }
+        });
+        console.log("6. Dobras convertidas para cálculo:", skinfoldValues);
 
-        if (protocolSkinfolds.length > 0) {
-          const sum = protocolSkinfolds.reduce((acc, curr) => acc + curr, 0);
-          results.skinfoldsSum = `${sum.toFixed(1)} mm`;
-        }
-      }
-
-      // Cálculos de composição corporal
-      if (validWeight) {
-        // Massa de gordura
-        const fatMass = calculateFatMass(validWeight, bodyFatPercentage);
-        results.fatMass = `${fatMass.toFixed(1)} kg`;
-
-        // Massa livre de gordura
-        const fatFreeMass = validWeight - fatMass;
-        results.fatFreeMass = `${fatFreeMass.toFixed(1)} kg`;
-
-        // Peso residual (baseado no gênero)
-        const residualWeight = calculateResidualWeight(
+        // Cálculo da densidade corporal
+        const { density, referenceUsed, ageWarning } = calculateBodyDensity(
+          skinfoldValues as Partial<Skinfolds>,
+          validGender,
+          age,
+          skinfoldFormula,
           validWeight,
-          validGender
-        );
-        results.residualWeight = `${residualWeight.toFixed(1)} kg`;
-
-        // Cálculo da massa óssea
-        if (
-          boneDiameters &&
-          !isNaN(boneDiameters.wrist) &&
-          !isNaN(boneDiameters.femur) &&
           validHeight
-        ) {
-          // Massa óssea usando diâmetros ósseos
-          const boneMass = calculateBoneMass(
-            validHeight,
-            boneDiameters.wrist,
-            boneDiameters.femur,
+        );
+        console.log("7. Resultado densidade:", {
+          density,
+          referenceUsed,
+          ageWarning,
+          isValid: density > 0,
+        });
+
+        if (density > 0) {
+          results.bodyDensity = density.toFixed(3);
+          results.referenceUsed = referenceUsed;
+          if (ageWarning) {
+            results.ageWarning = ageWarning;
+          }
+
+          // Cálculo do percentual de gordura usando a equação de Siri
+          const bodyFatPercentage = calculateBodyFatPercentage(density);
+          console.log("8. Percentual de gordura:", {
+            density,
+            bodyFatPercentage,
+            isValid: !isNaN(bodyFatPercentage) && bodyFatPercentage > 0,
+          });
+          results.bodyFatPercentage = `${bodyFatPercentage.toFixed(1)}%`;
+
+          // Classificação do percentual de gordura
+          results.bodyFatClassification = getBodyFatClassification(
+            bodyFatPercentage,
             validGender
           );
-          results.boneMass = `${boneMass.toFixed(1)} kg`;
 
-          // Massa muscular (via método de subtração das outras massas)
-          const muscleMass = calculateMuscleMass(
-            validWeight,
-            fatMass,
-            boneMass,
-            residualWeight
-          );
-          results.muscleMass = `${muscleMass.toFixed(1)} kg`;
+          // Valores ideais de percentual de gordura baseados em literatura científica
+          const idealRange = getIdealFatPercentageRange(validGender, age);
+          results.idealFatPercentage = `${idealRange.min}% a ${idealRange.max}%`;
+
+          // Somatório de dobras
+          if (formula) {
+            // Pega apenas as dobras do protocolo selecionado
+            const protocolSkinfolds = formula.requiredSkinfolds
+              .map((fold) => skinfolds[fold as keyof typeof skinfolds] || 0)
+              .filter((value) => !isNaN(value) && value > 0);
+
+            if (protocolSkinfolds.length > 0) {
+              const sum = protocolSkinfolds.reduce(
+                (acc, curr) => acc + curr,
+                0
+              );
+              results.skinfoldsSum = `${sum.toFixed(1)} mm`;
+            }
+          }
+
+          // Cálculos de composição corporal
+          if (validWeight) {
+            // Massa de gordura
+            const fatMass = calculateFatMass(validWeight, bodyFatPercentage);
+            results.fatMass = `${fatMass.toFixed(1)} kg`;
+
+            // Massa livre de gordura
+            const fatFreeMass = validWeight - fatMass;
+            results.fatFreeMass = `${fatFreeMass.toFixed(1)} kg`;
+
+            // Peso residual (baseado no gênero)
+            const residualWeight = calculateResidualWeight(
+              validWeight,
+              validGender
+            );
+            results.residualWeight = `${residualWeight.toFixed(1)} kg`;
+
+            // Cálculo da massa óssea
+            if (
+              boneDiameters &&
+              !isNaN(boneDiameters.wrist) &&
+              !isNaN(boneDiameters.femur) &&
+              validHeight
+            ) {
+              // Massa óssea usando diâmetros ósseos
+              const boneMass = calculateBoneMass(
+                validHeight,
+                boneDiameters.wrist,
+                boneDiameters.femur,
+                validGender
+              );
+              results.boneMass = `${boneMass.toFixed(1)} kg`;
+
+              // Massa muscular (via método de subtração das outras massas)
+              const muscleMass = calculateMuscleMass(
+                validWeight,
+                fatMass,
+                boneMass,
+                residualWeight
+              );
+              results.muscleMass = `${muscleMass.toFixed(1)} kg`;
+            }
+          }
         }
       }
     }

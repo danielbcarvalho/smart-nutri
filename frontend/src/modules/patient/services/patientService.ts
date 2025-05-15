@@ -18,6 +18,10 @@ export interface Patient {
   status: "active" | "inactive";
   photoUrl?: string;
   instagram?: string;
+  address?: string;
+  observations?: string;
+  allergies?: string[];
+  healthConditions?: string[];
   tags?: string[];
   createdAt: string;
   updatedAt: string;

@@ -461,26 +461,39 @@ export function MealPlanDetails() {
   const selectedMeal = plan.meals?.find((m) => m.id === selectedMealId);
 
   return (
-    <Box sx={{ maxWidth: 1200, mx: "auto", p: 3 }}>
+    <Box sx={{ maxWidth: 1200, mx: "auto", p: { xs: 1, sm: 3 } }}>
       <Stack
         direction={{ xs: "column", sm: "row" }}
-        alignItems={{ xs: "flex-start", sm: "center" }}
+        alignItems={{ xs: "stretch", sm: "center" }}
         justifyContent="space-between"
         spacing={2}
-        sx={{ mb: 2 }}
+        sx={{ mb: 2, gap: { xs: 1.5, sm: 0 } }}
       >
         <Box>
           <Typography
             variant="h5"
-            sx={{ display: "flex", alignItems: "center", mb: 0.5 }}
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              mb: 0.5,
+              fontSize: { xs: "1.3rem", sm: "2rem" },
+            }}
           >
             Plano Alimentar
           </Typography>
-          <Typography variant="h6" color="text.secondary">
+          <Typography
+            variant="h6"
+            color="text.secondary"
+            sx={{ fontSize: { xs: "1.05rem", sm: "1.25rem" } }}
+          >
             {plan.name}
           </Typography>
         </Box>
-        <Stack direction="row" spacing={1}>
+        <Stack
+          direction={{ xs: "column", sm: "row" }}
+          spacing={1.5}
+          sx={{ width: { xs: "100%", sm: "auto" } }}
+        >
           <Button
             variant="outlined"
             startIcon={
@@ -495,7 +508,9 @@ export function MealPlanDetails() {
                 ? handleCollapseAll
                 : handleExpandAll
             }
-            size="small"
+            size={"large"}
+            fullWidth
+            sx={{ fontWeight: 600, fontSize: { xs: "1rem", sm: "0.95rem" } }}
           >
             {expandedMeals.length === sortedMeals.length
               ? "Recolher tudo"
@@ -510,8 +525,10 @@ export function MealPlanDetails() {
               setMealMenuId("");
               setOpenMealDialog(true);
             }}
-            size="small"
+            size={"large"}
             color="success"
+            fullWidth
+            sx={{ fontWeight: 600, fontSize: { xs: "1rem", sm: "0.95rem" } }}
           >
             Nova refeição ou hábito
           </Button>
@@ -521,10 +538,11 @@ export function MealPlanDetails() {
       {/* Lista de Refeições */}
       <Box
         sx={{
-          borderRadius: 2,
+          borderRadius: { xs: 2, sm: 2 },
           overflow: "hidden",
           mb: 3,
           bgcolor: "transparent",
+          p: { xs: 0.5, sm: 0 },
         }}
       >
         {sortedMeals.map((meal) => (
@@ -554,10 +572,12 @@ export function MealPlanDetails() {
         disabled={isPdfGenerating}
         sx={{
           width: "100%",
-          py: 1.5,
+          py: { xs: 2, sm: 1.5 },
           fontWeight: 600,
-          fontSize: 18,
+          fontSize: { xs: 18, sm: 18 },
           bgcolor: "custom.main",
+          borderRadius: 2,
+          mb: 2,
           "&:hover": {
             bgcolor: "custom.dark",
           },

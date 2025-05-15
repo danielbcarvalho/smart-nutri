@@ -333,7 +333,7 @@ export const PhotosSection: React.FC<PhotosSectionProps> = ({
 
   // --- Render Logic ---
   const renderPhotoUpload = (type: PhotoType, label: string) => (
-    <Grid item xs={12} sm={6} md={3} key={type}>
+    <Grid key={type}>
       <Typography variant="body2" gutterBottom sx={{ fontWeight: "medium" }}>
         {label}
       </Typography>
@@ -355,17 +355,11 @@ export const PhotosSection: React.FC<PhotosSectionProps> = ({
           type={type}
           assessmentId={measurementId || ""}
           patientId={patientId}
-          // Pass the correct handler for completion
           onUploadComplete={handlePhotoChange(type)}
-          // Pass the specific error handler for this type
           onUploadError={handlePhotoError(type)}
-          // Pass the prepare handler
           onUploadStart={() => handleUploadStart(type)}
-          // Pass the remove handler
           onRemove={handleRemovePhoto}
-          // Get URL safely from state
           initialPhotoUrl={photos[type]?.url || ""}
-          // Define consistent preview size
           previewSize={{ width: 200, height: 250 }}
         />
       )}

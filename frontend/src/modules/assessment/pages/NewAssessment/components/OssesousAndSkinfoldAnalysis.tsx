@@ -33,10 +33,9 @@ export const OssesousAndSkinfoldAnalysis: React.FC<Props> = ({
             Percentual de Gordura
           </Typography>
           <Tooltip title={getReferenceTooltip("bodyFatPercentage")}>
-            {" "}
             <span>
               <HelpIcon color="action" fontSize="small" />
-            </span>{" "}
+            </span>
           </Tooltip>
         </Box>
         <Typography color="text.secondary">
@@ -57,10 +56,9 @@ export const OssesousAndSkinfoldAnalysis: React.FC<Props> = ({
         <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
           <Typography sx={{ fontWeight: "bold" }}>Classif. do % GC</Typography>
           <Tooltip title={getReferenceTooltip("bodyFatClassification")}>
-            {" "}
             <span>
               <HelpIcon color="action" fontSize="small" />
-            </span>{" "}
+            </span>
           </Tooltip>
         </Box>
         <Typography color="text.secondary">
@@ -81,10 +79,9 @@ export const OssesousAndSkinfoldAnalysis: React.FC<Props> = ({
         <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
           <Typography sx={{ fontWeight: "bold" }}>Peso ósseo</Typography>
           <Tooltip title={getReferenceTooltip("boneMass")}>
-            {" "}
             <span>
               <HelpIcon color="action" fontSize="small" />
-            </span>{" "}
+            </span>
           </Tooltip>
         </Box>
         <Typography color="text.secondary">
@@ -97,10 +94,9 @@ export const OssesousAndSkinfoldAnalysis: React.FC<Props> = ({
         <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
           <Typography sx={{ fontWeight: "bold" }}>Massa Muscular</Typography>
           <Tooltip title={getReferenceTooltip("muscleMass")}>
-            {" "}
             <span>
               <HelpIcon color="action" fontSize="small" />
-            </span>{" "}
+            </span>
           </Tooltip>
         </Box>
         <Typography color="text.secondary">
@@ -113,10 +109,9 @@ export const OssesousAndSkinfoldAnalysis: React.FC<Props> = ({
         <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
           <Typography sx={{ fontWeight: "bold" }}>Peso residual</Typography>
           <Tooltip title={getReferenceTooltip("residualWeight")}>
-            {" "}
             <span>
               <HelpIcon color="action" fontSize="small" />
-            </span>{" "}
+            </span>
           </Tooltip>
         </Box>
         <Typography color="text.secondary">

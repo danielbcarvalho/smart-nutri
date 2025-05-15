@@ -11,6 +11,10 @@ import {
   ToggleButton,
   IconButton,
   Tooltip,
+  useMediaQuery,
+  useTheme,
+  Menu,
+  MenuItem,
 } from "@mui/material";
 import {
   Add as AddIcon,
@@ -20,6 +24,7 @@ import {
   Delete as DeleteIcon,
   Restaurant as RestaurantIcon,
   ExpandMore as ExpandMoreIcon,
+  MoreVert as MoreVertIcon,
 } from "@mui/icons-material";
 
 interface MealPlan {
@@ -75,6 +80,10 @@ export function MealPlan() {
   const [showNewPlanForm, setShowNewPlanForm] = useState(false);
   const [showMealRoutine, setShowMealRoutine] = useState(false);
   const [meals, setMeals] = useState<Meal[]>(DEFAULT_MEALS);
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
+  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+  const [menuMealId, setMenuMealId] = useState<string | null>(null);
 
   const handleTypeChange = (
     event: React.MouseEvent<HTMLElement>,
@@ -101,35 +110,61 @@ export function MealPlan() {
     setMeals([...meals, newMeal]);
   };
 
+  const handleMenuOpen = (
+    event: React.MouseEvent<HTMLElement>,
+    mealId: string
+  ) => {
+    setAnchorEl(event.currentTarget);
+    setMenuMealId(mealId);
+  };
+  const handleMenuClose = () => {
+    setAnchorEl(null);
+    setMenuMealId(null);
+  };
+
   if (showMealRoutine) {
     return (
-      <Box sx={{ p: 2 }}>
-        <Typography variant="h6" sx={{ mb: 3, color: "text.primary" }}>
+      <Box sx={{ p: { xs: 1, sm: 2, md: 3 } }}>
+        <Typography
+          variant="h6"
+          sx={{
+            mb: 3,
+            color: "text.primary",
+            fontSize: { xs: "1.2rem", sm: "1.5rem" },
+          }}
+        >
           Plano Alimentar
         </Typography>
-
         {/* Meal List */}
         <Box>
           <Stack
-            direction="row"
-            justifyContent="space-between"
-            alignItems="center"
-            sx={{ mb: 2 }}
+            direction={isMobile ? "column" : "row"}
+            justifyContent={isMobile ? "flex-start" : "space-between"}
+            alignItems={isMobile ? "stretch" : "center"}
+            sx={{ mb: 2, gap: { xs: 2, sm: 0 } }}
           >
             <Typography
               variant="subtitle1"
               fontWeight={500}
               color="text.primary"
+              sx={{ fontSize: { xs: "1rem", sm: "1.1rem" } }}
             >
               Rotina do paciente
             </Typography>
-            <Stack direction="row" spacing={1}>
+            <Stack
+              direction={isMobile ? "column" : "row"}
+              spacing={2}
+              sx={{ width: { xs: "100%", sm: "auto" } }}
+            >
               <Button
                 variant="outlined"
-                size="small"
+                size={isMobile ? "large" : "small"}
+                fullWidth={isMobile}
                 sx={{
                   borderColor: "custom.main",
                   color: "custom.main",
+                  fontWeight: 600,
+                  fontSize: { xs: "1rem", sm: "0.95rem" },
                   "&:hover": {
                     borderColor: "custom.dark",
                     bgcolor: "custom.lightest",
@@ -140,10 +175,13 @@ export function MealPlan() {
               </Button>
               <Button
                 variant="outlined"
-                size="small"
+                size={isMobile ? "large" : "small"}
+                fullWidth={isMobile}
                 sx={{
                   borderColor: "custom.main",
                   color: "custom.main",
+                  fontWeight: 600,
+                  fontSize: { xs: "1rem", sm: "0.95rem" },
                   "&:hover": {
                     borderColor: "custom.dark",
                     bgcolor: "custom.lightest",
@@ -155,76 +193,134 @@ export function MealPlan() {
             </Stack>
           </Stack>
 
-          <Stack spacing={1}>
+          <Stack spacing={2}>
             {meals.map((meal) => (
               <Box
                 key={meal.id}
                 sx={{
-                  p: 2,
+                  p: { xs: 2, sm: 2 },
                   borderRadius: 2,
                   bgcolor: "background.paper",
                   border: "1px solid",
                   borderColor: "divider",
+                  boxShadow: isMobile ? 1 : 0,
+                  mx: { xs: 0, sm: 0 },
+                  mb: 1,
+                  width: "100%",
                   "&:hover": {
                     bgcolor: "custom.lightest",
                   },
                 }}
               >
-                <Stack direction="row" alignItems="center" spacing={2}>
-                  <IconButton
-                    size="small"
-                    sx={{
-                      color: "text.secondary",
-                      "&:hover": { color: "custom.main" },
-                    }}
+                <Stack
+                  direction={isMobile ? "column" : "row"}
+                  alignItems={isMobile ? "stretch" : "center"}
+                  spacing={2}
+                >
+                  <Stack
+                    direction="row"
+                    alignItems="center"
+                    spacing={1}
+                    sx={{ mb: isMobile ? 1 : 0 }}
                   >
-                    <ExpandMoreIcon fontSize="small" />
-                  </IconButton>
-                  <TextField
-                    size="small"
-                    type="time"
-                    value={meal.time}
-                    sx={{ width: 100 }}
-                  />
+                    <IconButton
+                      size="small"
+                      sx={{
+                        color: "text.secondary",
+                        "&:hover": { color: "custom.main" },
+                      }}
+                    >
+                      <ExpandMoreIcon fontSize="small" />
+                    </IconButton>
+                    <TextField
+                      size="small"
+                      type="time"
+                      value={meal.time}
+                      sx={{ width: 100 }}
+                      inputProps={{ style: { fontSize: isMobile ? 18 : 14 } }}
+                    />
+                  </Stack>
                   <Typography
                     variant="subtitle1"
                     sx={{
                       flex: 1,
                       color: "text.primary",
                       fontWeight: 500,
+                      fontSize: { xs: "1.1rem", sm: "1rem" },
+                      mb: isMobile ? 1 : 0,
                     }}
                   >
                     {meal.name}
                   </Typography>
-                  <Stack direction="row" spacing={1}>
-                    <IconButton
-                      size="small"
-                      sx={{
-                        color: "text.secondary",
-                        "&:hover": { color: "custom.main" },
-                      }}
-                    >
-                      <EditIcon fontSize="small" />
-                    </IconButton>
-                    <IconButton
-                      size="small"
-                      sx={{
-                        color: "text.secondary",
-                        "&:hover": { color: "custom.main" },
-                      }}
-                    >
-                      <CopyIcon fontSize="small" />
-                    </IconButton>
-                    <IconButton
-                      size="small"
-                      sx={{
-                        color: "text.secondary",
-                        "&:hover": { color: "error.main" },
-                      }}
-                    >
-                      <DeleteIcon fontSize="small" />
-                    </IconButton>
-                  </Stack>
+                  {isMobile ? (
+                    <>
+                      <IconButton
+                        size="large"
+                        onClick={(e) => handleMenuOpen(e, meal.id)}
+                        sx={{ color: "text.secondary" }}
+                      >
+                        <MoreVertIcon />
+                      </IconButton>
+                      <Menu
+                        anchorEl={anchorEl}
+                        open={menuMealId === meal.id}
+                        onClose={handleMenuClose}
+                        anchorOrigin={{
+                          vertical: "bottom",
+                          horizontal: "right",
+                        }}
+                        transformOrigin={{
+                          vertical: "top",
+                          horizontal: "right",
+                        }}
+                      >
+                        <MenuItem onClick={handleMenuClose}>
+                          <EditIcon fontSize="small" sx={{ mr: 1 }} /> Editar
+                        </MenuItem>
+                        <MenuItem onClick={handleMenuClose}>
+                          <CopyIcon fontSize="small" sx={{ mr: 1 }} /> Duplicar
+                        </MenuItem>
+                        <MenuItem onClick={handleMenuClose}>
+                          <DeleteIcon
+                            fontSize="small"
+                            sx={{ mr: 1 }}
+                            color="error"
+                          />{" "}
+                          Excluir
+                        </MenuItem>
+                      </Menu>
+                    </>
+                  ) : (
+                    <Stack direction="row" spacing={1}>
+                      <IconButton
+                        size="small"
+                        sx={{
+                          color: "text.secondary",
+                          "&:hover": { color: "custom.main" },
+                        }}
+                      >
+                        <EditIcon fontSize="small" />
+                      </IconButton>
+                      <IconButton
+                        size="small"
+                        sx={{
+                          color: "text.secondary",
+                          "&:hover": { color: "custom.main" },
+                        }}
+                      >
+                        <CopyIcon fontSize="small" />
+                      </IconButton>
+                      <IconButton
+                        size="small"
+                        sx={{
+                          color: "text.secondary",
+                          "&:hover": { color: "error.main" },
+                        }}
+                      >
+                        <DeleteIcon fontSize="small" />
+                      </IconButton>
+                    </Stack>
+                  )}
                 </Stack>
               </Box>
             ))}
@@ -234,10 +330,14 @@ export function MealPlan() {
             variant="outlined"
             startIcon={<AddIcon />}
             onClick={handleAddMeal}
+            fullWidth={isMobile}
+            size={isMobile ? "large" : "medium"}
             sx={{
               mt: 2,
               borderColor: "custom.main",
               color: "custom.main",
+              fontWeight: 600,
+              fontSize: { xs: "1rem", sm: "0.95rem" },
               "&:hover": {
                 borderColor: "custom.dark",
                 bgcolor: "custom.lightest",
@@ -253,12 +353,18 @@ export function MealPlan() {
 
   if (plans.length === 0 || showNewPlanForm) {
     return (
-      <Box sx={{ p: 2 }}>
-        <Typography variant="h6" sx={{ mb: 3, color: "text.primary" }}>
+      <Box sx={{ p: { xs: 1, sm: 2, md: 3 } }}>
+        <Typography
+          variant="h6"
+          sx={{
+            mb: 3,
+            color: "text.primary",
+            fontSize: { xs: "1.2rem", sm: "1.5rem" },
+          }}
+        >
           Criar novo plano alimentar
         </Typography>
-
-        <Card sx={{ mb: 2 }}>
+        <Card sx={{ mb: 2, p: { xs: 1, sm: 0 } }}>
           <CardContent>
             <Stack spacing={3}>
               <TextField
@@ -267,12 +373,16 @@ export function MealPlan() {
                 value={newPlanName}
                 onChange={(e) => setNewPlanName(e.target.value)}
                 placeholder="Ex: Cardápio personalizado"
+                inputProps={{ style: { fontSize: isMobile ? 18 : 14 } }}
               />
-
               <Box>
                 <Typography
                   variant="subtitle2"
-                  sx={{ mb: 1, color: "text.secondary" }}
+                  sx={{
+                    mb: 1,
+                    color: "text.secondary",
+                    fontSize: { xs: "1rem", sm: "1rem" },
+                  }}
                 >
                   Tipo de plano
                 </Typography>
@@ -281,11 +391,14 @@ export function MealPlan() {
                   exclusive
                   onChange={handleTypeChange}
                   aria-label="tipo de plano"
-                  size="small"
+                  size={isMobile ? "medium" : "small"}
+                  sx={{ width: { xs: "100%", sm: "auto" } }}
                 >
                   <ToggleButton
                     value="alimentos"
                     sx={{
+                      width: { xs: "100%", sm: "auto" },
+                      fontSize: { xs: "1rem", sm: "0.95rem" },
                       "&.Mui-selected": {
                         bgcolor: "custom.lightest",
                         color: "custom.main",
@@ -300,6 +413,8 @@ export function MealPlan() {
                   <ToggleButton
                     value="equivalentes"
                     sx={{
+                      width: { xs: "100%", sm: "auto" },
+                      fontSize: { xs: "1rem", sm: "0.95rem" },
                       "&.Mui-selected": {
                         bgcolor: "custom.lightest",
                         color: "custom.main",
@@ -314,6 +429,8 @@ export function MealPlan() {
                   <ToggleButton
                     value="qualitativa"
                     sx={{
+                      width: { xs: "100%", sm: "auto" },
+                      fontSize: { xs: "1rem", sm: "0.95rem" },
                       "&.Mui-selected": {
                         bgcolor: "custom.lightest",
                         color: "custom.main",
@@ -327,13 +444,16 @@ export function MealPlan() {
                   </ToggleButton>
                 </ToggleButtonGroup>
               </Box>
-
               <Button
                 variant="contained"
                 onClick={handleCreatePlan}
+                fullWidth={isMobile}
+                size={isMobile ? "large" : "medium"}
                 sx={{
                   bgcolor: "custom.main",
                   color: "common.white",
+                  fontWeight: 600,
+                  fontSize: { xs: "1rem", sm: "1rem" },
                   "&:hover": {
                     bgcolor: "custom.dark",
                   },
@@ -349,57 +469,110 @@ export function MealPlan() {
   }
 
   return (
-    <Box sx={{ p: 3 }}>
+    <Box sx={{ p: { xs: 1, sm: 3 } }}>
       <Stack
-        direction="row"
-        justifyContent="space-between"
-        alignItems="center"
-        sx={{ mb: 3 }}
+        direction={isMobile ? "column" : "row"}
+        justifyContent={isMobile ? "flex-start" : "space-between"}
+        alignItems={isMobile ? "stretch" : "center"}
+        sx={{ mb: 3, gap: { xs: 2, sm: 0 } }}
       >
-        <Typography variant="h6">Planos Alimentares</Typography>
+        <Typography
+          variant="h6"
+          sx={{ fontSize: { xs: "1.2rem", sm: "1.5rem" } }}
+        >
+          Planos Alimentares
+        </Typography>
         <Button
           variant="contained"
           startIcon={<AddIcon />}
           onClick={() => setShowNewPlanForm(true)}
+          fullWidth={isMobile}
+          size={isMobile ? "large" : "medium"}
+          sx={{ fontWeight: 600, fontSize: { xs: "1rem", sm: "1rem" } }}
         >
           nova prescrição alimentar
         </Button>
       </Stack>
-
       <Stack spacing={2}>
         {plans.map((plan) => (
-          <Card key={plan.id}>
+          <Card key={plan.id} sx={{ p: { xs: 1, sm: 0 } }}>
             <CardContent>
-              <Stack direction="row" alignItems="center" spacing={2}>
+              <Stack
+                direction={isMobile ? "column" : "row"}
+                alignItems={isMobile ? "stretch" : "center"}
+                spacing={2}
+              >
                 <RestaurantIcon color="primary" />
                 <Box sx={{ flex: 1 }}>
-                  <Typography variant="h6">{plan.name}</Typography>
+                  <Typography
+                    variant="h6"
+                    sx={{ fontSize: { xs: "1.1rem", sm: "1.25rem" } }}
+                  >
+                    {plan.name}
+                  </Typography>
                   <Typography variant="body2" color="text.secondary">
                     Criado em: {new Date(plan.createdAt).toLocaleDateString()}
                   </Typography>
                 </Box>
-                <Stack direction="row" spacing={1}>
-                  <Tooltip title="Editar">
-                    <IconButton>
-                      <EditIcon />
+                {isMobile ? (
+                  <>
+                    <IconButton
+                      size="large"
+                      onClick={(e) => handleMenuOpen(e, plan.id)}
+                      sx={{ color: "text.secondary" }}
+                    >
+                      <MoreVertIcon />
                     </IconButton>
-                  </Tooltip>
-                  <Tooltip title="Favoritar">
-                    <IconButton>
-                      <StarIcon />
-                    </IconButton>
-                  </Tooltip>
-                  <Tooltip title="Duplicar">
-                    <IconButton>
-                      <CopyIcon />
-                    </IconButton>
-                  </Tooltip>
-                  <Tooltip title="Excluir">
-                    <IconButton color="error">
-                      <DeleteIcon />
-                    </IconButton>
-                  </Tooltip>
-                </Stack>
+                    <Menu
+                      anchorEl={anchorEl}
+                      open={menuMealId === plan.id}
+                      onClose={handleMenuClose}
+                      anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
+                      transformOrigin={{ vertical: "top", horizontal: "right" }}
+                    >
+                      <MenuItem onClick={handleMenuClose}>
+                        <EditIcon fontSize="small" sx={{ mr: 1 }} /> Editar
+                      </MenuItem>
+                      <MenuItem onClick={handleMenuClose}>
+                        <StarIcon fontSize="small" sx={{ mr: 1 }} /> Favoritar
+                      </MenuItem>
+                      <MenuItem onClick={handleMenuClose}>
+                        <CopyIcon fontSize="small" sx={{ mr: 1 }} /> Duplicar
+                      </MenuItem>
+                      <MenuItem onClick={handleMenuClose}>
+                        <DeleteIcon
+                          fontSize="small"
+                          sx={{ mr: 1 }}
+                          color="error"
+                        />{" "}
+                        Excluir
+                      </MenuItem>
+                    </Menu>
+                  </>
+                ) : (
+                  <Stack direction="row" spacing={1}>
+                    <Tooltip title="Editar">
+                      <IconButton>
+                        <EditIcon />
+                      </IconButton>
+                    </Tooltip>
+                    <Tooltip title="Favoritar">
+                      <IconButton>
+                        <StarIcon />
+                      </IconButton>
+                    </Tooltip>
+                    <Tooltip title="Duplicar">
+                      <IconButton>
+                        <CopyIcon />
+                      </IconButton>
+                    </Tooltip>
+                    <Tooltip title="Excluir">
+                      <IconButton color="error">
+                        <DeleteIcon />
+                      </IconButton>
+                    </Tooltip>
+                  </Stack>
+                )}
               </Stack>
             </CardContent>
           </Card>

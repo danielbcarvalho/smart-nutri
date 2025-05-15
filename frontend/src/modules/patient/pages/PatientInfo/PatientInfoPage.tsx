@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import {
   Box,
   Typography,
@@ -12,9 +12,16 @@ import {
   Divider,
   useTheme,
   useMediaQuery,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Chip,
+  Accordion,
+  AccordionSummary,
+  AccordionDetails,
 } from "@mui/material";
 import {
-  Edit as EditIcon,
   WhatsApp as WhatsAppIcon,
   Phone as PhoneIcon,
   Email as EmailIcon,
@@ -24,6 +31,10 @@ import {
   Instagram as InstagramIcon,
   AssignmentInd as AssignmentIndIcon,
   PhotoCamera as PhotoCameraIcon,
+  LocationOn as LocationIcon,
+  Note as NoteIcon,
+  LocalHospital as LocalHospitalIcon,
+  Warning as WarningIcon,
 } from "@mui/icons-material";
 import { useQuery } from "@tanstack/react-query";
 import { format } from "date-fns";
@@ -35,9 +46,12 @@ import { notify } from "@utils/notificationBus";
 import { PatientFormModal } from "@components/PatientForm/PatientFormModal";
 import { MealPlanButton } from "@/modules/meal-plan/components/MealPlanButton";
 import { AssessmentButton } from "@components/AssessmentButton";
+import { PatientActionsMenu } from "@/modules/patient/components/PatientActionsMenu";
+import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 
 export function PatientInfo() {
   const { patientId } = useParams<{ patientId: string }>();
+  const navigate = useNavigate();
 
   const { data: patient, refetch } = useQuery({
     queryKey: ["patient", patientId],
@@ -49,10 +63,16 @@ export function PatientInfo() {
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
 
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
   const [photoUrl, setPhotoUrl] = useState<string | undefined>(
     patient?.photoUrl
   );
+  const [actionsAnchorEl, setActionsAnchorEl] = useState<null | HTMLElement>(
+    null
+  );
+  const actionsMenuOpen = Boolean(actionsAnchorEl);
 
   React.useEffect(() => {
     setPhotoUrl(patient?.photoUrl);
@@ -79,25 +99,97 @@ export function PatientInfo() {
     }
   };
 
-  // Função utilitária para campos vazios
-  const displayValue = (value?: string | null) =>
-    value && value.trim() !== "" ? value : "Não informado";
+  const handleDelete = async () => {
+    if (!patient?.id) return;
+    setIsDeleting(true);
+    try {
+      await patientService.delete(patient.id);
+      notify("Paciente excluído com sucesso!", "success");
+      navigate("/patients");
+    } catch {
+      notify("Erro ao excluir paciente.", "error");
+    } finally {
+      setIsDeleting(false);
+      setIsDeleteDialogOpen(false);
+    }
+  };
+
+  // Updated displayValue to return a Typography component
+  const displayValue = (value?: string | null) => {
+    if (value && value.trim() !== "") {
+      return (
+        <Typography
+          variant="body2"
+          color="text.secondary"
+          sx={{ wordBreak: "break-word", flexGrow: 1 }}
+        >
+          {value}
+        </Typography>
+      );
+    }
+    return (
+      <Typography variant="body2" color="text.disabled" sx={{ flexGrow: 1 }}>
+        Não informado
+      </Typography>
+    );
+  };
+
+  // Updated renderChips
+  const renderChips = (items?: string[]) => {
+    if (!items || items.length === 0) {
+      return (
+        <Typography variant="body2" color="text.disabled" sx={{ flexGrow: 1 }}>
+          Não informado
+        </Typography>
+      );
+    }
+    return (
+      <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5, flexGrow: 1 }}>
+        {items.map((item) => (
+          <Chip
+            key={item}
+            label={item}
+            size="small"
+            // Using default chip appearance or a specific light color for contrast
+            // sx={{ bgcolor: theme.palette.action.hover }}
+          />
+        ))}
+      </Box>
+    );
+  };
 
   if (!patient) {
-    return null;
+    return (
+      <Box
+        sx={{
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          height: "calc(100vh - 64px)",
+        }}
+      >
+        {" "}
+        {/* Adjust height based on your header */}
+        <CircularProgress />
+      </Box>
+    );
   }
 
   return (
-    <Box sx={{ p: isMobile ? 2 : 4 }}>
+    <Box sx={{ p: isMobile ? 2 : 3 }}>
+      {" "}
+      {/* Reduced outer padding slightly */}
       <Card
         sx={{
           maxWidth: 900,
           mx: "auto",
-          boxShadow: 3,
-          borderTop: `6px solid ${theme.palette.primary.main}`,
+          boxShadow: "0 4px 12px rgba(0,0,0,0.08)", // Softer shadow
+          borderTop: `4px solid ${theme.palette.primary.main}`, // Slightly thinner border
+          borderRadius: theme.shape.borderRadius * 2, // More rounded corners for the card
         }}
       >
-        <CardContent>
+        <CardContent sx={{ p: isMobile ? 2 : 3 }}>
+          {/* Topo: Avatar, nome, menu de ações */}
           <Box sx={{ textAlign: "center", position: "relative", mb: 3 }}>
             <Box
               sx={{
@@ -105,7 +197,7 @@ export function PatientInfo() {
                 width: 100,
                 height: 100,
                 margin: "0 auto",
-                mb: 2,
+                mb: 1.5,
               }}
             >
               <Avatar
@@ -121,26 +213,32 @@ export function PatientInfo() {
                 sx={{
                   width: 100,
                   height: 100,
-                  bgcolor: !photoUrl ? "custom.lightest" : undefined,
+                  bgcolor: !photoUrl ? theme.palette.grey[200] : undefined, // Lighter default avatar bg
                 }}
               >
-                {!photoUrl && <PersonIcon fontSize="large" />}
+                {!photoUrl && (
+                  <PersonIcon
+                    sx={{ fontSize: 60, color: theme.palette.grey[500] }}
+                  />
+                )}
               </Avatar>
               <IconButton
                 component="label"
                 sx={{
                   position: "absolute",
-                  bottom: -8,
-                  right: -8,
+                  bottom: 0,
+                  right: 0,
                   bgcolor: "background.paper",
                   boxShadow: 1,
-                  width: 40,
-                  height: 40,
+                  width: 32,
+                  height: 32,
                   zIndex: 2,
+                  p: 0,
+                  "&:hover": { bgcolor: theme.palette.action.hover },
                 }}
                 disabled={uploadingPhoto}
               >
-                <PhotoCameraIcon fontSize="medium" />
+                <PhotoCameraIcon fontSize="small" />
                 <input
                   hidden
                   type="file"
@@ -157,7 +255,7 @@ export function PatientInfo() {
                     left: 0,
                     width: "100%",
                     height: "100%",
-                    bgcolor: "rgba(255,255,255,0.6)",
+                    bgcolor: "rgba(255,255,255,0.7)",
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
@@ -165,59 +263,133 @@ export function PatientInfo() {
                     zIndex: 3,
                   }}
                 >
-                  <CircularProgress size={80} />
+                  <CircularProgress size={70} />
                 </Box>
               )}
             </Box>
-            <Typography variant="h5">{patient.name}</Typography>
-            <Button
-              variant="outlined"
-              startIcon={<EditIcon />}
-              onClick={() => setIsEditModalOpen(true)}
-              sx={{ position: "absolute", top: 10, right: 10 }}
+            <Box
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: 1,
+                mb: 1,
+              }}
             >
-              Editar
-            </Button>
+              <Typography
+                variant="h5"
+                fontWeight="medium"
+                gutterBottom
+                sx={{ mb: 0 }}
+              >
+                {patient.name}
+              </Typography>
+              {isMobile ? (
+                <IconButton
+                  onClick={(e) => setActionsAnchorEl(e.currentTarget)}
+                  sx={{ ml: 0.5 }}
+                >
+                  <ExpandMoreIcon />
+                </IconButton>
+              ) : (
+                <>
+                  <Button
+                    variant="outlined"
+                    size="small"
+                    sx={{ ml: 1 }}
+                    onClick={() => setIsEditModalOpen(true)}
+                  >
+                    Editar
+                  </Button>
+                  <Button
+                    variant="outlined"
+                    color="error"
+                    size="small"
+                    sx={{ ml: 1 }}
+                    onClick={() => setIsDeleteDialogOpen(true)}
+                  >
+                    Excluir
+                  </Button>
+                </>
+              )}
+            </Box>
+            <PatientActionsMenu
+              anchorEl={actionsAnchorEl}
+              open={actionsMenuOpen}
+              onClose={() => setActionsAnchorEl(null)}
+              patient={patient}
+              navigate={navigate}
+            />
           </Box>
 
           <Divider sx={{ my: 2 }} />
 
+          {/* Informações principais */}
           <Box
             sx={{
               display: "flex",
-              flexWrap: "wrap",
-              justifyContent: isMobile ? "flex-start" : "space-between",
-              gap: isMobile ? 2 : 3,
-              rowGap: 3,
-              columnGap: 3,
+              flexDirection: "column",
+              gap: 1.5,
               alignItems: "flex-start",
+              mb: 3,
             }}
           >
-            <Box sx={{ flex: 1, minWidth: 250, mb: isMobile ? 2 : 0 }}>
-              <Typography variant="subtitle2" color="text.secondary">
-                <CalendarIcon fontSize="small" /> Nascimento
+            {/* Nascimento */}
+            <Box>
+              <Typography
+                variant="caption"
+                color="text.secondary"
+                sx={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 0.5,
+                  mb: 0.25,
+                }}
+              >
+                <CalendarIcon sx={{ fontSize: "1rem" }} /> Nascimento
               </Typography>
-              <Typography variant="body1">
-                {patient.birthDate
-                  ? format(new Date(patient.birthDate), "dd/MM/yyyy")
-                  : "Não informado"}
+              <Typography variant="body1" fontWeight="medium">
+                {patient.birthDate ? (
+                  format(new Date(patient.birthDate), "dd/MM/yyyy")
+                ) : (
+                  <span style={{ color: theme.palette.text.disabled }}>
+                    Não informado
+                  </span>
+                )}
               </Typography>
             </Box>
-
-            <Box sx={{ flex: 1, minWidth: 250, mb: isMobile ? 2 : 0 }}>
-              <Typography variant="subtitle2" color="text.secondary">
-                <PhoneIcon fontSize="small" /> Telefone
+            {/* Telefone */}
+            <Box>
+              <Typography
+                variant="caption"
+                color="text.secondary"
+                sx={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 0.5,
+                  mb: 0.25,
+                }}
+              >
+                <PhoneIcon sx={{ fontSize: "1rem" }} /> Telefone
               </Typography>
               <Box sx={{ display: "flex", gap: 0.5, alignItems: "center" }}>
-                <Typography variant="body1">
-                  {displayValue(patient.phone)}
+                <Typography variant="body1" fontWeight="medium">
+                  {patient.phone && patient.phone.trim() !== "" ? (
+                    patient.phone
+                  ) : (
+                    <span style={{ color: theme.palette.text.disabled }}>
+                      Não informado
+                    </span>
+                  )}
                 </Typography>
-                {patient.phone && (
+                {patient.phone && patient.phone.trim() !== "" && (
                   <Tooltip title="WhatsApp">
                     <IconButton
                       size="small"
                       onClick={() =>
-                        window.open(`https://wa.me/55${patient.phone}`)
+                        window.open(
+                          `https://wa.me/55${patient.phone?.replace(/\D/g, "")}`
+                        )
                       }
                       color="success"
                     >
@@ -227,40 +399,72 @@ export function PatientInfo() {
                 )}
               </Box>
             </Box>
-
-            <Box sx={{ flex: 1, minWidth: 250, mb: isMobile ? 2 : 0 }}>
-              <Typography variant="subtitle2" color="text.secondary">
-                <EmailIcon fontSize="small" /> Email
+            {/* Email */}
+            <Box>
+              <Typography
+                variant="caption"
+                color="text.secondary"
+                sx={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 0.5,
+                  mb: 0.25,
+                }}
+              >
+                <EmailIcon sx={{ fontSize: "1rem" }} /> Email
               </Typography>
-              <Typography variant="body1">
-                {displayValue(patient.email)}
+              <Typography variant="body1" fontWeight="medium">
+                {patient.email && patient.email.trim() !== "" ? (
+                  patient.email
+                ) : (
+                  <span style={{ color: theme.palette.text.disabled }}>
+                    Não informado
+                  </span>
+                )}
               </Typography>
             </Box>
-
-            <Box sx={{ flex: 1, minWidth: 250, mb: isMobile ? 2 : 0 }}>
-              <Typography variant="subtitle2" color="text.secondary">
-                <AssignmentIndIcon
-                  fontSize="small"
-                  sx={{ verticalAlign: "middle", mr: 0.5 }}
-                />{" "}
-                CPF
+            {/* CPF */}
+            <Box>
+              <Typography
+                variant="caption"
+                color="text.secondary"
+                sx={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 0.5,
+                  mb: 0.25,
+                }}
+              >
+                <AssignmentIndIcon sx={{ fontSize: "1rem" }} /> CPF
               </Typography>
-              <Typography variant="body1">
-                {displayValue(patient.cpf)}
+              <Typography variant="body1" fontWeight="medium">
+                {patient.cpf && patient.cpf.trim() !== "" ? (
+                  patient.cpf
+                ) : (
+                  <span style={{ color: theme.palette.text.disabled }}>
+                    Não informado
+                  </span>
+                )}
               </Typography>
             </Box>
-
-            <Box sx={{ flex: 1, minWidth: 250, mb: isMobile ? 2 : 0 }}>
-              <Typography variant="subtitle2" color="text.secondary">
-                <InstagramIcon
-                  fontSize="small"
-                  sx={{ verticalAlign: "middle", mr: 0.5 }}
-                />{" "}
-                Instagram
+            {/* Instagram */}
+            <Box>
+              <Typography
+                variant="caption"
+                color="text.secondary"
+                sx={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 0.5,
+                  mb: 0.25,
+                }}
+              >
+                <InstagramIcon sx={{ fontSize: "1rem" }} /> Instagram
               </Typography>
               {patient.instagram && patient.instagram.trim() !== "" ? (
                 <Typography
                   variant="body1"
+                  fontWeight="medium"
                   component="a"
                   href={`https://instagram.com/${patient.instagram.replace(
                     /^@/,
@@ -270,8 +474,10 @@ export function PatientInfo() {
                   rel="noopener noreferrer"
                   sx={{
                     color: "primary.main",
-                    textDecoration: "underline",
+                    textDecoration: "none",
+                    "&:hover": { textDecoration: "underline" },
                     cursor: "pointer",
+                    wordBreak: "break-all",
                   }}
                 >
                   {patient.instagram.startsWith("@")
@@ -279,43 +485,152 @@ export function PatientInfo() {
                     : `@${patient.instagram}`}
                 </Typography>
               ) : (
-                <Typography variant="body1">Não informado</Typography>
+                <Typography
+                  variant="body1"
+                  fontWeight="medium"
+                  sx={{ color: theme.palette.text.disabled }}
+                >
+                  Não informado
+                </Typography>
               )}
             </Box>
-
-            <Box sx={{ flex: 1, minWidth: 250, mb: isMobile ? 2 : 0 }}>
-              <Typography variant="subtitle2" color="text.secondary">
-                <UpdateIcon fontSize="small" /> Atualizado em
+            {/* Atualizado em */}
+            <Box>
+              <Typography
+                variant="caption"
+                color="text.secondary"
+                sx={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 0.5,
+                  mb: 0.25,
+                }}
+              >
+                <UpdateIcon sx={{ fontSize: "1rem" }} /> Atualizado em
               </Typography>
-              <Typography variant="body1">
-                {patient.updatedAt
-                  ? format(
-                      new Date(patient.updatedAt),
-                      "dd/MM/yyyy 'às' HH:mm",
-                      {
-                        locale: ptBR,
-                      }
-                    )
-                  : "Não informado"}
+              <Typography variant="body1" fontWeight="medium">
+                {patient.updatedAt ? (
+                  format(new Date(patient.updatedAt), "dd/MM/yyyy 'às' HH:mm", {
+                    locale: ptBR,
+                  })
+                ) : (
+                  <span style={{ color: theme.palette.text.disabled }}>
+                    Não informado
+                  </span>
+                )}
               </Typography>
             </Box>
           </Box>
 
-          <Divider sx={{ my: 3 }} />
+          {/* Informações Complementares em Accordion */}
+          <Box sx={{ mb: 3 }}>
+            <Accordion sx={{ boxShadow: "none", borderRadius: 2 }}>
+              <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                <Typography variant="h6" fontWeight="medium">
+                  Informações Complementares
+                </Typography>
+              </AccordionSummary>
+              <AccordionDetails>
+                <Box
+                  sx={{ display: "grid", gridTemplateColumns: "1fr", gap: 2 }}
+                >
+                  {/* Endereço */}
+                  <Box>
+                    <Typography
+                      variant="body2"
+                      fontWeight="medium"
+                      color="text.primary"
+                      sx={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 1,
+                        mb: 1,
+                      }}
+                    >
+                      <LocationIcon fontSize="small" /> Endereço
+                    </Typography>
+                    {displayValue(patient.address)}
+                  </Box>
+                  {/* Observações */}
+                  <Box>
+                    <Typography
+                      variant="body2"
+                      fontWeight="medium"
+                      color="text.primary"
+                      sx={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 1,
+                        mb: 1,
+                      }}
+                    >
+                      <NoteIcon fontSize="small" /> Observações do Paciente
+                    </Typography>
+                    {displayValue(patient.observations)}
+                  </Box>
+                  {/* Alergias */}
+                  <Box>
+                    <Typography
+                      variant="body2"
+                      fontWeight="medium"
+                      color="text.primary"
+                      sx={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 1,
+                        mb: 1,
+                      }}
+                    >
+                      <WarningIcon fontSize="small" /> Alergias
+                    </Typography>
+                    {renderChips(patient.allergies)}
+                  </Box>
+                  {/* Condições de Saúde */}
+                  <Box>
+                    <Typography
+                      variant="body2"
+                      fontWeight="medium"
+                      color="text.primary"
+                      sx={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 1,
+                        mb: 1,
+                      }}
+                    >
+                      <LocalHospitalIcon fontSize="small" /> Condições de Saúde
+                    </Typography>
+                    {renderChips(patient.healthConditions)}
+                  </Box>
+                </Box>
+              </AccordionDetails>
+            </Accordion>
+          </Box>
 
+          <Divider sx={{ my: 2 }} />
+
+          {/* Botões de ação principais */}
           <Box
             sx={{
               display: "flex",
               flexDirection: isMobile ? "column" : "row",
               gap: 2,
               justifyContent: "center",
+              mb: 1,
             }}
           >
-            <AssessmentButton patientId={patientId} variant="contained" />
+            <AssessmentButton
+              patientId={patientId}
+              variant="contained"
+              size="large"
+              fullWidth={isMobile}
+            />
             <MealPlanButton
               patientId={patientId}
               variant="contained"
               color="secondary"
+              size="large"
+              fullWidth={isMobile}
             />
           </Box>
         </CardContent>
@@ -330,6 +645,34 @@ export function PatientInfo() {
         }}
         patient={patient}
       />
+      <Dialog
+        open={isDeleteDialogOpen}
+        onClose={() => !isDeleting && setIsDeleteDialogOpen(false)}
+      >
+        <DialogTitle>Confirmar exclusão</DialogTitle>
+        <DialogContent>
+          <Typography>
+            Tem certeza que deseja excluir o paciente {patient.name}? Esta ação
+            não pode ser desfeita.
+          </Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button
+            onClick={() => setIsDeleteDialogOpen(false)}
+            disabled={isDeleting}
+          >
+            Cancelar
+          </Button>
+          <Button
+            onClick={handleDelete}
+            color="error"
+            variant="contained"
+            disabled={isDeleting}
+          >
+            {isDeleting ? "Excluindo..." : "Excluir"}
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 }

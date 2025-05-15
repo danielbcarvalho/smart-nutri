@@ -59,30 +59,69 @@ export const calculateBodyDensity = (
   skinfolds: Partial<Skinfolds>,
   gender: "M" | "F",
   age: number,
-  formulaId: string = "pollock3"
-): { density: number; referenceUsed: string } => {
+  formulaId: string = "pollock3",
+  weight: number = 0,
+  height: number = 0
+): { density: number; referenceUsed: string; ageWarning?: string } => {
+  console.log("A. Iniciando cálculo de densidade:", {
+    skinfolds,
+    gender,
+    age,
+    formulaId,
+    weight,
+    height,
+  });
+
   const formula = bodyDensityFormulas.find((f) => f.id === formulaId);
+  console.log("B. Fórmula encontrada:", formula);
 
   if (!formula) {
+    console.log("C. Fórmula não encontrada");
     return { density: 0, referenceUsed: "-" };
   }
+
+  // Verifica se a idade está fora da faixa recomendada
+  const ageWarning =
+    age < formula.ageRange.min || age > formula.ageRange.max
+      ? `Esta fórmula é recomendada para idades entre ${formula.ageRange.min} e ${formula.ageRange.max} anos`
+      : undefined;
+
+  console.log("C. Validando fórmula:", {
+    formulaId,
+    gender,
+    age,
+    ageWarning,
+    requiredSkinfolds: formula.requiredSkinfolds,
+    skinfolds,
+  });
 
   const validationError = validateFormula(
     formula,
     skinfolds as Skinfolds,
     gender,
-    age
+    age,
+    false // Não usar validação estrita de idade
   );
+  console.log("D. Erro de validação:", validationError);
 
   if (validationError) {
+    console.log("E. Erro na validação, retornando 0");
     return { density: 0, referenceUsed: "-" };
   }
 
-  const density = formula.calculate(skinfolds as Skinfolds, gender, age);
+  const density = formula.calculate(
+    skinfolds as Skinfolds,
+    gender,
+    age,
+    weight,
+    height
+  );
+  console.log("F. Densidade calculada:", density);
 
   return {
     density,
     referenceUsed: `${formula.name}`,
+    ageWarning,
   };
 };
 
