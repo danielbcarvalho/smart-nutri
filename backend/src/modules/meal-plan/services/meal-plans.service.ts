@@ -27,14 +27,6 @@ export class MealPlansService {
     createMealPlanDto: CreateMealPlanDto,
     nutritionistId: string,
   ): Promise<MealPlan> {
-    console.log(
-      '🚀 ~ meal-plans.service.ts:30 ~ nutritionistId 🚀🚀🚀:',
-      nutritionistId,
-    );
-    console.log(
-      '🚀 ~ meal-plans.service.ts:30 ~ createMealPlanDto 🚀🚀🚀:',
-      createMealPlanDto,
-    );
     // Verifica se o paciente existe e pertence ao nutricionista
     await this.patientsService.findOne(
       createMealPlanDto.patientId,

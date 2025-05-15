@@ -8,12 +8,19 @@ import {
   Tooltip,
   Avatar,
   useTheme,
+  Drawer,
+  Typography,
+  useMediaQuery,
+  Menu,
+  MenuItem,
 } from "@mui/material";
 import {
   Notifications as NotificationsIcon,
   Search as SearchIcon,
   Groups as GroupsIcon,
   Person as PersonIcon,
+  Menu as MenuIcon,
+  MoreVert as MoreVertIcon,
 } from "@mui/icons-material";
 import { SearchModal } from "../SearchModal";
 import { Container } from "./Container";
@@ -27,7 +34,16 @@ import {
   Nutritionist,
 } from "../../modules/auth/services/authService";
 
-export const HeaderGlobal = () => {
+// Adiciona tipos para as novas props
+interface HeaderGlobalProps {
+  drawerContent?: React.ReactNode;
+  drawerTitle?: string;
+}
+
+export const HeaderGlobal = ({
+  drawerContent,
+  drawerTitle,
+}: HeaderGlobalProps) => {
   const navigate = useNavigate();
   const [searchOpen, setSearchOpen] = useState(false);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
@@ -35,17 +51,17 @@ export const HeaderGlobal = () => {
   const [aiOpen, setAiOpen] = useState(false);
   const user = authService.getUser();
   const [uploading, setUploading] = useState(false);
-  const [avatarUrl, setAvatarUrl] = useState(user?.photoUrl || null);
+  const [avatarUrl, setAvatarUrl] = useState<string | undefined>(
+    user?.photoUrl || undefined
+  );
   const [editProfileOpen, setEditProfileOpen] = useState(false);
   const theme = useTheme();
-
-  const getInitials = (name: string) => {
-    return name
-      .split(" ")
-      .map((n) => n[0])
-      .join("")
-      .toUpperCase();
-  };
+  const isMobile = useMediaQuery(theme.breakpoints.down("md"));
+  const [drawerOpen, setDrawerOpen] = useState(false);
+  const [moreMenuAnchorEl, setMoreMenuAnchorEl] = useState<null | HTMLElement>(
+    null
+  );
+  const moreMenuOpen = Boolean(moreMenuAnchorEl);
 
   const handleLogout = () => {
     authService.logout();
@@ -71,7 +87,7 @@ export const HeaderGlobal = () => {
 
       const updatedUrl = response.data.photoUrl
         ? `${response.data.photoUrl}?t=${Date.now()}`
-        : null;
+        : undefined;
       setAvatarUrl(updatedUrl);
     } catch (err) {
       console.log("🚀 ~ HeaderGlobal.tsx:222 ~ err 🚀🚀🚀:", err);
@@ -86,9 +102,16 @@ export const HeaderGlobal = () => {
     localStorage.setItem("@smartnutri:user", JSON.stringify(updatedUser));
     const updatedUrl = updatedUser.photoUrl
       ? `${updatedUser.photoUrl}?t=${Date.now()}`
-      : null;
+      : undefined;
     setAvatarUrl(updatedUrl);
     window.location.reload(); // Garante atualização dos dados em toda a UI
+  };
+
+  const handleMoreMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
+    setMoreMenuAnchorEl(event.currentTarget);
+  };
+  const handleMoreMenuClose = () => {
+    setMoreMenuAnchorEl(null);
   };
 
   return (
@@ -99,107 +122,258 @@ export const HeaderGlobal = () => {
     >
       <Container>
         <Toolbar sx={{ minHeight: 88 }}>
-          {/* Logo/Título */}
-          <Box
-            sx={{
-              flexGrow: 1,
-              display: "flex",
-              alignItems: "center",
-              cursor: "pointer",
-            }}
-            onClick={() => navigate("/")}
-          >
-            <img
-              src="/images/logo.png"
-              alt="Smart Nutri"
-              style={{ height: 40, width: "auto", display: "block" }}
-            />
-          </Box>
-
-          {/* Ícones do lado direito */}
-          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-            <Tooltip title="Pesquisar">
-              <IconButton
-                onClick={() => setSearchOpen(true)}
+          {/* Mobile: menu contextual */}
+          {isMobile && drawerContent ? (
+            <>
+              <Box
                 sx={{
-                  color: "text.secondary",
-                  "&:hover": { color: "text.primary" },
+                  display: "flex",
+                  alignItems: "center",
+                  flexGrow: 1,
+                  cursor: "pointer",
                 }}
+                onClick={() => setDrawerOpen(true)}
               >
-                <SearchIcon />
-              </IconButton>
-            </Tooltip>
-
-            <Tooltip title="Inteligência Artificial">
-              <IconButton
-                onClick={() => setAiOpen(true)}
+                <IconButton>
+                  <MenuIcon />
+                </IconButton>
+                <Typography
+                  variant="subtitle1"
+                  sx={{
+                    ml: 1,
+                    fontWeight: 600,
+                    fontSize: "1.1rem",
+                    color: "text.primary",
+                    letterSpacing: 0.2,
+                  }}
+                  component="span"
+                >
+                  {drawerTitle || "Menu"}
+                </Typography>
+              </Box>
+              <Drawer open={drawerOpen} onClose={() => setDrawerOpen(false)}>
+                {drawerContent}
+              </Drawer>
+            </>
+          ) : (
+            <>
+              {/* Logo/Título padrão */}
+              <Box
                 sx={{
-                  color: "text.secondary",
-                  "&:hover": { color: "text.primary" },
+                  flexGrow: 1,
+                  display: "flex",
+                  alignItems: "center",
+                  cursor: "pointer",
                 }}
+                onClick={() => navigate("/")}
               >
                 <img
-                  src="/images/ai-animated.gif"
-                  alt="IA"
-                  style={{ height: 24, width: 24 }}
+                  src="/images/logo.png"
+                  alt="Smart Nutri"
+                  style={{ height: 40, width: "auto", display: "block" }}
                 />
-              </IconButton>
-            </Tooltip>
+              </Box>
 
-            <Tooltip title="Pacientes">
-              <IconButton
-                onClick={() => navigate("/patients")}
-                sx={{
-                  color: "text.secondary",
-                  "&:hover": { color: "text.primary" },
-                }}
-              >
-                <GroupsIcon />
-              </IconButton>
-            </Tooltip>
+              {/* Ícones do lado direito */}
+              <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                {isMobile ? (
+                  <>
+                    {/* Notificações */}
+                    <Tooltip title="Notificações">
+                      <IconButton
+                        onClick={() => setNotificationsOpen(true)}
+                        sx={{
+                          color: "text.secondary",
+                          "&:hover": { color: "text.primary" },
+                        }}
+                      >
+                        <NotificationsIcon />
+                      </IconButton>
+                    </Tooltip>
+                    {/* Perfil */}
+                    <Tooltip title="Perfil">
+                      <IconButton
+                        onClick={() => setProfileOpen(true)}
+                        sx={{
+                          color: "text.secondary",
+                          "&:hover": { color: "text.primary" },
+                        }}
+                      >
+                        <Avatar
+                          key={
+                            typeof avatarUrl === "string"
+                              ? avatarUrl
+                              : undefined
+                          }
+                          src={
+                            typeof avatarUrl === "string"
+                              ? avatarUrl
+                              : undefined
+                          }
+                          sx={{
+                            width: 44,
+                            height: 44,
+                            bgcolor: "primary.main",
+                            fontSize: "1.15rem",
+                            border: `3px solid ${theme.palette.custom.accent}`,
+                            boxShadow: `0 2px 8px 0 ${theme.palette.custom.lightest}`,
+                            background: `linear-gradient(135deg, ${theme.palette.primary.main} 60%, ${theme.palette.custom.accent} 100%)`,
+                            transition: "box-shadow 0.2s",
+                            "&:hover": {
+                              boxShadow: `0 4px 16px 0 ${theme.palette.custom.light}`,
+                            },
+                          }}
+                        >
+                          {!avatarUrl && <PersonIcon />}
+                        </Avatar>
+                      </IconButton>
+                    </Tooltip>
+                    {/* Botão de três pontos verticais */}
+                    <Tooltip title="Mais opções">
+                      <IconButton
+                        onClick={handleMoreMenuOpen}
+                        sx={{
+                          color: "text.secondary",
+                          "&:hover": { color: "text.primary" },
+                        }}
+                      >
+                        <MoreVertIcon />
+                      </IconButton>
+                    </Tooltip>
+                    <Menu
+                      anchorEl={moreMenuAnchorEl}
+                      open={moreMenuOpen}
+                      onClose={handleMoreMenuClose}
+                      anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
+                      transformOrigin={{ vertical: "top", horizontal: "right" }}
+                    >
+                      <MenuItem
+                        onClick={() => {
+                          setSearchOpen(true);
+                          handleMoreMenuClose();
+                        }}
+                      >
+                        <SearchIcon sx={{ mr: 1 }} /> Pesquisar
+                      </MenuItem>
+                      <MenuItem
+                        onClick={() => {
+                          setAiOpen(true);
+                          handleMoreMenuClose();
+                        }}
+                      >
+                        <img
+                          src="/images/ai-animated.gif"
+                          alt="IA"
+                          style={{ height: 20, width: 20, marginRight: 8 }}
+                        />
+                        Inteligência Artificial
+                      </MenuItem>
+                      <MenuItem
+                        onClick={() => {
+                          navigate("/patients");
+                          handleMoreMenuClose();
+                        }}
+                      >
+                        <GroupsIcon sx={{ mr: 1 }} /> Pacientes
+                      </MenuItem>
+                    </Menu>
+                  </>
+                ) : (
+                  <>
+                    <Tooltip title="Pesquisar">
+                      <IconButton
+                        onClick={() => setSearchOpen(true)}
+                        sx={{
+                          color: "text.secondary",
+                          "&:hover": { color: "text.primary" },
+                        }}
+                      >
+                        <SearchIcon />
+                      </IconButton>
+                    </Tooltip>
 
-            <Tooltip title="Notificações">
-              <IconButton
-                onClick={() => setNotificationsOpen(true)}
-                sx={{
-                  color: "text.secondary",
-                  "&:hover": { color: "text.primary" },
-                }}
-              >
-                <NotificationsIcon />
-              </IconButton>
-            </Tooltip>
+                    <Tooltip title="Inteligência Artificial">
+                      <IconButton
+                        onClick={() => setAiOpen(true)}
+                        sx={{
+                          color: "text.secondary",
+                          "&:hover": { color: "text.primary" },
+                        }}
+                      >
+                        <img
+                          src="/images/ai-animated.gif"
+                          alt="IA"
+                          style={{ height: 24, width: 24 }}
+                        />
+                      </IconButton>
+                    </Tooltip>
 
-            <Tooltip title="Perfil">
-              <IconButton
-                onClick={() => setProfileOpen(true)}
-                sx={{
-                  color: "text.secondary",
-                  "&:hover": { color: "text.primary" },
-                }}
-              >
-                <Avatar
-                  key={avatarUrl}
-                  src={avatarUrl || undefined}
-                  sx={{
-                    width: 44,
-                    height: 44,
-                    bgcolor: "primary.main",
-                    fontSize: "1.15rem",
-                    border: `3px solid ${theme.palette.custom.accent}`,
-                    boxShadow: `0 2px 8px 0 ${theme.palette.custom.lightest}`,
-                    background: `linear-gradient(135deg, ${theme.palette.primary.main} 60%, ${theme.palette.custom.accent} 100%)`,
-                    transition: "box-shadow 0.2s",
-                    "&:hover": {
-                      boxShadow: `0 4px 16px 0 ${theme.palette.custom.light}`,
-                    },
-                  }}
-                >
-                  {!avatarUrl && <PersonIcon />}
-                </Avatar>
-              </IconButton>
-            </Tooltip>
-          </Box>
+                    <Tooltip title="Pacientes">
+                      <IconButton
+                        onClick={() => navigate("/patients")}
+                        sx={{
+                          color: "text.secondary",
+                          "&:hover": { color: "text.primary" },
+                        }}
+                      >
+                        <GroupsIcon />
+                      </IconButton>
+                    </Tooltip>
+
+                    <Tooltip title="Notificações">
+                      <IconButton
+                        onClick={() => setNotificationsOpen(true)}
+                        sx={{
+                          color: "text.secondary",
+                          "&:hover": { color: "text.primary" },
+                        }}
+                      >
+                        <NotificationsIcon />
+                      </IconButton>
+                    </Tooltip>
+
+                    <Tooltip title="Perfil">
+                      <IconButton
+                        onClick={() => setProfileOpen(true)}
+                        sx={{
+                          color: "text.secondary",
+                          "&:hover": { color: "text.primary" },
+                        }}
+                      >
+                        <Avatar
+                          key={
+                            typeof avatarUrl === "string"
+                              ? avatarUrl
+                              : undefined
+                          }
+                          src={
+                            typeof avatarUrl === "string"
+                              ? avatarUrl
+                              : undefined
+                          }
+                          sx={{
+                            width: 44,
+                            height: 44,
+                            bgcolor: "primary.main",
+                            fontSize: "1.15rem",
+                            border: `3px solid ${theme.palette.custom.accent}`,
+                            boxShadow: `0 2px 8px 0 ${theme.palette.custom.lightest}`,
+                            background: `linear-gradient(135deg, ${theme.palette.primary.main} 60%, ${theme.palette.custom.accent} 100%)`,
+                            transition: "box-shadow 0.2s",
+                            "&:hover": {
+                              boxShadow: `0 4px 16px 0 ${theme.palette.custom.light}`,
+                            },
+                          }}
+                        >
+                          {!avatarUrl && <PersonIcon />}
+                        </Avatar>
+                      </IconButton>
+                    </Tooltip>
+                  </>
+                )}
+              </Box>
+            </>
+          )}
         </Toolbar>
       </Container>
 
@@ -224,7 +398,6 @@ export const HeaderGlobal = () => {
           avatarUrl={avatarUrl}
           uploading={uploading}
           handlePhotoChange={handlePhotoChange}
-          getInitials={getInitials}
           handleLogout={handleLogout}
           setEditProfileOpen={setEditProfileOpen}
         />

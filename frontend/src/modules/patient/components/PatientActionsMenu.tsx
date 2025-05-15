@@ -1,10 +1,6 @@
 import React from "react";
 import { Menu, MenuItem, ListItemIcon, Typography } from "@mui/material";
-import {
-  Edit as EditIcon,
-  Visibility as VisibilityIcon,
-  Delete as DeleteIcon,
-} from "@mui/icons-material";
+import { Edit as EditIcon, Delete as DeleteIcon } from "@mui/icons-material";
 import { NavigateFunction } from "react-router-dom";
 import { Patient } from "@/modules/patient/services/patientService";
 
@@ -37,17 +33,6 @@ export const PatientActionsMenu: React.FC<PatientActionsMenuProps> = ({
           <EditIcon fontSize="small" />
         </ListItemIcon>
         <Typography variant="body2">Editar</Typography>
-      </MenuItem>
-      <MenuItem
-        onClick={() => {
-          navigate(`/patient/${patient.id}`);
-          onClose();
-        }}
-      >
-        <ListItemIcon>
-          <VisibilityIcon fontSize="small" />
-        </ListItemIcon>
-        <Typography variant="body2">Ver Detalhes</Typography>
       </MenuItem>
       <MenuItem onClick={onClose} sx={{ color: "error.main" }}>
         <ListItemIcon>

@@ -7,6 +7,9 @@ import {
   Typography,
   Box,
   TextField,
+  IconButton,
+  useMediaQuery,
+  useTheme,
 } from "@mui/material";
 import {
   foodService,
@@ -20,6 +23,7 @@ import AddFoodSection from "./AddFoodSection";
 import PrescribedFoodsSection from "./PrescribedFoodsSection";
 import { mealPlanService } from "../services/mealPlanService";
 import type { CreateMeal, UpdateMeal } from "../services/mealPlanService";
+import CloseIcon from "@mui/icons-material/Close";
 
 interface AddFoodToMealModalProps {
   open: boolean;
@@ -123,6 +127,9 @@ export const AddFoodToMealModal: React.FC<AddFoodToMealModalProps> = ({
   const [error, setError] = useState<string | null>(null);
 
   const { data: foodDb } = useFoodDb();
+
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
 
   // Efeito para busca de alimentos
   useEffect(() => {
@@ -373,15 +380,17 @@ export const AddFoodToMealModal: React.FC<AddFoodToMealModalProps> = ({
       open={open}
       onClose={onClose}
       maxWidth={false}
-      fullWidth
+      fullScreen={isMobile}
       PaperProps={{
         sx: {
           backgroundColor: "#fff",
-          borderRadius: 4,
+          borderRadius: isMobile ? 0 : 4,
           boxShadow: "0 4px 32px rgba(0,0,0,0.10)",
           p: 0,
-          maxWidth: 1100,
-          width: "100%",
+          maxWidth: isMobile ? "100vw" : 1100,
+          width: isMobile ? "100vw" : "100%",
+          height: isMobile ? "100vh" : "auto",
+          position: "relative",
         },
       }}
       sx={{
@@ -393,17 +402,35 @@ export const AddFoodToMealModal: React.FC<AddFoodToMealModalProps> = ({
     >
       <DialogContent
         sx={{
-          p: { xs: 2.5, sm: 4 },
+          p: isMobile ? 1 : 4,
           backgroundColor: "#fff",
-          borderRadius: 4,
+          borderRadius: isMobile ? 0 : 4,
           boxShadow: "none",
-          minWidth: { xs: 320, sm: 420 },
-          maxWidth: 1040,
+          minWidth: isMobile ? "100vw" : 420,
+          maxWidth: isMobile ? "100vw" : 1040,
           width: "100%",
           mx: "auto",
           overflow: "visible", // Garante que não haverá scroll interno
+          position: "relative",
         }}
       >
+        {/* Botão de fechar visível no topo direito */}
+        <IconButton
+          onClick={onClose}
+          sx={{
+            position: "absolute",
+            top: 8,
+            right: 8,
+            zIndex: 10,
+            bgcolor: "grey.100",
+            borderRadius: 2,
+            boxShadow: 1,
+            "&:hover": { bgcolor: "grey.200" },
+          }}
+          aria-label="Fechar"
+        >
+          <CloseIcon />
+        </IconButton>
         {/* Título minimalista */}
         <Typography
           variant="h6"
@@ -412,7 +439,6 @@ export const AddFoodToMealModal: React.FC<AddFoodToMealModalProps> = ({
         >
           {mealName ? `Refeição: ${mealName}` : "Adicionar Alimento à Refeição"}
         </Typography>
-
         {/* Seção de Adicionar Alimento */}
         <AddFoodSection
           foodSearch={foodSearch}
@@ -500,14 +526,18 @@ export const AddFoodToMealModal: React.FC<AddFoodToMealModalProps> = ({
         <Box
           sx={{
             display: "flex",
-            justifyContent: "flex-end",
+            flexDirection: isMobile ? "column" : "row",
+            justifyContent: isMobile ? "stretch" : "flex-end",
             gap: 2,
             mt: 4,
+            width: "100%",
           }}
         >
           <Button
             onClick={onClose}
             variant="outlined"
+            fullWidth={isMobile}
+            size={isMobile ? "large" : "medium"}
             sx={{ minWidth: 100, borderRadius: 2 }}
           >
             Cancelar
@@ -516,6 +546,8 @@ export const AddFoodToMealModal: React.FC<AddFoodToMealModalProps> = ({
             onClick={handleSave}
             variant="contained"
             color="success"
+            fullWidth={isMobile}
+            size={isMobile ? "large" : "medium"}
             sx={{ minWidth: 100, borderRadius: 2 }}
             disabled={loading || selectedFoods.length === 0}
           >

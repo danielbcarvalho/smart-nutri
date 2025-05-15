@@ -1,6 +1,13 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Box, Button, TextField, Paper } from "@mui/material";
+import {
+  Box,
+  Button,
+  TextField,
+  Paper,
+  useMediaQuery,
+  useTheme,
+} from "@mui/material";
 import { PersonAdd as PersonAddIcon } from "@mui/icons-material";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { PatientsTable } from "@/modules/patient/components/PatientsTable";
@@ -23,6 +30,8 @@ export function Patients() {
   const [patientToDelete, setPatientToDelete] = useState<Patient | null>(null);
   const [isPatientModalOpen, setIsPatientModalOpen] = useState(false);
   const [patientToEdit, setPatientToEdit] = useState<Patient | null>(null);
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
 
   const { data: patients = [] } = useQuery({
     queryKey: ["patients"],
@@ -85,25 +94,25 @@ export function Patients() {
   });
 
   return (
-    <Box sx={{ p: 3 }}>
+    <Box sx={{ p: { xs: 1, sm: 2, md: 3 } }}>
       {/* Header */}
       <Box
         sx={{
           display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
+          flexDirection: { xs: "column", sm: "row" },
+          justifyContent: { xs: "flex-start", sm: "space-between" },
+          alignItems: { xs: "stretch", sm: "center" },
           mb: 3,
+          gap: { xs: 2, sm: 0 },
         }}
       >
-        <Box sx={{ display: "flex", gap: 2, flex: 1 }}>
-          <TextField
-            placeholder="Buscar paciente..."
-            size="small"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            sx={{ width: 250 }}
-          />
-        </Box>
+        <TextField
+          placeholder="Buscar paciente..."
+          size="small"
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          sx={{ width: { xs: "100%", sm: 250 } }}
+        />
         <Button
           variant="contained"
           startIcon={<PersonAddIcon />}
@@ -111,14 +120,14 @@ export function Patients() {
             setIsPatientModalOpen(true);
             setPatientToEdit(null);
           }}
-          sx={{ bgcolor: "primary.main" }}
+          sx={{ bgcolor: "primary.main", width: { xs: "100%", sm: "auto" } }}
         >
           Novo Paciente
         </Button>
       </Box>
 
       {/* Patient Table */}
-      <Paper variant="outlined">
+      <Paper variant="outlined" sx={{ mt: 2, p: { xs: 1, sm: 0 } }}>
         <PatientsTable
           patients={sortedPatients}
           order={order}

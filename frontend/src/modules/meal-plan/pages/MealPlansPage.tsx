@@ -40,21 +40,26 @@ import {
 import { patientService } from "@modules/patient/services/patientService";
 import { authService } from "../../auth/services/authService";
 import { alpha, Theme } from "@mui/material/styles"; // Para cores com transparência
+import { useMediaQuery, useTheme } from "@mui/material";
 
 // Container principal estilizado
-const MainContainer = ({ children }: { children: React.ReactNode }) => (
-  <Paper
-    elevation={0}
-    sx={{
-      maxWidth: 900,
-      mx: "auto",
-      p: { xs: 2, sm: 3, md: 4 },
-      borderRadius: "16px",
-    }}
-  >
-    {children}
-  </Paper>
-);
+const MainContainer = ({ children }: { children: React.ReactNode }) => {
+  const theme = useTheme();
+  return (
+    <Paper
+      elevation={0}
+      sx={{
+        maxWidth: 900,
+        mx: "auto",
+        p: { xs: 1, sm: 3, md: 4 },
+        borderRadius: "16px",
+        mt: { xs: 1, sm: 3 },
+      }}
+    >
+      {children}
+    </Paper>
+  );
+};
 
 // Estilo dos botões de ação para consistência
 const actionButtonSx = {
@@ -313,6 +318,9 @@ export function MealPlan() {
     }
   };
 
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
+
   if (!patientId) {
     return (
       <Paper
@@ -393,15 +401,21 @@ export function MealPlan() {
         <Box
           sx={{
             display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            mb: 4, // Aumentado margin bottom
+            flexDirection: { xs: "column", sm: "row" },
+            justifyContent: { xs: "flex-start", sm: "space-between" },
+            alignItems: { xs: "stretch", sm: "center" },
+            mb: 4,
+            gap: { xs: 2, sm: 0 },
           }}
         >
           <Typography
             variant="h4"
             component="h1"
-            sx={{ fontWeight: 600, color: "text.primary" }}
+            sx={{
+              fontWeight: 600,
+              color: "text.primary",
+              fontSize: { xs: "1.3rem", sm: "2rem" },
+            }}
           >
             Planos Alimentares
           </Typography>
@@ -411,7 +425,12 @@ export function MealPlan() {
             onClick={() =>
               navigate(`/patient/${patientId}/meal-plans?new=true`)
             }
-            sx={primaryButtonSx}
+            sx={{
+              ...primaryButtonSx,
+              width: { xs: "100%", sm: "auto" },
+              fontSize: { xs: "1rem", sm: "1.1rem" },
+              py: { xs: 1.2, sm: 1 },
+            }}
           >
             Criar Novo Plano
           </Button>
@@ -490,6 +509,7 @@ export function MealPlan() {
                     sx={{
                       fontWeight: "bold",
                       color: "custom.dark" /* Ou text.primary */,
+                      fontSize: { xs: "1.1rem", sm: "1.25rem" },
                     }}
                   >
                     {plan.name || "Plano Sem Nome"}
@@ -504,6 +524,7 @@ export function MealPlan() {
                         variant="body2"
                         color="text.secondary"
                         component="div"
+                        sx={{ fontSize: { xs: "0.95rem", sm: "1rem" } }}
                       >
                         <Box component="strong" sx={{ fontWeight: 500 }}>
                           Criado em:
@@ -521,6 +542,7 @@ export function MealPlan() {
                         variant="body2"
                         color="text.secondary"
                         component="div"
+                        sx={{ fontSize: { xs: "0.95rem", sm: "1rem" } }}
                       >
                         <Box component="strong" sx={{ fontWeight: 500 }}>
                           Refeições:
@@ -543,6 +565,7 @@ export function MealPlan() {
                           variant="body2"
                           color="text.secondary"
                           component="div"
+                          sx={{ fontSize: { xs: "0.95rem", sm: "1rem" } }}
                         >
                           <Box component="strong" sx={{ fontWeight: 500 }}>
                             Objetivo:
@@ -554,14 +577,21 @@ export function MealPlan() {
                   </Stack>
                 </CardContent>
                 <CardActions
-                  sx={{ justifyContent: "flex-end", pt: 0, pb: 1.5, px: 1.5 }}
+                  sx={{
+                    justifyContent: { xs: "center", sm: "flex-end" },
+                    pt: 0,
+                    pb: 1.5,
+                    px: 1.5,
+                    gap: { xs: 2, sm: 1 },
+                  }}
                 >
                   <IconButton
-                    size="medium"
+                    size={isMobile ? "large" : "medium"}
                     onClick={(e) => handleEditClick(e, plan.id)}
                     title="Ver Detalhes"
                     sx={{
                       color: "custom.main",
+                      p: isMobile ? 1.5 : 1,
                       "&:hover": {
                         bgcolor: (theme: Theme) =>
                           alpha(theme.palette.custom.main, 0.1),
@@ -571,11 +601,12 @@ export function MealPlan() {
                     <EditIcon fontSize="small" />
                   </IconButton>
                   <IconButton
-                    size="medium"
+                    size={isMobile ? "large" : "medium"}
                     onClick={(e) => handleDeleteClick(e, plan)}
                     title="Excluir Plano"
                     sx={{
                       color: "error.main",
+                      p: isMobile ? 1.5 : 1,
                       "&:hover": {
                         bgcolor: (theme) =>
                           alpha(theme.palette.error.main, 0.1),

@@ -112,8 +112,8 @@ const PhotoThumbnail = ({
       <Box
         sx={{
           position: "relative",
-          width: 220,
-          height: 260,
+          width: { xs: 140, sm: 160, md: 180 },
+          height: { xs: 170, sm: 190, md: 210 },
           backgroundColor: "#f8f9fa",
           display: "flex",
           alignItems: "center",
@@ -129,8 +129,8 @@ const PhotoThumbnail = ({
           src={photo.url}
           alt={`Foto ${photo.type} - ${date}`}
           sx={{
-            width: 220,
-            height: 260,
+            width: { xs: 140, sm: 160, md: 180 },
+            height: { xs: 170, sm: 190, md: 210 },
             objectFit: "contain",
             display: "block",
           }}
@@ -467,7 +467,7 @@ export const PhotoGallery: React.FC<PhotoGalleryProps> = ({
               <Box
                 sx={{
                   display: "grid",
-                  gap: 3,
+                  gap: { xs: 2, sm: 3 },
                   gridTemplateColumns: {
                     xs: "1fr",
                     sm: "repeat(2, 1fr)",

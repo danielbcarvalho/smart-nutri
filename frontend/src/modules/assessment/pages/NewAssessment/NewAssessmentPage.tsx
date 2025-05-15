@@ -7,6 +7,7 @@ import {
   useMediaQuery,
   useTheme,
   Paper,
+  Stack,
 } from "@mui/material";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
@@ -343,9 +344,6 @@ export function NewAssessment() {
         severity: "success",
       });
       isSaving.current = false; // Reset saving flag on success
-      setTimeout(() => {
-        navigate(`/patient/${patientId}/assessments`);
-      }, 1500);
     },
     onError: (error: Error) => {
       // Tipo explícito para error
@@ -518,7 +516,7 @@ export function NewAssessment() {
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
 
   return (
-    <Box sx={{ maxWidth: 1200, mx: "auto", p: { xs: 2, sm: 3 } }}>
+    <Box sx={{ maxWidth: 1200, mx: "auto", p: { xs: 1, sm: 2, md: 3 } }}>
       <AssessmentHeader
         patientName={patient?.name || ""}
         onNavigateBack={handleNavigateBack}
@@ -528,7 +526,7 @@ export function NewAssessment() {
         sx={{
           display: "flex",
           flexDirection: isMobile ? "column" : "row",
-          gap: 3,
+          gap: { xs: 2, sm: 3 },
         }}
       >
         <Box sx={{ flex: isMobile ? "1 1 auto" : "0 0 58.333%" }}>
@@ -536,50 +534,60 @@ export function NewAssessment() {
             assessmentDate={assessmentDate}
             onAssessmentDateChange={setAssessmentDate}
           />
-          <Paper elevation={1} sx={{ borderRadius: 2, overflow: "hidden" }}>
-            <BasicDataSection
-              expanded={expanded === "basicData"}
-              onAccordionChange={handleAccordionChange}
-              basicData={basicData}
-              onBasicDataChange={handleBasicDataChange}
-            />
-            <SkinfoldSection
-              expanded={expanded === "skinfolds"}
-              onAccordionChange={handleAccordionChange}
-              skinfolds={skinfolds}
-              skinfoldFormula={skinfoldFormula}
-              onSkinfoldFormulaChange={handleSkinfoldFormulaChange}
-              onSkinfoldChange={handleSkinfoldChange}
-              patientGender={patient?.gender}
-              patient={patient}
-            />
-            <CircumferenceSection
-              expanded={expanded === "circumferences"}
-              onAccordionChange={handleAccordionChange}
-              circumferences={circumferences}
-              onCircumferenceChange={handleCircumferenceChange}
-            />
-            <BoneDiameterSection
-              expanded={expanded === "boneDiameters"}
-              onAccordionChange={handleAccordionChange}
-              boneDiameters={boneDiameters}
-              onBoneDiameterChange={handleBoneDiameterChange}
-            />
-            <PhotosSection
-              patientId={patientId!}
-              measurementId={measurementId}
-              sharePhotos={sharePhotos}
-              onSharePhotosChange={setSharePhotos}
-              onPhotosChange={handlePhotosChange} // Passando o handler
-              measurement={measurementToEdit}
-              expanded={expanded === "photos"}
-              onAccordionChange={handleAccordionChange}
-            />
+          <Paper
+            elevation={1}
+            sx={{
+              borderRadius: 2,
+              overflow: "hidden",
+              p: { xs: 1.5, sm: 2.5 },
+              mb: 2,
+            }}
+          >
+            <Stack spacing={2}>
+              <BasicDataSection
+                expanded={expanded === "basicData"}
+                onAccordionChange={handleAccordionChange}
+                basicData={basicData}
+                onBasicDataChange={handleBasicDataChange}
+              />
+              <SkinfoldSection
+                expanded={expanded === "skinfolds"}
+                onAccordionChange={handleAccordionChange}
+                skinfolds={skinfolds}
+                skinfoldFormula={skinfoldFormula}
+                onSkinfoldFormulaChange={handleSkinfoldFormulaChange}
+                onSkinfoldChange={handleSkinfoldChange}
+                patientGender={patient?.gender}
+                patient={patient}
+              />
+              <CircumferenceSection
+                expanded={expanded === "circumferences"}
+                onAccordionChange={handleAccordionChange}
+                circumferences={circumferences}
+                onCircumferenceChange={handleCircumferenceChange}
+              />
+              <BoneDiameterSection
+                expanded={expanded === "boneDiameters"}
+                onAccordionChange={handleAccordionChange}
+                boneDiameters={boneDiameters}
+                onBoneDiameterChange={handleBoneDiameterChange}
+              />
+              <PhotosSection
+                patientId={patientId!}
+                measurementId={measurementId}
+                sharePhotos={sharePhotos}
+                onSharePhotosChange={setSharePhotos}
+                onPhotosChange={handlePhotosChange}
+                measurement={measurementToEdit}
+                expanded={expanded === "photos"}
+                onAccordionChange={handleAccordionChange}
+              />
+            </Stack>
           </Paper>
           <ActionButtons
             onSave={handleSaveAssessment}
             onCancel={handleCancel}
-            isSaving={createMutation.isPending} // Usar createMutation.isPending
+            isSaving={createMutation.isPending}
           />
         </Box>
         <Box sx={{ flex: isMobile ? "1 1 auto" : "0 0 41.667%" }}>

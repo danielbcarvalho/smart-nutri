@@ -3,23 +3,20 @@ import { Outlet, NavLink, useParams } from "react-router-dom";
 import {
   Box,
   Typography,
-  Paper,
   List,
   ListItemButton,
   ListItemIcon,
   ListItemText,
   IconButton,
-  Drawer,
   useTheme,
-  useMediaQuery,
   Tooltip,
+  useMediaQuery,
 } from "@mui/material";
 import {
   Info,
   RestaurantMenu,
   Assessment,
   Description,
-  Menu as MenuIcon,
   ChevronLeft,
   ChevronRight,
   Timeline as TimelineIcon,
@@ -29,14 +26,14 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { patientService } from "../modules/patient/services/patientService";
 import { Container } from "../components/Layout/Container";
 import { getPreloadFoodDb } from "@/services/useFoodDb";
+import { HeaderGlobal } from "../components/Layout/HeaderGlobal";
 
 export function PatientLayout() {
   const { patientId } = useParams<{ patientId: string }>();
   const theme = useTheme();
-  const mobile = useMediaQuery(theme.breakpoints.down("md"));
-  const [drawerOpen, setDrawerOpen] = useState(false);
   const [sidebarMinimized, setSidebarMinimized] = useState(false);
   const queryClient = useQueryClient();
+  const isMobile = useMediaQuery(theme.breakpoints.down("md"));
 
   // Buscar os dados do paciente
   const { data: patient } = useQuery({
@@ -82,7 +79,7 @@ export function PatientLayout() {
     if (item.label === "Planos Alimentares") {
       getPreloadFoodDb(queryClient);
     }
-    setDrawerOpen(false);
+    // Drawer control agora é feito pelo HeaderGlobal
   };
 
   const SidebarContent = (
@@ -168,6 +165,13 @@ export function PatientLayout() {
 
   return (
     <Container>
+      {/* HeaderGlobal com menu contextual apenas no mobile */}
+      {isMobile && (
+        <HeaderGlobal
+          drawerContent={SidebarContent}
+          drawerTitle="Menu Paciente"
+        />
+      )}
       <Box sx={{ display: "flex", flex: 1, width: "100%" }}>
         {/* Sidebar */}
         <Box
@@ -184,7 +188,6 @@ export function PatientLayout() {
         >
           {SidebarContent}
         </Box>
-
         {/* Conteúdo principal */}
         <Box
           component="main"
@@ -193,8 +196,8 @@ export function PatientLayout() {
             bgcolor: "#FAFAFA",
             minHeight: "60vh",
             borderRadius: "24px",
-            m: 4,
-            p: { xs: 2, md: 4 },
+            m: { xs: 0, md: 4 },
+            p: { xs: 0, md: 4 },
             boxShadow: "0 1px 4px 0 rgba(0,0,0,0.03)",
             overflow: "auto",
           }}
@@ -202,35 +205,6 @@ export function PatientLayout() {
           <Outlet />
         </Box>
       </Box>
-
-      {/* Mobile: Drawer e header flutuante */}
-      {mobile && (
-        <>
-          <Paper
-            sx={{
-              position: "fixed",
-              top: 0,
-              left: 0,
-              right: 0,
-              zIndex: theme.zIndex.appBar,
-              height: "56px",
-              display: "flex",
-              alignItems: "center",
-              px: 1,
-              bgcolor: theme.palette.background.paper,
-              boxShadow: theme.shadows[1],
-            }}
-          >
-            <IconButton onClick={() => setDrawerOpen(true)}>
-              <MenuIcon />
-            </IconButton>
-            <Typography variant="subtitle1">Menu Paciente</Typography>
-          </Paper>
-          <Drawer open={drawerOpen} onClose={() => setDrawerOpen(false)}>
-            {SidebarContent}
-          </Drawer>
-        </>
-      )}
     </Container>
   );
 }
