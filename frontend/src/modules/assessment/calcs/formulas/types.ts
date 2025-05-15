@@ -4,6 +4,19 @@ export type Gender = "M" | "F";
 
 export type SkinfoldType = keyof Skinfolds;
 
+export type SkinfoldsInput = {
+  tricipital: string;
+  bicipital: string;
+  abdominal: string;
+  subscapular: string;
+  axillaryMedian: string;
+  thigh: string;
+  thoracic: string;
+  suprailiac: string;
+  calf: string;
+  supraspinal: string;
+};
+
 export interface AgeRange {
   min: number;
   max: number;

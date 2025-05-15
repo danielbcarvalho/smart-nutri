@@ -174,6 +174,8 @@ export const calculateAnthropometricResults = ({
           : formula.id === "petroski" &&
             typeof formula.getRequiredSkinfolds === "function"
           ? formula.getRequiredSkinfolds(validGender, age)
+          : formula.getRequiredSkinfolds
+          ? formula.getRequiredSkinfolds(validGender)
           : formula.requiredSkinfolds;
 
       console.log("3. Dobras necessárias para o gênero:", {
@@ -187,14 +189,15 @@ export const calculateAnthropometricResults = ({
       const hasAllRequiredSkinfolds = requiredSkinfoldsForGender.every(
         (fold) => {
           const value = skinfolds[fold as keyof typeof skinfolds];
+          const isValid = !isNaN(value) && value > 0;
           console.log("4. Verificando dobra:", {
             fold,
             value,
             rawValue: skinfolds[fold as keyof typeof skinfolds],
             type: typeof value,
-            isValid: !isNaN(value) && value > 0,
+            isValid,
           });
-          return !isNaN(value) && value > 0;
+          return isValid;
         }
       );
 

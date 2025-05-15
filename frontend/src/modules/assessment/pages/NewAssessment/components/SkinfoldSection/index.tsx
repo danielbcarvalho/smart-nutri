@@ -1,4 +1,5 @@
-import React from "react";
+// skinfoldsection.tsx
+import React, { useMemo } from "react";
 import {
   TextField,
   Grid,
@@ -9,21 +10,22 @@ import {
   Accordion,
   ToggleButtonGroup,
   ToggleButton,
+  Tooltip,
 } from "@mui/material";
 import ArrowDropDownIcon from "@mui/icons-material/ArrowDropDown";
-import { bodyDensityFormulas } from "../../../../calcs/formulas";
+import { bodyDensityFormulas } from "../../../../calcs/formulas"; // Ajuste o caminho
+import {
+  BodyDensityFormula,
+  SkinfoldsInput as SkinfoldsState,
+} from "../../../../calcs/formulas/types"; // Ajuste o caminho
 
-type SkinfoldsState = {
-  tricipital: string;
-  bicipital: string;
-  abdominal: string;
-  subscapular: string;
-  axillaryMedian: string;
-  thigh: string;
-  thoracic: string;
-  suprailiac: string;
-  calf: string;
-  supraspinal: string;
+// Função utilitária para calcular idade
+const calculateAge = (birthDateString?: string): number | undefined => {
+  if (!birthDateString) return undefined;
+  const birthDate = new Date(birthDateString);
+  if (isNaN(birthDate.getTime())) return undefined; // Data inválida
+  const ageDiffMs = new Date().getTime() - birthDate.getTime();
+  return Math.floor(ageDiffMs / (1000 * 60 * 60 * 24 * 365.25));
 };
 
 interface SkinfoldSectionProps {
@@ -32,8 +34,8 @@ interface SkinfoldSectionProps {
     panel: string
   ) => (event: React.SyntheticEvent, isExpanded: boolean) => void;
   skinfolds: SkinfoldsState;
-  skinfoldFormula: string;
-  onSkinfoldFormulaChange: (value: string) => void;
+  skinfoldFormula: string; // ID da fórmula selecionada
+  onSkinfoldFormulaChange: (formulaId: string) => void;
   onSkinfoldChange: (
     field: keyof SkinfoldsState
   ) => (event: React.ChangeEvent<HTMLInputElement>) => void;
@@ -51,7 +53,7 @@ export const SkinfoldSection: React.FC<SkinfoldSectionProps> = ({
   patientGender,
   patient,
 }) => {
-  const skinfoldLabels: Record<string, string> = {
+  const skinfoldLabels: Record<keyof SkinfoldsState, string> = {
     tricipital: "Tricipital",
     bicipital: "Bicipital",
     abdominal: "Abdominal (Paraumbilical)",
@@ -64,14 +66,87 @@ export const SkinfoldSection: React.FC<SkinfoldSectionProps> = ({
     supraspinal: "Supraespinhal",
   };
 
-  const currentPatientGender = patientGender?.toUpperCase();
+  const currentPatientGender = useMemo(() => {
+    const gender = patientGender?.toUpperCase();
+    console.log("🔍 SkinfoldSection Debug - Current gender:", gender);
+    return gender;
+  }, [patientGender]);
+  const patientAge = useMemo(() => {
+    const age = calculateAge(patient?.birthDate);
+    console.log("🔍 SkinfoldSection Debug - Current age:", age);
+    return age;
+  }, [patient?.birthDate]);
+
   const isMale =
     currentPatientGender === "M" || currentPatientGender === "MALE";
   const isFemale =
     currentPatientGender === "F" || currentPatientGender === "FEMALE";
 
-  const guedesFormulaDef = bodyDensityFormulas.find((f) => f.id === "guedes");
-  const guedesAgeRange = guedesFormulaDef?.ageRange;
+  const selectedFormulaDef = useMemo(() => {
+    const formula = bodyDensityFormulas.find((f) => f.id === skinfoldFormula);
+    console.log("🔍 SkinfoldSection Debug - Selected formula:", formula);
+    return formula;
+  }, [skinfoldFormula]);
+
+  const AgeWarningMessage: React.FC<{ formulaDef?: BodyDensityFormula }> = ({
+    formulaDef,
+  }) => {
+    if (!formulaDef || !patientAge || !formulaDef.ageRange) return null;
+
+    let message = "";
+    let isOutsideRange = false;
+    const generalMin = formulaDef.ageRange.min;
+    const generalMax = formulaDef.ageRange.max;
+
+    if (formulaDef.id === "petroski") {
+      const range = formulaDef.ageRange as any; // Para acessar subpropriedades male/female
+      let specificMin = generalMin;
+      let specificMax = generalMax;
+      let genderSpecificMsg = "";
+
+      if (isMale && range.male) {
+        specificMin = range.male.min;
+        specificMax = range.male.max;
+        genderSpecificMsg = `Para homens, é validada entre ${specificMin} e ${specificMax.toFixed(
+          1
+        )} anos.`;
+      } else if (isFemale && range.female) {
+        specificMin = range.female.min;
+        specificMax = range.female.max;
+        genderSpecificMsg = `Para mulheres, é validada entre ${specificMin} e ${specificMax} anos.`;
+      }
+
+      isOutsideRange = patientAge < specificMin || patientAge > specificMax;
+      message = `⚠️ A fórmula de Petroski ${
+        genderSpecificMsg
+          ? genderSpecificMsg
+          : `tem faixas de validação (geral: ${generalMin}-${generalMax} anos).`
+      } Considere a aplicabilidade para este paciente com ${patientAge} anos.`;
+    } else if (formulaDef.id === "durnin") {
+      isOutsideRange = patientAge < generalMin || patientAge > generalMax;
+      // Adicionando o alerta específico sobre a simplificação
+      message = `⚠️ A fórmula de Durnin & Womersley (faixa ${generalMin}-${generalMax} anos) é uma versão simplificada do protocolo original, que possui constantes específicas por faixa etária. Considere a aplicabilidade para este paciente com ${patientAge} anos.`;
+    } else if (formulaDef.id === "faulkner") {
+      isOutsideRange = patientAge < generalMin || patientAge > generalMax;
+      message = `⚠️ A fórmula de Faulkner (faixa ${generalMin}-${generalMax} anos) calcula o %G diretamente. Considere a aplicabilidade para este paciente com ${patientAge} anos.`;
+    } else {
+      // Para outras fórmulas como Guedes, Pollock3, Pollock7
+      isOutsideRange = patientAge < generalMin || patientAge > generalMax;
+      if (isOutsideRange) {
+        message = `⚠️ A fórmula ${formulaDef.name} é indicada para a faixa etária de ${generalMin} a ${generalMax} anos. Considere a aplicabilidade para este paciente com ${patientAge} anos.`;
+      }
+    }
+
+    return isOutsideRange ? (
+      <Typography
+        variant="body2"
+        color="warning.main"
+        sx={{ mt: 1, display: "flex", alignItems: "center", gap: 1 }}
+      >
+        {message}
+      </Typography>
+    ) : null;
+  };
 
   return (
     <Accordion
@@ -123,278 +198,90 @@ export const SkinfoldSection: React.FC<SkinfoldSectionProps> = ({
               },
             }}
           >
-            <ToggleButton value="pollock3">Pollock 3</ToggleButton>
-            <ToggleButton value="pollock7">Pollock 7</ToggleButton>
-            <ToggleButton value="petroski">Petroski</ToggleButton>
-            <ToggleButton value="guedes">Guedes</ToggleButton>
-            <ToggleButton value="durnin">Durnin & Womersley</ToggleButton>
-            <ToggleButton value="faulkner">Faulkner</ToggleButton>
+            {bodyDensityFormulas.map((formula) => (
+              <Tooltip
+                key={formula.id}
+                title={formula.description}
+                placement="top"
+                arrow
+              >
+                <ToggleButton
+                  value={formula.id}
+                  disabled={formula.status !== "active"}
+                >
+                  {formula.name.split("(")[0].trim()}
+                </ToggleButton>
+              </Tooltip>
+            ))}
             <ToggleButton value="none">Nenhuma</ToggleButton>
           </ToggleButtonGroup>
 
-          {skinfoldFormula === "durnin" &&
-            patient?.birthDate &&
-            (() => {
-              const patientAge = Math.floor(
-                (new Date().getTime() -
-                  new Date(patient.birthDate!).getTime()) /
-                  (1000 * 60 * 60 * 24 * 365.25)
-              );
-              const durninFormulaDef = bodyDensityFormulas.find(
-                (f) => f.id === "durnin"
-              );
-              const durninAgeRange = durninFormulaDef?.ageRange;
-              const isOutsideDurninRange =
-                durninAgeRange &&
-                (patientAge < durninAgeRange.min ||
-                  patientAge > durninAgeRange.max);
-
-              return isOutsideDurninRange ? (
-                <Typography
-                  variant="body2"
-                  color="warning.main"
-                  sx={{ mt: 1, display: "flex", alignItems: "center", gap: 1 }}
-                >
-                  ⚠️ A fórmula de Durnin & Womersley é uma versão simplificada
-                  do protocolo original, que possui constantes específicas por
-                  faixa etária. Considere a aplicabilidade para este paciente
-                  com {patientAge} anos.
-                </Typography>
-              ) : null;
-            })()}
-
-          {skinfoldFormula === "faulkner" &&
-            patient?.birthDate &&
-            (() => {
-              const patientAge = Math.floor(
-                (new Date().getTime() -
-                  new Date(patient.birthDate!).getTime()) /
-                  (1000 * 60 * 60 * 24 * 365.25)
-              );
-              const faulknerFormulaDef = bodyDensityFormulas.find(
-                (f) => f.id === "faulkner"
-              );
-              const faulknerAgeRange = faulknerFormulaDef?.ageRange;
-              const isOutsideFaulknerRange =
-                faulknerAgeRange &&
-                (patientAge < faulknerAgeRange.min ||
-                  patientAge > faulknerAgeRange.max);
-
-              return isOutsideFaulknerRange ? (
-                <Typography
-                  variant="body2"
-                  color="warning.main"
-                  sx={{ mt: 1, display: "flex", alignItems: "center", gap: 1 }}
-                >
-                  ⚠️ A fórmula de Faulkner calcula o percentual de gordura
-                  diretamente, sem usar densidade corporal. Considere a
-                  aplicabilidade para este paciente com {patientAge} anos.
-                </Typography>
-              ) : null;
-            })()}
-
-          {skinfoldFormula === "guedes" &&
-            patient?.birthDate &&
-            guedesAgeRange &&
-            (() => {
-              const patientAge = Math.floor(
-                (new Date().getTime() -
-                  new Date(patient.birthDate!).getTime()) /
-                  (1000 * 60 * 60 * 24 * 365.25)
-              );
-              const isOutsideGuedesRange =
-                patientAge < guedesAgeRange.min ||
-                patientAge > guedesAgeRange.max;
-
-              return isOutsideGuedesRange ? (
-                <Typography
-                  variant="body2"
-                  color="warning.main"
-                  sx={{ mt: 1, display: "flex", alignItems: "center", gap: 1 }}
-                >
-                  ⚠️ A fórmula de Guedes selecionada é indicada para a faixa
-                  etária de {guedesAgeRange.min} a {guedesAgeRange.max} anos.
-                  Considere a aplicabilidade para este paciente com {patientAge}{" "}
-                  anos.
-                </Typography>
-              ) : null;
-            })()}
-
-          {skinfoldFormula === "petroski" &&
-            patient?.birthDate &&
-            (() => {
-              const patientAge = Math.floor(
-                (new Date().getTime() -
-                  new Date(patient.birthDate!).getTime()) /
-                  (1000 * 60 * 60 * 24 * 365.25)
-              );
-              const petroskiFormulaDef = bodyDensityFormulas.find(
-                (f) => f.id === "petroski"
-              );
-              let isOutsidePetroskiRange = true;
-              let petroskiMessage =
-                "A fórmula de Petroski tem faixas etárias específicas.";
-
-              if (
-                petroskiFormulaDef?.ageRange &&
-                typeof petroskiFormulaDef.ageRange !== "string"
-              ) {
-                if (isMale) {
-                  const maleMin =
-                    (
-                      petroskiFormulaDef.ageRange as {
-                        min: number;
-                        max: number;
-                        male?: { min: number; max: number };
-                      }
-                    ).male?.min ?? 20;
-                  const maleMax =
-                    (
-                      petroskiFormulaDef.ageRange as {
-                        min: number;
-                        max: number;
-                        male?: { min: number; max: number };
-                      }
-                    ).male?.max ?? 39.9;
-                  isOutsidePetroskiRange =
-                    patientAge < maleMin || patientAge >= maleMax + 0.1;
-                  petroskiMessage = `Para homens, Petroski é validada entre ${maleMin} e ${maleMax.toFixed(
-                    1
-                  )} anos.`;
-                } else if (isFemale) {
-                  const femaleMin =
-                    (
-                      petroskiFormulaDef.ageRange as {
-                        min: number;
-                        max: number;
-                        female?: { min: number; max: number };
-                      }
-                    ).female?.min ?? 18;
-                  const femaleMax =
-                    (
-                      petroskiFormulaDef.ageRange as {
-                        min: number;
-                        max: number;
-                        female?: { min: number; max: number };
-                      }
-                    ).female?.max ?? 51;
-                  isOutsidePetroskiRange =
-                    patientAge < femaleMin || patientAge > femaleMax;
-                  petroskiMessage = `Para mulheres, Petroski é validada entre ${femaleMin} e ${femaleMax} anos.`;
-                }
-              }
-
-              return isOutsidePetroskiRange ? (
-                <Typography
-                  variant="body2"
-                  color="warning.main"
-                  sx={{ mt: 1, display: "flex", alignItems: "center", gap: 1 }}
-                >
-                  ⚠️ {petroskiMessage} Para outras faixas etárias, considere
-                  outras fórmulas. (Paciente com {patientAge} anos)
-                </Typography>
-              ) : null;
-            })()}
+          {skinfoldFormula !== "none" && selectedFormulaDef && (
+            <AgeWarningMessage formulaDef={selectedFormulaDef} />
+          )}
         </Box>
 
         <Grid container spacing={2}>
-          {Object.entries(skinfolds).map(([key, value]) => {
-            const currentFormulaDef = bodyDensityFormulas.find(
-              (f) => f.id === skinfoldFormula
-            );
-            let isSkinfoldRequired = false;
-
-            if (currentFormulaDef) {
-              if (skinfoldFormula === "guedes") {
-                if (isMale) {
-                  isSkinfoldRequired = [
-                    "tricipital",
-                    "suprailiac",
-                    "abdominal",
-                  ].includes(key);
-                } else if (isFemale) {
-                  isSkinfoldRequired = [
-                    "subscapular",
-                    "suprailiac",
-                    "thigh",
-                  ].includes(key);
-                }
-              } else if (skinfoldFormula === "faulkner") {
-                isSkinfoldRequired =
-                  currentFormulaDef.requiredSkinfolds.includes(
-                    key as keyof SkinfoldsState
-                  );
-              } else if (
-                skinfoldFormula === "durnin" ||
-                skinfoldFormula === "petroski"
+          {(Object.keys(skinfolds) as Array<keyof SkinfoldsState>).map(
+            (key) => {
+              let isSkinfoldRequired = false;
+              if (
+                selectedFormulaDef &&
+                selectedFormulaDef.getRequiredSkinfolds
               ) {
-                const patientAge = patient?.birthDate
-                  ? Math.floor(
-                      (new Date().getTime() -
-                        new Date(patient.birthDate).getTime()) /
-                        (1000 * 60 * 60 * 24 * 365.25)
-                    )
-                  : 0;
-
-                const requiredSkinfolds =
-                  currentFormulaDef.getRequiredSkinfolds?.(
-                    currentPatientGender || "",
+                const requiredForFormula =
+                  selectedFormulaDef.getRequiredSkinfolds(
+                    currentPatientGender,
                     patientAge
-                  ) || [];
-                isSkinfoldRequired = requiredSkinfolds.includes(
-                  key as keyof SkinfoldsState
-                );
-              } else {
-                isSkinfoldRequired =
-                  currentFormulaDef.requiredSkinfolds.includes(
-                    key as keyof SkinfoldsState
                   );
+                isSkinfoldRequired = requiredForFormula.includes(key);
               }
-            }
 
-            return (
-              <Box
-                sx={{ flex: { xs: "1 1 100%", sm: "1 1 calc(50% - 8px)" } }}
-                key={key}
-              >
-                <TextField
-                  fullWidth
-                  label={
-                    <Typography
-                      component="span"
-                      sx={{
-                        fontWeight: isSkinfoldRequired ? 700 : 400,
-                        color: isSkinfoldRequired ? "primary.main" : "inherit",
-                      }}
-                    >
-                      {`${skinfoldLabels[key as keyof SkinfoldsState]} (mm)`}
-                    </Typography>
-                  }
-                  value={value}
-                  onChange={onSkinfoldChange(key as keyof SkinfoldsState)}
-                  InputProps={{
-                    sx: {
-                      bgcolor: "background.paper",
-                      ...(skinfoldFormula !== "none" && {
-                        "& .MuiOutlinedInput-notchedOutline": {
-                          borderColor: isSkinfoldRequired
+              return (
+                <Box
+                  sx={{ flex: { xs: "1 1 100%", sm: "1 1 calc(50% - 8px)" } }} // Ajuste para responsividade
+                  key={key}
+                >
+                  <TextField
+                    fullWidth
+                    label={
+                      <Typography
+                        component="span"
+                        sx={{
+                          fontWeight: isSkinfoldRequired ? 700 : 400,
+                          color: isSkinfoldRequired
                             ? "primary.main"
-                            : "grey.300",
-                        },
-                        "&:hover .MuiOutlinedInput-notchedOutline": {
-                          borderColor: isSkinfoldRequired
-                            ? "primary.dark"
-                            : "grey.400",
-                        },
-                      }),
-                    },
-                  }}
-                  type="number"
-                  inputProps={{ min: "0", step: "0.1" }}
-                />
-              </Box>
-            );
-          })}
+                            : "inherit",
+                        }}
+                      >
+                        {`${skinfoldLabels[key]} (mm)`}
+                      </Typography>
+                    }
+                    value={skinfolds[key]}
+                    onChange={onSkinfoldChange(key)}
+                    InputProps={{
+                      sx: {
+                        bgcolor: "background.paper",
+                        ...(skinfoldFormula !== "none" &&
+                          isSkinfoldRequired && {
+                            // Destacar apenas se requerida
+                            "& .MuiOutlinedInput-notchedOutline": {
+                              borderColor: "primary.main",
+                              borderWidth: isSkinfoldRequired ? "2px" : "1px", // Borda mais grossa se requerida
+                            },
+                            "&:hover .MuiOutlinedInput-notchedOutline": {
+                              borderColor: "primary.dark",
+                            },
+                          }),
+                      },
+                    }}
+                    type="number"
+                    inputProps={{ min: "0", step: "0.1" }}
+                  />
+                </Box>
+              );
+            }
+          )}
         </Grid>
       </AccordionDetails>
     </Accordion>

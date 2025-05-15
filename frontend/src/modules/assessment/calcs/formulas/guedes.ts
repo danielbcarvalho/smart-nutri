@@ -1,18 +1,15 @@
-import { BodyDensityFormula } from "./types";
+// guedes.ts
+import { BodyDensityFormula, SkinfoldsInput } from "./types";
 
 export const guedesFormula: BodyDensityFormula = {
   id: "guedes",
   name: "Guedes (1994)",
   description:
     "Protocolo de Guedes utilizando 3 dobras cutâneas específicas por gênero. " +
-    "Para homens: Tricipital (posterior do braço, ponto médio entre acrômio e olécrano), " +
-    "Abdominal (vertical, 2cm lateral à cicatriz umbilical) e " +
-    "Supra-ilíaca (diagonal acima da crista ilíaca, linha axilar anterior/média). " +
-    "Para mulheres: Subescapular (diagonal abaixo do ângulo inferior da escápula), " +
-    "Coxa (vertical na face anterior, ponto médio entre ligamento inguinal e borda superior da patela) e " +
-    "Supra-ilíaca (mesma localização do masculino). " +
+    "Para homens: Tricipital, Abdominal e Supra-ilíaca. " +
+    "Para mulheres: Subescapular, Coxa e Supra-ilíaca. " +
     "Fórmulas: Homens: DC = 1.1714 - 0.0671 * log10(Σdobras). " +
-    "Mulheres: DC = 1.1665 - 0.07063 * log10(Σdobras).",
+    "Mulheres: DC = 1.1665 - 0.07063 * log10(Σdobras).", // Original tinha 1.16650, o 0 é irrelevante
   status: "active",
   requiredSkinfolds: [
     "tricipital",
@@ -23,16 +20,16 @@ export const guedesFormula: BodyDensityFormula = {
   ],
   genderSupport: "both",
   ageRange: {
+    // Guedes (1994) foi validado para adultos, geralmente 18-50/60
     min: 18,
     max: 60,
   },
   reference:
     "GUEDES, D.P. (1994). Composição corporal: princípios, técnicas e aplicações. Londrina: APEF.",
-  calculate: (skinfolds, gender) => {
-    if (!gender) return NaN;
+  calculate: (skinfolds: SkinfoldsInput, gender?: string) => {
+    if (!gender) return 0;
 
     const g = gender.toUpperCase();
-    // Parse das dobras, converte string inválida em 0
     const triceps = parseFloat(skinfolds.tricipital || "0") || 0;
     const suprailiac = parseFloat(skinfolds.suprailiac || "0") || 0;
     const abdominal = parseFloat(skinfolds.abdominal || "0") || 0;
@@ -43,33 +40,30 @@ export const guedesFormula: BodyDensityFormula = {
     let sum: number;
 
     if (g === "M") {
-      // Homens: tríceps + suprailiaca + abdominal
       sum = triceps + suprailiac + abdominal;
-      if (sum <= 0) return NaN;
+      if (sum <= 0) return 0;
       density = 1.1714 - 0.0671 * Math.log10(sum);
     } else if (g === "F") {
-      // Mulheres: subescapular + suprailiaca + coxa
       sum = subscap + suprailiac + thigh;
-      if (sum <= 0) return NaN;
+      if (sum <= 0) return 0;
       density = 1.1665 - 0.07063 * Math.log10(sum);
     } else {
-      return NaN;
+      return 0;
     }
 
+    if (isNaN(density) || !isFinite(density) || density <= 0) {
+      return 0;
+    }
     return density;
   },
-  // Função para determinar as dobras requeridas com base no gênero
-  getRequiredSkinfolds: (gender: string) => {
+  getRequiredSkinfolds: (gender?: string) => {
     const g = (gender || "").toUpperCase();
-
     if (g === "M") {
       return ["tricipital", "suprailiac", "abdominal"];
     }
-
     if (g === "F") {
       return ["subscapular", "suprailiac", "thigh"];
     }
-
-    return [];
+    return ["tricipital", "suprailiac", "abdominal", "subscapular", "thigh"];
   },
 };
