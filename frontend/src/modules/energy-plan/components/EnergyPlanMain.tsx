@@ -35,8 +35,8 @@ import {
   useUpdateEnergyPlan,
 } from "../hooks/useEnergyPlans";
 import { authService } from "../../auth/services/authService";
-
 import { CreateEnergyPlanDto } from "../services/energyPlanService";
+import EnergyPlanMethodSection from "./EnergyPlanMethodSection";
 
 export interface DadosPlanoEnergetico {
   nome: string;
@@ -312,7 +312,7 @@ const EnergyPlanMain: React.FC = () => {
       reset({
         nome: planToEdit.name || "",
         dataCalculo:
-          (planToEdit as any).calculationDate ||
+          planToEdit.createdAt.split("T")[0] ||
           new Date().toISOString().split("T")[0],
         equacao: planToEdit.formulaKey || "harris_benedict_1984",
         peso: formatNumberForInput(planToEdit.weightAtCalculationKg),
@@ -390,19 +390,35 @@ const EnergyPlanMain: React.FC = () => {
 
       // Só adiciona os campos de meta se o usuário preencheu
       if (goalWeight !== 0 || goalDays !== 0) {
-        (payload as any).goalWeightChangeKg = goalWeight;
-        (payload as any).goalDaysToAchieve = goalDays;
+        const payloadWithGoal = {
+          ...payload,
+          goalWeightChangeKg: goalWeight,
+          goalDaysToAchieve: goalDays,
+        };
         if (goalWeight !== 0 && goalDays > 0) {
-          (payload as any).calculatedGoalKcalAdjustment = Math.round(
+          payloadWithGoal.calculatedGoalKcalAdjustment = Math.round(
             (goalWeight * 7700) / goalDays
           );
         }
-      }
-
-      if (planId) {
-        await updatePlan.mutateAsync({ id: planId, data: payload, patientId });
+        if (planId) {
+          await updatePlan.mutateAsync({
+            id: planId,
+            data: payloadWithGoal,
+            patientId,
+          });
+        } else {
+          await createPlan.mutateAsync({ patientId, data: payloadWithGoal });
+        }
       } else {
-        await createPlan.mutateAsync({ patientId, data: payload });
+        if (planId) {
+          await updatePlan.mutateAsync({
+            id: planId,
+            data: payload,
+            patientId,
+          });
+        } else {
+          await createPlan.mutateAsync({ patientId, data: payload });
+        }
       }
       navigate(`/patient/${patientId}/energy-plans`);
     } catch (error) {
@@ -510,6 +526,11 @@ const EnergyPlanMain: React.FC = () => {
             macronutrientDistribution={macronutrientDistribution}
           />
         )}
+
+        <EnergyPlanMethodSection
+          control={control}
+          calculationDetails={calculationDetails}
+        />
 
         <EnergyPlanResultsSection
           isCalculating={isCalculating}

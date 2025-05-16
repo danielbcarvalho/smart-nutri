@@ -51,7 +51,7 @@ const EnergyPlanGoalSection: React.FC<EnergyPlanGoalSectionProps> = ({
   return (
     <Card variant="outlined" sx={{ mt: 3 }}>
       <CardContent sx={{ p: 2.5, "&:last-child": { pb: 2.5 } }}>
-        <Typography variant="subtitle1" fontWeight={600} sx={{ mb: 2 }}>
+        <Typography variant="h6" fontWeight={600} sx={{ mb: 2 }}>
           Meta
         </Typography>
 
