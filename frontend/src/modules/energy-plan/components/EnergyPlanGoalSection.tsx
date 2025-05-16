@@ -128,12 +128,13 @@ const EnergyPlanGoalSection: React.FC<EnergyPlanGoalSectionProps> = ({
             <Slider
               value={goalDays}
               onChange={(_, v) => setGoalDays(Number(v))}
-              min={1}
+              min={0}
               max={365} // Ex: Limite de 1 ano
               step={1}
               sx={{ flex: 1, color: "success.main", height: 6, mr: 1 }}
               valueLabelDisplay="auto"
               marks={[
+                { value: 0, label: "0d" },
                 { value: 30, label: "30d" },
                 { value: 90, label: "90d" },
                 { value: 180, label: "180d" },
@@ -141,12 +142,12 @@ const EnergyPlanGoalSection: React.FC<EnergyPlanGoalSectionProps> = ({
               ]}
             />
             <TextField
-              value={goalDays.toString()} // goalDays é number
+              value={goalDays.toString()}
               onChange={(e) => handleGoalDaysChange(e.target.value)}
-              type="number" // Mantém number para validação de inteiros
+              type="number"
               size="small"
               inputProps={{
-                min: 1,
+                min: 0,
                 max: 365,
                 step: 1,
                 style: { textAlign: "right", width: "50px" },

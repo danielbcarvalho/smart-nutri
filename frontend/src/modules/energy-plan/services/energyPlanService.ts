@@ -1,8 +1,32 @@
 import { api } from "@/lib/axios";
 // Tipos DTOs podem ser ajustados depois
 
-export type CreateEnergyPlanDto = object;
-export type UpdateEnergyPlanDto = object;
+export type CreateEnergyPlanDto = {
+  name: string;
+  formulaKey: string;
+  weightAtCalculationKg: number;
+  heightAtCalculationCm: number;
+  fatFreeMassAtCalculationKg?: number;
+  ageAtCalculationYears: number;
+  genderAtCalculation: "male" | "female" | "other";
+  activityFactorKey: string;
+  injuryFactorKey: string;
+  calculatedTmbKcal?: number;
+  calculatedGetKcal: number;
+  // Goal section
+  goalWeightChangeKg?: number;
+  goalDaysToAchieve?: number;
+  calculatedGoalKcalAdjustment?: number;
+  // Macronutrient distribution
+  macronutrientDistribution: {
+    proteins: number;
+    carbs: number;
+    fats: number;
+  };
+};
+
+export type UpdateEnergyPlanDto = CreateEnergyPlanDto;
+
 export interface EnergyPlanResponseDto {
   id: string;
   name: string;
@@ -16,11 +40,22 @@ export interface EnergyPlanResponseDto {
   injuryFactorKey: string;
   calculatedTmbKcal?: number;
   calculatedGetKcal: number;
+  // Goal section
+  goalWeightChangeKg: number;
+  goalDaysToAchieve: number;
+  calculatedGoalKcalAdjustment?: number;
+  // Macronutrient distribution
+  macronutrientDistribution: {
+    proteins: number;
+    carbs: number;
+    fats: number;
+  };
   createdAt: string;
   updatedAt: string;
   patientId: string;
   nutritionistId: string;
 }
+
 export type QueryEnergyPlanDto = object;
 
 const API_URL = "/energy-plans";

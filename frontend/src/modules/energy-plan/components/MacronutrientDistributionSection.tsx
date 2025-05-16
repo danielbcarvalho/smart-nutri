@@ -17,6 +17,11 @@ import { useTheme } from "@mui/material/styles";
 interface MacronutrientDistributionSectionProps {
   peso: number; // em kg
   get: number; // Gasto Energético Total em kcal
+  onDistributionChange: (distribution: {
+    proteins: number;
+    carbs: number;
+    fats: number;
+  }) => void;
 }
 
 // Estrutura de dados dos macronutrientes
@@ -79,7 +84,7 @@ const getColor = (macroKey: string, theme: any) => {
 
 const MacronutrientDistributionSection: React.FC<
   MacronutrientDistributionSectionProps
-> = ({ peso, get }) => {
+> = ({ peso, get, onDistributionChange }) => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
   const [percents, setPercents] = React.useState<number[]>(defaultPercents);
@@ -91,6 +96,11 @@ const MacronutrientDistributionSection: React.FC<
     const newPercents = [...percents];
     newPercents[macroIndex] = newValue as number;
     setPercents(newPercents);
+    onDistributionChange({
+      proteins: newPercents[0],
+      carbs: newPercents[1],
+      fats: newPercents[2],
+    });
   };
 
   const totalPercentSum = percents.reduce((sum, current) => sum + current, 0);

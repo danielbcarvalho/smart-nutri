@@ -15,7 +15,6 @@ import { energyPlanService } from "../services/energyPlanService";
 import SaveIcon from "@mui/icons-material/Save";
 import { useForm } from "react-hook-form";
 import { patientService } from "@/modules/patient/services/patientService";
-import { authService } from "../../auth/services/authService";
 import EnergyPlanGoalSection from "./EnergyPlanGoalSection";
 import EnergyPlanResultsSection from "./EnergyPlanResultsSection";
 import EnergyPlanFormSection from "./EnergyPlanFormSection";
@@ -35,7 +34,7 @@ import {
   useCreateEnergyPlan,
   useUpdateEnergyPlan,
 } from "../hooks/useEnergyPlans";
-import { EnergyPlanResponseDto } from "../services/energyPlanService";
+import { CreateEnergyPlanDto } from "../services/energyPlanService";
 
 export interface DadosPlanoEnergetico {
   nome: string;
@@ -67,6 +66,25 @@ const parseNumericField = (
   return isNaN(num) ? undefined : num;
 };
 
+interface FormData {
+  nome: string;
+  dataCalculo: string;
+  equacao: string;
+  peso: string | number | undefined;
+  altura: string | number | undefined;
+  massaMagra?: string | number | undefined;
+  nivelAtividade: string;
+  fatorClinico: string;
+}
+
+interface CalculationDetails {
+  formula: string;
+  activityFactor: string;
+  injuryFactor: string;
+  isValid: boolean;
+  validationMessage?: string;
+}
+
 const EnergyPlanMain: React.FC = () => {
   const navigate = useNavigate();
   const { patientId, planId } = useParams<{
@@ -93,8 +111,6 @@ const EnergyPlanMain: React.FC = () => {
     message: "",
     severity: "success",
   });
-
-  const nutritionistId = authService.getUser()?.id;
 
   const { data: patient, isLoading: isLoadingPatient } = useQuery({
     queryKey: ["patient", patientId],
@@ -131,38 +147,47 @@ const EnergyPlanMain: React.FC = () => {
 
   const [calculatedTMB, setCalculatedTMB] = React.useState<number | null>(null);
   const [calculatedGET, setCalculatedGET] = React.useState<number | null>(null);
-  const [calculationDetails, setCalculationDetails] = React.useState<{
-    formula: string;
-    activityFactor: string;
-    injuryFactor: string;
-    isValid: boolean;
-    validationMessage?: string;
-  } | null>(null);
+  const [calculationDetails, setCalculationDetails] =
+    React.useState<CalculationDetails | null>(null);
   const [isCalculating, setIsCalculating] = React.useState(false);
   const [importModalOpen, setImportModalOpen] = React.useState(false);
   const [goalWeight, setGoalWeight] = React.useState(0);
   const [goalDays, setGoalDays] = React.useState(0);
+  const [macronutrientDistribution, setMacronutrientDistribution] =
+    React.useState({
+      proteins: 20,
+      carbs: 50,
+      fats: 30,
+    });
 
-  const handleImportMeasurements = (measurement: {
-    weight: number;
-    height: number;
-    muscleMass?: number;
-  }) => {
-    setValue("peso", formatNumberForInput(measurement.weight), {
-      shouldValidate: true,
-      shouldDirty: true,
-    });
-    setValue("altura", formatNumberForInput(measurement.height), {
-      shouldValidate: true,
-      shouldDirty: true,
-    });
-    if (measurement.muscleMass !== undefined) {
-      setValue("massaMagra", formatNumberForInput(measurement.muscleMass), {
+  const handleImportMeasurements = (measurement: unknown) => {
+    if (
+      typeof measurement === "object" &&
+      measurement !== null &&
+      "weight" in measurement &&
+      "height" in measurement
+    ) {
+      const m = measurement as {
+        weight: number;
+        height: number;
+        muscleMass?: number;
+      };
+      setValue("peso", formatNumberForInput(m.weight), {
         shouldValidate: true,
         shouldDirty: true,
       });
+      setValue("altura", formatNumberForInput(m.height), {
+        shouldValidate: true,
+        shouldDirty: true,
+      });
+      if (typeof m.muscleMass === "number") {
+        setValue("massaMagra", formatNumberForInput(m.muscleMass), {
+          shouldValidate: true,
+          shouldDirty: true,
+        });
+      }
+      setImportModalOpen(false);
     }
-    setImportModalOpen(false);
   };
 
   const validateFormulaInputs = (
@@ -170,11 +195,11 @@ const EnergyPlanMain: React.FC = () => {
     weight: number | undefined,
     height: number | undefined,
     age: number
-  ) => {
+  ): { isValid: boolean; validationMessage?: string } => {
     if (weight === undefined || height === undefined) {
       return {
         isValid: false,
-        message: "Peso e altura são necessários para o cálculo.",
+        validationMessage: "Peso e altura são necessários para o cálculo.",
       };
     }
     switch (formula) {
@@ -182,7 +207,7 @@ const EnergyPlanMain: React.FC = () => {
         if (age < 18) {
           return {
             isValid: false,
-            message:
+            validationMessage:
               "A fórmula Harris-Benedict é recomendada apenas para adultos (18+ anos).",
           };
         }
@@ -191,7 +216,7 @@ const EnergyPlanMain: React.FC = () => {
         if (age > 60) {
           return {
             isValid: false,
-            message:
+            validationMessage:
               "A fórmula FAO/OMS tem limitações para idosos acima de 60 anos.",
           };
         }
@@ -264,18 +289,17 @@ const EnergyPlanMain: React.FC = () => {
           watchedFatorClinico as keyof typeof INJURY_FACTOR_DESCRIPTIONS
         ]?.name || "N/A",
       isValid: validation.isValid && tmb !== null && get !== null,
-      validationMessage: validation.message,
+      validationMessage: validation.validationMessage,
     });
-
     setIsCalculating(false);
   }, [
     patient,
     watchedPeso,
     watchedAltura,
-    watchedMassaMagra,
     watchedEquacao,
     watchedNivelAtividade,
     watchedFatorClinico,
+    watchedMassaMagra,
     watch,
   ]);
 
@@ -307,7 +331,7 @@ const EnergyPlanMain: React.FC = () => {
     }
   }, [planToEdit, reset]);
 
-  const onSubmit = (data: DadosPlanoEnergetico) => {
+  const onSubmit = async (data: FormData) => {
     if (
       !patientId ||
       !patient ||
@@ -322,85 +346,57 @@ const EnergyPlanMain: React.FC = () => {
       });
       return;
     }
-    if (!calculationDetails?.isValid) {
+
+    try {
+      // Monta o payload base
+      const payload: CreateEnergyPlanDto = {
+        name: data.nome.trim() || "Plano Energético Padrão",
+        formulaKey: data.equacao,
+        weightAtCalculationKg: parseNumericField(data.peso) || 0,
+        heightAtCalculationCm: parseNumericField(data.altura) || 0,
+        fatFreeMassAtCalculationKg: parseNumericField(data.massaMagra),
+        ageAtCalculationYears: patient.birthDate
+          ? calculateAge(patient.birthDate, new Date(data.dataCalculo))
+          : 0,
+        genderAtCalculation:
+          patient.gender.toLowerCase() === "f"
+            ? "female"
+            : patient.gender.toLowerCase() === "m"
+            ? "male"
+            : "other",
+        activityFactorKey: data.nivelAtividade,
+        injuryFactorKey: data.fatorClinico,
+        calculatedTmbKcal: Math.round(calculatedTMB),
+        calculatedGetKcal: Math.round(calculatedGET),
+        macronutrientDistribution,
+      };
+
+      // Só adiciona os campos de meta se o usuário preencheu
+      if (goalWeight !== 0 || goalDays !== 0) {
+        (payload as any).goalWeightChangeKg = goalWeight;
+        (payload as any).goalDaysToAchieve = goalDays;
+        if (goalWeight !== 0 && goalDays > 0) {
+          (payload as any).calculatedGoalKcalAdjustment = Math.round(
+            (goalWeight * 7700) / goalDays
+          );
+        }
+      }
+
+      if (planId) {
+        await updatePlan.mutateAsync({ id: planId, data: payload, patientId });
+      } else {
+        await createPlan.mutateAsync({ patientId, data: payload });
+      }
+      navigate(`/patient/${patientId}/energy-plans`);
+    } catch (error) {
+      console.error("Error submitting form:", error);
       setSnackbar({
         open: true,
-        message:
-          calculationDetails?.validationMessage ||
-          "Dados inválidos para a fórmula selecionada.",
-        severity: "warning",
+        message: `Erro ao ${planId ? "atualizar" : "criar"} plano energético: ${
+          error instanceof Error ? error.message : "Erro desconhecido"
+        }`,
+        severity: "error",
       });
-      return;
-    }
-
-    const nomePlano =
-      data.nome && data.nome.trim().length > 0
-        ? data.nome.trim()
-        : "Plano Energético Padrão";
-
-    const payload = {
-      name: nomePlano,
-      calculationDate: data.dataCalculo,
-      formulaKey: data.equacao,
-      weightAtCalculationKg: parseNumericField(data.peso),
-      heightAtCalculationCm: parseNumericField(data.altura),
-      fatFreeMassAtCalculationKg: parseNumericField(data.massaMagra),
-      activityFactorKey: data.nivelAtividade,
-      injuryFactorKey: data.fatorClinico,
-      ageAtCalculationYears: patient.birthDate
-        ? calculateAge(patient.birthDate, new Date(data.dataCalculo))
-        : 0,
-      genderAtCalculation:
-        patient.gender.toLowerCase() === "f"
-          ? "female"
-          : patient.gender.toLowerCase() === "m"
-          ? "male"
-          : "other",
-      calculatedGetKcal: Math.round(calculatedGET),
-      calculatedTmbKcal: Math.round(calculatedTMB),
-      nutritionistId: nutritionistId,
-      patientId: patientId,
-    };
-
-    const mutationOptions = {
-      onSuccess: () => {
-        setSnackbar({
-          open: true,
-          message: planId
-            ? "Plano atualizado com sucesso!"
-            : "Plano criado com sucesso!",
-          severity: "success" as "success" | "error",
-        });
-        reset({
-          nome: "",
-          dataCalculo: new Date().toISOString().split("T")[0],
-          equacao: "harris_benedict_1984",
-          peso: undefined,
-          altura: undefined,
-          massaMagra: undefined,
-          nivelAtividade: "1.200",
-          fatorClinico: "1.000",
-        });
-        navigate(`/patient/${patientId}/energy-plans`);
-      },
-      onError: (error: Error) => {
-        setSnackbar({
-          open: true,
-          message: `Erro ao ${
-            planId ? "atualizar" : "criar"
-          } plano energético: ${error.message}`,
-          severity: "error" as "success" | "error",
-        });
-      },
-    };
-
-    if (planId) {
-      updatePlan.mutate(
-        { id: planId, data: payload, patientId },
-        mutationOptions
-      );
-    } else {
-      createPlan.mutate({ patientId, data: payload }, mutationOptions);
     }
   };
 
@@ -489,10 +485,11 @@ const EnergyPlanMain: React.FC = () => {
           setGoalDays={setGoalDays}
         />
 
-        {calculatedGET !== null && watch("peso") && (
+        {calculatedGET && watch("peso") && (
           <MacronutrientDistributionSection
             peso={parseNumericField(watch("peso")) || 0}
             get={calculatedGET}
+            onDistributionChange={setMacronutrientDistribution}
           />
         )}
 
