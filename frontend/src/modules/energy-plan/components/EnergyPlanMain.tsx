@@ -1,0 +1,568 @@
+import React from "react";
+import {
+  Box,
+  Typography,
+  IconButton,
+  CircularProgress,
+  Snackbar,
+  Alert,
+  Button,
+} from "@mui/material";
+import ArrowBackIcon from "@mui/icons-material/ArrowBack";
+import { useNavigate, useParams } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
+import { energyPlanService } from "../services/energyPlanService";
+import SaveIcon from "@mui/icons-material/Save";
+import { useForm } from "react-hook-form";
+import { patientService } from "@/modules/patient/services/patientService";
+import { authService } from "../../auth/services/authService";
+import EnergyPlanGoalSection from "./EnergyPlanGoalSection";
+import EnergyPlanResultsSection from "./EnergyPlanResultsSection";
+import EnergyPlanFormSection from "./EnergyPlanFormSection";
+import MacronutrientDistributionSection from "./MacronutrientDistributionSection";
+import { ImportMeasurementsModal } from "./ImportMeasurementsModal";
+import {
+  calculateTMB,
+  calculateGET,
+  calculateAge,
+} from "../utils/energyCalculations";
+import {
+  FORMULA_DESCRIPTIONS,
+  ACTIVITY_FACTOR_DESCRIPTIONS,
+  INJURY_FACTOR_DESCRIPTIONS,
+} from "../constants/energyPlanConstants";
+import {
+  useCreateEnergyPlan,
+  useUpdateEnergyPlan,
+} from "../hooks/useEnergyPlans";
+import { EnergyPlanResponseDto } from "../services/energyPlanService";
+
+export interface DadosPlanoEnergetico {
+  nome: string;
+  dataCalculo: string;
+  equacao: string;
+  peso: number | string | undefined;
+  altura: number | string | undefined;
+  massaMagra?: number | string;
+  nivelAtividade: string;
+  fatorClinico: string;
+}
+
+// Helper to format numbers for text input, ensuring dot as decimal separator
+const formatNumberForInput = (
+  num: number | undefined | null
+): string | undefined => {
+  if (num === undefined || num === null) return undefined;
+  return String(num).replace(",", ".");
+};
+
+// Helper to parse numeric fields from form data for payload
+const parseNumericField = (
+  value: string | number | undefined
+): number | undefined => {
+  if (value === undefined || value === null || String(value).trim() === "") {
+    return undefined;
+  }
+  const num = Number(String(value).replace(",", "."));
+  return isNaN(num) ? undefined : num;
+};
+
+const EnergyPlanMain: React.FC = () => {
+  const navigate = useNavigate();
+  const { patientId, planId } = useParams<{
+    patientId: string;
+    planId: string;
+  }>();
+
+  // Busca plano para edição, se houver planId
+  const { data: planToEdit, isLoading } = useQuery({
+    queryKey: ["energyPlan", planId],
+    queryFn: () => energyPlanService.getById(planId!),
+    enabled: !!planId,
+  });
+
+  // Lógica do formulário (copiada do antigo EnergyPlanMain)
+  const createPlan = useCreateEnergyPlan();
+  const updatePlan = useUpdateEnergyPlan();
+  const [snackbar, setSnackbar] = React.useState<{
+    open: boolean;
+    message: string;
+    severity: "success" | "error" | "warning" | "info";
+  }>({
+    open: false,
+    message: "",
+    severity: "success",
+  });
+
+  const nutritionistId = authService.getUser()?.id;
+
+  const { data: patient, isLoading: isLoadingPatient } = useQuery({
+    queryKey: ["patient", patientId],
+    queryFn: () => patientService.getById(patientId!),
+    enabled: !!patientId,
+  });
+
+  const {
+    control,
+    handleSubmit,
+    reset,
+    watch,
+    setValue,
+    formState: { errors },
+  } = useForm<DadosPlanoEnergetico>({
+    defaultValues: {
+      nome: "",
+      dataCalculo: new Date().toISOString().split("T")[0],
+      equacao: "harris_benedict_1984",
+      peso: undefined,
+      altura: undefined,
+      massaMagra: undefined,
+      nivelAtividade: "1.200",
+      fatorClinico: "1.000",
+    },
+  });
+
+  const watchedPeso = watch("peso");
+  const watchedAltura = watch("altura");
+  const watchedMassaMagra = watch("massaMagra");
+  const watchedEquacao = watch("equacao");
+  const watchedNivelAtividade = watch("nivelAtividade");
+  const watchedFatorClinico = watch("fatorClinico");
+
+  const [calculatedTMB, setCalculatedTMB] = React.useState<number | null>(null);
+  const [calculatedGET, setCalculatedGET] = React.useState<number | null>(null);
+  const [calculationDetails, setCalculationDetails] = React.useState<{
+    formula: string;
+    activityFactor: string;
+    injuryFactor: string;
+    isValid: boolean;
+    validationMessage?: string;
+  } | null>(null);
+  const [isCalculating, setIsCalculating] = React.useState(false);
+  const [importModalOpen, setImportModalOpen] = React.useState(false);
+  const [goalWeight, setGoalWeight] = React.useState(0);
+  const [goalDays, setGoalDays] = React.useState(0);
+
+  const handleImportMeasurements = (measurement: {
+    weight: number;
+    height: number;
+    muscleMass?: number;
+  }) => {
+    setValue("peso", formatNumberForInput(measurement.weight), {
+      shouldValidate: true,
+      shouldDirty: true,
+    });
+    setValue("altura", formatNumberForInput(measurement.height), {
+      shouldValidate: true,
+      shouldDirty: true,
+    });
+    if (measurement.muscleMass !== undefined) {
+      setValue("massaMagra", formatNumberForInput(measurement.muscleMass), {
+        shouldValidate: true,
+        shouldDirty: true,
+      });
+    }
+    setImportModalOpen(false);
+  };
+
+  const validateFormulaInputs = (
+    formula: string,
+    weight: number | undefined,
+    height: number | undefined,
+    age: number
+  ) => {
+    if (weight === undefined || height === undefined) {
+      return {
+        isValid: false,
+        message: "Peso e altura são necessários para o cálculo.",
+      };
+    }
+    switch (formula) {
+      case "harris_benedict_1984":
+        if (age < 18) {
+          return {
+            isValid: false,
+            message:
+              "A fórmula Harris-Benedict é recomendada apenas para adultos (18+ anos).",
+          };
+        }
+        break;
+      case "fao_who_2004":
+        if (age > 60) {
+          return {
+            isValid: false,
+            message:
+              "A fórmula FAO/OMS tem limitações para idosos acima de 60 anos.",
+          };
+        }
+        break;
+    }
+    return { isValid: true };
+  };
+
+  React.useEffect(() => {
+    if (!patient || !watchedPeso || !watchedAltura || !patient.birthDate) {
+      setCalculatedTMB(null);
+      setCalculatedGET(null);
+      setCalculationDetails(null);
+      return;
+    }
+
+    setIsCalculating(true);
+    const ageYears = calculateAge(
+      patient.birthDate,
+      new Date(watch("dataCalculo"))
+    );
+    const gender = patient.gender.toLowerCase() === "f" ? "female" : "male";
+
+    const currentPeso = parseNumericField(watchedPeso);
+    const currentAltura = parseNumericField(watchedAltura);
+    const currentMassaMagra = parseNumericField(watchedMassaMagra);
+
+    const validation = validateFormulaInputs(
+      watchedEquacao,
+      currentPeso,
+      currentAltura,
+      ageYears
+    );
+
+    let tmb: number | null = null;
+    let get: number | null = null;
+
+    if (validation.isValid && currentPeso && currentAltura) {
+      tmb = calculateTMB({
+        formulaKey: watchedEquacao,
+        weightKg: currentPeso,
+        heightCm: currentAltura,
+        ageYears,
+        gender,
+        fatFreeMassKg: currentMassaMagra,
+      });
+
+      if (tmb !== null) {
+        get = calculateGET({
+          tmbKcal: tmb,
+          activityFactorValue: Number(watchedNivelAtividade),
+          injuryFactorValue: Number(watchedFatorClinico),
+        });
+      }
+    }
+
+    setCalculatedTMB(tmb);
+    setCalculatedGET(get);
+    setCalculationDetails({
+      formula:
+        FORMULA_DESCRIPTIONS[
+          watchedEquacao as keyof typeof FORMULA_DESCRIPTIONS
+        ]?.formula[gender as "male" | "female"] || "N/A",
+      activityFactor:
+        ACTIVITY_FACTOR_DESCRIPTIONS[
+          watchedNivelAtividade as keyof typeof ACTIVITY_FACTOR_DESCRIPTIONS
+        ]?.name || "N/A",
+      injuryFactor:
+        INJURY_FACTOR_DESCRIPTIONS[
+          watchedFatorClinico as keyof typeof INJURY_FACTOR_DESCRIPTIONS
+        ]?.name || "N/A",
+      isValid: validation.isValid && tmb !== null && get !== null,
+      validationMessage: validation.message,
+    });
+
+    setIsCalculating(false);
+  }, [
+    patient,
+    watchedPeso,
+    watchedAltura,
+    watchedMassaMagra,
+    watchedEquacao,
+    watchedNivelAtividade,
+    watchedFatorClinico,
+    watch,
+  ]);
+
+  React.useEffect(() => {
+    if (planToEdit) {
+      reset({
+        nome: planToEdit.name || "",
+        dataCalculo:
+          (planToEdit as any).calculationDate ||
+          new Date().toISOString().split("T")[0],
+        equacao: planToEdit.formulaKey || "harris_benedict_1984",
+        peso: formatNumberForInput(planToEdit.weightAtCalculationKg),
+        altura: formatNumberForInput(planToEdit.heightAtCalculationCm),
+        massaMagra: formatNumberForInput(planToEdit.fatFreeMassAtCalculationKg),
+        nivelAtividade: planToEdit.activityFactorKey || "1.200",
+        fatorClinico: planToEdit.injuryFactorKey || "1.000",
+      });
+    } else {
+      reset({
+        nome: "",
+        dataCalculo: new Date().toISOString().split("T")[0],
+        equacao: "harris_benedict_1984",
+        peso: undefined,
+        altura: undefined,
+        massaMagra: undefined,
+        nivelAtividade: "1.200",
+        fatorClinico: "1.000",
+      });
+    }
+  }, [planToEdit, reset]);
+
+  const onSubmit = (data: DadosPlanoEnergetico) => {
+    if (
+      !patientId ||
+      !patient ||
+      calculatedGET === null ||
+      calculatedTMB === null
+    ) {
+      setSnackbar({
+        open: true,
+        message:
+          "Não foi possível calcular GET/TMB. Verifique os dados do paciente e do plano.",
+        severity: "error",
+      });
+      return;
+    }
+    if (!calculationDetails?.isValid) {
+      setSnackbar({
+        open: true,
+        message:
+          calculationDetails?.validationMessage ||
+          "Dados inválidos para a fórmula selecionada.",
+        severity: "warning",
+      });
+      return;
+    }
+
+    const nomePlano =
+      data.nome && data.nome.trim().length > 0
+        ? data.nome.trim()
+        : "Plano Energético Padrão";
+
+    const payload = {
+      name: nomePlano,
+      calculationDate: data.dataCalculo,
+      formulaKey: data.equacao,
+      weightAtCalculationKg: parseNumericField(data.peso),
+      heightAtCalculationCm: parseNumericField(data.altura),
+      fatFreeMassAtCalculationKg: parseNumericField(data.massaMagra),
+      activityFactorKey: data.nivelAtividade,
+      injuryFactorKey: data.fatorClinico,
+      ageAtCalculationYears: patient.birthDate
+        ? calculateAge(patient.birthDate, new Date(data.dataCalculo))
+        : 0,
+      genderAtCalculation:
+        patient.gender.toLowerCase() === "f"
+          ? "female"
+          : patient.gender.toLowerCase() === "m"
+          ? "male"
+          : "other",
+      calculatedGetKcal: Math.round(calculatedGET),
+      calculatedTmbKcal: Math.round(calculatedTMB),
+      nutritionistId: nutritionistId,
+      patientId: patientId,
+    };
+
+    const mutationOptions = {
+      onSuccess: () => {
+        setSnackbar({
+          open: true,
+          message: planId
+            ? "Plano atualizado com sucesso!"
+            : "Plano criado com sucesso!",
+          severity: "success" as "success" | "error",
+        });
+        reset({
+          nome: "",
+          dataCalculo: new Date().toISOString().split("T")[0],
+          equacao: "harris_benedict_1984",
+          peso: undefined,
+          altura: undefined,
+          massaMagra: undefined,
+          nivelAtividade: "1.200",
+          fatorClinico: "1.000",
+        });
+        navigate(`/patient/${patientId}/energy-plans`);
+      },
+      onError: (error: Error) => {
+        setSnackbar({
+          open: true,
+          message: `Erro ao ${
+            planId ? "atualizar" : "criar"
+          } plano energético: ${error.message}`,
+          severity: "error" as "success" | "error",
+        });
+      },
+    };
+
+    if (planId) {
+      updatePlan.mutate(
+        { id: planId, data: payload, patientId },
+        mutationOptions
+      );
+    } else {
+      createPlan.mutate({ patientId, data: payload }, mutationOptions);
+    }
+  };
+
+  const handleCloseSnackbar = (
+    _event?: React.SyntheticEvent | Event,
+    reason?: string
+  ) => {
+    if (reason === "clickaway") {
+      return;
+    }
+    setSnackbar((prev) => ({ ...prev, open: false }));
+  };
+
+  if (isLoading) {
+    return (
+      <Box sx={{ display: "flex", justifyContent: "center", p: 3 }}>
+        <CircularProgress />
+      </Box>
+    );
+  }
+
+  if (isLoadingPatient) {
+    return (
+      <Box sx={{ display: "flex", justifyContent: "center", p: 3 }}>
+        <CircularProgress />
+      </Box>
+    );
+  }
+
+  if (!isLoadingPatient && !patient) {
+    return (
+      <Alert severity="error" sx={{ m: 2 }}>
+        Não foi possível carregar os dados do paciente. Verifique o ID ou tente
+        novamente.
+      </Alert>
+    );
+  }
+
+  return (
+    <Box>
+      {/* Header */}
+      <Box
+        sx={{
+          display: "flex",
+          alignItems: "center",
+          gap: 2,
+          mb: 4,
+        }}
+      >
+        <IconButton
+          onClick={() => navigate(`/patient/${patientId}/energy-plans`)}
+          sx={{ color: "text.primary" }}
+        >
+          <ArrowBackIcon />
+        </IconButton>
+        <Typography variant="h5" fontWeight="bold">
+          {planId ? "Editar Plano Energético" : "Novo Plano Energético"}
+        </Typography>
+      </Box>
+
+      {/* Formulário */}
+      <Box
+        component="form"
+        onSubmit={handleSubmit(onSubmit)}
+        sx={{
+          display: "flex",
+          flexDirection: "column",
+          gap: 2.5,
+        }}
+      >
+        <EnergyPlanFormSection
+          control={control}
+          errors={errors}
+          watchedPeso={watch("peso")}
+          setImportModalOpen={setImportModalOpen}
+          importModalOpen={importModalOpen}
+          handleImportMeasurements={handleImportMeasurements}
+          patientId={patientId || ""}
+          calculationDetails={calculationDetails}
+        />
+
+        <EnergyPlanGoalSection
+          goalWeight={goalWeight}
+          setGoalWeight={setGoalWeight}
+          goalDays={goalDays}
+          setGoalDays={setGoalDays}
+        />
+
+        {calculatedGET !== null && watch("peso") && (
+          <MacronutrientDistributionSection
+            peso={parseNumericField(watch("peso")) || 0}
+            get={calculatedGET}
+          />
+        )}
+
+        <EnergyPlanResultsSection
+          isCalculating={isCalculating}
+          calculatedTMB={calculatedTMB}
+          calculatedGET={calculatedGET}
+          calculationDetails={calculationDetails}
+        />
+
+        <Button
+          type="submit"
+          variant="contained"
+          fullWidth
+          startIcon={<SaveIcon />}
+          sx={{
+            mt: 1.5,
+            py: 1.5,
+            borderRadius: "8px",
+            fontWeight: "600",
+            fontSize: "1rem",
+            textTransform: "none",
+            bgcolor: "#1976d2",
+            "&:hover": {
+              bgcolor: "#1565c0",
+            },
+          }}
+          disabled={
+            createPlan.isPending ||
+            updatePlan.isPending ||
+            isCalculating ||
+            isLoadingPatient ||
+            (calculationDetails !== null &&
+              !calculationDetails.isValid &&
+              calculationDetails.validationMessage !== undefined)
+          }
+        >
+          {createPlan.isPending || updatePlan.isPending
+            ? "Salvando..."
+            : planId
+            ? "Atualizar Plano"
+            : "Salvar Plano"}
+        </Button>
+      </Box>
+
+      <ImportMeasurementsModal
+        open={importModalOpen}
+        onClose={() => setImportModalOpen(false)}
+        onSelect={handleImportMeasurements}
+        patientId={patientId!}
+      />
+
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={6000}
+        onClose={handleCloseSnackbar}
+        anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+      >
+        <Alert
+          onClose={handleCloseSnackbar}
+          severity={snackbar.severity}
+          sx={{ width: "100%" }}
+          elevation={6}
+          variant="filled"
+        >
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
+    </Box>
+  );
+};
+
+export default EnergyPlanMain;

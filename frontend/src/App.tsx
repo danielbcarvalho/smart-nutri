@@ -20,7 +20,7 @@ import { PatientInfo } from "./modules/patient/pages/PatientInfo/PatientInfoPage
 import { MealPlan } from "./modules/meal-plan/pages/MealPlansPage";
 import { MealPlanDetails } from "./modules/meal-plan/pages/MealPlanDetails/MealPlanDetailsPage";
 import EnergyPlanPage from "@modules/energy-plan/pages/EnergyPlanPage";
-import EnergyPlanFormPage from "@modules/energy-plan/pages/EnergyPlanFormPage";
+import EnergyPlanMain from "@modules/energy-plan/components/EnergyPlanMain";
 
 // Placeholder components
 const DocumentsPlaceholder = () => (
@@ -162,11 +162,11 @@ const router = createBrowserRouter([
               },
               {
                 path: "edit/:planId",
-                element: <EnergyPlanFormPage />,
+                element: <EnergyPlanMain />,
               },
               {
                 path: "new",
-                element: <EnergyPlanFormPage />,
+                element: <EnergyPlanMain />,
               },
             ],
           },
