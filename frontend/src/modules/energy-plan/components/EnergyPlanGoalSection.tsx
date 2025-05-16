@@ -6,12 +6,14 @@ import {
   Box,
   Slider,
   TextField,
+  useTheme, // Para acessar cores do tema de forma mais robusta
+  alpha, // Para transparência
 } from "@mui/material";
 
 interface EnergyPlanGoalSectionProps {
-  goalWeight: number; // Variação de peso desejada (pode ser negativo para perda)
+  goalWeight: number;
   setGoalWeight: (value: number) => void;
-  goalDays: number; // Dias para atingir a meta
+  goalDays: number;
   setGoalDays: (value: number) => void;
 }
 
@@ -21,44 +23,59 @@ const EnergyPlanGoalSection: React.FC<EnergyPlanGoalSectionProps> = ({
   goalDays,
   setGoalDays,
 }) => {
+  const theme = useTheme(); // Acesso ao tema
+
   const handleGoalWeightChange = (value: string) => {
-    const numericValue = parseFloat(value.replace(",", "."));
+    const cleanedValue = value.replace(",", ".");
+    // Permite "-" ou "-." ou "." no início
+    if (
+      cleanedValue === "" ||
+      cleanedValue === "-" ||
+      cleanedValue === "." ||
+      cleanedValue === "-."
+    ) {
+      setGoalWeight(0); // Ou algum valor que indique "vazio" se 0 não for ideal
+      return;
+    }
+    const numericValue = parseFloat(cleanedValue);
     if (!isNaN(numericValue)) {
       setGoalWeight(numericValue);
-    } else if (value === "" || value === "-") {
-      // Permite limpar o campo ou iniciar com sinal negativo
-      setGoalWeight(0); // Ou algum outro valor padrão se "" não for ideal
     }
   };
 
   const handleGoalDaysChange = (value: string) => {
+    if (value === "") {
+      setGoalDays(0); // Ou 1, se 0 não for um estado válido
+      return;
+    }
     const numericValue = parseInt(value, 10);
     if (!isNaN(numericValue) && numericValue >= 0) {
       setGoalDays(numericValue);
-    } else if (value === "") {
-      setGoalDays(0); // Ou 1, se 0 não for um estado válido
     }
   };
 
-  // Calcula as calorias diárias necessárias para atingir a meta
   const dailyKcalChange = React.useMemo(() => {
     if (goalWeight !== 0 && goalDays > 0) {
       return Math.round((goalWeight * 7700) / goalDays);
     }
-    return null; // Retorna null se não for possível calcular
+    return null;
   }, [goalWeight, goalDays]);
 
+  // Largura consistente para o TextField e a unidade para alinhar os Sliders
+  const textFieldWidth = 80;
+  const unitWidth = 50; // Suficiente para "Dia(s)"
+
   return (
-    <Card variant="outlined" sx={{ mt: 3 }}>
+    <Card variant="outlined" sx={{ mt: 3 /*, maxWidth: 600, mx: 'auto' */ }}>
+      {" "}
+      {/* Opcional: limitar largura do card */}
       <CardContent sx={{ p: 2.5, "&:last-child": { pb: 2.5 } }}>
-        <Typography variant="h6" fontWeight={600} sx={{ mb: 2 }}>
+        <Typography variant="h6" fontWeight={600} sx={{ mb: 2.5 }}>
           Meta
         </Typography>
 
         {/* Seção de Meta de Peso */}
-        <Box sx={{ mb: 3 }}>
-          {" "}
-          {/* Aumentei um pouco a margem inferior */}
+        <Box sx={{ mb: 3, p: 2.5 }}>
           <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
             Quantos kg o paciente precisa ganhar ou perder?
           </Typography>
@@ -66,21 +83,20 @@ const EnergyPlanGoalSection: React.FC<EnergyPlanGoalSectionProps> = ({
             sx={{
               display: "flex",
               alignItems: "center",
-              gap: 2,
-              width: "100%",
+              gap: 2, // Espaçamento entre Slider, TextField e Unidade
             }}
           >
             <Slider
               value={goalWeight}
               onChange={(_, v) => setGoalWeight(Number(v))}
-              min={-40} // Ex: Limite de perda de 40kg
-              max={40} // Ex: Limite de ganho de 40kg
+              min={-40}
+              max={40}
               step={0.1}
               sx={{
                 flex: 1,
                 color: "success.main",
                 height: 6,
-                mr: 1 /* Pequena margem para não colar no input */,
+                m: 2.5,
               }}
               valueLabelDisplay="auto"
               marks={[
@@ -90,30 +106,33 @@ const EnergyPlanGoalSection: React.FC<EnergyPlanGoalSectionProps> = ({
               ]}
             />
             <TextField
-              value={goalWeight.toFixed(1).replace(".", ",")}
+              value={
+                goalWeight === 0 &&
+                (goalWeight.toString().startsWith("-") ||
+                  goalWeight.toString() === "0.0")
+                  ? goalWeight.toFixed(1).replace(".", ",")
+                  : goalWeight.toString().replace(".", ",")
+              }
               onChange={(e) => handleGoalWeightChange(e.target.value)}
-              // type="number" // Usar text para melhor controle de formatação e entrada com vírgula
-              inputMode="decimal" // Melhora a experiência mobile
+              inputMode="decimal"
               size="small"
               inputProps={{
-                // min: -40, // Removido pois type="text"
-                // max: 40,
-                // step: 0.1,
-                style: { textAlign: "right", width: "50px" }, // Largura direto no inputProps
+                style: { textAlign: "right" },
               }}
-              sx={{ width: 95 /* Largura total do TextField wrapper */ }}
+              sx={{
+                width: textFieldWidth, // Largura fixa para o TextField
+              }}
             />
-            <Typography sx={{ width: "auto", minWidth: 25, textAlign: "left" }}>
+            <Typography
+              sx={{ width: unitWidth, textAlign: "left", minWidth: unitWidth }}
+            >
               Kg
-            </Typography>{" "}
-            {/* Ajuste para unidade */}
+            </Typography>
           </Box>
         </Box>
 
         {/* Seção de Tempo Estimado */}
-        <Box sx={{ mb: 3 }}>
-          {" "}
-          {/* Aumentei um pouco a margem inferior */}
+        <Box sx={{ mb: 3, p: 2.5 }}>
           <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
             Qual o tempo estimado para esta meta?
           </Typography>
@@ -122,16 +141,20 @@ const EnergyPlanGoalSection: React.FC<EnergyPlanGoalSectionProps> = ({
               display: "flex",
               alignItems: "center",
               gap: 2,
-              width: "100%",
             }}
           >
             <Slider
               value={goalDays}
               onChange={(_, v) => setGoalDays(Number(v))}
               min={0}
-              max={365} // Ex: Limite de 1 ano
+              max={365}
               step={1}
-              sx={{ flex: 1, color: "success.main", height: 6, mr: 1 }}
+              sx={{
+                flex: 1,
+                color: "success.main",
+                height: 6,
+                m: 2.5,
+              }}
               valueLabelDisplay="auto"
               marks={[
                 { value: 0, label: "0d" },
@@ -144,45 +167,51 @@ const EnergyPlanGoalSection: React.FC<EnergyPlanGoalSectionProps> = ({
             <TextField
               value={goalDays.toString()}
               onChange={(e) => handleGoalDaysChange(e.target.value)}
-              type="number"
+              type="number" // Mantém o tipo number para validação e teclado numérico
               size="small"
               inputProps={{
                 min: 0,
                 max: 365,
                 step: 1,
-                style: { textAlign: "right", width: "50px" },
+                style: { textAlign: "right" },
               }}
-              sx={{ width: 95 }}
+              sx={{
+                width: textFieldWidth,
+              }}
             />
-            <Typography sx={{ width: "auto", minWidth: 45, textAlign: "left" }}>
+            <Typography
+              sx={{ width: unitWidth, textAlign: "left", minWidth: unitWidth }}
+            >
               Dia(s)
-            </Typography>{" "}
-            {/* Ajuste para unidade */}
+            </Typography>
           </Box>
         </Box>
 
         {/* Seção de Resultado */}
-        <Box sx={{ bgcolor: "success.lightest", borderRadius: 2, p: 2, mt: 2 }}>
-          {/* Usando cor do tema para fundo, ex: theme.palette.success.lightest
-            Se não tiver lightest, pode ser: alpha(theme.palette.success.main, 0.1) 
-            Ou manter a cor original: bgcolor: "#e8f5e9" */}
-          <Typography
-            variant="body2" // Alterado para body2 para ser menos proeminente que o resultado principal
-            color="text.secondary"
-            sx={{ mb: 0.5 }}
-          >
+        <Box
+          sx={{
+            bgcolor:
+              theme.palette.success.lightest ||
+              alpha(theme.palette.success.main, 0.1), // Fallback se lightest não existir
+            borderRadius: 2,
+            p: 2,
+            mt: 2,
+          }}
+        >
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>
             Resultado Estimado:
           </Typography>
-          <Typography variant="h6" fontWeight="fontWeightBold">
-            {" "}
-            {/* Usando fontWeightBold do tema */}
-            {goalWeight >= 0 ? "Ganho" : "Perda"} de{" "}
-            {Math.abs(goalWeight).toFixed(1).replace(".", ",")} Kg em {goalDays}{" "}
-            dia(s)
+          <Typography variant="h6" fontWeight={theme.typography.fontWeightBold}>
+            {goalWeight === 0
+              ? "Manutenção"
+              : goalWeight > 0
+              ? "Ganho"
+              : "Perda"}{" "}
+            de {Math.abs(goalWeight).toFixed(1).replace(".", ",")} Kg em{" "}
+            {goalDays} dia(s)
           </Typography>
-          <Typography variant="body1" color="text.primary" fontWeight="500">
-            {" "}
-            {/* Destaque para o Kcal/dia */}(
+          <Typography variant="body1" color="text.primary" fontWeight={500}>
+            (
             {dailyKcalChange !== null
               ? `${dailyKcalChange > 0 ? "+" : ""}${dailyKcalChange} Kcal/dia`
               : "-- Kcal/dia"}
