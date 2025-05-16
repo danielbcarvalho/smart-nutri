@@ -163,6 +163,32 @@ export class EnergyPlanResponseDto {
   calculatedGetKcal: number;
 
   @ApiProperty({
+    description: 'Distribuição dos macronutrientes',
+    example: { proteins: 20, carbs: 50, fats: 30 },
+    required: false,
+  })
+  macronutrientDistribution?: {
+    proteins: number;
+    carbs: number;
+    fats: number;
+  };
+
+  @ApiProperty({
+    description: 'Variação de peso desejada (kg)',
+    required: false,
+  })
+  goalWeightChangeKg?: number;
+
+  @ApiProperty({ description: 'Dias para atingir a meta', required: false })
+  goalDaysToAchieve?: number;
+
+  @ApiProperty({
+    description: 'Ajuste calórico estimado para a meta',
+    required: false,
+  })
+  calculatedGoalKcalAdjustment?: number;
+
+  @ApiProperty({
     description: 'Data de criação',
     example: '2024-03-20T10:00:00Z',
   })

@@ -34,6 +34,8 @@ import {
   useCreateEnergyPlan,
   useUpdateEnergyPlan,
 } from "../hooks/useEnergyPlans";
+import { authService } from "../../auth/services/authService";
+
 import { CreateEnergyPlanDto } from "../services/energyPlanService";
 
 export interface DadosPlanoEnergetico {
@@ -111,6 +113,8 @@ const EnergyPlanMain: React.FC = () => {
     message: "",
     severity: "success",
   });
+
+  const nutritionistId = authService.getUser()?.id;
 
   const { data: patient, isLoading: isLoadingPatient } = useQuery({
     queryKey: ["patient", patientId],
@@ -317,6 +321,15 @@ const EnergyPlanMain: React.FC = () => {
         nivelAtividade: planToEdit.activityFactorKey || "1.200",
         fatorClinico: planToEdit.injuryFactorKey || "1.000",
       });
+      setGoalWeight(planToEdit.goalWeightChangeKg ?? 0);
+      setGoalDays(planToEdit.goalDaysToAchieve ?? 0);
+      setMacronutrientDistribution(
+        planToEdit.macronutrientDistribution ?? {
+          proteins: 20,
+          carbs: 50,
+          fats: 30,
+        }
+      );
     } else {
       reset({
         nome: "",
@@ -328,6 +341,8 @@ const EnergyPlanMain: React.FC = () => {
         nivelAtividade: "1.200",
         fatorClinico: "1.000",
       });
+      setGoalWeight(0);
+      setGoalDays(0);
     }
   }, [planToEdit, reset]);
 
@@ -369,6 +384,8 @@ const EnergyPlanMain: React.FC = () => {
         calculatedTmbKcal: Math.round(calculatedTMB),
         calculatedGetKcal: Math.round(calculatedGET),
         macronutrientDistribution,
+        nutritionistId: nutritionistId!,
+        patientId: patientId,
       };
 
       // Só adiciona os campos de meta se o usuário preencheu
@@ -490,6 +507,7 @@ const EnergyPlanMain: React.FC = () => {
             peso={parseNumericField(watch("peso")) || 0}
             get={calculatedGET}
             onDistributionChange={setMacronutrientDistribution}
+            macronutrientDistribution={macronutrientDistribution}
           />
         )}
 

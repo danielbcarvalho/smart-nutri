@@ -98,9 +98,12 @@ export class EnergyPlan {
 
   @Column({ name: 'weight_goal_details', type: 'jsonb', nullable: true })
   weightGoalDetails?: {
-    target_weight_change_kg: number;
-    days_to_achieve: number;
-    calculated_kcal_adjustment: number;
+    target_weight_change_kg?: number;
+    days_to_achieve?: number;
+    calculated_kcal_adjustment?: number;
+    goalWeightChangeKg?: number;
+    goalDaysToAchieve?: number;
+    calculatedGoalKcalAdjustment?: number;
   };
 
   @Column({
@@ -177,4 +180,11 @@ export class EnergyPlan {
   @ManyToOne(() => Consultation, { onDelete: 'SET NULL' })
   @JoinColumn({ name: 'consultation_id' })
   consultation?: Consultation;
+
+  @Column({ name: 'macronutrient_distribution', type: 'jsonb', nullable: true })
+  macronutrientDistribution?: {
+    proteins: number;
+    carbs: number;
+    fats: number;
+  };
 }

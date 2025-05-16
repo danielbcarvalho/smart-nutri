@@ -1,6 +1,6 @@
 # Estrutura do Banco de Dados
 
-Gerado em: 5/15/2025, 1:56:08 PM
+Gerado em: 5/16/2025, 12:43:12 PM
 
 
 ## Tabela: consultations
@@ -221,8 +221,8 @@ Gerado em: 5/15/2025, 1:56:08 PM
 | clinicName | character varying | - | YES | NULL | PK |
 | created_at | timestamp without time zone | - | NO | now() | PK |
 | updated_at | timestamp without time zone | - | NO | now() | PK |
-| photo_url | character varying | - | YES | NULL | PK |
 | instagram | character varying | - | YES | NULL | PK |
+| photo_url | character varying | - | YES | NULL | PK |
 
 ## Tabela: patient_photos
 
@@ -287,7 +287,7 @@ Gerado em: 5/15/2025, 1:56:08 PM
 
 ## Informações do Banco
 
-- **Host:** aws-0-us-east-1.pooler.supabase.com
+- **Host:** localhost
 - **Porta:** 5432
-- **Banco de Dados:** postgres
+- **Banco de Dados:** smartnutri_db
 - **Schema:** public

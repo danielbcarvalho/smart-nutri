@@ -4,12 +4,11 @@ import {
   CardContent,
   Typography,
   Box,
-  Slider,
-  Divider,
   Tooltip,
   IconButton,
   Alert,
   useMediaQuery,
+  TextField,
 } from "@mui/material";
 import InfoIcon from "@mui/icons-material/Info";
 import { useTheme } from "@mui/material/styles";
@@ -22,6 +21,11 @@ interface MacronutrientDistributionSectionProps {
     carbs: number;
     fats: number;
   }) => void;
+  macronutrientDistribution?: {
+    proteins: number;
+    carbs: number;
+    fats: number;
+  };
 }
 
 // Estrutura de dados dos macronutrientes
@@ -34,8 +38,8 @@ const MACROS = [
     refRange: "10 - 35 %",
     refSource: "Food and Nutrition Board / IOM",
     kcalPerGram: 4,
-    min: 10, // % mínima
-    max: 35, // % máxima
+    min: 0, // Alterado para permitir de 0 a 100
+    max: 100, // Alterado para permitir de 0 a 100
     order: 1,
   },
   {
@@ -46,8 +50,8 @@ const MACROS = [
     refRange: "45 - 65 %",
     refSource: "Food and Nutrition Board / IOM",
     kcalPerGram: 4,
-    min: 45,
-    max: 65,
+    min: 0, // Alterado para permitir de 0 a 100
+    max: 100, // Alterado para permitir de 0 a 100
     order: 2,
   },
   {
@@ -58,17 +62,17 @@ const MACROS = [
     refRange: "20 - 35 %",
     refSource: "Food and Nutrition Board / IOM",
     kcalPerGram: 9,
-    min: 20,
-    max: 35,
+    min: 0, // Alterado para permitir de 0 a 100
+    max: 100, // Alterado para permitir de 0 a 100
     order: 3,
   },
 ];
 
-// Valores percentuais padrão (Proteínas, Carboidratos, Lipídios)
-const defaultPercents = [20, 50, 30];
-
 // Função para obter a cor do macronutriente
-const getColor = (macroKey: string, theme: any) => {
+const getColor = (
+  macroKey: string,
+  theme: import("@mui/material/styles").Theme
+) => {
   // Idealmente, estas cores viriam do tema ou seriam mais configuráveis
   switch (macroKey) {
     case "proteins":
@@ -84,26 +88,30 @@ const getColor = (macroKey: string, theme: any) => {
 
 const MacronutrientDistributionSection: React.FC<
   MacronutrientDistributionSectionProps
-> = ({ peso, get, onDistributionChange }) => {
+> = ({ peso, get, onDistributionChange, macronutrientDistribution }) => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
-  const [percents, setPercents] = React.useState<number[]>(defaultPercents);
+  const [percents, setPercents] = React.useState<number[]>([
+    macronutrientDistribution?.proteins ?? 20,
+    macronutrientDistribution?.carbs ?? 50,
+    macronutrientDistribution?.fats ?? 30,
+  ]);
 
-  const handleSliderChange = (
-    macroIndex: number,
-    newValue: number | number[]
-  ) => {
-    const newPercents = [...percents];
-    newPercents[macroIndex] = newValue as number;
-    setPercents(newPercents);
-    onDistributionChange({
-      proteins: newPercents[0],
-      carbs: newPercents[1],
-      fats: newPercents[2],
-    });
-  };
+  React.useEffect(() => {
+    if (macronutrientDistribution) {
+      setPercents([
+        macronutrientDistribution.proteins,
+        macronutrientDistribution.carbs,
+        macronutrientDistribution.fats,
+      ]);
+    }
+  }, [macronutrientDistribution]);
 
-  const totalPercentSum = percents.reduce((sum, current) => sum + current, 0);
+  // Soma dos percentuais, tratando valores inválidos como zero
+  const totalPercentSum = percents.reduce(
+    (sum, current) => sum + (Number.isFinite(current) ? current : 0),
+    0
+  );
 
   // --- LAYOUT DESKTOP ---
   const DesktopView = (
@@ -205,7 +213,7 @@ const MacronutrientDistributionSection: React.FC<
               </Typography>
             </Box>
 
-            {/* Coluna 2: Slider e Porcentagem */}
+            {/* Coluna 2: Slider e Porcentagem + Input */}
             <Box
               sx={{
                 display: "flex",
@@ -214,35 +222,59 @@ const MacronutrientDistributionSection: React.FC<
                 px: 1,
               }}
             >
-              <Slider
-                value={percent}
-                min={macro.min}
-                max={macro.max}
-                step={1}
-                onChange={(_, v) => handleSliderChange(idx, v)}
-                sx={{
-                  color: macroColor,
-                  width: "100%",
-                  mt: 0.5,
-                  mb: 0.2,
-                  height: 6,
-                  "& .MuiSlider-thumb": {
-                    width: 16,
-                    height: 16,
-                  },
-                  "& .MuiSlider-rail": {
-                    opacity: 0.4,
-                  },
-                }}
-                valueLabelDisplay="auto"
-              />
-              <Typography
-                variant="body2"
-                fontWeight="fontWeightMedium"
-                sx={{ textAlign: "center" }}
+              <Box
+                sx={{ display: "flex", alignItems: "center", width: "100%" }}
               >
-                {percent}%
-              </Typography>
+                <TextField
+                  value={percents[idx]}
+                  onChange={(e) => {
+                    let val =
+                      e.target.value === "" ? 0 : Number(e.target.value);
+                    if (isNaN(val)) val = 0;
+                    if (val < macro.min) val = macro.min;
+                    if (val > macro.max) val = macro.max;
+                    const newPercents = [...percents];
+                    newPercents[idx] = val;
+                    setPercents(newPercents);
+                    onDistributionChange({
+                      proteins: newPercents[0],
+                      carbs: newPercents[1],
+                      fats: newPercents[2],
+                    });
+                  }}
+                  type="number"
+                  size="small"
+                  inputProps={{
+                    min: macro.min,
+                    max: macro.max,
+                    style: {
+                      textAlign: "center",
+                      MozAppearance: "textfield",
+                      fontSize: 13,
+                    },
+                    inputMode: "numeric",
+                    pattern: "[0-9]*",
+                  }}
+                  sx={{
+                    ml: 1,
+                    "& input[type=number]::-webkit-inner-spin-button, & input[type=number]::-webkit-outer-spin-button":
+                      {
+                        WebkitAppearance: "none",
+                        margin: 0,
+                      },
+                    "& input": {
+                      fontSize: 13,
+                    },
+                  }}
+                />
+                <Typography
+                  variant="body2"
+                  fontWeight="fontWeightMedium"
+                  sx={{ ml: 1 }}
+                >
+                  %
+                </Typography>
+              </Box>
             </Box>
 
             {/* Coluna 3: Gramas */}
@@ -314,24 +346,6 @@ const MacronutrientDistributionSection: React.FC<
                 {percent}%
               </Typography>
             </Box>
-            <Slider
-              value={percent}
-              min={macro.min}
-              max={macro.max}
-              step={1}
-              onChange={(_, v) => handleSliderChange(idx, v)}
-              sx={{
-                color: macroColor,
-                mx: 0,
-                mb: 1,
-                height: 6,
-                "& .MuiSlider-thumb": {
-                  width: 18, // Um pouco maior no mobile para toque
-                  height: 18,
-                },
-              }}
-              valueLabelDisplay="auto"
-            />
             <Box
               sx={{
                 display: "grid",

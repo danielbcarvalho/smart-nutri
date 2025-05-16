@@ -24,6 +24,7 @@ export class EnergyPlanService {
 
   private toResponseDto(energyPlan: EnergyPlan): EnergyPlanResponseDto {
     const { patient, nutritionist, mealPlans, ...rest } = energyPlan;
+    const weightGoal = energyPlan.weightGoalDetails || {};
     return {
       ...rest,
       calculationDate: new Date(energyPlan.calculationDate)
@@ -35,6 +36,14 @@ export class EnergyPlanService {
         | ActivityFactor
         | undefined,
       injuryFactorKey: energyPlan.injuryFactorKey as InjuryFactor | undefined,
+      macronutrientDistribution: energyPlan.macronutrientDistribution,
+      goalWeightChangeKg:
+        weightGoal.goalWeightChangeKg ?? weightGoal.target_weight_change_kg,
+      goalDaysToAchieve:
+        weightGoal.goalDaysToAchieve ?? weightGoal.days_to_achieve,
+      calculatedGoalKcalAdjustment:
+        weightGoal.calculatedGoalKcalAdjustment ??
+        weightGoal.calculated_kcal_adjustment,
     };
   }
 
@@ -52,8 +61,32 @@ export class EnergyPlanService {
       );
     }
 
+    const {
+      goalWeightChangeKg,
+      goalDaysToAchieve,
+      calculatedGoalKcalAdjustment,
+      macronutrientDistribution,
+      ...rest
+    } = createEnergyPlanDto;
+
+    let weightGoalDetails = rest.weightGoalDetails;
+    if (
+      goalWeightChangeKg !== undefined ||
+      goalDaysToAchieve !== undefined ||
+      calculatedGoalKcalAdjustment !== undefined
+    ) {
+      weightGoalDetails = {
+        ...weightGoalDetails,
+        target_weight_change_kg: goalWeightChangeKg,
+        days_to_achieve: goalDaysToAchieve,
+        calculated_kcal_adjustment: calculatedGoalKcalAdjustment,
+      };
+    }
+
     const energyPlan = this.energyPlanRepository.create({
-      ...createEnergyPlanDto,
+      ...rest,
+      weightGoalDetails,
+      macronutrientDistribution,
       calculationDate: new Date(),
     });
     const saved = await this.energyPlanRepository.save(energyPlan);
@@ -139,7 +172,33 @@ export class EnergyPlanService {
       );
     }
 
-    Object.assign(energyPlan, updateEnergyPlanDto);
+    const {
+      goalWeightChangeKg,
+      goalDaysToAchieve,
+      calculatedGoalKcalAdjustment,
+      macronutrientDistribution,
+      ...rest
+    } = updateEnergyPlanDto;
+
+    let weightGoalDetails =
+      rest.weightGoalDetails || energyPlan.weightGoalDetails;
+    if (
+      goalWeightChangeKg !== undefined ||
+      goalDaysToAchieve !== undefined ||
+      calculatedGoalKcalAdjustment !== undefined
+    ) {
+      weightGoalDetails = {
+        ...weightGoalDetails,
+        target_weight_change_kg: goalWeightChangeKg,
+        days_to_achieve: goalDaysToAchieve,
+        calculated_kcal_adjustment: calculatedGoalKcalAdjustment,
+      };
+    }
+
+    Object.assign(energyPlan, rest, {
+      weightGoalDetails,
+      macronutrientDistribution,
+    });
     const updated = await this.energyPlanRepository.save(energyPlan);
     return this.toResponseDto(updated);
   }

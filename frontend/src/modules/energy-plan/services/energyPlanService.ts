@@ -13,6 +13,8 @@ export type CreateEnergyPlanDto = {
   injuryFactorKey: string;
   calculatedTmbKcal?: number;
   calculatedGetKcal: number;
+  nutritionistId: string;
+  patientId: string;
   // Goal section
   goalWeightChangeKg?: number;
   goalDaysToAchieve?: number;
