@@ -56,14 +56,6 @@ export class CreateEnergyPlanDto {
   consultationId?: string;
 
   @ApiProperty({
-    description: 'Data do cálculo',
-    example: '2024-03-20',
-  })
-  @IsNotEmpty()
-  @IsDateString()
-  calculationDate: string;
-
-  @ApiProperty({
     description: 'Peso no momento do cálculo (kg)',
     example: 70.5,
     minimum: 0,

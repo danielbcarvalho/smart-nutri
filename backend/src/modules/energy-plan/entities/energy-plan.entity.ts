@@ -11,7 +11,7 @@ import {
 import { Patient } from '../../patients/entities/patient.entity';
 import { Nutritionist } from '../../nutritionists/entities/nutritionist.entity';
 import { Consultation } from '../../patients/entities/consultation.entity';
-import type { MealPlan } from '../../meal-plan/entities/meal-plan.entity';
+import { MealPlan } from '../../meal-plan/entities/meal-plan.entity';
 
 @Entity('energy_plans')
 export class EnergyPlan {
@@ -171,7 +171,7 @@ export class EnergyPlan {
   @JoinColumn({ name: 'nutritionist_id' })
   nutritionist: Nutritionist;
 
-  @OneToMany('MealPlan', 'energyPlan')
+  @OneToMany(() => MealPlan, (mealPlan) => mealPlan.energyPlan)
   mealPlans: MealPlan[];
 
   @ManyToOne(() => Consultation, { onDelete: 'SET NULL' })

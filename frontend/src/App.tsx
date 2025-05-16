@@ -19,6 +19,8 @@ import { Patients } from "./modules/patient/pages/Patients/PatientsPage";
 import { PatientInfo } from "./modules/patient/pages/PatientInfo/PatientInfoPage";
 import { MealPlan } from "./modules/meal-plan/pages/MealPlansPage";
 import { MealPlanDetails } from "./modules/meal-plan/pages/MealPlanDetails/MealPlanDetailsPage";
+import EnergyPlanPage from "@modules/energy-plan/pages/EnergyPlanPage";
+import EnergyPlanFormPage from "@modules/energy-plan/pages/EnergyPlanFormPage";
 
 // Placeholder components
 const DocumentsPlaceholder = () => (
@@ -110,17 +112,14 @@ const router = createBrowserRouter([
             children: [
               {
                 index: true,
-                // element: <PlansPlaceholder />
                 element: <MealPlan />,
               },
               {
                 path: "new",
                 element: <PlansPlaceholder />,
-                // element: <NewMealPlan />,
               },
               {
                 path: ":planId",
-                // element: <PlansPlaceholder />,
                 element: <MealPlanDetails />,
               },
             ],
@@ -151,6 +150,23 @@ const router = createBrowserRouter([
               {
                 path: "evolution/photos",
                 element: <AssessmentEvolution />,
+              },
+            ],
+          },
+          {
+            path: "energy-plans",
+            children: [
+              {
+                index: true,
+                element: <EnergyPlanPage />,
+              },
+              {
+                path: "edit/:planId",
+                element: <EnergyPlanFormPage />,
+              },
+              {
+                path: "new",
+                element: <EnergyPlanFormPage />,
               },
             ],
           },

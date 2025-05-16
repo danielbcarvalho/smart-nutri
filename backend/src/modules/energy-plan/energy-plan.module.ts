@@ -1,11 +1,13 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { EnergyPlan } from './entities/energy-plan.entity';
+
+import { NutritionistsModule } from '../nutritionists/nutritionists.module';
 import { EnergyPlanController } from './energy-plan.controller';
 import { EnergyPlanService } from './energy-plan.service';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([EnergyPlan])],
+  imports: [TypeOrmModule.forFeature([EnergyPlan]), NutritionistsModule],
   controllers: [EnergyPlanController],
   providers: [EnergyPlanService],
   exports: [EnergyPlanService],

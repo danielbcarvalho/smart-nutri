@@ -21,6 +21,7 @@ import {
   ChevronRight,
   Timeline as TimelineIcon,
   PhotoCamera as PhotoCameraIcon,
+  Bolt,
 } from "@mui/icons-material";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { patientService } from "../modules/patient/services/patientService";
@@ -52,6 +53,11 @@ export function PatientLayout() {
       label: "Planos Alimentares",
       icon: <RestaurantMenu />,
       path: `/patient/${patientId}/meal-plans`,
+    },
+    {
+      label: "Planejamento Energético",
+      icon: <Bolt />,
+      path: `/patient/${patientId}/energy-plans`,
     },
     {
       label: "Avaliações",

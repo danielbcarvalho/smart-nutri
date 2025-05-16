@@ -12,19 +12,23 @@ import { EnergyFormula } from './enums/energy-formulas.enum';
 import { ActivityFactor } from './enums/activity-factors.enum';
 import { InjuryFactor } from './enums/injury-factors.enum';
 import { Gender } from './enums/gender.enum';
+import { NutritionistsService } from '../nutritionists/nutritionists.service';
 
 @Injectable()
 export class EnergyPlanService {
   constructor(
     @InjectRepository(EnergyPlan)
     private readonly energyPlanRepository: Repository<EnergyPlan>,
+    private readonly nutritionistsService: NutritionistsService,
   ) {}
 
   private toResponseDto(energyPlan: EnergyPlan): EnergyPlanResponseDto {
     const { patient, nutritionist, mealPlans, ...rest } = energyPlan;
     return {
       ...rest,
-      calculationDate: energyPlan.calculationDate.toISOString().split('T')[0],
+      calculationDate: new Date(energyPlan.calculationDate)
+        .toISOString()
+        .split('T')[0],
       genderAtCalculation: energyPlan.genderAtCalculation as Gender,
       formulaKey: energyPlan.formulaKey as EnergyFormula,
       activityFactorKey: energyPlan.activityFactorKey as
@@ -37,7 +41,21 @@ export class EnergyPlanService {
   async create(
     createEnergyPlanDto: CreateEnergyPlanDto,
   ): Promise<EnergyPlanResponseDto> {
-    const energyPlan = this.energyPlanRepository.create(createEnergyPlanDto);
+    // Verificar se o nutricionista existe
+    try {
+      await this.nutritionistsService.findOne(
+        createEnergyPlanDto.nutritionistId,
+      );
+    } catch (error) {
+      throw new NotFoundException(
+        `Nutricionista com ID ${createEnergyPlanDto.nutritionistId} não encontrado`,
+      );
+    }
+
+    const energyPlan = this.energyPlanRepository.create({
+      ...createEnergyPlanDto,
+      calculationDate: new Date(),
+    });
     const saved = await this.energyPlanRepository.save(energyPlan);
     return this.toResponseDto(saved);
   }

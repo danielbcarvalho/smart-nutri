@@ -189,6 +189,20 @@ import { StatsCards } from "@components/StatsCards";
 - Serviços: `services/authService.ts`
 - Páginas: `pages/Login/LoginPage.tsx`, `pages/Register/RegisterPage.tsx`
 
+### Módulo de Planejamento Energético (`src/modules/energy-plan`)
+
+- Criação, edição e visualização de planos energéticos (TMB/GET).
+- Serviços: `services/energyPlanService.ts`
+- Páginas: `pages/EnergyPlanPage.tsx`
+- Componentes: (futuros componentes específicos)
+- Utilitários: (futuros cálculos em `calcs/`)
+
+**Padrão visual atualizado (2024-06):**
+
+- Os boxes de "Atividade física" e "Fator clínico" agora usam o tom de verde do tema (`primary.main` e `primary.light`), com borda verde, para alinhar ao botão "Criar Novo Plano".
+- Os boxes de TMB e GET não possuem mais borda, têm fonte menor e visual mais compacto.
+- A fórmula utilizada recebe destaque maior, com fonte aumentada e peso maior.
+
 ---
 
 ## Boas Práticas e Padrões
