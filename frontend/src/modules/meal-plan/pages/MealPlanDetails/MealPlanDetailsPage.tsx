@@ -43,6 +43,8 @@ import { patientService } from "@/modules/patient/services/patientService";
 import type { Patient } from "@/modules/patient/services/patientService";
 import { authService } from "../../../auth/services/authService";
 import { MealPlanPDF } from "@/modules/meal-plan/components/MealPlanPDF";
+import { useEnergyPlan } from "../../hooks/useEnergyPlan";
+import { calculateMacronutrientTargets } from "../../utils/nutrientComparison";
 
 // Componente principal
 export function MealPlanDetails() {
@@ -116,6 +118,26 @@ export function MealPlanDetails() {
     },
     enabled: !!authService.getUser()?.id,
   });
+
+  // Carregar dados do plano energético
+  const {
+    data: energyPlan,
+    isLoading: isEnergyPlanLoading,
+    error: energyPlanError,
+  } = useEnergyPlan(patientId as string);
+
+  console.log("[DEBUG] energyPlan hook result:", {
+    energyPlan,
+    isEnergyPlanLoading,
+    energyPlanError,
+  });
+
+  if (energyPlan) {
+    console.log(
+      "[DEBUG] energyPlan full object:",
+      JSON.stringify(energyPlan, null, 2)
+    );
+  }
 
   const addMealMutation = useMutation({
     mutationFn: (newMeal: Omit<Meal, "id">) =>
@@ -356,7 +378,7 @@ export function MealPlanDetails() {
         totalWeight: 0,
       };
 
-    return plan.meals.reduce(
+    const nutrients = plan.meals.reduce(
       (acc, meal) => {
         const mealNutrients = meal.mealFoods.reduce(
           (mealAcc, mealFood) => {
@@ -398,6 +420,34 @@ export function MealPlanDetails() {
       },
       { protein: 0, fat: 0, carbohydrates: 0, calories: 0, totalWeight: 0 }
     );
+
+    // Adiciona metas do plano energético se disponível
+    if (energyPlan) {
+      const targets = calculateMacronutrientTargets(
+        Number(energyPlan.calculatedGetKcal)
+      );
+      const result = {
+        ...nutrients,
+        targetCalories: Number(energyPlan.calculatedGetKcal),
+        tmb: Number(energyPlan.calculatedTmbKcal),
+        targetProtein: Number(targets.protein),
+        targetFat: Number(targets.fat),
+        targetCarbohydrates: Number(targets.carbohydrates),
+        targetProteinPercentage: Number(
+          energyPlan.macronutrientDistribution?.proteins ?? undefined
+        ),
+        targetFatPercentage: Number(
+          energyPlan.macronutrientDistribution?.fats ?? undefined
+        ),
+        targetCarbohydratesPercentage: Number(
+          energyPlan.macronutrientDistribution?.carbs ?? undefined
+        ),
+      };
+      console.log("[DEBUG] calculateTotalNutrients result:", result);
+      return result;
+    }
+
+    return nutrients;
   };
 
   // Função para gerar o PDF

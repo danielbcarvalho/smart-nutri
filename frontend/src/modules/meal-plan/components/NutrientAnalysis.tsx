@@ -1,44 +1,114 @@
 import React from "react";
 import {
   Box,
+  Paper,
   Typography,
   Stack,
-  Paper,
-  Tooltip,
   useTheme,
-  useMediaQuery,
+  Tooltip,
+  Button,
+  LinearProgress,
 } from "@mui/material";
-import {
-  PieChart,
-  Pie,
-  Cell,
-  ResponsiveContainer,
-  Tooltip as RechartsTooltip,
-} from "recharts";
-import InfoIcon from "@mui/icons-material/Info";
-import RestaurantIcon from "@mui/icons-material/Restaurant";
-import LocalDiningIcon from "@mui/icons-material/LocalDining";
-import FitnessCenterIcon from "@mui/icons-material/FitnessCenter";
+import { alpha } from "@mui/material/styles";
+import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 import LocalFireDepartmentIcon from "@mui/icons-material/LocalFireDepartment";
-import ScaleIcon from "@mui/icons-material/Scale";
+import MacronutrientDistribution from "./MacronutrientDistribution";
 
 interface NutrientAnalysisProps {
-  protein: number;
-  fat: number;
-  carbohydrates: number;
-  calories: number;
-  totalWeight: number;
+  protein: number; // em gramas
+  fat: number; // em gramas
+  carbohydrates: number; // em gramas
+  calories: number; // kcal totais do plano
+  totalWeight: number; // peso total da refeição/plano em gramas
+  targetCalories?: number; // meta de kcal
+  targetProtein?: number; // meta de proteínas em gramas
+  targetFat?: number; // meta de lipídios em gramas
+  targetCarbohydrates?: number; // meta de carboidratos em gramas
+  tmb?: number; // taxa metabólica basal
+  targetProteinPercentage?: number; // meta % de proteína do VET
+  targetFatPercentage?: number; // meta % de lipídios do VET
+  targetCarbohydratesPercentage?: number; // meta % de carboidratos do VET
 }
 
-const COLORS = ["#FF6B6B", "#FFD93F", "#4ECDC4"];
+const COLORS = {
+  success: {
+    light: "#4CAF50", // Usado por getAdherenceColor
+    main: "#2E7D32",
+    dark: "#1B5E20",
+  },
+  warning: {
+    light: "#FFC107", // Usado por getAdherenceColor
+    main: "#FFA000",
+    dark: "#FF6F00",
+  },
+  error: {
+    light: "#F44336", // Usado por getAdherenceColor
+    main: "#D32F2F",
+    dark: "#B71C1C",
+  },
+  protein: {
+    light: "#FFCDD2", // Lighter shade for background from image
+    main: "#E53935", // Vermelho para proteínas (from image: #F44336)
+    dark: "#C62828",
+  },
+  carbs: {
+    light: "#FFF9C4", // Lighter shade for background from image
+    main: "#FFC107", // Amarelo para carboidratos (from image: #FFEB3B)
+    dark: "#FFA000",
+  },
+  fat: {
+    light: "#B2EBF2", // Lighter shade for background from image
+    main: "#00ACC1", // Azul/Ciano para lipídios (from image: #00BCD4)
+    dark: "#00838F",
+  },
+};
 
-function getCaloricDensityClass(density: number) {
-  if (density <= 0.6) return { label: "Muito Baixa", color: "#4ECDC4" };
-  if (density <= 1.5) return { label: "Baixa", color: "#45B7AA" };
-  if (density <= 3.9) return { label: "Média", color: "#96CEB4" };
-  if (density <= 5.0) return { label: "Alta", color: "#FFD93F" };
-  return { label: "Muito Alta", color: "#FF6B6B" };
-}
+const formatNumber = (value: number | undefined, decimalPlaces: number = 1) => {
+  if (value === undefined || Number.isNaN(value))
+    return `0,${"0".repeat(decimalPlaces)}`;
+  return value.toLocaleString("pt-BR", {
+    minimumFractionDigits: decimalPlaces,
+    maximumFractionDigits: decimalPlaces,
+  });
+};
+
+const getAdherenceColor = (difference: number, target: number) => {
+  if (target === 0 && difference === 0) return "success"; // Se meta é 0 e atingiu 0, está ok
+  if (target === 0 && difference !== 0) return "error"; // Se meta é 0 e tem valor, está fora
+
+  const percentDiff = Math.abs((difference / target) * 100);
+  if (percentDiff <= 5) return "success";
+  if (percentDiff <= 10) return "warning";
+  return "error";
+};
+
+const getCaloricDensityClass = (density: number) => {
+  if (density < 1) {
+    return {
+      label: "Baixa Densidade",
+      color: COLORS.success.main,
+      bgColor: COLORS.success.light,
+      description:
+        "Alimentos com baixa densidade calórica ajudam na saciedade com menos calorias.",
+    };
+  } else if (density < 2) {
+    return {
+      label: "Média Densidade",
+      color: COLORS.warning.main,
+      bgColor: COLORS.warning.light,
+      description:
+        "Densidade calórica moderada, equilibra nutrientes e saciedade.",
+    };
+  } else {
+    return {
+      label: "Alta Densidade",
+      color: COLORS.error.main,
+      bgColor: COLORS.error.light,
+      description:
+        "Alimentos calóricos concentrados. Use com moderação no plano alimentar.",
+    };
+  }
+};
 
 export const NutrientAnalysis: React.FC<NutrientAnalysisProps> = ({
   protein,
@@ -46,100 +116,20 @@ export const NutrientAnalysis: React.FC<NutrientAnalysisProps> = ({
   carbohydrates,
   calories,
   totalWeight,
+  targetCalories,
+  targetProtein,
+  targetFat,
+  targetCarbohydrates,
+  tmb,
+  targetProteinPercentage,
+  targetFatPercentage,
+  targetCarbohydratesPercentage,
 }) => {
   const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
-  const isMedium = useMediaQuery(theme.breakpoints.between("sm", "md"));
 
-  const density = totalWeight ? calories / totalWeight : 0;
+  const density = totalWeight && calories ? calories / totalWeight : 0;
   const densityClass = getCaloricDensityClass(density);
 
-  // Distribuição calórica dos macronutrientes
-  const kcalProtein = protein * 4;
-  const kcalFat = fat * 9;
-  const kcalCarb = carbohydrates * 4;
-
-  const totalKcalMacros = kcalProtein + kcalFat + kcalCarb;
-  const macroData = [
-    { name: "Proteínas", value: kcalProtein },
-    { name: "Lipídios", value: kcalFat },
-    { name: "Carboidratos", value: kcalCarb },
-  ];
-
-  // Legenda customizada mais limpa e alinhada
-  const renderCustomLegend = () => (
-    <Box
-      sx={{
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "flex-start",
-        justifyContent: "center",
-        gap: 1,
-        width: "100%",
-      }}
-    >
-      {macroData.map((entry, idx) => {
-        const percent =
-          totalKcalMacros > 0 ? (entry.value / totalKcalMacros) * 100 : 0;
-        return (
-          <Box
-            key={entry.name}
-            sx={{
-              display: "flex",
-              alignItems: "center",
-              width: "100%",
-              px: 1,
-            }}
-          >
-            <Box
-              component="span"
-              sx={{
-                width: 10,
-                height: 10,
-                borderRadius: "50%",
-                backgroundColor: COLORS[idx],
-                marginRight: 1.5,
-              }}
-            />
-            <Typography
-              variant="body2"
-              sx={{
-                color: theme.palette.text.primary,
-                fontWeight: 400,
-                fontSize: "0.875rem",
-              }}
-            >
-              {entry.name}
-            </Typography>
-            <Typography
-              variant="body2"
-              sx={{
-                marginLeft: 1,
-                color: COLORS[idx],
-                fontWeight: "500",
-                fontSize: "0.875rem",
-              }}
-            >
-              {Math.round(entry.value)} kcal
-            </Typography>
-            <Typography
-              variant="body2"
-              sx={{
-                marginLeft: 1,
-                color: COLORS[idx],
-                fontWeight: 400,
-                fontSize: "0.875rem",
-              }}
-            >
-              ({percent.toFixed(0)}%)
-            </Typography>
-          </Box>
-        );
-      })}
-    </Box>
-  );
-
-  const hasMacroData = totalKcalMacros > 0;
   const hasBasicData =
     protein > 0 ||
     fat > 0 ||
@@ -147,453 +137,465 @@ export const NutrientAnalysis: React.FC<NutrientAnalysisProps> = ({
     calories > 0 ||
     totalWeight > 0;
 
-  // Common card styles
-  const cardStyle = {
-    p: { xs: 1.5, sm: 2.5 },
-    borderRadius: { xs: 2, sm: 3 },
-    backgroundColor: theme.palette.background.paper,
-    boxShadow: theme.shadows[1],
-    border: `1px solid ${theme.palette.divider}`,
-    display: "flex",
-    flexDirection: "column",
-    height: "100%",
-    [theme.breakpoints.down("sm")]: {
-      boxShadow: "none",
-      borderRadius: 2,
-      border: `1px solid ${theme.palette.grey[200]}`,
-    },
-  };
+  const hasTargetData =
+    targetCalories !== undefined &&
+    targetProtein !== undefined &&
+    targetFat !== undefined &&
+    targetCarbohydrates !== undefined &&
+    targetProteinPercentage !== undefined &&
+    targetFatPercentage !== undefined &&
+    targetCarbohydratesPercentage !== undefined;
+
+  const caloriesDifference = calories - (targetCalories || 0);
+  const caloriesPercentage =
+    targetCalories && targetCalories > 0
+      ? (calories / targetCalories) * 100
+      : calories > 0
+      ? 100
+      : 0;
+  const caloriesAdherenceColor = getAdherenceColor(
+    caloriesDifference,
+    targetCalories || 0
+  );
+  const isCaloriesDeficit = calories < (targetCalories || 0);
 
   return (
     <Paper
-      elevation={2}
+      elevation={0}
       sx={{
         p: { xs: 2, sm: 3 },
         borderRadius: 3,
-        backgroundColor: theme.palette.background.paper,
-        mb: 2,
-        boxShadow: theme.shadows[1],
+        backgroundColor: theme.palette.grey[50],
+        mb: 3,
         border: `1px solid ${theme.palette.divider}`,
-        transition: "none",
-        "&:hover": { transform: "none" },
       }}
     >
-      <Typography
-        variant="h6"
-        sx={{
-          mb: 3,
-          fontWeight: "bold",
-          color: theme.palette.primary.main,
-          textAlign: "center",
-        }}
-      >
-        Análise de Nutrientes
-      </Typography>
-
       <Box
         sx={{
           display: "flex",
-          flexDirection: isMedium ? "column" : isMobile ? "column" : "row",
+          alignItems: "center",
+          justifyContent: "center",
+          mb: 3,
         }}
       >
-        <Stack
-          direction={{ xs: "column", md: "row" }}
-          spacing={3}
-          justifyContent="space-between"
+        <Typography
+          variant="h5"
           sx={{
-            width: "100%",
-            gap: 3,
+            fontWeight: "600",
+            color: theme.palette.primary.main,
+            position: "relative",
+            "&::after": {
+              content: '""',
+              position: "absolute",
+              bottom: -8,
+              left: "50%",
+              transform: "translateX(-50%)",
+              width: 60,
+              height: 3,
+              borderRadius: 1.5,
+              backgroundColor: theme.palette.primary.main,
+            },
           }}
         >
-          {/* Seção 1: Macronutrientes com gradiente e ícones */}
-          <Box
+          Análise de Nutrientes
+        </Typography>
+        <Tooltip
+          title="O Plano Atual se refere aos valores do planejamento alimentar atual, enquanto a Meta foi definida através do planejamento energético."
+          arrow
+          placement="top"
+        >
+          <InfoOutlinedIcon
             sx={{
-              ...cardStyle,
-              flex: isMedium ? "0 0 100%" : isMobile ? "0 0 100%" : "1 1 0",
-              mb: isMedium ? 3 : 0,
+              ml: 1,
+              color: theme.palette.text.secondary,
+              fontSize: 20,
+              cursor: "pointer",
+            }}
+          />
+        </Tooltip>
+      </Box>
+
+      {!hasTargetData && (
+        <Box sx={{ textAlign: "center", mb: 3 }}>
+          <Typography color="text.secondary" variant="body1" sx={{ mb: 2 }}>
+            Para uma análise completa com comparação de metas, adicione um Plano
+            Energético.
+          </Typography>
+          <Button
+            variant="contained"
+            color="primary"
+            size="large"
+            sx={{
+              mb: 4,
+              px: 3,
+              py: 1,
+              borderRadius: 2,
+              textTransform: "none",
+              fontWeight: 500,
+              boxShadow: theme.shadows[2],
+              "&:hover": {
+                boxShadow: theme.shadows[4],
+              },
             }}
           >
-            <Typography
-              variant="subtitle1"
-              sx={{
-                fontWeight: "bold",
-                color: theme.palette.text.primary,
-                mb: 2,
-                textAlign: "left",
-              }}
-            >
-              Macronutrientes
-            </Typography>
-            <Box
-              sx={{
-                flex: 1,
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "center",
-                justifyContent: "center",
-              }}
-            >
-              {hasBasicData ? (
-                <Stack spacing={2} sx={{ width: "100%" }}>
-                  {[
-                    {
-                      label: "Proteínas",
-                      value: protein.toFixed(1) + "g",
-                      color: COLORS[0],
-                      icon: (
-                        <FitnessCenterIcon
-                          sx={{ fontSize: 16, color: COLORS[0] }}
-                        />
-                      ),
-                    },
-                    {
-                      label: "Lipídios",
-                      value: fat.toFixed(1) + "g",
-                      color: COLORS[1],
-                      icon: (
-                        <LocalFireDepartmentIcon
-                          sx={{ fontSize: 16, color: COLORS[1] }}
-                        />
-                      ),
-                    },
-                    {
-                      label: "Carboidratos",
-                      value: carbohydrates.toFixed(1) + "g",
-                      color: COLORS[2],
-                      icon: (
-                        <RestaurantIcon
-                          sx={{ fontSize: 16, color: COLORS[2] }}
-                        />
-                      ),
-                    },
-                    {
-                      label: "Calorias",
-                      value: Math.round(calories) + " Kcal",
-                      color: theme.palette.primary.main,
-                      icon: (
-                        <LocalFireDepartmentIcon
-                          sx={{
-                            fontSize: 16,
-                            color: theme.palette.primary.main,
-                          }}
-                        />
-                      ),
-                    },
-                    {
-                      label: "Peso Total",
-                      value: Math.round(totalWeight) + "g",
-                      color: theme.palette.grey[600],
-                      icon: (
-                        <ScaleIcon
-                          sx={{ fontSize: 16, color: theme.palette.grey[600] }}
-                        />
-                      ),
-                    },
-                  ].map((item, index) => (
-                    <Stack
-                      key={index}
-                      direction="row"
-                      alignItems="center"
-                      spacing={1.5}
-                      sx={{
-                        p: 1,
-                        borderRadius: 1,
-                        backgroundColor: "rgba(255, 255, 255, 0.5)",
-                        transition: "background-color 0.3s ease",
-                        "&:hover": {
-                          backgroundColor: "rgba(255, 255, 255, 0.8)",
-                        },
-                      }}
-                    >
-                      {item.icon}
-                      <Typography variant="body2" sx={{ flex: 1 }}>
-                        {item.label}
-                      </Typography>
-                      <Typography
-                        variant="body2"
-                        sx={{ fontWeight: "bold", color: item.color }}
-                      >
-                        {item.value}
-                      </Typography>
-                    </Stack>
-                  ))}
-                </Stack>
-              ) : (
+            Adicionar Plano Energético
+          </Button>
+
+          {hasBasicData ? (
+            <Box sx={{ display: "flex", justifyContent: "center" }}>
+              <Box
+                sx={{
+                  width: "100%",
+                  maxWidth: { md: "66.666667%", lg: "50%" },
+                }}
+              >
                 <Box
                   sx={{
-                    textAlign: "center",
-                    py: 3,
-                    color: theme.palette.text.secondary,
+                    bgcolor: theme.palette.background.paper,
+                    p: 3,
+                    borderRadius: 3,
+                    boxShadow: theme.shadows[1],
+                    border: `1px solid ${theme.palette.divider}`,
                   }}
                 >
-                  <RestaurantIcon
-                    sx={{ fontSize: 40, mb: 1, color: theme.palette.grey[400] }}
-                  />
-                  <Typography variant="body2">
-                    Nenhum dado de nutrientes disponível
+                  <Typography
+                    variant="h6"
+                    sx={{
+                      mb: 2,
+                      fontWeight: 500,
+                      textAlign: "center",
+                      color: theme.palette.text.primary,
+                    }}
+                  >
+                    Distribuição Calórica (Plano Atual)
                   </Typography>
-                  <Typography variant="caption">
-                    Adicione alimentos para ver a análise
-                  </Typography>
-                </Box>
-              )}
-            </Box>
-          </Box>
 
-          {/* Seção 2 and 3: Wrapper for middle columns in medium screens */}
-          <Stack
-            direction={isMedium ? "row" : "column"}
+                  <MacronutrientDistribution
+                    protein={protein}
+                    fat={fat}
+                    carbohydrates={carbohydrates}
+                    calories={calories}
+                  />
+                </Box>
+              </Box>
+            </Box>
+          ) : (
+            <Typography variant="body1" color="text.secondary" sx={{ mt: 2 }}>
+              Adicione alimentos ao plano para visualizar a análise de
+              nutrientes.
+            </Typography>
+          )}
+        </Box>
+      )}
+
+      {hasTargetData && (
+        <Stack spacing={3}>
+          {/* 1. CARD DE BALANÇO CALÓRICO */}
+          <Box
             sx={{
-              flex: isMedium ? "0 0 100%" : isMobile ? "0 0 100%" : "2 1 0",
-              gap: 3,
-              width: "100%",
+              p: { xs: 2, sm: 3 },
+              borderRadius: 2,
+              bgcolor: theme.palette.background.paper,
+              boxShadow: theme.shadows[1],
+              border: `1px solid ${theme.palette.divider}`,
+              transition: "box-shadow 0.3s ease",
+              "&:hover": { boxShadow: theme.shadows[3] },
             }}
           >
-            {/* Seção 2: Densidade Calórica */}
-            <Box
-              sx={{
-                ...cardStyle,
-                flex: 1,
-              }}
-            >
-              <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
-                <Typography
-                  variant="subtitle1"
+            <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
+              <LocalFireDepartmentIcon
+                color="primary"
+                sx={{ mr: 1, fontSize: 28 }}
+              />
+              <Typography variant="h6" color="primary" fontWeight="medium">
+                Balanço Calórico Total
+              </Typography>
+              <Tooltip
+                title="Comparação entre as calorias do plano alimentar e a meta calórica (GET)."
+                arrow
+              >
+                <InfoOutlinedIcon
                   sx={{
-                    fontWeight: "bold",
-                    color: theme.palette.text.primary,
-                    textAlign: "left",
+                    ml: 1,
+                    color: theme.palette.text.secondary,
+                    fontSize: 20,
+                    cursor: "pointer",
+                  }}
+                />
+              </Tooltip>
+            </Box>
+            <Stack spacing={3}>
+              <Box
+                sx={{
+                  display: "flex",
+                  alignItems: "flex-end",
+                  justifyContent: "space-between",
+                }}
+              >
+                <Box>
+                  <Typography
+                    variant="body2"
+                    color="text.secondary"
+                    gutterBottom
+                  >
+                    Plano Atual
+                  </Typography>
+                  <Typography
+                    variant="h4"
+                    color="primary"
+                    sx={{ fontWeight: "bold", lineHeight: 1.1 }}
+                  >
+                    {formatNumber(calories, 0)} kcal
+                  </Typography>
+                </Box>
+                <Box sx={{ textAlign: "right" }}>
+                  <Typography
+                    variant="body2"
+                    color="text.secondary"
+                    gutterBottom
+                  >
+                    Meta (GET)
+                  </Typography>
+                  <Typography
+                    variant="h5"
+                    color="text.primary"
+                    sx={{ fontWeight: "bold", lineHeight: 1.1 }}
+                  >
+                    {formatNumber(targetCalories, 0)} kcal
+                  </Typography>
+                </Box>
+              </Box>
+              <Box>
+                <Box
+                  sx={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    mb: 0.5,
                   }}
                 >
-                  Densidade Calórica
-                </Typography>
-                <Tooltip
-                  title="Relação entre calorias totais e o peso da refeição (Kcal/g). Indica quão calórica é a refeição por unidade de peso."
-                  arrow
-                  placement="top"
-                >
-                  <InfoIcon
-                    fontSize="small"
+                  <Typography
+                    variant="body2"
+                    color={
+                      theme.palette[caloriesAdherenceColor]?.main ||
+                      theme.palette.text.secondary
+                    }
+                    fontWeight="medium"
+                  >
+                    {Math.abs(caloriesDifference) < 0.01
+                      ? "Meta atingida"
+                      : isCaloriesDeficit
+                      ? "Déficit"
+                      : "Superávit"}
+                    :{" "}
+                    {caloriesDifference !== 0
+                      ? isCaloriesDeficit
+                        ? ""
+                        : "+"
+                      : ""}
+                    {formatNumber(Math.abs(caloriesDifference), 0)} kcal
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    {formatNumber(caloriesPercentage, 0)}% da meta
+                  </Typography>
+                </Box>
+                <Box sx={{ position: "relative" }}>
+                  <LinearProgress
+                    variant="determinate"
+                    value={Math.min(caloriesPercentage, 120)}
+                    color={caloriesAdherenceColor}
                     sx={{
-                      color: theme.palette.text.disabled,
-                      cursor: "pointer",
-                      transition: "transform 0.2s",
-                      ml: 1,
-                      "&:hover": {
-                        transform: "scale(1.1)",
-                        color: theme.palette.primary.main,
+                      height: 10,
+                      borderRadius: 5,
+                      bgcolor: theme.palette.grey[200],
+                      "& .MuiLinearProgress-bar": {
+                        transition: "transform 1s ease-out",
+                        borderRadius: 5,
                       },
                     }}
                   />
-                </Tooltip>
-              </Box>
-              <Box
-                sx={{
-                  flex: 1,
-                  display: "flex",
-                  flexDirection: "column",
-                  alignItems: "center",
-                  justifyContent: "center",
-                }}
-              >
-                {hasBasicData && totalWeight > 0 ? (
-                  <>
-                    <Box sx={{ width: "100%", maxWidth: 220, mb: 2 }}>
-                      <Box
-                        sx={{
-                          height: 24,
-                          width: "100%",
-                          bgcolor: theme.palette.grey[200],
-                          borderRadius: 2,
-                          position: "relative",
-                          overflow: "hidden",
-                          boxShadow: "inset 0 0 4px rgba(0, 0, 0, 0.1)",
-                        }}
-                      >
-                        <Box
-                          sx={{
-                            position: "absolute",
-                            left: 0,
-                            top: 0,
-                            height: "100%",
-                            width: `${Math.min((density / 5) * 100, 100)}%`,
-                            bgcolor: densityClass.color,
-                            borderRadius: 2,
-                            transition: "width 0.8s ease-out",
-                            background: `linear-gradient(to right, ${densityClass.color}cc, ${densityClass.color})`,
-                            boxShadow: "0 0 8px rgba(0, 0, 0, 0.2)",
-                          }}
-                        />
-                      </Box>
-                      <Typography
-                        variant="caption"
-                        align="center"
-                        sx={{
-                          mt: 0.5,
-                          display: "block",
-                          color: theme.palette.text.secondary,
-                          fontWeight: "bold",
-                        }}
-                      >
-                        {density.toFixed(2)} Kcal/g
-                      </Typography>
-                    </Box>
-                    <Box
-                      sx={{
-                        px: 2.5,
-                        py: 1.2,
-                        borderRadius: 2,
-                        bgcolor: densityClass.color,
-                        color: theme.palette.getContrastText(
-                          densityClass.color
-                        ),
-                        fontWeight: "bold",
-                        textAlign: "center",
-                        boxShadow: `0 2px 4px ${densityClass.color}66`,
-                        transition: "transform 0.3s ease",
-                        "&:hover": {
-                          transform: "scale(1.03)",
-                        },
-                      }}
-                    >
-                      {densityClass.label}
-                    </Box>
-                  </>
-                ) : (
                   <Box
                     sx={{
-                      textAlign: "center",
-                      color: theme.palette.text.secondary,
-                      display: "flex",
-                      flexDirection: "column",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      py: 3,
+                      position: "absolute",
+                      left: "100%",
+                      top: "50%",
+                      transform: "translate(-50%, -50%)",
+                      width: 3,
+                      height: 14,
+                      bgcolor: alpha(theme.palette.common.black, 0.7),
+                      borderRadius: 1.5,
+                      zIndex: 1,
+                      display:
+                        targetCalories && targetCalories > 0 ? "block" : "none",
                     }}
-                  >
-                    <LocalFireDepartmentIcon
-                      sx={{
-                        fontSize: 40,
-                        mb: 1,
-                        color: theme.palette.grey[400],
-                      }}
-                    />
-                    <Typography variant="body2">
-                      Dados de densidade não disponíveis
-                    </Typography>
-                    <Typography variant="caption">
-                      Adicione alimentos com peso para calcular
-                    </Typography>
-                  </Box>
-                )}
+                  />
+                </Box>
               </Box>
-            </Box>
+              {tmb && tmb > 0 && (
+                <Box
+                  sx={{
+                    bgcolor: theme.palette.grey[50],
+                    p: 1.5,
+                    borderRadius: 2,
+                    border: `1px solid ${theme.palette.grey[200]}`,
+                  }}
+                >
+                  <Box sx={{ display: "flex", alignItems: "center", mb: 0.5 }}>
+                    <Typography variant="body2" color="text.secondary">
+                      Taxa Metabólica Basal (TMB)
+                    </Typography>
+                    <Tooltip
+                      title="Energia mínima para funções vitais em repouso."
+                      arrow
+                    >
+                      <InfoOutlinedIcon
+                        sx={{
+                          ml: 1,
+                          color: theme.palette.text.secondary,
+                          fontSize: 16,
+                          cursor: "pointer",
+                        }}
+                      />
+                    </Tooltip>
+                  </Box>
+                  <Typography
+                    variant="h6"
+                    color="text.primary"
+                    sx={{ fontWeight: "medium" }}
+                  >
+                    {formatNumber(tmb, 0)} kcal
+                  </Typography>
+                </Box>
+              )}
+            </Stack>
+          </Box>
 
-            {/* Seção 3: Distribuição Calórica */}
+          {/* 2. CARD DE DISTRIBUIÇÃO DE MACRONUTRIENTES */}
+          <MacronutrientDistribution
+            protein={protein}
+            fat={fat}
+            carbohydrates={carbohydrates}
+            calories={calories}
+            targetProtein={targetProtein}
+            targetFat={targetFat}
+            targetCarbohydrates={targetCarbohydrates}
+            targetProteinPercentage={targetProteinPercentage}
+            targetFatPercentage={targetFatPercentage}
+            targetCarbohydratesPercentage={targetCarbohydratesPercentage}
+          />
+
+          {/* 3. CARD DE DENSIDADE CALÓRICA */}
+          {totalWeight > 0 && calories > 0 && (
             <Box
               sx={{
-                ...cardStyle,
-                flex: 1,
+                p: { xs: 2, sm: 3 },
+                borderRadius: 2,
+                backgroundColor: theme.palette.background.paper,
+                boxShadow: theme.shadows[1],
+                border: `1px solid ${theme.palette.divider}`,
+                display: "flex",
+                flexDirection: { xs: "column", md: "row" },
+                alignItems: "center",
+                justifyContent: "space-between",
+                gap: 3,
+                transition: "box-shadow 0.3s ease",
+                "&:hover": { boxShadow: theme.shadows[3] },
               }}
             >
-              <Typography
-                variant="subtitle1"
-                sx={{
-                  fontWeight: "bold",
-                  color: theme.palette.text.primary,
-                  textAlign: "left",
-                }}
-              >
-                Distribuição Calórica
-              </Typography>
-
+              <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+                <Box
+                  sx={{
+                    display: { xs: "none", sm: "flex" },
+                    alignItems: "center",
+                    justifyContent: "center",
+                    width: 60,
+                    height: 60,
+                    borderRadius: "50%",
+                    bgcolor: alpha(densityClass.bgColor, 0.3),
+                    color: densityClass.color,
+                  }}
+                >
+                  <LocalFireDepartmentIcon sx={{ fontSize: 32 }} />
+                </Box>
+                <Box>
+                  <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                    <Typography
+                      variant="h6"
+                      color="text.primary"
+                      fontWeight="medium"
+                    >
+                      Densidade Calórica
+                    </Typography>
+                    <Tooltip
+                      title="Relação Kcal/g. Indica quão calórica é a refeição por peso."
+                      arrow
+                    >
+                      <InfoOutlinedIcon
+                        sx={{
+                          ml: 0.5,
+                          color: theme.palette.text.secondary,
+                          fontSize: 18,
+                          cursor: "pointer",
+                        }}
+                      />
+                    </Tooltip>
+                  </Box>
+                  <Typography variant="body2" color="text.secondary">
+                    {densityClass.description}
+                  </Typography>
+                </Box>
+              </Box>
               <Box
                 sx={{
-                  flex: 1,
                   display: "flex",
                   flexDirection: "column",
-                  alignItems: "center",
-                  justifyContent: "center",
+                  alignItems: { xs: "center", md: "flex-end" },
                 }}
               >
-                {hasMacroData ? (
-                  <>
-                    <Box
-                      sx={{
-                        height: isMedium ? 150 : isMobile ? 120 : 160,
-                        width: "100%",
-                      }}
-                    >
-                      <ResponsiveContainer width="100%" height="100%">
-                        <PieChart>
-                          <Pie
-                            data={macroData}
-                            dataKey="value"
-                            nameKey="name"
-                            cx="50%"
-                            cy="50%"
-                            innerRadius={isMedium ? 30 : 38}
-                            outerRadius={isMedium ? 55 : 65}
-                            paddingAngle={2}
-                            labelLine={false}
-                            stroke="#fff"
-                            strokeWidth={2}
-                          >
-                            {macroData.map((entry, index) => (
-                              <Cell
-                                key={`cell-${index}`}
-                                fill={COLORS[index % COLORS.length]}
-                              />
-                            ))}
-                          </Pie>
-                          <RechartsTooltip
-                            formatter={(value: number) =>
-                              `${Math.round(value)} kcal (${(
-                                (value / totalKcalMacros) *
-                                100
-                              ).toFixed(0)}%)`
-                            }
-                          />
-                        </PieChart>
-                      </ResponsiveContainer>
-                    </Box>
-
-                    <Box sx={{ width: "100%" }}>{renderCustomLegend()}</Box>
-                  </>
-                ) : (
-                  <Box
-                    sx={{
-                      textAlign: "center",
-                      py: 3,
-                      color: theme.palette.text.secondary,
-                      display: "flex",
-                      flexDirection: "column",
-                      alignItems: "center",
-                      justifyContent: "center",
-                    }}
-                  >
-                    <LocalDiningIcon
-                      sx={{
-                        fontSize: 40,
-                        mb: 1,
-                        color: theme.palette.grey[400],
-                      }}
-                    />
-                    <Typography variant="body2">
-                      Sem dados de distribuição calórica
-                    </Typography>
-                    <Typography variant="caption">
-                      Adicione alimentos para visualizar o gráfico
-                    </Typography>
-                  </Box>
-                )}
+                <Typography
+                  variant="h4"
+                  sx={{ color: densityClass.color, fontWeight: "bold" }}
+                >
+                  {formatNumber(density)} kcal/g
+                </Typography>
+                <Box
+                  sx={{
+                    bgcolor: alpha(densityClass.color, 0.2),
+                    color: densityClass.color,
+                    py: 0.5,
+                    px: 2,
+                    borderRadius: 10,
+                  }}
+                >
+                  <Typography variant="body2" fontWeight="medium">
+                    {densityClass.label}
+                  </Typography>
+                </Box>
               </Box>
             </Box>
-          </Stack>
+          )}
         </Stack>
-      </Box>
+      )}
     </Paper>
   );
 };
 
 export default NutrientAnalysis;
+
+// Dummy calculateMacronutrientPercentages - Certifique-se de que o seu real está importado corretamente.
+// const calculateMacronutrientPercentages = (protein: number, fat: number, carbohydrates: number, calories: number) => {
+//   if (calories === 0) {
+//     return { proteinPercentage: 0, fatPercentage: 0, carbohydratesPercentage: 0 };
+//   }
+//   const proteinKcal = protein * 4;
+//   const fatKcal = fat * 9;
+//   const carbsKcal = carbohydrates * 4;
+//   const totalMacroKcal = proteinKcal + fatKcal + carbsKcal; // Use this for percentages if it's more accurate than total plan calories for VET
+//   if (totalMacroKcal === 0) {
+//      return { proteinPercentage: 0, fatPercentage: 0, carbohydratesPercentage: 0 };
+//   }
+//   return {
+//     proteinPercentage: (proteinKcal / totalMacroKcal) * 100,
+//     fatPercentage: (fatKcal / totalMacroKcal) * 100,
+//     carbohydratesPercentage: (carbsKcal / totalMacroKcal) * 100,
+//   };
+// };
