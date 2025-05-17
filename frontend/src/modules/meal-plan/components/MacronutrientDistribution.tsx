@@ -115,6 +115,7 @@ export const MacronutrientDistribution: React.FC<
   ];
 
   const pieDataFiltered = pieData.filter((p) => p.value > 0);
+  const hasPieData = pieDataFiltered.length > 0;
 
   return (
     <Box
@@ -157,40 +158,42 @@ export const MacronutrientDistribution: React.FC<
         }}
       >
         <Box sx={{ flex: { sm: "0 0 41.666667%" } }}>
-          <Box sx={{ height: { xs: 200, sm: 220 }, width: "100%" }}>
-            <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <Pie
-                  data={pieDataFiltered}
-                  dataKey="value"
-                  nameKey="name"
-                  cx="50%"
-                  cy="50%"
-                  innerRadius="60%"
-                  outerRadius="85%"
-                  paddingAngle={pieDataFiltered.length > 1 ? 5 : 0}
-                  stroke={theme.palette.background.paper}
-                  strokeWidth={2}
-                >
-                  {pieDataFiltered.map((entry, index) => (
-                    <Cell
-                      key={`cell-${index}`}
-                      fill={entry.color}
-                      opacity={0.95}
-                    />
-                  ))}
-                </Pie>
-                <RechartsTooltip
-                  formatter={(value: number, name: string, props) => [
-                    `${formatNumber(value, 0)} kcal (${formatNumber(
-                      props.payload.percentage
-                    )}%)`,
-                    name,
-                  ]}
-                />
-              </PieChart>
-            </ResponsiveContainer>
-          </Box>
+          {hasPieData ? (
+            <Box sx={{ height: { xs: 200, sm: 220 }, width: "100%" }}>
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={pieDataFiltered}
+                    dataKey="value"
+                    nameKey="name"
+                    cx="50%"
+                    cy="50%"
+                    innerRadius="60%"
+                    outerRadius="85%"
+                    paddingAngle={pieDataFiltered.length > 1 ? 5 : 0}
+                    stroke={theme.palette.background.paper}
+                    strokeWidth={2}
+                  >
+                    {pieDataFiltered.map((entry, index) => (
+                      <Cell
+                        key={`cell-${index}`}
+                        fill={entry.color}
+                        opacity={0.95}
+                      />
+                    ))}
+                  </Pie>
+                  <RechartsTooltip
+                    formatter={(value: number, name: string, props) => [
+                      `${formatNumber(value, 0)} kcal (${formatNumber(
+                        props.payload.percentage
+                      )}%)`,
+                      name,
+                    ]}
+                  />
+                </PieChart>
+              </ResponsiveContainer>
+            </Box>
+          ) : null}
         </Box>
         <Box sx={{ flex: { sm: "0 0 58.333333%" } }}>
           <Stack
