@@ -7,6 +7,7 @@ import {
   ValidateNested,
   IsNotEmpty,
   ValidateIf,
+  IsUUID,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 import { CreateMealDto } from './create-meal.dto';
@@ -54,6 +55,15 @@ export class UpdateMealPlanDto {
   @IsOptional()
   @IsString()
   description?: string;
+
+  @ApiProperty({
+    description: 'ID do plano energético de referência',
+    example: '123e4567-e89b-12d3-a456-426614174000',
+    required: false,
+  })
+  @IsOptional()
+  @IsUUID('4')
+  energyPlanId?: string;
 
   @ApiProperty({
     description: 'Lista de refeições do plano',

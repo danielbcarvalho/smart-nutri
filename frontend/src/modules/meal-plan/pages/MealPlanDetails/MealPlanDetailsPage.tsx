@@ -1,6 +1,5 @@
-// Primeiro, vamos adicionar as importações necessárias para o PDF
 import React, { useState, useEffect, useRef } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import {
   Box,
   Typography,
@@ -12,8 +11,11 @@ import {
   DialogActions,
   TextField,
   LinearProgress,
-  Backdrop,
-  CircularProgress,
+  Snackbar,
+  Alert,
+  Card,
+  CardContent,
+  CardActions,
 } from "@mui/material";
 import {
   ExpandMore as ExpandMoreIcon,
@@ -23,13 +25,15 @@ import {
   Restaurant as RestaurantIcon,
   Save as SaveIcon,
   PictureAsPdf as PdfIcon,
+  CalendarMonth as CalendarMonthIcon,
+  MonitorWeight as MonitorWeightIcon,
+  FitnessCenter as FitnessCenterIcon,
 } from "@mui/icons-material";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   mealPlanService,
   Meal,
   UpdateMeal,
-  MealPlan,
 } from "@/modules/meal-plan/services/mealPlanService";
 import AddFoodToMealModal from "@/modules/meal-plan/components/AddFoodToMealModal";
 import { useFoodDb } from "@/services/useFoodDb";
@@ -38,13 +42,18 @@ import type { Alimento } from "@/modules/meal-plan/components/AddFoodToMealModal
 import MealCard from "@/modules/meal-plan/components/MealCard";
 import MealMenu from "@/modules/meal-plan/components/MealMenu";
 import NutrientAnalysis from "@/modules/meal-plan/components/NutrientAnalysis";
-import { PDFViewer, PDFDownloadLink } from "@react-pdf/renderer";
+import { pdf } from "@react-pdf/renderer";
 import { patientService } from "@/modules/patient/services/patientService";
-import type { Patient } from "@/modules/patient/services/patientService";
 import { authService } from "../../../auth/services/authService";
 import { MealPlanPDF } from "@/modules/meal-plan/components/MealPlanPDF";
 import { useEnergyPlan } from "../../hooks/useEnergyPlan";
 import { calculateMacronutrientTargets } from "../../utils/nutrientComparison";
+import { usePatientEnergyPlans } from "@/modules/energy-plan/hooks/useEnergyPlans";
+import {
+  ACTIVITY_FACTOR_DESCRIPTIONS,
+  INJURY_FACTOR_DESCRIPTIONS,
+  FORMULA_DESCRIPTIONS,
+} from "@/modules/energy-plan/constants/energyPlanConstants";
 
 // Componente principal
 export function MealPlanDetails() {
@@ -64,28 +73,15 @@ export function MealPlanDetails() {
   const foodDb: Alimento[] = Array.isArray(foodDbRaw) ? foodDbRaw : [];
   const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
   const [mealMenuId, setMealMenuId] = useState("");
-
-  // Estados para o PDF
-  const [showPdfPreview, setShowPdfPreview] = useState(false);
-  const [isPdfGenerating, setIsPdfGenerating] = useState(false);
-  const [pdfData, setPdfData] = useState<{
-    plan: MealPlan;
-    mealsByTime: Meal[];
-    patientData?: Patient;
-    nutritionistData?: {
-      name?: string;
-      crn?: string;
-      email?: string;
-    } | null;
-    totalNutrients: {
-      protein: number;
-      fat: number;
-      carbohydrates: number;
-      calories: number;
-      totalWeight: number;
-    };
-    foodDb: Alimento[];
-  } | null>(null);
+  const [snackbar, setSnackbar] = useState<{
+    open: boolean;
+    message: string;
+    severity: "success" | "error";
+  }>({
+    open: false,
+    message: "",
+    severity: "success",
+  });
 
   // Template de refeições
   const [templates, setTemplates] = useState<
@@ -120,24 +116,39 @@ export function MealPlanDetails() {
   });
 
   // Carregar dados do plano energético
-  const {
-    data: energyPlan,
-    isLoading: isEnergyPlanLoading,
-    error: energyPlanError,
-  } = useEnergyPlan(patientId as string);
+  const { data: energyPlan } = useEnergyPlan(patientId as string);
 
-  console.log("[DEBUG] energyPlan hook result:", {
-    energyPlan,
-    isEnergyPlanLoading,
-    energyPlanError,
-  });
+  // NOVO: Buscar todos os planos energéticos do paciente
+  const { data: energyPlans } = usePatientEnergyPlans(patientId!);
+  // NOVO: Estado para o plano energético selecionado
+  const [selectedEnergyPlanId, setSelectedEnergyPlanId] = useState<
+    string | null
+  >(null);
 
-  if (energyPlan) {
-    console.log(
-      "[DEBUG] energyPlan full object:",
-      JSON.stringify(energyPlan, null, 2)
-    );
-  }
+  // NOVO: Definir o plano selecionado (por padrão, o mais recente)
+  useEffect(() => {
+    if (plan?.energyPlanId) {
+      setSelectedEnergyPlanId(plan.energyPlanId);
+    } else if (energyPlans && energyPlans.length > 0 && !selectedEnergyPlanId) {
+      // Ordena do mais novo para o mais antigo
+      const sorted = [...energyPlans].sort(
+        (a, b) =>
+          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+      );
+      setSelectedEnergyPlanId(sorted[0].id);
+    }
+  }, [plan?.energyPlanId, energyPlans]);
+
+  // NOVO: Atualizar o plano selecionado quando o plano for atualizado
+  useEffect(() => {
+    if (plan?.energyPlanId) {
+      setSelectedEnergyPlanId(plan.energyPlanId);
+    }
+  }, [plan?.energyPlanId]);
+
+  const selectedEnergyPlan =
+    energyPlans?.find((plan) => plan.id === selectedEnergyPlanId) ||
+    energyPlans?.[energyPlans.length - 1];
 
   const addMealMutation = useMutation({
     mutationFn: (newMeal: Omit<Meal, "id">) =>
@@ -443,29 +454,59 @@ export function MealPlanDetails() {
           energyPlan.macronutrientDistribution?.carbs ?? undefined
         ),
       };
-      console.log("[DEBUG] calculateTotalNutrients result:", result);
       return result;
     }
 
     return nutrients;
   };
 
-  // Função para gerar o PDF
-  const handleGeneratePDF = () => {
-    setIsPdfGenerating(true);
+  // Função para salvar o plano alimentar
+  const handleSaveMealPlan = async () => {
+    if (!plan) {
+      setSnackbar({
+        open: true,
+        message: "Plano alimentar não encontrado.",
+        severity: "error",
+      });
+      return;
+    }
 
-    // Organizar os dados para o PDF
+    try {
+      const updatedPlan = await mealPlanService.updatePlan(plan.id, {
+        energyPlanId: selectedEnergyPlanId || undefined,
+      });
+
+      // Atualiza o estado local com o novo energyPlanId
+      setSelectedEnergyPlanId(updatedPlan.energyPlanId || null);
+
+      await queryClient.invalidateQueries({ queryKey: ["mealPlan", planId] });
+      setSnackbar({
+        open: true,
+        message: "Plano alimentar salvo com sucesso!",
+        severity: "success",
+      });
+    } catch {
+      setSnackbar({
+        open: true,
+        message: "Erro ao salvar plano alimentar. Tente novamente.",
+        severity: "error",
+      });
+    }
+  };
+
+  const handleCloseSnackbar = () => {
+    setSnackbar((prev) => ({ ...prev, open: false }));
+  };
+
+  // Função para abrir o PDF em nova aba
+  const handleOpenPdfInNewTab = async () => {
     if (plan && foodDb) {
-      // Ordenar refeições por horário
       const sortedMeals = [...(plan.meals || [])].sort((a, b) => {
         const timeA = a.time.split(":").map(Number);
         const timeB = b.time.split(":").map(Number);
         return timeA[0] * 60 + timeA[1] - (timeB[0] * 60 + timeB[1]);
       });
-
       const totalNutrients = calculateTotalNutrients();
-
-      // Preparar dados para o PDF
       const pdfDataObj = {
         plan,
         mealsByTime: sortedMeals,
@@ -474,15 +515,31 @@ export function MealPlanDetails() {
         totalNutrients,
         foodDb,
       };
-
-      setPdfData(pdfDataObj);
-      setShowPdfPreview(true);
-      setIsPdfGenerating(false);
-    } else {
-      setIsPdfGenerating(false);
-      // Mostrar mensagem de erro se os dados não estiverem disponíveis
-      alert("Não foi possível gerar o PDF. Dados incompletos.");
+      const blob = await pdf(<MealPlanPDF {...pdfDataObj} />).toBlob();
+      const url = URL.createObjectURL(blob);
+      window.open(url, "_blank");
     }
+  };
+
+  const [openEnergyPlanModal, setOpenEnergyPlanModal] = useState(false);
+
+  const handleOpenEnergyPlanModal = () => {
+    setOpenEnergyPlanModal(true);
+  };
+
+  const handleCloseEnergyPlanModal = () => {
+    setOpenEnergyPlanModal(false);
+  };
+
+  const handleSelectEnergyPlan = (planId: string) => {
+    setSelectedEnergyPlanId(planId);
+    setOpenEnergyPlanModal(false);
+  };
+
+  const navigate = useNavigate();
+
+  const handleCreateNewEnergyPlan = () => {
+    navigate(`/patient/${patientId}/energy-plans/new`);
   };
 
   if (isLoading) {
@@ -511,7 +568,7 @@ export function MealPlanDetails() {
   const selectedMeal = plan.meals?.find((m) => m.id === selectedMealId);
 
   return (
-    <Box sx={{ maxWidth: 1200, mx: "auto", p: { xs: 1, sm: 3 } }}>
+    <Box sx={{ maxWidth: 1200, mx: "auto", p: { xs: 1, sm: 1 } }}>
       <Stack
         direction={{ xs: "column", sm: "row" }}
         alignItems={{ xs: "stretch", sm: "center" }}
@@ -521,7 +578,7 @@ export function MealPlanDetails() {
       >
         <Box>
           <Typography
-            variant="h5"
+            variant="h6"
             sx={{
               display: "flex",
               alignItems: "center",
@@ -541,7 +598,7 @@ export function MealPlanDetails() {
         </Box>
         <Stack
           direction={{ xs: "column", sm: "row" }}
-          spacing={1.5}
+          spacing={1}
           sx={{ width: { xs: "100%", sm: "auto" } }}
         >
           <Button
@@ -560,7 +617,7 @@ export function MealPlanDetails() {
             }
             size={"large"}
             fullWidth
-            sx={{ fontWeight: 600, fontSize: { xs: "1rem", sm: "0.95rem" } }}
+            sx={{ fontWeight: 600, fontSize: 16, py: 0 }}
           >
             {expandedMeals.length === sortedMeals.length
               ? "Recolher tudo"
@@ -578,9 +635,9 @@ export function MealPlanDetails() {
             size={"large"}
             color="success"
             fullWidth
-            sx={{ fontWeight: 600, fontSize: { xs: "1rem", sm: "0.95rem" } }}
+            sx={{ fontWeight: 600, fontSize: 16, py: 0 }}
           >
-            Nova refeição ou hábito
+            Nova refeição
           </Button>
         </Stack>
       </Stack>
@@ -610,108 +667,75 @@ export function MealPlanDetails() {
 
       {/* Análise de Nutrientes Total */}
       <Box sx={{ mb: 3 }}>
-        <NutrientAnalysis {...calculateTotalNutrients()} />
+        <NutrientAnalysis
+          {...calculateTotalNutrients()}
+          targetCalories={selectedEnergyPlan?.calculatedGetKcal}
+          tmb={selectedEnergyPlan?.calculatedTmbKcal}
+          targetProteinPercentage={
+            selectedEnergyPlan?.macronutrientDistribution?.proteins
+          }
+          targetFatPercentage={
+            selectedEnergyPlan?.macronutrientDistribution?.fats
+          }
+          targetCarbohydratesPercentage={
+            selectedEnergyPlan?.macronutrientDistribution?.carbs
+          }
+          selectedEnergyPlan={
+            selectedEnergyPlan
+              ? {
+                  id: selectedEnergyPlan.id,
+                  name: selectedEnergyPlan.name,
+                  createdAt: selectedEnergyPlan.createdAt,
+                }
+              : undefined
+          }
+          energyPlans={energyPlans?.map((plan) => ({
+            id: plan.id,
+            name: plan.name,
+            createdAt: plan.createdAt,
+          }))}
+          onEnergyPlanChange={handleOpenEnergyPlanModal}
+          patientId={patientId as string}
+        />
       </Box>
 
-      {/* Botão Salvar e ver planejamento */}
-      <Button
-        variant="contained"
-        color="primary"
-        startIcon={<PdfIcon />}
-        onClick={handleGeneratePDF}
-        disabled={isPdfGenerating}
-        sx={{
-          width: "100%",
-          py: { xs: 2, sm: 1.5 },
-          fontWeight: 600,
-          fontSize: { xs: 18, sm: 18 },
-          bgcolor: "custom.main",
-          borderRadius: 2,
-          mb: 2,
-          "&:hover": {
-            bgcolor: "custom.dark",
-          },
-        }}
-      >
-        {isPdfGenerating ? "Gerando PDF..." : "Salvar e ver planejamento"}
-      </Button>
-
-      {/* Dialog de visualização do PDF */}
-      <Dialog
-        open={showPdfPreview}
-        onClose={() => setShowPdfPreview(false)}
-        fullScreen
-      >
-        <DialogTitle
+      {/* Botões Salvar e Ver planejamento em PDF */}
+      <Stack direction="column" spacing={2} sx={{ width: "100%", mb: 2 }}>
+        <Button
+          variant="contained"
+          color="primary"
+          startIcon={<SaveIcon />}
+          onClick={handleSaveMealPlan}
+          fullWidth
           sx={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
+            py: 1,
+            fontWeight: 600,
+            fontSize: 18,
             bgcolor: "custom.main",
-            color: "white",
+            borderRadius: 2,
+            "&:hover": {
+              bgcolor: "custom.dark",
+            },
           }}
         >
-          <Typography variant="h6">Visualização do Plano Alimentar</Typography>
-          <Stack direction="row" spacing={1}>
-            {pdfData && (
-              <PDFDownloadLink
-                document={<MealPlanPDF {...pdfData} />}
-                fileName={`plano-alimentar-${patient?.name || "paciente"}.pdf`}
-                style={{ textDecoration: "none" }}
-              >
-                {({ loading }) => (
-                  <Button
-                    variant="contained"
-                    color="secondary"
-                    disabled={loading}
-                    startIcon={<SaveIcon />}
-                  >
-                    {loading ? "Carregando..." : "Download PDF"}
-                  </Button>
-                )}
-              </PDFDownloadLink>
-            )}
-            <Button
-              variant="outlined"
-              onClick={() => setShowPdfPreview(false)}
-              sx={{ color: "white", borderColor: "white" }}
-            >
-              Fechar
-            </Button>
-          </Stack>
-        </DialogTitle>
-        <DialogContent sx={{ p: 0, height: "calc(100vh - 64px)" }}>
-          {pdfData ? (
-            <PDFViewer style={{ width: "100%", height: "100%" }}>
-              <MealPlanPDF {...pdfData} />
-            </PDFViewer>
-          ) : (
-            <Box
-              sx={{
-                display: "flex",
-                justifyContent: "center",
-                alignItems: "center",
-                height: "100%",
-              }}
-            >
-              <Typography>Carregando visualização...</Typography>
-            </Box>
-          )}
-        </DialogContent>
-      </Dialog>
-
-      {/* Backdrop enquanto gera o PDF */}
-      <Backdrop
-        sx={{ color: "#fff", zIndex: (theme) => theme.zIndex.drawer + 1 }}
-        open={isPdfGenerating}
-      >
-        <Box sx={{ textAlign: "center" }}>
-          <CircularProgress color="inherit" />
-          <Typography sx={{ mt: 2 }}>
-            Gerando PDF do plano alimentar...
-          </Typography>
-        </Box>
-      </Backdrop>
+          Salvar
+        </Button>
+        <Button
+          variant="contained"
+          color="secondary"
+          startIcon={<PdfIcon />}
+          onClick={handleOpenPdfInNewTab}
+          fullWidth
+          sx={{
+            py: 1,
+            fontWeight: 600,
+            fontSize: 18,
+            borderRadius: 2,
+          }}
+        >
+          Ver planejamento em PDF
+        </Button>
+      </Stack>
 
       {/* Dialog para adicionar/editar refeição */}
       <Dialog
@@ -810,6 +834,285 @@ export function MealPlanDetails() {
           setOpenAddFoodModal(false);
         }}
       />
+
+      {/* Modal de Seleção de Plano Energético */}
+      <Dialog
+        open={openEnergyPlanModal}
+        onClose={handleCloseEnergyPlanModal}
+        maxWidth="md"
+        fullWidth
+        PaperProps={{ sx: { borderRadius: 2 } }}
+      >
+        <DialogTitle sx={{ fontWeight: 600 }}>
+          Selecione um Plano Energético
+        </DialogTitle>
+        <DialogContent>
+          <Stack spacing={2.5} sx={{ mt: 1 }}>
+            {energyPlans?.map((plan) => {
+              const formula =
+                FORMULA_DESCRIPTIONS[
+                  plan.formulaKey as keyof typeof FORMULA_DESCRIPTIONS
+                ]?.name || plan.formulaKey;
+              const activity =
+                ACTIVITY_FACTOR_DESCRIPTIONS[
+                  plan.activityFactorKey as keyof typeof ACTIVITY_FACTOR_DESCRIPTIONS
+                ]?.name || plan.activityFactorKey;
+              const injury =
+                INJURY_FACTOR_DESCRIPTIONS[
+                  plan.injuryFactorKey as keyof typeof INJURY_FACTOR_DESCRIPTIONS
+                ]?.name || plan.injuryFactorKey;
+              const tmbValue =
+                plan.calculatedTmbKcal !== null &&
+                plan.calculatedTmbKcal !== undefined &&
+                !isNaN(Number(plan.calculatedTmbKcal))
+                  ? Number(plan.calculatedTmbKcal)
+                  : null;
+              const getValue =
+                plan.calculatedGetKcal !== null &&
+                plan.calculatedGetKcal !== undefined &&
+                !isNaN(Number(plan.calculatedGetKcal))
+                  ? Number(plan.calculatedGetKcal)
+                  : null;
+
+              return (
+                <Card
+                  key={plan.id}
+                  elevation={1}
+                  sx={{
+                    borderRadius: "12px",
+                    border: "1px solid",
+                    borderColor:
+                      plan.id === selectedEnergyPlanId
+                        ? "primary.main"
+                        : "divider",
+                    transition: "all 0.2s",
+                    "&:hover": {
+                      boxShadow: 4,
+                      borderColor: "primary.main",
+                    },
+                  }}
+                >
+                  <CardContent sx={{ p: 2.5 }}>
+                    {/* Cabeçalho */}
+                    <Box
+                      sx={{
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                        mb: 2,
+                      }}
+                    >
+                      <Typography variant="h6" fontWeight="bold">
+                        {plan.name || "Plano energético"}
+                      </Typography>
+                      <Box
+                        sx={{ display: "flex", alignItems: "center", gap: 0.5 }}
+                      >
+                        <CalendarMonthIcon
+                          sx={{ fontSize: 18, color: "text.secondary" }}
+                        />
+                        <Typography variant="body2" color="text.secondary">
+                          {new Date(plan.createdAt).toLocaleDateString()}
+                        </Typography>
+                      </Box>
+                    </Box>
+
+                    {/* Resultados Principais */}
+                    <Box
+                      sx={{
+                        display: "flex",
+                        gap: 3,
+                        flexWrap: "wrap",
+                        mb: 2,
+                        p: 1.5,
+                        bgcolor: "background.paper",
+                        borderRadius: 1,
+                      }}
+                    >
+                      <Box sx={{ minWidth: "150px" }}>
+                        <Typography
+                          variant="caption"
+                          fontWeight={500}
+                          color="text.secondary"
+                          sx={{ fontSize: 12 }}
+                        >
+                          TAXA METABÓLICA BASAL (TMB)
+                        </Typography>
+                        <Typography
+                          variant="h6"
+                          fontWeight={700}
+                          color="primary.main"
+                          sx={{ mt: 0.5, fontSize: 22 }}
+                        >
+                          {tmbValue !== null
+                            ? `${tmbValue} kcal`
+                            : "Não calculado"}
+                        </Typography>
+                      </Box>
+                      <Box sx={{ minWidth: "150px" }}>
+                        <Typography
+                          variant="caption"
+                          fontWeight={500}
+                          color="text.secondary"
+                          sx={{ fontSize: 12 }}
+                        >
+                          GASTO ENERGÉTICO TOTAL (GET)
+                        </Typography>
+                        <Typography
+                          variant="h6"
+                          fontWeight={700}
+                          color="primary.main"
+                          sx={{ mt: 0.5, fontSize: 22 }}
+                        >
+                          {getValue !== null
+                            ? `${getValue} kcal`
+                            : "Não calculado"}
+                        </Typography>
+                      </Box>
+                    </Box>
+
+                    {/* Informações da Fórmula */}
+                    <Typography
+                      variant="subtitle1"
+                      color="primary"
+                      fontWeight={700}
+                      sx={{ mb: 1.5, fontSize: 17 }}
+                    >
+                      Fórmula: {formula}
+                    </Typography>
+
+                    {/* Dados Físicos */}
+                    <Box sx={{ display: "flex", gap: 3, mb: 2 }}>
+                      <Box
+                        sx={{ display: "flex", alignItems: "center", gap: 0.5 }}
+                      >
+                        <MonitorWeightIcon fontSize="small" color="action" />
+                        <Typography variant="body2" fontWeight={500}>
+                          {plan.weightAtCalculationKg} kg
+                        </Typography>
+                      </Box>
+                      {plan.fatFreeMassAtCalculationKg !== undefined && (
+                        <Box
+                          sx={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: 0.5,
+                          }}
+                        >
+                          <FitnessCenterIcon fontSize="small" color="action" />
+                          <Typography variant="body2" fontWeight={500}>
+                            Massa magra: {plan.fatFreeMassAtCalculationKg} kg
+                          </Typography>
+                        </Box>
+                      )}
+                    </Box>
+
+                    {/* Fatores */}
+                    <Box
+                      sx={{
+                        display: "grid",
+                        gridTemplateColumns:
+                          "repeat(auto-fit, minmax(220px, 1fr))",
+                        gap: 2,
+                        mt: 2,
+                      }}
+                    >
+                      <Box
+                        sx={{
+                          p: 1.5,
+                          bgcolor: "rgba(42,139,139,0.1)",
+                          borderRadius: 1,
+                        }}
+                      >
+                        <Typography
+                          variant="subtitle2"
+                          fontWeight={600}
+                          color="primary.main"
+                        >
+                          Atividade física
+                        </Typography>
+                        <Typography
+                          variant="body2"
+                          fontWeight={500}
+                          sx={{ mt: 0.5 }}
+                        >
+                          {activity}
+                        </Typography>
+                      </Box>
+                      <Box
+                        sx={{
+                          p: 1.5,
+                          bgcolor: "rgba(42,139,139,0.1)",
+                          borderRadius: 1,
+                        }}
+                      >
+                        <Typography
+                          variant="subtitle2"
+                          fontWeight={600}
+                          color="primary.main"
+                        >
+                          Fator clínico
+                        </Typography>
+                        <Typography
+                          variant="body2"
+                          fontWeight={500}
+                          sx={{ mt: 0.5 }}
+                        >
+                          {injury}
+                        </Typography>
+                      </Box>
+                    </Box>
+                  </CardContent>
+
+                  <CardActions
+                    sx={{
+                      justifyContent: "flex-end",
+                      pt: 0,
+                      pb: 2,
+                      px: 2,
+                      gap: 1,
+                    }}
+                  >
+                    <Button
+                      size="small"
+                      variant="contained"
+                      color="primary"
+                      onClick={() => handleSelectEnergyPlan(plan.id)}
+                    >
+                      Escolher este plano
+                    </Button>
+                  </CardActions>
+                </Card>
+              );
+            })}
+          </Stack>
+        </DialogContent>
+        <DialogActions sx={{ p: 2, justifyContent: "space-between" }}>
+          <Button
+            variant="contained"
+            color="primary"
+            onClick={handleCreateNewEnergyPlan}
+            startIcon={<AddIcon />}
+          >
+            Novo Plano Energético
+          </Button>
+          <Button onClick={handleCloseEnergyPlanModal}>Cancelar</Button>
+        </DialogActions>
+      </Dialog>
+
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={6000}
+        onClose={handleCloseSnackbar}
+      >
+        <Alert
+          onClose={handleCloseSnackbar}
+          severity={snackbar.severity}
+          sx={{ width: "100%" }}
+        >
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
     </Box>
   );
 }

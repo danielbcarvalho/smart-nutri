@@ -56,20 +56,53 @@ export class MealPlansService {
   async findAll(nutritionistId: string): Promise<MealPlan[]> {
     return this.mealPlanRepository.find({
       where: { nutritionistId },
-      relations: ['meals', 'meals.mealFoods', 'patient', 'nutritionist'],
+      relations: [
+        'meals',
+        'meals.mealFoods',
+        'patient',
+        'nutritionist',
+        'energyPlan',
+      ],
       order: { startDate: 'DESC' },
     });
   }
 
   async findOne(id: string, nutritionistId: string): Promise<MealPlan> {
+    this.logger.log('🔍 [MealPlansService] Buscando plano:', {
+      id,
+      nutritionistId,
+    });
+
     const mealPlan = await this.mealPlanRepository.findOne({
       where: { id, nutritionistId },
-      relations: ['meals', 'meals.mealFoods', 'patient', 'nutritionist'],
+      relations: [
+        'meals',
+        'meals.mealFoods',
+        'patient',
+        'nutritionist',
+        'energyPlan',
+      ],
     });
 
     if (!mealPlan) {
+      this.logger.log('❌ [MealPlansService] Plano não encontrado:', {
+        id,
+        nutritionistId,
+      });
       throw new NotFoundException(`Meal plan with ID ${id} not found`);
     }
+
+    this.logger.log('✅ [MealPlansService] Plano encontrado:', {
+      id,
+      energyPlanId: mealPlan.energyPlanId,
+      energyPlan: mealPlan.energyPlan
+        ? {
+            id: mealPlan.energyPlan.id,
+            name: mealPlan.energyPlan.name,
+          }
+        : null,
+    });
+
     return mealPlan;
   }
 
@@ -101,64 +134,40 @@ export class MealPlansService {
     mealPlanDto: UpdateMealPlanDto,
     nutritionistId: string,
   ): Promise<MealPlan> {
-    const mealPlan = await this.findOne(id, nutritionistId);
-
-    // Delete existing meals and their foods
-    const meals = await this.mealRepository.find({
-      where: { mealPlan: { id, nutritionistId } },
-      relations: ['mealFoods'],
+    // Primeiro, busca o plano sem as relações
+    const mealPlan = await this.mealPlanRepository.findOne({
+      where: { id, nutritionistId },
     });
 
-    for (const meal of meals) {
-      await this.mealFoodRepository.delete({ meal: { id: meal.id } });
-    }
-    await this.mealRepository.delete({ mealPlan: { id } });
-
-    // Update meal plan basic info
-    Object.assign(mealPlan, mealPlanDto);
-
-    // Create new meals
-    if (mealPlanDto.meals) {
-      for (const mealDto of mealPlanDto.meals) {
-        // Ensure time format is HH:mm
-        const formattedTime = mealDto.time.split(':').slice(0, 2).join(':');
-
-        const meal = this.mealRepository.create({
-          ...mealDto,
-          time: formattedTime,
-          mealPlan,
-        });
-        const savedMeal = await this.mealRepository.save(meal);
-
-        // Create meal foods
-        if (mealDto.mealFoods) {
-          for (const mealFoodDto of mealDto.mealFoods) {
-            const mealEntity = await this.mealRepository.findOne({
-              where: { id: savedMeal.id },
-            });
-            if (!mealEntity)
-              throw new Error('Refeição não encontrada ao criar MealFood');
-            const mealFood = this.mealFoodRepository.create({
-              amount: mealFoodDto.amount,
-              unit: mealFoodDto.unit,
-              foodId: mealFoodDto.foodId,
-              source: mealFoodDto.source.toLowerCase(),
-              meal: mealEntity,
-              mealId: mealEntity.id,
-            });
-            await this.mealFoodRepository.save(mealFood);
-          }
-        }
-        mealPlan.meals.push(savedMeal);
-      }
+    if (!mealPlan) {
+      throw new NotFoundException(`Meal plan with ID ${id} not found`);
     }
 
-    await this.mealPlanRepository.save(mealPlan);
+    // Atualiza apenas o energyPlanId
+    mealPlan.energyPlanId = mealPlanDto.energyPlanId;
 
-    // Atualiza os totais do plano
-    await this.updateMealPlanTotals(id);
+    // Salva o plano atualizado
+    const updatedMealPlan = await this.mealPlanRepository.save(mealPlan);
 
-    return this.findOne(id, nutritionistId);
+    // Força uma nova busca com as relações após a atualização
+    const finalMealPlan = await this.mealPlanRepository.findOne({
+      where: { id: updatedMealPlan.id },
+      relations: [
+        'meals',
+        'meals.mealFoods',
+        'patient',
+        'nutritionist',
+        'energyPlan',
+      ],
+    });
+
+    if (!finalMealPlan) {
+      throw new NotFoundException(
+        `Meal plan with ID ${id} not found after update`,
+      );
+    }
+
+    return finalMealPlan;
   }
 
   async remove(id: string, nutritionistId: string): Promise<void> {

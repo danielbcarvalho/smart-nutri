@@ -13,21 +13,34 @@ import { alpha } from "@mui/material/styles";
 import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 import LocalFireDepartmentIcon from "@mui/icons-material/LocalFireDepartment";
 import MacronutrientDistribution from "./MacronutrientDistribution";
+import { useNavigate } from "react-router-dom";
 
 interface NutrientAnalysisProps {
-  protein: number; // em gramas
-  fat: number; // em gramas
-  carbohydrates: number; // em gramas
-  calories: number; // kcal totais do plano
-  totalWeight: number; // peso total da refeição/plano em gramas
-  targetCalories?: number; // meta de kcal
-  targetProtein?: number; // meta de proteínas em gramas
-  targetFat?: number; // meta de lipídios em gramas
-  targetCarbohydrates?: number; // meta de carboidratos em gramas
-  tmb?: number; // taxa metabólica basal
-  targetProteinPercentage?: number; // meta % de proteína do VET
-  targetFatPercentage?: number; // meta % de lipídios do VET
-  targetCarbohydratesPercentage?: number; // meta % de carboidratos do VET
+  protein: number;
+  fat: number;
+  carbohydrates: number;
+  calories: number;
+  totalWeight: number;
+  targetCalories?: number;
+  targetProtein?: number;
+  targetFat?: number;
+  targetCarbohydrates?: number;
+  tmb?: number;
+  targetProteinPercentage?: number;
+  targetFatPercentage?: number;
+  targetCarbohydratesPercentage?: number;
+  selectedEnergyPlan?: {
+    id: string;
+    name: string;
+    createdAt: string;
+  };
+  energyPlans?: Array<{
+    id: string;
+    name: string;
+    createdAt: string;
+  }>;
+  onEnergyPlanChange?: () => void;
+  patientId: string;
 }
 
 const COLORS = {
@@ -124,8 +137,13 @@ export const NutrientAnalysis: React.FC<NutrientAnalysisProps> = ({
   targetProteinPercentage,
   targetFatPercentage,
   targetCarbohydratesPercentage,
+  selectedEnergyPlan,
+  energyPlans,
+  onEnergyPlanChange,
+  patientId,
 }) => {
   const theme = useTheme();
+  const navigate = useNavigate();
 
   const density = totalWeight && calories ? calories / totalWeight : 0;
   const densityClass = getCaloricDensityClass(density);
@@ -225,6 +243,7 @@ export const NutrientAnalysis: React.FC<NutrientAnalysisProps> = ({
             variant="contained"
             color="primary"
             size="large"
+            onClick={() => navigate(`/patient/${patientId}/energy-plans/new`)}
             sx={{
               mb: 4,
               px: 3,
@@ -574,6 +593,50 @@ export const NutrientAnalysis: React.FC<NutrientAnalysisProps> = ({
             </Box>
           )}
         </Stack>
+      )}
+
+      {/* Plano Energético de Referência */}
+      {selectedEnergyPlan && (
+        <Box
+          sx={{
+            mt: 3,
+            pt: 2,
+            borderTop: `1px solid ${theme.palette.divider}`,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: 1,
+          }}
+        >
+          <Typography variant="body2" color="text.secondary">
+            Plano Energético de Referência: {selectedEnergyPlan.name}
+            {selectedEnergyPlan.createdAt && (
+              <Typography
+                component="span"
+                variant="body2"
+                color="text.secondary"
+                sx={{ ml: 0.5 }}
+              >
+                ({new Date(selectedEnergyPlan.createdAt).toLocaleDateString()})
+              </Typography>
+            )}
+          </Typography>
+          {onEnergyPlanChange && (
+            <Button
+              size="small"
+              onClick={onEnergyPlanChange}
+              sx={{
+                textTransform: "none",
+                color: theme.palette.primary.main,
+                "&:hover": {
+                  backgroundColor: alpha(theme.palette.primary.main, 0.04),
+                },
+              }}
+            >
+              Alterar
+            </Button>
+          )}
+        </Box>
       )}
     </Paper>
   );

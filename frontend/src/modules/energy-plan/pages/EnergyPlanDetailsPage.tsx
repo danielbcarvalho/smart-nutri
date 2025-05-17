@@ -15,11 +15,11 @@ import { energyPlanService } from "../services/energyPlanService";
 import SaveIcon from "@mui/icons-material/Save";
 import { useForm } from "react-hook-form";
 import { patientService } from "@/modules/patient/services/patientService";
-import EnergyPlanGoalSection from "./EnergyPlanGoalSection";
-import EnergyPlanResultsSection from "./EnergyPlanResultsSection";
-import EnergyPlanFormSection from "./EnergyPlanFormSection";
-import MacronutrientDistributionSection from "./MacronutrientDistributionSection";
-import { ImportMeasurementsModal } from "./ImportMeasurementsModal";
+import EnergyPlanGoalSection from "../components/EnergyPlanGoalSection";
+import EnergyPlanResultsSection from "../components/EnergyPlanResultsSection";
+import EnergyPlanFormSection from "../components/EnergyPlanFormSection";
+import MacronutrientDistributionSection from "../components/MacronutrientDistributionSection";
+import { ImportMeasurementsModal } from "../components/ImportMeasurementsModal";
 import {
   calculateTMB,
   calculateGET,
@@ -36,7 +36,7 @@ import {
 } from "../hooks/useEnergyPlans";
 import { authService } from "../../auth/services/authService";
 import { CreateEnergyPlanDto } from "../services/energyPlanService";
-import EnergyPlanMethodSection from "./EnergyPlanMethodSection";
+import EnergyPlanMethodSection from "../components/EnergyPlanMethodSection";
 
 export interface DadosPlanoEnergetico {
   nome: string;

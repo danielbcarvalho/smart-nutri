@@ -17,10 +17,10 @@ import { AssessmentEvolution } from "@modules/assessment/pages/AssessmentEvoluti
 import { useRouteError, isRouteErrorResponse, Link } from "react-router-dom";
 import { Patients } from "./modules/patient/pages/Patients/PatientsPage";
 import { PatientInfo } from "./modules/patient/pages/PatientInfo/PatientInfoPage";
-import { MealPlan } from "./modules/meal-plan/pages/MealPlansPage";
+import { MealPlan } from "./modules/meal-plan/pages/MealPlansListPage";
 import { MealPlanDetails } from "./modules/meal-plan/pages/MealPlanDetails/MealPlanDetailsPage";
 import EnergyPlanPage from "@/modules/energy-plan/pages/EnergyPlanListPage";
-import EnergyPlanMain from "@modules/energy-plan/components/EnergyPlanMain";
+import EnergyPlanMain from "@/modules/energy-plan/pages/EnergyPlanDetailsPage";
 
 // Placeholder components
 const DocumentsPlaceholder = () => (

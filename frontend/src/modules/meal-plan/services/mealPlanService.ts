@@ -10,6 +10,7 @@ export type UpdateMealFood = Omit<MealFood, "id">;
 export type UpdateMeal = Partial<Omit<Meal, "id" | "mealFoods">> & {
   mealFoods: UpdateMealFood[];
   notes?: string;
+  energyPlanId?: string;
 };
 
 export interface Meal {
@@ -37,6 +38,7 @@ export interface MealPlan {
   dailyProtein?: number;
   dailyCarbs?: number;
   dailyFat?: number;
+  energyPlanId?: string;
 }
 
 export const mealPlanService = {

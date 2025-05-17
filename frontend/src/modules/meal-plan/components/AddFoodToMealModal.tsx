@@ -24,6 +24,7 @@ import PrescribedFoodsSection from "./PrescribedFoodsSection";
 import { mealPlanService } from "../services/mealPlanService";
 import type { CreateMeal, UpdateMeal } from "../services/mealPlanService";
 import CloseIcon from "@mui/icons-material/Close";
+import NutrientAnalysisIndividualMeal from "./NutrientAnalysisIndividualMeal";
 
 interface AddFoodToMealModalProps {
   open: boolean;
@@ -463,7 +464,7 @@ export const AddFoodToMealModal: React.FC<AddFoodToMealModalProps> = ({
           handleOpenDetails={handleOpenDetails}
         />
         {/* Seção de Análise de Nutrientes */}
-        <NutrientAnalysis
+        <NutrientAnalysisIndividualMeal
           protein={totalMacros.protein || 0}
           fat={totalMacros.fat || 0}
           carbohydrates={totalMacros.carbohydrates || 0}

@@ -1,6 +1,6 @@
 # Estrutura do Banco de Dados
 
-Gerado em: 5/16/2025, 12:43:12 PM
+Gerado em: 5/17/2025, 2:06:41 PM
 
 
 ## Tabela: consultations
@@ -46,6 +46,7 @@ Gerado em: 5/16/2025, 12:43:12 PM
 | calculated_get_kcal | numeric | - | NO | NULL | FK,PK |
 | created_at | timestamp without time zone | - | NO | now() | FK,PK |
 | updated_at | timestamp without time zone | - | NO | now() | FK,PK |
+| macronutrient_distribution | jsonb | - | YES | NULL | FK,PK |
 
 ## Tabela: food_templates
 
