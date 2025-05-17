@@ -19,7 +19,7 @@ import { Patients } from "./modules/patient/pages/Patients/PatientsPage";
 import { PatientInfo } from "./modules/patient/pages/PatientInfo/PatientInfoPage";
 import { MealPlan } from "./modules/meal-plan/pages/MealPlansPage";
 import { MealPlanDetails } from "./modules/meal-plan/pages/MealPlanDetails/MealPlanDetailsPage";
-import EnergyPlanPage from "@modules/energy-plan/pages/EnergyPlanPage";
+import EnergyPlanPage from "@/modules/energy-plan/pages/EnergyPlanListPage";
 import EnergyPlanMain from "@modules/energy-plan/components/EnergyPlanMain";
 
 // Placeholder components
