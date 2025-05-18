@@ -56,7 +56,7 @@ const EnergyPlanGoalSection: React.FC<EnergyPlanGoalSectionProps> = ({
 
   const dailyKcalChange = React.useMemo(() => {
     if (goalWeight !== 0 && goalDays > 0) {
-      return Math.round((goalWeight * 7700) / goalDays);
+      return Number(((goalWeight * 7700) / goalDays).toFixed(1));
     }
     return null;
   }, [goalWeight, goalDays]);
@@ -190,9 +190,7 @@ const EnergyPlanGoalSection: React.FC<EnergyPlanGoalSectionProps> = ({
         {/* Seção de Resultado */}
         <Box
           sx={{
-            bgcolor:
-              theme.palette.success.lightest ||
-              alpha(theme.palette.success.main, 0.1), // Fallback se lightest não existir
+            bgcolor: alpha(theme.palette.success.main, 0.1),
             borderRadius: 2,
             p: 2,
             mt: 2,
@@ -213,7 +211,9 @@ const EnergyPlanGoalSection: React.FC<EnergyPlanGoalSectionProps> = ({
           <Typography variant="body1" color="text.primary" fontWeight={500}>
             (
             {dailyKcalChange !== null
-              ? `${dailyKcalChange > 0 ? "+" : ""}${dailyKcalChange} Kcal/dia`
+              ? `${dailyKcalChange > 0 ? "+" : ""}${dailyKcalChange
+                  .toFixed(1)
+                  .replace(".", ",")} Kcal/dia`
               : "-- Kcal/dia"}
             )
           </Typography>

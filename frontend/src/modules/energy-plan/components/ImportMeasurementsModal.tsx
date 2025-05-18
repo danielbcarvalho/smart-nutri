@@ -25,7 +25,7 @@ interface Measurement {
   date: string;
   weight?: string | number;
   height?: string | number;
-  muscleMass?: string | number | null;
+  fatFreeMass?: string | number | null;
 }
 
 interface ImportMeasurementsModalProps {
@@ -34,7 +34,7 @@ interface ImportMeasurementsModalProps {
   onSelect: (measurement: {
     weight: number;
     height: number;
-    muscleMass?: number;
+    fatFreeMass?: number;
   }) => void;
   patientId: string;
 }
@@ -77,8 +77,8 @@ export const ImportMeasurementsModal: React.FC<
     onSelect({
       weight: Number(measurement.weight),
       height: Number(measurement.height),
-      muscleMass: measurement.muscleMass
-        ? Number(measurement.muscleMass)
+      fatFreeMass: measurement.fatFreeMass
+        ? Number(measurement.fatFreeMass)
         : undefined,
     });
     onClose();
@@ -125,7 +125,9 @@ export const ImportMeasurementsModal: React.FC<
                   <TableCell>Data</TableCell>
                   <TableCell align="right">Peso (kg)</TableCell>
                   <TableCell align="right">Altura (cm)</TableCell>
-                  <TableCell align="right">Massa Magra (kg)</TableCell>
+                  <TableCell align="right">
+                    Massa Livre de Gordura (kg)
+                  </TableCell>
                   <TableCell align="right">Ações</TableCell>
                 </TableRow>
               </TableHead>
@@ -152,7 +154,7 @@ export const ImportMeasurementsModal: React.FC<
                       {measurement.height || "-"}
                     </TableCell>
                     <TableCell align="right">
-                      {measurement.muscleMass || "-"}
+                      {measurement.fatFreeMass || "-"}
                     </TableCell>
                     <TableCell align="right">
                       <Button

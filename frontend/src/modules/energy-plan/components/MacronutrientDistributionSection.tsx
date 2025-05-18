@@ -279,12 +279,12 @@ const MacronutrientDistributionSection: React.FC<
 
             {/* Coluna 3: Gramas */}
             <Typography variant="body1" sx={{ textAlign: "center" }}>
-              {Math.round(grams)}g
+              {Number(grams.toFixed(1))}g
             </Typography>
 
             {/* Coluna 4: g/kg */}
             <Typography variant="body1" sx={{ textAlign: "center" }}>
-              {gramsPerKg.toFixed(2)}
+              {Number(gramsPerKg.toFixed(1))}
             </Typography>
 
             {/* Coluna 5: Referência */}
@@ -363,7 +363,7 @@ const MacronutrientDistributionSection: React.FC<
                   Gramas
                 </Typography>
                 <Typography variant="body1" fontWeight="fontWeightMedium">
-                  {Math.round(grams)}g
+                  {Number(grams.toFixed(1))}g
                 </Typography>
               </Box>
               <Box>
@@ -375,7 +375,7 @@ const MacronutrientDistributionSection: React.FC<
                   g/kg
                 </Typography>
                 <Typography variant="body1" fontWeight="fontWeightMedium">
-                  {gramsPerKg.toFixed(2)}
+                  {Number(gramsPerKg.toFixed(1))}
                 </Typography>
               </Box>
               <Box>

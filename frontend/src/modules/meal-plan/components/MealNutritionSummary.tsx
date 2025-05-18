@@ -90,20 +90,20 @@ const MealNutritionSummary: React.FC<MealNutritionSummaryProps> = ({
             Proteínas: {nutritionSummary.protein.toFixed(1)}g
           </Typography>
           <Typography variant="body2" color="text.secondary">
-            {Math.round(
+            {(
               (nutritionSummary.macroDistribution.protein /
                 totalMacroCalories) *
-                100
-            )}
+              100
+            ).toFixed(0)}
             %
           </Typography>
         </Box>
         <LinearProgress
           variant="determinate"
-          value={Math.round(
+          value={
             (nutritionSummary.macroDistribution.protein / totalMacroCalories) *
-              100
-          )}
+            100
+          }
           color="secondary"
           sx={{ height: 6, borderRadius: 3, mb: 1 }}
         />
@@ -113,19 +113,19 @@ const MealNutritionSummary: React.FC<MealNutritionSummaryProps> = ({
             Carboidratos: {nutritionSummary.carbs.toFixed(1)}g
           </Typography>
           <Typography variant="body2" color="text.secondary">
-            {Math.round(
+            {(
               (nutritionSummary.macroDistribution.carbs / totalMacroCalories) *
-                100
-            )}
+              100
+            ).toFixed(0)}
             %
           </Typography>
         </Box>
         <LinearProgress
           variant="determinate"
-          value={Math.round(
+          value={
             (nutritionSummary.macroDistribution.carbs / totalMacroCalories) *
-              100
-          )}
+            100
+          }
           color="warning"
           sx={{ height: 6, borderRadius: 3, mb: 1 }}
         />
@@ -135,18 +135,18 @@ const MealNutritionSummary: React.FC<MealNutritionSummaryProps> = ({
             Gorduras: {nutritionSummary.fat.toFixed(1)}g
           </Typography>
           <Typography variant="body2" color="text.secondary">
-            {Math.round(
+            {(
               (nutritionSummary.macroDistribution.fat / totalMacroCalories) *
-                100
-            )}
+              100
+            ).toFixed(0)}
             %
           </Typography>
         </Box>
         <LinearProgress
           variant="determinate"
-          value={Math.round(
+          value={
             (nutritionSummary.macroDistribution.fat / totalMacroCalories) * 100
-          )}
+          }
           color="info"
           sx={{ height: 6, borderRadius: 3 }}
         />

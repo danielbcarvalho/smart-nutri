@@ -69,17 +69,6 @@ const SimpleDonutChart: React.FC<MuiDonutChartProps> = ({
   // Se não houver calorias dos macronutrientes, usa o valor de calories fornecido
   const effectiveCalories = totalMacroKcal > 0 ? totalMacroKcal : calories;
 
-  // LOGS PARA DEPURAÇÃO
-  console.log("[SimpleDonutChart] protein (g):", protein);
-  console.log("[SimpleDonutChart] fat (g):", fat);
-  console.log("[SimpleDonutChart] carbohydrates (g):", carbohydrates);
-  console.log("[SimpleDonutChart] proteinKcal:", proteinKcal);
-  console.log("[SimpleDonutChart] fatKcal:", fatKcal);
-  console.log("[SimpleDonutChart] carbsKcal:", carbsKcal);
-  console.log("[SimpleDonutChart] totalMacroKcal:", totalMacroKcal);
-  console.log("[SimpleDonutChart] calories prop:", calories);
-  console.log("[SimpleDonutChart] effectiveCalories:", effectiveCalories);
-
   // Calcula as porcentagens
   const proteinPercentage =
     totalMacroKcal > 0 ? (proteinKcal / totalMacroKcal) * 100 : 0;
@@ -259,31 +248,56 @@ const getAdherenceColor = (current: number, target: number | undefined) => {
   return "warning"; // Outros casos (entre 5% e 10%)
 };
 
-const getCaloricDensityClass = (density: number) => {
-  if (density < 1)
+/**
+ * Classifica a densidade calórica de uma dieta completa (valor médio de kcal/g ao longo do dia):
+ *   < 0.6 kcal/g  → Muito Baixa Densidade   (dieta que tende a oferecer muita saciedade com poucas calorias,
+ *                                             ex.: refeições ricas em vegetais, sopas e frutas, pouco concentradas em gorduras)
+ * 0.6–1.5 kcal/g  → Baixa Densidade         (dieta balanceada com ênfase em alimentos ricos em água e fibras,
+ *                                             como carnes magras, legumes cozidos, arroz integral e laticínios desnatados)
+ * 1.5–4 kcal/g    → Moderada Densidade      (dieta que inclui porções moderadas de fontes calóricas energéticas,
+ *                                             como queijos, pães integrais, grãos, pequenas frituras ou molhos leves)
+ * ≥ 4 kcal/g      → Alta Densidade          (dieta muito calórica por grama, com itens concentrados em gorduras e açúcares,
+ *                                             ex.: oleaginosas em grande quantidade, doces, molhos cremosos ou frituras pesadas)
+ *
+ * Estes valores se referem ao cálculo total do dia – não a um alimento isolado.
+ */
+function getCaloricDensityClass(density: number) {
+  if (density < 0.6) {
     return {
-      label: "Baixa Densidade",
+      label: "Muito Baixa Densidade",
       color: COLORS.success.main,
       bgColor: COLORS.success.light,
       description:
-        "Alimentos com baixa densidade calórica ajudam na saciedade com menos calorias.",
+        "A densidade calórica diária está muito baixa, indicando refeições volumosas e ricas em água/fibras, que promovem saciedade com poucas calorias totais no dia.",
     };
-  if (density < 2)
+  }
+
+  if (density < 1.5) {
     return {
-      label: "Média Densidade",
+      label: "Baixa Densidade",
+      description:
+        "A densidade calórica diária está baixa, refletindo uma dieta equilibrada com ênfase em alimentos menos concentrados em calorias (carnes magras, legumes, grãos integrais).",
+    };
+  }
+
+  if (density < 4) {
+    return {
+      label: "Moderada Densidade",
       color: COLORS.warning.main,
       bgColor: COLORS.warning.light,
       description:
-        "Densidade calórica moderada, equilibra nutrientes e saciedade.",
+        "A densidade calórica diária está moderada, indicando inclusão de alimentos energéticos (queijos, pães, grãos) sem excesso de gorduras ou açúcares.",
     };
+  }
+
   return {
     label: "Alta Densidade",
     color: COLORS.error.main,
     bgColor: COLORS.error.light,
     description:
-      "Alimentos calóricos concentrados. Use com moderação no plano alimentar.",
+      "A densidade calórica diária está alta, sugerindo que as calorias estão muito concentradas (fritos, doces, molhos ricos), e pode dificultar controle de peso.",
   };
-};
+}
 
 export const NutrientAnalysis: React.FC<NutrientAnalysisProps> = ({
   protein,
@@ -305,6 +319,12 @@ export const NutrientAnalysis: React.FC<NutrientAnalysisProps> = ({
 }) => {
   const theme = useTheme();
   const navigate = useNavigate();
+
+  /**
+   * Cálculo de densidade calórica: kcal por grama de alimento.
+   * Fonte dos limites de densidade: Drewnowski A. & Bellisle F. (2007). “Energy density: definition and
+   * recommendations for reducing energy intake.” *Am J Clin Nutr*.
+   */
 
   const density = totalWeight > 0 && calories > 0 ? calories / totalWeight : 0;
   const densityClass = getCaloricDensityClass(density);
@@ -547,7 +567,7 @@ export const NutrientAnalysis: React.FC<NutrientAnalysisProps> = ({
                   color="primary"
                   sx={{ fontWeight: "bold", lineHeight: 1.1 }}
                 >
-                  {formatNumber(calories, 0)}{" "}
+                  {formatNumber(calories, 1)}{" "}
                   <Typography component="span" variant="h6" color="primary">
                     kcal
                   </Typography>
@@ -571,7 +591,7 @@ export const NutrientAnalysis: React.FC<NutrientAnalysisProps> = ({
                   color="text.primary"
                   sx={{ fontWeight: "bold", lineHeight: 1.1 }}
                 >
-                  {formatNumber(targetCalories, 0)}{" "}
+                  {formatNumber(targetCalories, 1)}{" "}
                   <Typography
                     component="span"
                     variant="body1"
@@ -673,7 +693,7 @@ export const NutrientAnalysis: React.FC<NutrientAnalysisProps> = ({
                   color="text.primary"
                   sx={{ fontWeight: "medium", lineHeight: 1.2 }}
                 >
-                  {formatNumber(tmb, 0)} kcal
+                  {formatNumber(tmb, 1)} kcal
                 </Typography>
               </Box>
             )}

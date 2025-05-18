@@ -203,13 +203,13 @@ export const foodService = {
   calculateMacros(food: Food, amount: number): MacroNutrients {
     const factor = amount / food.servingSize;
     return {
-      calories: Math.round(food.calories * factor),
-      protein: +(food.protein * factor).toFixed(1),
-      carbohydrates: +(food.carbohydrates * factor).toFixed(1),
-      fat: +(food.fat * factor).toFixed(1),
-      fiber: food.fiber ? +(food.fiber * factor).toFixed(1) : undefined,
-      sugar: food.sugar ? +(food.sugar * factor).toFixed(1) : undefined,
-      sodium: food.sodium ? +(food.sodium * factor).toFixed(1) : undefined,
+      calories: food.calories * factor,
+      protein: food.protein * factor,
+      carbohydrates: food.carbohydrates * factor,
+      fat: food.fat * factor,
+      fiber: food.fiber ? food.fiber * factor : undefined,
+      sugar: food.sugar ? food.sugar * factor : undefined,
+      sodium: food.sodium ? food.sodium * factor : undefined,
     };
   },
 
@@ -229,22 +229,20 @@ export const foodService = {
       const foodMacros = this.calculateMacros(food, amount);
       return {
         calories: total.calories + foodMacros.calories,
-        protein: +(total.protein + foodMacros.protein).toFixed(1),
-        carbohydrates: +(
-          total.carbohydrates + foodMacros.carbohydrates
-        ).toFixed(1),
-        fat: +(total.fat + foodMacros.fat).toFixed(1),
+        protein: total.protein + foodMacros.protein,
+        carbohydrates: total.carbohydrates + foodMacros.carbohydrates,
+        fat: total.fat + foodMacros.fat,
         fiber:
           foodMacros.fiber && total.fiber
-            ? +(total.fiber + foodMacros.fiber).toFixed(1)
+            ? total.fiber + foodMacros.fiber
             : undefined,
         sugar:
           foodMacros.sugar && total.sugar
-            ? +(total.sugar + foodMacros.sugar).toFixed(1)
+            ? total.sugar + foodMacros.sugar
             : undefined,
         sodium:
           foodMacros.sodium && total.sodium
-            ? +(total.sodium + foodMacros.sodium).toFixed(1)
+            ? total.sodium + foodMacros.sodium
             : undefined,
       };
     }, initialMacros);

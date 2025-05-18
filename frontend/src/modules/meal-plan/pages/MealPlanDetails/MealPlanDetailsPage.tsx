@@ -47,7 +47,7 @@ import { patientService } from "@/modules/patient/services/patientService";
 import { authService } from "../../../auth/services/authService";
 import { MealPlanPDF } from "@/modules/meal-plan/components/MealPlanPDF";
 import { useEnergyPlan } from "../../hooks/useEnergyPlan";
-import { calculateMacronutrientTargets } from "../../utils/nutrientComparison";
+import { calculateMacronutrientTargetsFromDistribution } from "../../utils/nutrientComparison";
 import { usePatientEnergyPlans } from "@/modules/energy-plan/hooks/useEnergyPlans";
 import {
   ACTIVITY_FACTOR_DESCRIPTIONS,
@@ -434,8 +434,11 @@ export function MealPlanDetails() {
 
     // Adiciona metas do plano energético se disponível
     if (energyPlan) {
-      const targets = calculateMacronutrientTargets(
-        Number(energyPlan.calculatedGetKcal)
+      const targets = calculateMacronutrientTargetsFromDistribution(
+        Number(energyPlan.calculatedGetKcal),
+        Number(energyPlan.macronutrientDistribution?.proteins),
+        Number(energyPlan.macronutrientDistribution?.fats),
+        Number(energyPlan.macronutrientDistribution?.carbs)
       );
       const result = {
         ...nutrients,

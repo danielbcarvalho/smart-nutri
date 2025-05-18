@@ -264,7 +264,7 @@ export const NutrientAnalysisIndividualMeal: React.FC<
                     },
                     {
                       label: "Calorias",
-                      value: Math.round(calories) + " Kcal",
+                      value: calories.toFixed(1) + " Kcal",
                       color: theme.palette.primary.main,
                       icon: (
                         <LocalFireDepartmentIcon
@@ -277,7 +277,7 @@ export const NutrientAnalysisIndividualMeal: React.FC<
                     },
                     {
                       label: "Peso Total",
-                      value: Math.round(totalWeight) + "g",
+                      value: totalWeight.toFixed(1) + "g",
                       color: theme.palette.grey[600],
                       icon: (
                         <ScaleIcon

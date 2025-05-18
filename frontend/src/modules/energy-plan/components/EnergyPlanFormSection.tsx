@@ -21,7 +21,7 @@ interface EnergyPlanFormSectionProps {
   handleImportMeasurements: (measurement: {
     weight: number;
     height: number;
-    muscleMass?: number;
+    fatFreeMass?: number;
   }) => void;
   patientId: string;
   calculationDetails: {
@@ -199,7 +199,7 @@ const EnergyPlanFormSection: React.FC<EnergyPlanFormSectionProps> = ({
               }}
               render={({ field, fieldState }) => (
                 <TextField
-                  label="Massa Magra (kg)"
+                  label="Massa Livre de Gordura (kg)"
                   type="text"
                   inputMode="decimal"
                   size="small"

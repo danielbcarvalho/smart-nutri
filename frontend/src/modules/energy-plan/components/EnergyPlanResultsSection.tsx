@@ -22,6 +22,8 @@ interface EnergyPlanResultsSectionProps {
   calculatedTMB: number | null;
   calculatedGET: number | null;
   calculationDetails: CalculationDetails | null;
+  goalWeight?: number;
+  goalDays?: number;
 }
 
 const EnergyPlanResultsSection: React.FC<EnergyPlanResultsSectionProps> = ({
@@ -29,7 +31,14 @@ const EnergyPlanResultsSection: React.FC<EnergyPlanResultsSectionProps> = ({
   calculatedTMB,
   calculatedGET,
   calculationDetails,
+  goalWeight = 0,
+  goalDays = 0,
 }) => {
+  const weightGoalKcalAdjustment =
+    goalWeight !== 0 && goalDays > 0
+      ? Number(((goalWeight * 7700) / goalDays).toFixed(1))
+      : 0;
+
   return (
     <Card
       variant="outlined" // Alterado para 'outlined' para consistência, ou mantenha 'elevation' se preferir
@@ -81,12 +90,12 @@ const EnergyPlanResultsSection: React.FC<EnergyPlanResultsSectionProps> = ({
                   Taxa Metabólica Basal (TMB)
                 </Typography>
                 <Typography
-                  variant="h4" // Aumentar o destaque
+                  variant="h4"
                   fontWeight={700}
-                  sx={{ color: "success.darker" }} // Mantido
+                  sx={{ color: "success.darker" }}
                 >
                   {calculatedTMB !== null
-                    ? `${Math.round(calculatedTMB)} kcal`
+                    ? `${Number(calculatedTMB.toFixed(1))} kcal`
                     : "-- kcal"}
                 </Typography>
               </Grid>
@@ -95,14 +104,28 @@ const EnergyPlanResultsSection: React.FC<EnergyPlanResultsSectionProps> = ({
                   Gasto Energético Total (GET)
                 </Typography>
                 <Typography
-                  variant="h4" // Aumentar o destaque
+                  variant="h4"
                   fontWeight={700}
-                  sx={{ color: "success.darker" }} // Mantido
+                  sx={{ color: "success.darker" }}
                 >
                   {calculatedGET !== null
-                    ? `${Math.round(calculatedGET)} kcal`
+                    ? `${Number(calculatedGET.toFixed(1))} kcal`
                     : "-- kcal"}
                 </Typography>
+                {weightGoalKcalAdjustment !== 0 && (
+                  <Typography
+                    variant="body2"
+                    color={
+                      weightGoalKcalAdjustment > 0
+                        ? "error.main"
+                        : "success.main"
+                    }
+                    sx={{ mt: 0.5 }}
+                  >
+                    {weightGoalKcalAdjustment > 0 ? "+" : ""}
+                    {weightGoalKcalAdjustment} kcal (ajuste meta)
+                  </Typography>
+                )}
               </Grid>
             </Grid>
 
@@ -121,6 +144,14 @@ const EnergyPlanResultsSection: React.FC<EnergyPlanResultsSectionProps> = ({
                   <br />
                   <strong>Fator Clínico:</strong>{" "}
                   {calculationDetails.injuryFactor}
+                  {weightGoalKcalAdjustment !== 0 && (
+                    <>
+                      <br />
+                      <strong>Ajuste Meta:</strong>{" "}
+                      {weightGoalKcalAdjustment > 0 ? "+" : ""}
+                      {weightGoalKcalAdjustment} kcal/dia
+                    </>
+                  )}
                 </Typography>
               </>
             )}

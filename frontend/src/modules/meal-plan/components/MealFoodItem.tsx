@@ -49,21 +49,17 @@ const MealFoodItem: React.FC<MealFoodItemProps> = ({
 
   const nutritionInfo = foodDetails
     ? {
-        calories: Math.round(
-          ((Number(foodDetails.kcal) || 0) * realWeight) / 100
-        ),
-        protein: Math.round(
-          ((Number(foodDetails.ptn) || 0) * realWeight) / 100
-        ),
-        carbs: Math.round(((Number(foodDetails.cho) || 0) * realWeight) / 100),
-        fat: Math.round(((Number(foodDetails.lip) || 0) * realWeight) / 100),
+        calories: ((Number(foodDetails.kcal) || 0) * realWeight) / 100,
+        protein: ((Number(foodDetails.ptn) || 0) * realWeight) / 100,
+        carbs: ((Number(foodDetails.cho) || 0) * realWeight) / 100,
+        fat: ((Number(foodDetails.lip) || 0) * realWeight) / 100,
       }
     : null;
 
   if (asTableRow) {
     return (
       <TableRow hover>
-        <TableCell sx={{ width: 70 }}>{Math.round(mealFood.amount)}</TableCell>
+        <TableCell sx={{ width: 70 }}>{mealFood.amount}</TableCell>
         <TableCell sx={{ width: 70 }} color="text.secondary">
           {mealFood.unit}
         </TableCell>
@@ -74,22 +70,22 @@ const MealFoodItem: React.FC<MealFoodItemProps> = ({
               title={
                 <Box>
                   <Typography variant="caption">
-                    Calorias: {nutritionInfo.calories} kcal
+                    Calorias: {nutritionInfo.calories.toFixed(1)} kcal
                   </Typography>
                   <Typography variant="caption">
-                    Proteína: {nutritionInfo.protein}g
+                    Proteína: {nutritionInfo.protein.toFixed(1)}g
                   </Typography>
                   <Typography variant="caption">
-                    Carboidratos: {nutritionInfo.carbs}g
+                    Carboidratos: {nutritionInfo.carbs.toFixed(1)}g
                   </Typography>
                   <Typography variant="caption">
-                    Gorduras: {nutritionInfo.fat}g
+                    Gorduras: {nutritionInfo.fat.toFixed(1)}g
                   </Typography>
                 </Box>
               }
             >
               <Chip
-                label={`${nutritionInfo.calories} kcal`}
+                label={`${nutritionInfo.calories.toFixed(1)} kcal`}
                 size="small"
                 variant="outlined"
                 sx={{ height: 24 }}
@@ -113,7 +109,7 @@ const MealFoodItem: React.FC<MealFoodItemProps> = ({
       }}
     >
       <Typography variant="body2" sx={{ width: 70 }}>
-        {Math.round(mealFood.amount)}
+        {mealFood.amount}
       </Typography>
       <Typography variant="body2" color="text.secondary" sx={{ width: 70 }}>
         {mealFood.unit}
@@ -127,22 +123,22 @@ const MealFoodItem: React.FC<MealFoodItemProps> = ({
           title={
             <Box>
               <Typography variant="caption">
-                Calorias: {nutritionInfo.calories} kcal
+                Calorias: {nutritionInfo.calories.toFixed(1)} kcal
               </Typography>
               <Typography variant="caption">
-                Proteína: {nutritionInfo.protein}g
+                Proteína: {nutritionInfo.protein.toFixed(1)}g
               </Typography>
               <Typography variant="caption">
-                Carboidratos: {nutritionInfo.carbs}g
+                Carboidratos: {nutritionInfo.carbs.toFixed(1)}g
               </Typography>
               <Typography variant="caption">
-                Gorduras: {nutritionInfo.fat}g
+                Gorduras: {nutritionInfo.fat.toFixed(1)}g
               </Typography>
             </Box>
           }
         >
           <Chip
-            label={`${nutritionInfo.calories} kcal`}
+            label={`${nutritionInfo.calories.toFixed(1)} kcal`}
             size="small"
             variant="outlined"
             sx={{ height: 24 }}

@@ -343,25 +343,25 @@ export const MealPlanPDF: React.FC<MealPlanPDFProps> = ({
           <View style={pdfStyles.nutrientRow}>
             <Text style={pdfStyles.nutrient}>Calorias</Text>
             <Text style={pdfStyles.nutrientValue}>
-              {Math.round(totalNutrients.calories)} kcal
+              {totalNutrients.calories.toFixed(1)} kcal
             </Text>
           </View>
           <View style={pdfStyles.nutrientRow}>
             <Text style={pdfStyles.nutrient}>Proteínas</Text>
             <Text style={pdfStyles.nutrientValue}>
-              {Math.round(totalNutrients.protein)} g
+              {totalNutrients.protein.toFixed(1)} g
             </Text>
           </View>
           <View style={pdfStyles.nutrientRow}>
             <Text style={pdfStyles.nutrient}>Carboidratos</Text>
             <Text style={pdfStyles.nutrientValue}>
-              {Math.round(totalNutrients.carbohydrates)} g
+              {totalNutrients.carbohydrates.toFixed(1)} g
             </Text>
           </View>
           <View style={pdfStyles.nutrientRow}>
             <Text style={pdfStyles.nutrient}>Gorduras</Text>
             <Text style={pdfStyles.nutrientValue}>
-              {Math.round(totalNutrients.fat)} g
+              {totalNutrients.fat.toFixed(1)} g
             </Text>
           </View>
         </View>

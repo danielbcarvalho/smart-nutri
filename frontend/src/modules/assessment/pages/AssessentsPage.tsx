@@ -248,7 +248,7 @@ export function Assessments() {
                         color: theme.palette.primary.main,
                       }}
                     >
-                      Massa Magra (kg)
+                      Massa Livre de Gordura (kg)
                     </TableCell>
                   )}
                   <TableCell
@@ -302,8 +302,8 @@ export function Assessments() {
                       )}
                       {!isMobile && (
                         <TableCell>
-                          {measurement.muscleMass
-                            ? `${measurement.muscleMass} kg`
+                          {measurement.fatFreeMass
+                            ? `${measurement.fatFreeMass} kg`
                             : "-"}
                         </TableCell>
                       )}

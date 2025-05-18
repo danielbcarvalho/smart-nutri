@@ -195,7 +195,7 @@ const PrescribedFoodItem: React.FC<PrescribedFoodItemProps> = ({
           borderBottom: "none",
         }}
       >
-        {Math.round(quantidadeGramas)}g
+        {quantidadeGramas.toFixed(1)}g
       </TableCell>
       <TableCell
         align="center"
@@ -255,7 +255,7 @@ const PrescribedFoodItem: React.FC<PrescribedFoodItemProps> = ({
           borderBottom: "none",
         }}
       >
-        {Math.round(Number(food.kcal ?? 0) * fator)} Kcal
+        {(Number(food.kcal ?? 0) * fator).toFixed(1)} Kcal
       </TableCell>
       <TableCell
         align="right"

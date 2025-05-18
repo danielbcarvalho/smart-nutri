@@ -174,7 +174,7 @@ const EnergyPlanMain: React.FC = () => {
       const m = measurement as {
         weight: number;
         height: number;
-        muscleMass?: number;
+        fatFreeMass: number;
       };
       setValue("peso", formatNumberForInput(m.weight), {
         shouldValidate: true,
@@ -184,8 +184,8 @@ const EnergyPlanMain: React.FC = () => {
         shouldValidate: true,
         shouldDirty: true,
       });
-      if (typeof m.muscleMass === "number") {
-        setValue("massaMagra", formatNumberForInput(m.muscleMass), {
+      if (typeof m.fatFreeMass === "number") {
+        setValue("massaMagra", formatNumberForInput(m.fatFreeMass), {
           shouldValidate: true,
           shouldDirty: true,
         });
@@ -269,10 +269,19 @@ const EnergyPlanMain: React.FC = () => {
       });
 
       if (tmb !== null) {
+        // Calculate weight goal adjustment if goal is set
+        let weightGoalKcalAdjustment = 0;
+        if (goalWeight !== 0 && goalDays > 0) {
+          weightGoalKcalAdjustment = Number(
+            ((goalWeight * 7700) / goalDays).toFixed(1)
+          );
+        }
+
         get = calculateGET({
           tmbKcal: tmb,
           activityFactorValue: Number(watchedNivelAtividade),
           injuryFactorValue: Number(watchedFatorClinico),
+          weightGoalKcalAdjustment,
         });
       }
     }
@@ -305,6 +314,8 @@ const EnergyPlanMain: React.FC = () => {
     watchedFatorClinico,
     watchedMassaMagra,
     watch,
+    goalWeight,
+    goalDays,
   ]);
 
   React.useEffect(() => {
@@ -381,8 +392,8 @@ const EnergyPlanMain: React.FC = () => {
             : "other",
         activityFactorKey: data.nivelAtividade,
         injuryFactorKey: data.fatorClinico,
-        calculatedTmbKcal: Math.round(calculatedTMB),
-        calculatedGetKcal: Math.round(calculatedGET),
+        calculatedTmbKcal: Number(calculatedTMB),
+        calculatedGetKcal: Number(calculatedGET),
         macronutrientDistribution,
         nutritionistId: nutritionistId!,
         patientId: patientId,
@@ -396,7 +407,7 @@ const EnergyPlanMain: React.FC = () => {
           goalDaysToAchieve: goalDays,
         };
         if (goalWeight !== 0 && goalDays > 0) {
-          payloadWithGoal.calculatedGoalKcalAdjustment = Math.round(
+          payloadWithGoal.calculatedGoalKcalAdjustment = Number(
             (goalWeight * 7700) / goalDays
           );
         }
@@ -537,6 +548,8 @@ const EnergyPlanMain: React.FC = () => {
           calculatedTMB={calculatedTMB}
           calculatedGET={calculatedGET}
           calculationDetails={calculationDetails}
+          goalWeight={goalWeight}
+          goalDays={goalDays}
         />
 
         <Button

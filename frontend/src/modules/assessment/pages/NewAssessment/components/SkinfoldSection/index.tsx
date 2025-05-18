@@ -68,12 +68,10 @@ export const SkinfoldSection: React.FC<SkinfoldSectionProps> = ({
 
   const currentPatientGender = useMemo(() => {
     const gender = patientGender?.toUpperCase();
-    console.log("🔍 SkinfoldSection Debug - Current gender:", gender);
     return gender;
   }, [patientGender]);
   const patientAge = useMemo(() => {
     const age = calculateAge(patient?.birthDate);
-    console.log("🔍 SkinfoldSection Debug - Current age:", age);
     return age;
   }, [patient?.birthDate]);
 
@@ -84,7 +82,6 @@ export const SkinfoldSection: React.FC<SkinfoldSectionProps> = ({
 
   const selectedFormulaDef = useMemo(() => {
     const formula = bodyDensityFormulas.find((f) => f.id === skinfoldFormula);
-    console.log("🔍 SkinfoldSection Debug - Selected formula:", formula);
     return formula;
   }, [skinfoldFormula]);
 

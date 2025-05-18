@@ -39,3 +39,14 @@ export const calculateMacronutrientPercentages = (
     carbohydratesPercentage: ((carbohydrates * 4) / totalCalories) * 100,
   };
 };
+
+export const calculateMacronutrientTargetsFromDistribution = (
+  getKcal: number,
+  proteinPct: number,
+  fatPct: number,
+  carbPct: number
+) => ({
+  protein: (getKcal * (proteinPct / 100)) / 4,
+  fat: (getKcal * (fatPct / 100)) / 9,
+  carbohydrates: (getKcal * (carbPct / 100)) / 4,
+});
