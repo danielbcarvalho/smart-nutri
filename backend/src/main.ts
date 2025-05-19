@@ -14,7 +14,7 @@ async function bootstrap() {
   ].filter((origin): origin is string => Boolean(origin)); // Ensure only strings are included
 
   app.enableCors({
-    origin: allowedOrigins,
+    origin: '*', // Permitir todas as origens em MVP
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
     credentials: true,
     optionsSuccessStatus: 204,
@@ -81,14 +81,15 @@ async function bootstrap() {
         description: 'Enter JWT token',
         in: 'header',
       },
-      'JWT-auth', // This name here is important for security references
+      'JWT-auth',
     )
+    .addServer('https://smart-nutri-flame.vercel.app', 'Servidor de Produção')
     .addServer(`http://localhost:${port}`, 'Servidor de Desenvolvimento')
     .build();
 
   const document = SwaggerModule.createDocument(app, config);
 
-  // Altera a rota para apenas 'api' em vez de 'api-docs'
+  // Configuração do Swagger UI
   SwaggerModule.setup('api', app, document, {
     customSiteTitle: 'SmartNutri API Documentation',
     customfavIcon: 'https://nestjs.com/img/logo_text.svg',
@@ -113,7 +114,7 @@ async function bootstrap() {
     },
   });
 
-  // Criar também um alias para api-docs para manter compatibilidade
+  // Alias para api-docs
   SwaggerModule.setup('api-docs', app, document);
 
   console.log(`🚀 Aplicação iniciada na porta ${port}`);
