@@ -172,7 +172,16 @@ export const HeaderGlobal = ({
                 <img
                   src={logoUrl}
                   alt="Smart Nutri"
-                  style={{ height: 40, width: "auto", display: "block" }}
+                  style={{
+                    height: 40,
+                    width: "auto",
+                    display: "block",
+                    objectFit: "contain",
+                    imageRendering: "crisp-edges",
+                    WebkitFontSmoothing: "antialiased",
+                    MozOsxFontSmoothing: "grayscale",
+                  }}
+                  loading="eager"
                 />
               </Box>
 

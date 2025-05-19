@@ -307,7 +307,35 @@ export class NutritionistsService {
       nutritionist.logoUrl = settings.logoUrl;
     }
 
-    return this.nutritionistRepository.save(nutritionist);
+    // Salva as alterações
+    await this.nutritionistRepository.save(nutritionist);
+
+    // Retorna o nutricionista atualizado com as configurações
+    const updatedNutritionist = await this.nutritionistRepository.findOne({
+      where: { id: nutritionistId },
+      select: [
+        'id',
+        'name',
+        'email',
+        'phone',
+        'crn',
+        'specialties',
+        'clinicName',
+        'photoUrl',
+        'instagram',
+        'customColors',
+        'customFonts',
+        'logoUrl',
+        'createdAt',
+        'updatedAt',
+      ],
+    });
+
+    if (!updatedNutritionist) {
+      throw new NotFoundException('Nutritionist not found after update');
+    }
+
+    return updatedNutritionist;
   }
 
   async getSettings(nutritionistId: string): Promise<NutritionistSettingsDto> {

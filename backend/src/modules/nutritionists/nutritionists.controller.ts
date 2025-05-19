@@ -210,9 +210,11 @@ export class NutritionistsController {
   @ApiResponse({ status: 404, description: 'Nutricionista não encontrado' })
   async updateSettings(
     @Param('id') id: string,
-    @Body() settings: NutritionistSettingsDto,
+    @Body() body: any,
     @UploadedFile() file?: Express.Multer.File,
   ) {
+    // Parse the settings from FormData
+    const settings = body.settings ? JSON.parse(body.settings) : {};
     return this.nutritionistsService.updateSettings(id, settings, file);
   }
 

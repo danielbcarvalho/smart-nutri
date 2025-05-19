@@ -18,7 +18,9 @@ export function LogoProvider({ children }: { children: React.ReactNode }) {
 
   // Atualiza o localStorage sempre que o logo mudar
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEY, logoUrl);
+    if (logoUrl && logoUrl !== "/images/logo.png") {
+      localStorage.setItem(STORAGE_KEY, logoUrl);
+    }
   }, [logoUrl]);
 
   // Atualiza o logo quando o usuário fizer login

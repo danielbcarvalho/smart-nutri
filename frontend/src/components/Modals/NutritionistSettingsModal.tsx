@@ -138,7 +138,7 @@ export default function NutritionistSettingsModal({
   };
 
   const handleLogoChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (!e.target.files || !e.target.files[0]) return;
+    if (!e.target.files || !e.target.files[0] || !user?.id) return;
 
     const file = e.target.files[0];
     const validationError = validateLogo(file);
@@ -158,13 +158,30 @@ export default function NutritionistSettingsModal({
     setLogoFile(file);
 
     try {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        const newLogoUrl = reader.result as string;
-        setLogoPreview(newLogoUrl);
-        updateLogo(newLogoUrl);
-      };
-      reader.readAsDataURL(file);
+      const formData = new FormData();
+      formData.append(
+        "settings",
+        JSON.stringify({
+          customColors,
+          customFonts,
+        })
+      );
+      formData.append("logo", file);
+
+      const response = await api.patch(
+        `/nutritionists/${user.id}/settings`,
+        formData,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        }
+      );
+
+      const newLogoUrl = response.data.logoUrl;
+      setLogoPreview(newLogoUrl);
+      updateLogo(newLogoUrl);
+
       onLogoChange?.(e);
       setSnackbar({
         open: true,
