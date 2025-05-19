@@ -793,8 +793,8 @@ export function PatientFormModal({
           variant="outlined"
           onClick={onClose}
           sx={{
-            borderColor: "custom.main",
-            color: "custom.main",
+            borderColor: "custom.primary",
+            color: "custom.primary",
             "&:hover": {
               borderColor: "custom.dark",
               bgcolor: "transparent",
@@ -808,7 +808,7 @@ export function PatientFormModal({
           variant="contained"
           disabled={createMutation.isPending || updateMutation.isPending}
           sx={{
-            bgcolor: "custom.main",
+            bgcolor: "custom.primary",
             color: "common.white",
             "&:hover": {
               bgcolor: "custom.dark",

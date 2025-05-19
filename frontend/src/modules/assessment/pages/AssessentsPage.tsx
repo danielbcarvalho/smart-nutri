@@ -30,6 +30,7 @@ import { patientService } from "@/modules/patient/services/patientService";
 import { formatDateToLocal } from "@utils/dateUtils";
 import { LoadingBackdrop } from "@components/LoadingBackdrop";
 import { useState } from "react";
+import { DesignSystemButton } from "../../../components/DesignSystem/Button/ButtonVariants";
 
 export function Assessments() {
   const theme = useTheme();
@@ -162,12 +163,15 @@ export function Assessments() {
       >
         <Typography
           variant="h5"
-          sx={{ fontSize: { xs: "1.2rem", sm: "1.5rem" } }}
+          fontWeight="bold"
+          sx={{
+            color: "text.primary",
+          }}
         >
           Avaliações Antropométricas
         </Typography>
         <Stack direction={isMobile ? "column" : "row"} spacing={2}>
-          <Button
+          <DesignSystemButton
             variant="contained"
             startIcon={<Timeline />}
             onClick={() =>
@@ -178,20 +182,30 @@ export function Assessments() {
             fullWidth={isMobile}
           >
             Evolução
-          </Button>
-          <Button
+          </DesignSystemButton>
+          <DesignSystemButton
             variant="contained"
             startIcon={<Add />}
             onClick={handleNewAssessment}
             fullWidth={isMobile}
           >
             Nova Avaliação
-          </Button>
+          </DesignSystemButton>
         </Stack>
       </Box>
 
       {measurements && measurements.length > 0 ? (
-        <Box sx={{ width: "100%", overflowX: "auto" }}>
+        <Box
+          sx={{
+            borderRadius: "12px",
+            borderColor: "divider",
+            transition: "all 0.2s",
+            "&:hover": {
+              boxShadow: 4,
+              borderColor: "primary.main",
+            },
+          }}
+        >
           <TableContainer
             component={Paper}
             sx={{ minWidth: isMobile ? 600 : undefined }}

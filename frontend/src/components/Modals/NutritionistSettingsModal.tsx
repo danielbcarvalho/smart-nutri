@@ -14,7 +14,13 @@ import {
 import CloseIcon from "@mui/icons-material/Close";
 import PhotoCameraIcon from "@mui/icons-material/PhotoCamera";
 import InfoIcon from "@mui/icons-material/Info";
+import RestartAltIcon from "@mui/icons-material/RestartAlt";
 import { useState } from "react";
+import { alpha } from "@mui/material/styles";
+import { useTheme } from "../../theme/ThemeContext";
+import { DesignSystemPreview } from "../DesignSystem/Preview/DesignSystemPreview";
+import { useLogo } from "../../contexts/LogoContext";
+import { DesignSystemCallout } from "../DesignSystem/Callout/Callout";
 
 type ColorPalette = {
   primary: string;
@@ -29,10 +35,8 @@ type Props = {
     name: string;
     email: string;
     logoUrl?: string;
-    colorPalette?: ColorPalette;
   } | null;
   onLogoChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
-  onColorPaletteChange?: (palette: ColorPalette) => void;
 };
 
 interface TabPanelProps {
@@ -62,21 +66,15 @@ export default function NutritionistSettingsModal({
   onClose,
   user,
   onLogoChange,
-  onColorPaletteChange,
 }: Props) {
+  const { customColors, updateColors } = useTheme();
+  const { updateLogo } = useLogo();
   const [tabValue, setTabValue] = useState(0);
   const [logoPreview, setLogoPreview] = useState<string | undefined>(
     user?.logoUrl
   );
   const [logoUploading, setLogoUploading] = useState(false);
   const [logoError, setLogoError] = useState<string | null>(null);
-  const [colorPalette, setColorPalette] = useState<ColorPalette>(
-    user?.colorPalette || {
-      primary: "#1976d2",
-      secondary: "#dc004e",
-      accent: "#4caf50",
-    }
-  );
   const [selectedColorType, setSelectedColorType] = useState<
     keyof ColorPalette | null
   >(null);
@@ -129,7 +127,9 @@ export default function NutritionistSettingsModal({
     try {
       const reader = new FileReader();
       reader.onloadend = () => {
-        setLogoPreview(reader.result as string);
+        const newLogoUrl = reader.result as string;
+        setLogoPreview(newLogoUrl);
+        updateLogo(newLogoUrl);
       };
       reader.readAsDataURL(file);
       onLogoChange?.(e);
@@ -152,9 +152,7 @@ export default function NutritionistSettingsModal({
   };
 
   const handleColorChange = (color: string, type: keyof ColorPalette) => {
-    const newPalette = { ...colorPalette, [type]: color };
-    setColorPalette(newPalette);
-    onColorPaletteChange?.(newPalette);
+    updateColors({ ...customColors, [type]: color });
     setSelectedColorType(null);
     setSnackbar({
       open: true,
@@ -193,6 +191,62 @@ export default function NutritionistSettingsModal({
     setTabValue(newValue);
   };
 
+  const handleSave = () => {
+    setSnackbar({
+      open: true,
+      message: "Configurações salvas com sucesso!",
+      severity: "success",
+    });
+    onClose();
+  };
+
+  // Preview das cores
+  const renderColorPreview = () => (
+    <Box
+      sx={{
+        p: 2,
+        borderRadius: 1,
+        bgcolor: "background.default",
+        border: "1px solid",
+        borderColor: "divider",
+      }}
+    >
+      <Typography variant="subtitle2" gutterBottom>
+        Preview
+      </Typography>
+      <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+        <Button variant="contained" sx={{ bgcolor: customColors.primary }}>
+          Botão Principal
+        </Button>
+        <Button
+          variant="outlined"
+          sx={{
+            borderColor: customColors.secondary,
+            color: customColors.secondary,
+            "&:hover": {
+              borderColor: customColors.secondary,
+              bgcolor: alpha(customColors.secondary, 0.1),
+            },
+          }}
+        >
+          Botão Secundário
+        </Button>
+        <Box
+          sx={{
+            p: 2,
+            borderRadius: 1,
+            bgcolor: alpha(customColors.accent, 0.1),
+            color: customColors.accent,
+            border: "1px solid",
+            borderColor: customColors.accent,
+          }}
+        >
+          Elemento de Destaque
+        </Box>
+      </Box>
+    </Box>
+  );
+
   return (
     <Modal open={open} onClose={onClose}>
       <Box
@@ -200,11 +254,14 @@ export default function NutritionistSettingsModal({
           bgcolor: "background.paper",
           width: 600,
           maxWidth: "90vw",
+          maxHeight: "90vh",
           borderRadius: 2,
           boxShadow: 24,
           mx: "auto",
-          my: "10vh",
+          my: "5vh",
           overflow: "hidden",
+          display: "flex",
+          flexDirection: "column",
         }}
       >
         {/* Header */}
@@ -216,6 +273,7 @@ export default function NutritionistSettingsModal({
             display: "flex",
             justifyContent: "space-between",
             alignItems: "center",
+            flexShrink: 0,
           }}
         >
           <Typography variant="h6" fontWeight={600}>
@@ -227,7 +285,7 @@ export default function NutritionistSettingsModal({
         </Box>
 
         {/* Tabs */}
-        <Box sx={{ borderBottom: 1, borderColor: "divider" }}>
+        <Box sx={{ borderBottom: 1, borderColor: "divider", flexShrink: 0 }}>
           <Tabs
             value={tabValue}
             onChange={handleTabChange}
@@ -236,6 +294,7 @@ export default function NutritionistSettingsModal({
             scrollButtons="auto"
           >
             <Tab label="Aparência" />
+            <Tab label="Design System" />
             <Tab label="Arquivos" disabled />
             <Tab label="Formulários" disabled />
             <Tab label="Outros" disabled />
@@ -243,9 +302,62 @@ export default function NutritionistSettingsModal({
         </Box>
 
         {/* Tab Content */}
-        <Box sx={{ px: 3 }}>
+        <Box
+          sx={{
+            px: 3,
+            overflowY: "auto",
+            flexGrow: 1,
+            "&::-webkit-scrollbar": {
+              width: "8px",
+            },
+            "&::-webkit-scrollbar-track": {
+              background: "transparent",
+            },
+            "&::-webkit-scrollbar-thumb": {
+              background: "rgba(0,0,0,0.2)",
+              borderRadius: "4px",
+            },
+            "&::-webkit-scrollbar-thumb:hover": {
+              background: "rgba(0,0,0,0.3)",
+            },
+          }}
+        >
           {/* Aparência */}
           <TabPanel value={tabValue} index={0}>
+            <DesignSystemCallout
+              variant="info"
+              title="Configurações Experimentais"
+            >
+              Estas configurações são experimentais e podem apresentar
+              inconsistências visuais. Para uma experiência estável,
+              recomendamos utilizar a aparência padrão do sistema.
+            </DesignSystemCallout>
+
+            <Box sx={{ display: "flex", justifyContent: "flex-end", my: 3 }}>
+              <Button
+                variant="outlined"
+                color="warning"
+                onClick={() => {
+                  // Resetar cores para o padrão
+                  updateColors({
+                    primary: "#2a8b8b", // Teal
+                    secondary: "#75c58e", // Light Green
+                    accent: "#ffd2bf", // Peach
+                  });
+                  // Resetar logo para o padrão
+                  updateLogo("/images/logo.png");
+                  setSnackbar({
+                    open: true,
+                    message: "Aparência redefinida para o padrão",
+                    severity: "success",
+                  });
+                }}
+                startIcon={<RestartAltIcon />}
+              >
+                Redefinir Aparência
+              </Button>
+            </Box>
+
             <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 2 }}>
               <Typography variant="subtitle1" fontWeight={600}>
                 Personalização
@@ -377,7 +489,7 @@ export default function NutritionistSettingsModal({
                   mb: 2,
                 }}
               >
-                {Object.entries(colorPalette).map(([type, color]) => (
+                {Object.entries(customColors).map(([type, color]) => (
                   <Box
                     key={type}
                     sx={{
@@ -428,56 +540,11 @@ export default function NutritionistSettingsModal({
               </Box>
 
               {/* Color Preview */}
-              <Box
-                sx={{
-                  p: 2,
-                  borderRadius: 1,
-                  bgcolor: "background.default",
-                  border: "1px solid",
-                  borderColor: "divider",
-                }}
-              >
-                <Typography variant="subtitle2" gutterBottom>
-                  Preview
-                </Typography>
-                <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-                  <Button
-                    variant="contained"
-                    sx={{ bgcolor: colorPalette.primary }}
-                  >
-                    Botão Principal
-                  </Button>
-                  <Button
-                    variant="outlined"
-                    sx={{
-                      borderColor: colorPalette.secondary,
-                      color: colorPalette.secondary,
-                      "&:hover": {
-                        borderColor: colorPalette.secondary,
-                        bgcolor: `${colorPalette.secondary}10`,
-                      },
-                    }}
-                  >
-                    Botão Secundário
-                  </Button>
-                  <Box
-                    sx={{
-                      p: 2,
-                      borderRadius: 1,
-                      bgcolor: `${colorPalette.accent}10`,
-                      color: colorPalette.accent,
-                      border: "1px solid",
-                      borderColor: colorPalette.accent,
-                    }}
-                  >
-                    Elemento de Destaque
-                  </Box>
-                </Box>
-              </Box>
+              {renderColorPreview()}
 
               {/* Color Descriptions */}
               <Box sx={{ mt: 2 }}>
-                {Object.entries(colorPalette).map(([type, color]) => (
+                {Object.entries(customColors).map(([type, color]) => (
                   <Box
                     key={type}
                     sx={{
@@ -506,18 +573,31 @@ export default function NutritionistSettingsModal({
             </Box>
           </TabPanel>
 
-          {/* Arquivos (placeholder) */}
+          {/* Design System */}
           <TabPanel value={tabValue} index={1}>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 2 }}>
+              <Typography variant="subtitle1" fontWeight={600}>
+                Design System
+              </Typography>
+              <Tooltip title="Visualize e teste os componentes do design system">
+                <InfoIcon fontSize="small" color="action" />
+              </Tooltip>
+            </Box>
+            <DesignSystemPreview />
+          </TabPanel>
+
+          {/* Arquivos (placeholder) */}
+          <TabPanel value={tabValue} index={2}>
             <Typography>Em breve: Gerenciamento de arquivos</Typography>
           </TabPanel>
 
           {/* Formulários (placeholder) */}
-          <TabPanel value={tabValue} index={2}>
+          <TabPanel value={tabValue} index={3}>
             <Typography>Em breve: Gerenciamento de formulários</Typography>
           </TabPanel>
 
           {/* Outros (placeholder) */}
-          <TabPanel value={tabValue} index={3}>
+          <TabPanel value={tabValue} index={4}>
             <Typography>Em breve: Outras configurações</Typography>
           </TabPanel>
         </Box>
@@ -531,12 +611,13 @@ export default function NutritionistSettingsModal({
             display: "flex",
             justifyContent: "flex-end",
             gap: 2,
+            flexShrink: 0,
           }}
         >
           <Button variant="outlined" onClick={onClose}>
             Cancelar
           </Button>
-          <Button variant="contained" onClick={onClose}>
+          <Button variant="contained" onClick={handleSave}>
             Salvar
           </Button>
         </Box>
