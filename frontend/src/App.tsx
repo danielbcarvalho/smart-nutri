@@ -21,6 +21,8 @@ import EnergyPlanPage from "@/modules/energy-plan/pages/EnergyPlanListPage";
 import EnergyPlanMain from "@/modules/energy-plan/pages/EnergyPlanDetailsPage";
 import { ThemeProvider } from "./theme/ThemeContext";
 import { LogoProvider } from "./contexts/LogoContext";
+import { NutritionistSettingsProvider } from "./contexts/NutritionistSettingsContext";
+import React from "react";
 
 // Placeholder components
 const DocumentsPlaceholder = () => (
@@ -181,14 +183,56 @@ const router = createBrowserRouter([
 ]);
 
 function App() {
+  const [user, setUser] = React.useState(() => {
+    const storedUser = localStorage.getItem("@smartnutri:user");
+    return storedUser ? JSON.parse(storedUser) : null;
+  });
+
+  React.useEffect(() => {
+    const handleStorageChange = () => {
+      const storedUser = localStorage.getItem("@smartnutri:user");
+      setUser(storedUser ? JSON.parse(storedUser) : null);
+    };
+
+    // Listener para mudanças no localStorage (outras abas)
+    window.addEventListener("storage", handleStorageChange);
+
+    // Listener para mudanças no localStorage (mesma aba)
+    const handleLocalStorageChange = (e: StorageEvent) => {
+      if (e.key === "@smartnutri:user") {
+        handleStorageChange();
+      }
+    };
+
+    window.addEventListener("storage", handleLocalStorageChange);
+
+    // Disparar um evento personalizado quando o usuário fizer login
+    const handleLogin = () => {
+      const storedUser = localStorage.getItem("@smartnutri:user");
+      if (storedUser) {
+        setUser(JSON.parse(storedUser));
+      }
+    };
+
+    window.addEventListener("userLogin", handleLogin);
+
+    return () => {
+      window.removeEventListener("storage", handleStorageChange);
+      window.removeEventListener("storage", handleLocalStorageChange);
+      window.removeEventListener("userLogin", handleLogin);
+    };
+  }, []);
+
   return (
     <ThemeProvider>
       <QueryClientProvider client={queryClient}>
-        <LogoProvider>
-          <CssBaseline />
-          <ErrorSnackbar />
-          <RouterProvider router={router} />
-        </LogoProvider>
+        <NutritionistSettingsProvider user={user}>
+          <LogoProvider>
+            <CssBaseline />
+            <ErrorSnackbar />
+            <RouterProvider router={router} />
+          </LogoProvider>
+        </NutritionistSettingsProvider>
       </QueryClientProvider>
     </ThemeProvider>
   );

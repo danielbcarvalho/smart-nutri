@@ -92,7 +92,6 @@ export const pollock3Formula: BodyDensityFormula = {
   },
   getRequiredSkinfolds: (gender?: string) => {
     const g = (gender || "").toUpperCase();
-    console.log("🚀 ~ pollock3.ts:75 ~ g 🚀🚀🚀:", g);
     if (g === "M") {
       return ["thoracic", "abdominal", "thigh"];
     }

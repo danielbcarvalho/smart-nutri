@@ -46,25 +46,25 @@ export function StatsCards() {
       title: "Total de pacientes",
       value: stats?.totalPatients ?? 0,
       growth: stats?.lastWeekGrowth.patients ?? 0,
-      color: theme.palette.primary.main,
+      color: theme.palette.custom.accent,
     },
     {
       title: "Total de planos",
       value: stats?.totalMealPlans ?? 0,
       growth: stats?.lastWeekGrowth.mealPlans ?? 0,
-      color: theme.palette.success.main,
+      color: theme.palette.custom.accent,
     },
     {
       title: "Total de avaliações",
       value: stats?.totalMeasurements ?? 0,
       growth: stats?.lastWeekGrowth.measurements ?? 0,
-      color: theme.palette.warning.main,
+      color: theme.palette.custom.accent,
     },
     {
       title: "Total de documentos",
       value: stats?.totalDocuments ?? 0,
       growth: stats?.lastWeekGrowth.documents ?? 0,
-      color: theme.palette.info.main,
+      color: theme.palette.custom.accent,
     },
   ];
 

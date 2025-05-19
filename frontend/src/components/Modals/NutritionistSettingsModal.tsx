@@ -10,17 +10,26 @@ import {
   Tabs,
   Tab,
   CircularProgress,
+  Select,
+  MenuItem,
+  FormControl,
+  InputLabel,
+  TextField,
+  Collapse,
+  Link,
 } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
 import PhotoCameraIcon from "@mui/icons-material/PhotoCamera";
 import InfoIcon from "@mui/icons-material/Info";
 import RestartAltIcon from "@mui/icons-material/RestartAlt";
-import { useState } from "react";
+import SearchIcon from "@mui/icons-material/Search";
+import { useState, useEffect } from "react";
 import { alpha } from "@mui/material/styles";
 import { useTheme } from "../../theme/ThemeContext";
 import { DesignSystemPreview } from "../DesignSystem/Preview/DesignSystemPreview";
 import { useLogo } from "../../contexts/LogoContext";
 import { DesignSystemCallout } from "../DesignSystem/Callout/Callout";
+import { api } from "../../services/api";
 
 type ColorPalette = {
   primary: string;
@@ -32,6 +41,7 @@ type Props = {
   open: boolean;
   onClose: () => void;
   user: {
+    id: string;
     name: string;
     email: string;
     logoUrl?: string;
@@ -61,13 +71,27 @@ function TabPanel(props: TabPanelProps) {
   );
 }
 
+// Lista de fontes disponíveis do Google Fonts
+const availableFonts = [
+  { name: "Inter", value: "Inter" },
+  { name: "Roboto", value: "Roboto" },
+  { name: "Open Sans", value: "Open Sans" },
+  { name: "Lato", value: "Lato" },
+  { name: "Montserrat", value: "Montserrat" },
+  { name: "Poppins", value: "Poppins" },
+  { name: "Source Sans Pro", value: "Source Sans Pro" },
+  { name: "Nunito", value: "Nunito" },
+  { name: "Raleway", value: "Raleway" },
+  { name: "Ubuntu", value: "Ubuntu" },
+];
+
 export default function NutritionistSettingsModal({
   open,
   onClose,
   user,
   onLogoChange,
 }: Props) {
-  const { customColors, updateColors } = useTheme();
+  const { customColors, customFonts, updateColors, updateFonts } = useTheme();
   const { updateLogo } = useLogo();
   const [tabValue, setTabValue] = useState(0);
   const [logoPreview, setLogoPreview] = useState<string | undefined>(
@@ -87,6 +111,14 @@ export default function NutritionistSettingsModal({
     message: "",
     severity: "info",
   });
+  const [showCustomFont, setShowCustomFont] = useState(false);
+  const [customFontName, setCustomFontName] = useState("");
+  const [customFontError, setCustomFontError] = useState<string | null>(null);
+  const [customFontsLoaded, setCustomFontsLoaded] = useState<string[]>(() => {
+    const saved = localStorage.getItem("customFontsLoaded");
+    return saved ? JSON.parse(saved) : [];
+  });
+  const [logoFile, setLogoFile] = useState<File | null>(null);
 
   const validateLogo = (file: File): string | null => {
     if (!file) return "Nenhum arquivo selecionado";
@@ -123,6 +155,7 @@ export default function NutritionistSettingsModal({
 
     setLogoError(null);
     setLogoUploading(true);
+    setLogoFile(file);
 
     try {
       const reader = new FileReader();
@@ -191,13 +224,121 @@ export default function NutritionistSettingsModal({
     setTabValue(newValue);
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
+    try {
+      const formData = new FormData();
+
+      // Adiciona as configurações como JSON
+      formData.append(
+        "settings",
+        JSON.stringify({
+          customColors: {
+            primary: customColors.primary,
+            secondary: customColors.secondary,
+            accent: customColors.accent,
+          },
+          customFonts: {
+            primary: customFonts.primary,
+            secondary: customFonts.secondary,
+          },
+        })
+      );
+
+      // Se houver um novo logo, adiciona ao FormData
+      if (logoFile) {
+        formData.append("logo", logoFile);
+      }
+
+      await api.patch(`/nutritionists/${user?.id}/settings`, formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      });
+
+      setSnackbar({
+        open: true,
+        message: "Configurações salvas com sucesso!",
+        severity: "success",
+      });
+
+      onClose();
+    } catch (error) {
+      console.error("Erro ao salvar configurações:", error);
+      setSnackbar({
+        open: true,
+        message: "Erro ao salvar configurações",
+        severity: "error",
+      });
+    }
+  };
+
+  const handleFontChange = (type: "primary" | "secondary", value: string) => {
+    updateFonts({ ...customFonts, [type]: value });
     setSnackbar({
       open: true,
-      message: "Configurações salvas com sucesso!",
+      message: "Fonte atualizada com sucesso!",
       severity: "success",
     });
-    onClose();
+  };
+
+  // Função para carregar uma fonte do Google Fonts
+  const loadGoogleFont = (fontName: string): Promise<void> => {
+    return new Promise((resolve, reject) => {
+      const fontLink = document.createElement("link");
+      fontLink.rel = "stylesheet";
+      fontLink.href = `https://fonts.googleapis.com/css2?family=${fontName.replace(
+        /\s+/g,
+        "+"
+      )}:wght@400;500;600;700&display=swap`;
+
+      fontLink.onload = () => {
+        // Adiciona a fonte à lista de fontes carregadas
+        const updatedFonts = [...customFontsLoaded, fontName];
+        setCustomFontsLoaded(updatedFonts);
+        localStorage.setItem("customFontsLoaded", JSON.stringify(updatedFonts));
+        resolve();
+      };
+
+      fontLink.onerror = () => {
+        reject(new Error("Fonte não encontrada"));
+      };
+
+      document.head.appendChild(fontLink);
+    });
+  };
+
+  // Carregar fontes personalizadas ao iniciar
+  useEffect(() => {
+    const loadSavedFonts = async () => {
+      for (const font of customFontsLoaded) {
+        try {
+          await loadGoogleFont(font);
+        } catch (error) {
+          console.error(`Erro ao carregar fonte ${font}:`, error);
+        }
+      }
+    };
+
+    loadSavedFonts();
+  }, []);
+
+  const handleCustomFontSubmit = async (type: "primary" | "secondary") => {
+    if (!customFontName.trim()) {
+      setCustomFontError("Digite o nome da fonte");
+      return;
+    }
+
+    try {
+      const fontName = customFontName.trim();
+      await loadGoogleFont(fontName);
+
+      handleFontChange(type, fontName);
+      setCustomFontName("");
+      setShowCustomFont(false);
+      setCustomFontError(null);
+    } catch (error) {
+      setCustomFontError("Fonte não encontrada no Google Fonts");
+    }
   };
 
   // Preview das cores
@@ -246,6 +387,40 @@ export default function NutritionistSettingsModal({
       </Box>
     </Box>
   );
+
+  // Carregar configurações ao abrir o modal
+  useEffect(() => {
+    const loadSettings = async () => {
+      if (!user?.id) return;
+
+      try {
+        const response = await api.get(`/nutritionists/${user.id}/settings`);
+        const settings = response.data;
+
+        if (settings.customColors) {
+          updateColors(settings.customColors);
+        }
+        if (settings.customFonts) {
+          updateFonts(settings.customFonts);
+        }
+        if (settings.logoUrl) {
+          setLogoPreview(settings.logoUrl);
+          updateLogo(settings.logoUrl);
+        }
+      } catch (error: unknown) {
+        console.error("Erro ao carregar configurações:", error);
+        setSnackbar({
+          open: true,
+          message: "Erro ao carregar configurações",
+          severity: "error",
+        });
+      }
+    };
+
+    if (open) {
+      loadSettings();
+    }
+  }, [open, user?.id]);
 
   return (
     <Modal open={open} onClose={onClose}>
@@ -569,6 +744,173 @@ export default function NutritionistSettingsModal({
                     </Typography>
                   </Box>
                 ))}
+              </Box>
+            </Box>
+
+            {/* Fontes */}
+            <Box sx={{ mt: 4 }}>
+              <Box
+                sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1 }}
+              >
+                <Typography variant="subtitle2" color="text.secondary">
+                  Fontes
+                </Typography>
+                <Tooltip title="Personalize as fontes da sua clínica">
+                  <InfoIcon fontSize="small" color="action" />
+                </Tooltip>
+              </Box>
+
+              <Box sx={{ display: "flex", gap: 2, mb: 2 }}>
+                <FormControl fullWidth>
+                  <InputLabel>Fonte Principal</InputLabel>
+                  <Select
+                    value={customFonts.primary}
+                    label="Fonte Principal"
+                    onChange={(e) =>
+                      handleFontChange("primary", e.target.value)
+                    }
+                  >
+                    {availableFonts.map((font) => (
+                      <MenuItem
+                        key={font.value}
+                        value={font.value}
+                        sx={{ fontFamily: font.value }}
+                      >
+                        {font.name}
+                      </MenuItem>
+                    ))}
+                    <MenuItem
+                      value="custom"
+                      onClick={() => setShowCustomFont(true)}
+                      sx={{ color: "primary.main" }}
+                    >
+                      <Box
+                        sx={{ display: "flex", alignItems: "center", gap: 1 }}
+                      >
+                        <SearchIcon fontSize="small" />
+                        Buscar outra fonte...
+                      </Box>
+                    </MenuItem>
+                  </Select>
+                </FormControl>
+
+                <FormControl fullWidth>
+                  <InputLabel>Fonte Secundária</InputLabel>
+                  <Select
+                    value={customFonts.secondary}
+                    label="Fonte Secundária"
+                    onChange={(e) =>
+                      handleFontChange("secondary", e.target.value)
+                    }
+                  >
+                    {availableFonts.map((font) => (
+                      <MenuItem
+                        key={font.value}
+                        value={font.value}
+                        sx={{ fontFamily: font.value }}
+                      >
+                        {font.name}
+                      </MenuItem>
+                    ))}
+                    <MenuItem
+                      value="custom"
+                      onClick={() => setShowCustomFont(true)}
+                      sx={{ color: "primary.main" }}
+                    >
+                      <Box
+                        sx={{ display: "flex", alignItems: "center", gap: 1 }}
+                      >
+                        <SearchIcon fontSize="small" />
+                        Buscar outra fonte...
+                      </Box>
+                    </MenuItem>
+                  </Select>
+                </FormControl>
+              </Box>
+
+              {/* Campo de busca personalizada */}
+              <Collapse in={showCustomFont}>
+                <Box
+                  sx={{
+                    mt: 2,
+                    p: 2,
+                    bgcolor: "background.default",
+                    borderRadius: 1,
+                  }}
+                >
+                  <Typography variant="subtitle2" gutterBottom>
+                    Buscar Fonte no Google Fonts
+                  </Typography>
+                  <Typography
+                    variant="body2"
+                    color="text.secondary"
+                    sx={{ mb: 2 }}
+                  >
+                    Digite o nome exato da fonte como aparece no Google Fonts.
+                    <Link
+                      href="https://fonts.google.com"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      sx={{ ml: 1 }}
+                    >
+                      Ver todas as fontes disponíveis
+                    </Link>
+                  </Typography>
+
+                  <Box sx={{ display: "flex", gap: 2 }}>
+                    <TextField
+                      fullWidth
+                      size="small"
+                      label="Nome da fonte"
+                      value={customFontName}
+                      onChange={(e) => {
+                        setCustomFontName(e.target.value);
+                        setCustomFontError(null);
+                      }}
+                      error={!!customFontError}
+                      helperText={customFontError}
+                      placeholder="Ex: Playfair Display"
+                    />
+                    <Button
+                      variant="contained"
+                      onClick={() => handleCustomFontSubmit("primary")}
+                      disabled={!customFontName.trim()}
+                    >
+                      Aplicar
+                    </Button>
+                  </Box>
+                </Box>
+              </Collapse>
+
+              {/* Preview das fontes */}
+              <Box
+                sx={{
+                  p: 2,
+                  borderRadius: 1,
+                  bgcolor: "background.default",
+                  border: "1px solid",
+                  borderColor: "divider",
+                }}
+              >
+                <Typography variant="subtitle2" gutterBottom>
+                  Preview
+                </Typography>
+                <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+                  <Typography
+                    variant="h4"
+                    sx={{ fontFamily: customFonts.primary }}
+                  >
+                    Título Principal
+                  </Typography>
+                  <Typography
+                    variant="body1"
+                    sx={{ fontFamily: customFonts.secondary }}
+                  >
+                    Este é um exemplo de texto usando a fonte secundária. Aqui
+                    você pode ver como o texto ficará em parágrafos e conteúdos
+                    mais longos.
+                  </Typography>
+                </Box>
               </Box>
             </Box>
           </TabPanel>

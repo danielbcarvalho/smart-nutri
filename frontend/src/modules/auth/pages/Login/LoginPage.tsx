@@ -129,6 +129,26 @@ export function Login() {
         JSON.stringify(response.nutritionist)
       );
 
+      // Atualizar tema e logo
+      if (response.nutritionist.customColors) {
+        localStorage.setItem(
+          "customColors",
+          JSON.stringify(response.nutritionist.customColors)
+        );
+      }
+      if (response.nutritionist.customFonts) {
+        localStorage.setItem(
+          "customFonts",
+          JSON.stringify(response.nutritionist.customFonts)
+        );
+      }
+      if (response.nutritionist.logoUrl) {
+        localStorage.setItem("@smartnutri:logo", response.nutritionist.logoUrl);
+      }
+
+      // Disparar evento personalizado para atualizar o tema
+      window.dispatchEvent(new Event("userLogin"));
+
       const state = location.state as LocationState;
       const redirectPath = state?.from || "/";
 

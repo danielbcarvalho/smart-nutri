@@ -147,22 +147,8 @@ export const calculateAnthropometricResults = ({
 
   // Análises por dobras cutâneas
   if (skinfolds) {
-    console.log("1. Iniciando análise de dobras:", {
-      skinfolds,
-      skinfoldFormula,
-      gender: validGender,
-      age,
-      rawSkinfolds: JSON.stringify(skinfolds),
-    });
-
     // Obtém a fórmula selecionada
     const formula = bodyDensityFormulas.find((f) => f.id === skinfoldFormula);
-    console.log("2. Fórmula encontrada:", {
-      formulaId: formula?.id,
-      formulaName: formula?.name,
-      requiredSkinfolds: formula?.requiredSkinfolds,
-      genderSupport: formula?.genderSupport,
-    });
 
     if (formula) {
       // Verifica se todas as dobras necessárias estão presentes e válidas
@@ -178,39 +164,14 @@ export const calculateAnthropometricResults = ({
           ? formula.getRequiredSkinfolds(validGender)
           : formula.requiredSkinfolds;
 
-      console.log("3. Dobras necessárias para o gênero:", {
-        gender: validGender,
-        requiredSkinfolds: requiredSkinfoldsForGender,
-        formulaId: formula.id,
-        allSkinfolds: Object.keys(skinfolds),
-        age,
-      });
-
       const hasAllRequiredSkinfolds = requiredSkinfoldsForGender.every(
         (fold) => {
           const value = skinfolds[fold as keyof typeof skinfolds];
           const isValid = !isNaN(value) && value > 0;
-          console.log("4. Verificando dobra:", {
-            fold,
-            value,
-            rawValue: skinfolds[fold as keyof typeof skinfolds],
-            type: typeof value,
-            isValid,
-          });
+
           return isValid;
         }
       );
-
-      console.log("5. Validação das dobras:", {
-        hasAllRequiredSkinfolds,
-        requiredSkinfoldsForGender,
-        gender: validGender,
-        allSkinfolds: Object.entries(skinfolds).map(([key, value]) => ({
-          key,
-          value,
-          type: typeof value,
-        })),
-      });
 
       if (hasAllRequiredSkinfolds) {
         // Converte as dobras para o formato esperado
@@ -220,7 +181,6 @@ export const calculateAnthropometricResults = ({
             skinfoldValues[key] = String(value);
           }
         });
-        console.log("6. Dobras convertidas para cálculo:", skinfoldValues);
 
         // Cálculo da densidade corporal
         const { density, referenceUsed, ageWarning } = calculateBodyDensity(
@@ -231,12 +191,6 @@ export const calculateAnthropometricResults = ({
           validWeight,
           validHeight
         );
-        console.log("7. Resultado densidade:", {
-          density,
-          referenceUsed,
-          ageWarning,
-          isValid: density > 0,
-        });
 
         if (density > 0) {
           results.bodyDensity = density.toFixed(3);
@@ -247,12 +201,6 @@ export const calculateAnthropometricResults = ({
 
           // Cálculo do percentual de gordura usando a equação de Siri
           const bodyFatPercentage = calculateBodyFatPercentage(density);
-          console.log("8. Percentual de gordura:", {
-            density,
-            bodyFatPercentage,
-            isValid: !isNaN(bodyFatPercentage) && bodyFatPercentage > 0,
-          });
-          results.bodyFatPercentage = `${bodyFatPercentage.toFixed(1)}%`;
 
           // Classificação do percentual de gordura
           results.bodyFatClassification = getBodyFatClassification(
