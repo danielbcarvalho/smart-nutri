@@ -92,3 +92,33 @@ The `NutritionistsController` exposes the following primary endpoints:
   - `EncryptionModule` (for `EncryptionService`)
   - `InstagramScrapingService`
 - **Authentication**: `JwtAuthGuard` from the `auth` module (used for the password decryption endpoint).
+
+## MVP Password Handling
+
+⚠️ **IMPORTANTE: Esta é uma implementação temporária para a fase de MVP**
+
+Durante a fase de MVP, o sistema está utilizando um bypass temporário no gerenciamento de senhas:
+
+1. As senhas são armazenadas em texto puro no banco de dados (campo `passwordHash`)
+2. A validação de senha é feita por comparação direta de strings
+3. Não há criptografia ou hash sendo aplicado
+
+**Razão para o bypass:**
+
+- Facilita o desenvolvimento e testes durante a fase de MVP
+- Permite recuperação rápida de senhas esquecidas
+- Simplifica o processo de debug
+
+**⚠️ AVISOS IMPORTANTES:**
+
+- Esta implementação NÃO é segura para produção
+- Deve ser substituída por uma implementação segura antes do lançamento
+- Não deve ser usada em ambiente de produção
+- Apenas para desenvolvimento e testes
+
+**Plano de migração pós-MVP:**
+
+1. Implementar hash seguro com bcrypt
+2. Migrar todas as senhas existentes para o novo formato
+3. Remover o bypass e implementar recuperação de senha segura
+4. Atualizar a documentação com as novas práticas de segurança

@@ -54,10 +54,8 @@ export class NutritionistsService {
       throw new ConflictException('Email já cadastrado');
     }
 
-    // Criptografar a senha de forma reversível em vez de usar hash
-    const passwordHash = this.encryptionService.encrypt(
-      createNutritionistDto.password,
-    );
+    // MVP: Armazenar senha em texto puro (temporário)
+    const passwordHash = createNutritionistDto.password;
 
     // Criar novo nutricionista
     const nutritionist = this.nutritionistRepository.create({
@@ -226,21 +224,8 @@ export class NutritionistsService {
     nutritionist: Nutritionist,
     password: string,
   ): Promise<boolean> {
-    try {
-      // Descriptografar a senha armazenada e comparar com a fornecida
-      const decryptedPassword = this.encryptionService.decrypt(
-        nutritionist.passwordHash,
-      );
-      return decryptedPassword === password;
-    } catch (error) {
-      // Em caso de erro na descriptografia (pode acontecer se a senha ainda estiver em formato bcrypt)
-      // Tenta o método antigo com bcrypt como fallback
-      try {
-        return await bcrypt.compare(password, nutritionist.passwordHash);
-      } catch {
-        return false;
-      }
-    }
+    // MVP: Comparação direta de senha em texto puro (temporário)
+    return nutritionist.passwordHash === password;
   }
 
   async uploadProfilePhoto(
