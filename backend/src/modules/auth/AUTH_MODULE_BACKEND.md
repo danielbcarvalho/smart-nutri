@@ -86,11 +86,13 @@ backend/src/modules/auth/
   - Validates credentials
   - Generates JWT tokens
   - Returns user information and access token
+  - Handles user logout
 
 ### Controllers
 
 - **`AuthController`**:
   - Exposes the login endpoint (`POST /auth/login`)
+  - Exposes the logout endpoint (`POST /auth/logout`)
   - Uses `LoginDto` for request validation
   - Returns JWT token and user information
 
@@ -122,6 +124,47 @@ Authenticates a user and returns a JWT token.
 }
 ```
 
+### POST /auth/logout
+
+Logs out a user by invalidating their session.
+
+**Headers**:
+
+- `Authorization: Bearer <token>`
+
+**Response**:
+
+```typescript
+{
+  message: string; // "Logout realizado com sucesso"
+}
+```
+
+### POST /auth/admin/logout-nutritionist/:email
+
+Força o logout de um nutricionista específico (endpoint administrativo).
+
+**URL Parameters**:
+
+- `email`: Email do nutricionista
+
+**Response**:
+
+```typescript
+{
+  message: string; // "Logout forçado realizado com sucesso para o nutricionista {nome}"
+  nutritionist: {
+    id: string;
+    name: string;
+    email: string;
+  }
+}
+```
+
+**Error Responses**:
+
+- `404 Not Found`: Quando o nutricionista não é encontrado
+
 ## Authentication Flow
 
 1. User sends login request with credentials
@@ -130,6 +173,13 @@ Authenticates a user and returns a JWT token.
 4. If valid, generates JWT token with user information
 5. Returns token and user details
 6. Client includes token in subsequent requests
+
+## Logout Flow
+
+1. User sends logout request with valid JWT token
+2. `AuthController` receives request and calls `authService.logout()`
+3. Client removes the JWT token from storage
+4. User is logged out and needs to authenticate again for protected routes
 
 ## Authorization Flow
 
@@ -142,10 +192,12 @@ Authenticates a user and returns a JWT token.
 ## Security Considerations
 
 1. JWT tokens are signed with a secure secret key
-2. Tokens have expiration time
+2. Tokens have expiration time (30 days)
 3. Role-based access control for all protected routes
 4. Password hashing for secure storage
 5. Input validation using DTOs
+6. Logout requires valid JWT token
+7. Client-side token removal on logout
 
 ## Usage Example
 
@@ -186,3 +238,5 @@ export class EnergyPlanController {
 6. Handle authentication errors gracefully
 7. Log authentication attempts
 8. Implement rate limiting for login attempts
+9. Remove tokens on client-side logout
+10. Use secure token storage on client
