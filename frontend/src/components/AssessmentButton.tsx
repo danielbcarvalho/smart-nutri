@@ -30,13 +30,13 @@ export function AssessmentButton({
       startIcon={<AssessmentIcon />}
       onClick={handleClick}
       sx={{
-        fontSize: "0.75rem",
+        fontSize: (theme) => theme.typography.caption.fontSize,
         py: 0.5,
-        borderColor: "success.main",
-        color: "success.main",
+        borderColor: "primary.main",
+        color: "primary.main",
         "&:hover": {
-          borderColor: "success.dark",
-          bgcolor: "success.lighter",
+          borderColor: "primary.dark",
+          bgcolor: "primary.light",
         },
         ...props.sx,
       }}

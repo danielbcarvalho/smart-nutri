@@ -29,6 +29,7 @@ import { EditProfileModal } from "../Modals/NutritionistEditProfileModal";
 import NotificationsModal from "../Modals/NotificationsModal";
 import AiModal from "../Modals/AiModal";
 import ProfileModal from "../Modals/NutritionistProfileModal";
+import { useLogo } from "../../contexts/LogoContext";
 import {
   authService,
   Nutritionist,
@@ -45,6 +46,7 @@ export const HeaderGlobal = ({
   drawerTitle,
 }: HeaderGlobalProps) => {
   const navigate = useNavigate();
+  const { logoUrl } = useLogo();
   const [searchOpen, setSearchOpen] = useState(false);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
@@ -168,7 +170,7 @@ export const HeaderGlobal = ({
                 onClick={() => navigate("/")}
               >
                 <img
-                  src="/images/logo.png"
+                  src={logoUrl}
                   alt="Smart Nutri"
                   style={{ height: 40, width: "auto", display: "block" }}
                 />

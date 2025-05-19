@@ -1,8 +1,6 @@
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { ThemeProvider } from "@mui/material/styles";
 import CssBaseline from "@mui/material/CssBaseline";
-import { theme } from "./theme/index";
 import ErrorSnackbar from "./components/ErrorHandling/ErrorSnackbar";
 import { Layout } from "./layouts/Layout";
 import { PatientLayout } from "./layouts/PatientLayout";
@@ -21,6 +19,8 @@ import { MealPlan } from "./modules/meal-plan/pages/MealPlansListPage";
 import { MealPlanDetails } from "./modules/meal-plan/pages/MealPlanDetails/MealPlanDetailsPage";
 import EnergyPlanPage from "@/modules/energy-plan/pages/EnergyPlanListPage";
 import EnergyPlanMain from "@/modules/energy-plan/pages/EnergyPlanDetailsPage";
+import { ThemeProvider } from "./theme/ThemeContext";
+import { LogoProvider } from "./contexts/LogoContext";
 
 // Placeholder components
 const DocumentsPlaceholder = () => (
@@ -182,13 +182,15 @@ const router = createBrowserRouter([
 
 function App() {
   return (
-    <QueryClientProvider client={queryClient}>
-      <ThemeProvider theme={theme}>
-        <CssBaseline />
-        <ErrorSnackbar />
-        <RouterProvider router={router} />
-      </ThemeProvider>
-    </QueryClientProvider>
+    <ThemeProvider>
+      <QueryClientProvider client={queryClient}>
+        <LogoProvider>
+          <CssBaseline />
+          <ErrorSnackbar />
+          <RouterProvider router={router} />
+        </LogoProvider>
+      </QueryClientProvider>
+    </ThemeProvider>
   );
 }
 

@@ -9,7 +9,7 @@ export const LoadingBackdrop: React.FC<LoadingBackdropProps> = ({ open }) => {
   return (
     <Backdrop
       sx={{
-        color: "#fff",
+        color: "background.paper",
         zIndex: (theme) => theme.zIndex.drawer + 1,
       }}
       open={open}

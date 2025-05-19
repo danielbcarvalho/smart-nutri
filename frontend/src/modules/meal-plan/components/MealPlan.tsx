@@ -161,8 +161,8 @@ export function MealPlan() {
                 size={isMobile ? "large" : "small"}
                 fullWidth={isMobile}
                 sx={{
-                  borderColor: "custom.main",
-                  color: "custom.main",
+                  borderColor: "custom.primary",
+                  color: "custom.primary",
                   fontWeight: 600,
                   fontSize: { xs: "1rem", sm: "0.95rem" },
                   "&:hover": {
@@ -178,8 +178,8 @@ export function MealPlan() {
                 size={isMobile ? "large" : "small"}
                 fullWidth={isMobile}
                 sx={{
-                  borderColor: "custom.main",
-                  color: "custom.main",
+                  borderColor: "custom.primary",
+                  color: "custom.primary",
                   fontWeight: 600,
                   fontSize: { xs: "1rem", sm: "0.95rem" },
                   "&:hover": {
@@ -227,7 +227,7 @@ export function MealPlan() {
                       size="small"
                       sx={{
                         color: "text.secondary",
-                        "&:hover": { color: "custom.main" },
+                        "&:hover": { color: "custom.primary" },
                       }}
                     >
                       <ExpandMoreIcon fontSize="small" />
@@ -296,7 +296,7 @@ export function MealPlan() {
                         size="small"
                         sx={{
                           color: "text.secondary",
-                          "&:hover": { color: "custom.main" },
+                          "&:hover": { color: "custom.primary" },
                         }}
                       >
                         <EditIcon fontSize="small" />
@@ -305,7 +305,7 @@ export function MealPlan() {
                         size="small"
                         sx={{
                           color: "text.secondary",
-                          "&:hover": { color: "custom.main" },
+                          "&:hover": { color: "custom.primary" },
                         }}
                       >
                         <CopyIcon fontSize="small" />
@@ -334,8 +334,8 @@ export function MealPlan() {
             size={isMobile ? "large" : "medium"}
             sx={{
               mt: 2,
-              borderColor: "custom.main",
-              color: "custom.main",
+              borderColor: "custom.primary",
+              color: "custom.primary",
               fontWeight: 600,
               fontSize: { xs: "1rem", sm: "0.95rem" },
               "&:hover": {
@@ -401,7 +401,7 @@ export function MealPlan() {
                       fontSize: { xs: "1rem", sm: "0.95rem" },
                       "&.Mui-selected": {
                         bgcolor: "custom.lightest",
-                        color: "custom.main",
+                        color: "custom.primary",
                         "&:hover": {
                           bgcolor: "custom.lightest",
                         },
@@ -417,7 +417,7 @@ export function MealPlan() {
                       fontSize: { xs: "1rem", sm: "0.95rem" },
                       "&.Mui-selected": {
                         bgcolor: "custom.lightest",
-                        color: "custom.main",
+                        color: "custom.primary",
                         "&:hover": {
                           bgcolor: "custom.lightest",
                         },
@@ -433,7 +433,7 @@ export function MealPlan() {
                       fontSize: { xs: "1rem", sm: "0.95rem" },
                       "&.Mui-selected": {
                         bgcolor: "custom.lightest",
-                        color: "custom.main",
+                        color: "custom.primary",
                         "&:hover": {
                           bgcolor: "custom.lightest",
                         },
@@ -450,7 +450,7 @@ export function MealPlan() {
                 fullWidth={isMobile}
                 size={isMobile ? "large" : "medium"}
                 sx={{
-                  bgcolor: "custom.main",
+                  bgcolor: "custom.primary",
                   color: "common.white",
                   fontWeight: 600,
                   fontSize: { xs: "1rem", sm: "1rem" },

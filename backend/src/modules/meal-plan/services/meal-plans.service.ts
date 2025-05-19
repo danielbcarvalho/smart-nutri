@@ -92,17 +92,6 @@ export class MealPlansService {
       throw new NotFoundException(`Meal plan with ID ${id} not found`);
     }
 
-    this.logger.log('✅ [MealPlansService] Plano encontrado:', {
-      id,
-      energyPlanId: mealPlan.energyPlanId,
-      energyPlan: mealPlan.energyPlan
-        ? {
-            id: mealPlan.energyPlan.id,
-            name: mealPlan.energyPlan.name,
-          }
-        : null,
-    });
-
     return mealPlan;
   }
 
@@ -114,7 +103,6 @@ export class MealPlansService {
     try {
       await this.patientsService.findOne(patientId, nutritionistId);
     } catch (error) {
-      console.log('🚀 ~ meal-plans.service.ts:84 ~ error 🚀🚀🚀:', error);
       if (error instanceof NotFoundException) {
         return [];
       }

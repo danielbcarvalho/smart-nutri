@@ -121,6 +121,317 @@ Componentes reutilizáveis (UI, botões, modais, etc) ficam em `src/components/`
   import { PatientFormModal } from "@components/PatientForm/PatientFormModal";
   ```
 
+## Design System
+
+O SmartNutri possui um design system consistente e reutilizável, disponível através de componentes pré-configurados.
+
+### Componentes Base
+
+#### Tipografia
+
+| Componente   | Variante | Uso                          |
+| ------------ | -------- | ---------------------------- |
+| PageTitle    | h4       | Títulos principais de página |
+| SectionTitle | h5       | Títulos de seções            |
+| CardTitle    | h6       | Títulos de cards             |
+| BodyText     | body1    | Texto principal              |
+| Caption      | caption  | Textos secundários           |
+
+Exemplo de uso:
+
+```tsx
+<DesignSystemTypography variant="pageTitle">
+  Título da Página
+</DesignSystemTypography>
+```
+
+#### Botões
+
+| Variante  | Uso               | Ícones |
+| --------- | ----------------- | ------ |
+| Primary   | Ações principais  | ✅     |
+| Secondary | Ações secundárias | ✅     |
+| Text      | Ações terciárias  | ✅     |
+| Icon      | Ações com ícone   | ✅     |
+
+Exemplo de uso:
+
+```tsx
+// Botão básico
+<DesignSystemButton variant="primary">Botão Principal</DesignSystemButton>
+
+// Botão com ícone no início
+<DesignSystemButton
+  variant="primary"
+  startIcon={<AddIcon />}
+>
+  Novo Item
+</DesignSystemButton>
+
+// Botão com ícone no final
+<DesignSystemButton
+  variant="secondary"
+  endIcon={<ArrowForwardIcon />}
+>
+  Próximo
+</DesignSystemButton>
+
+// Botão apenas com ícone
+<DesignSystemButton variant="icon">
+  <SearchIcon />
+</DesignSystemButton>
+```
+
+#### Cards
+
+O design system inclui um componente de Card padronizado com diferentes variantes e suporte a título, subtítulo e ações.
+
+| Variante | Descrição                    |
+| -------- | ---------------------------- |
+| default  | Card padrão com sombra suave |
+| elevated | Card com sombra pronunciada  |
+| outlined | Card com borda, sem sombra   |
+
+Exemplo de uso:
+
+```tsx
+// Card básico
+<DesignSystemCard variant="default">
+  <DesignSystemTypography variant="cardTitle">
+    Título do Card
+  </DesignSystemTypography>
+  <DesignSystemTypography variant="bodyText">
+    Conteúdo do card
+  </DesignSystemTypography>
+</DesignSystemCard>
+
+// Card com título, subtítulo e ações
+<DesignSystemCard
+  variant="default"
+  title={
+    <DesignSystemTypography variant="cardTitle">
+      Título do Card
+    </DesignSystemTypography>
+  }
+  subtitle={
+    <DesignSystemTypography variant="caption">
+      Subtítulo do card
+    </DesignSystemTypography>
+  }
+  actions={
+    <>
+      <DesignSystemButton variant="icon">
+        <EditIcon />
+      </DesignSystemButton>
+      <DesignSystemButton variant="icon">
+        <DeleteIcon />
+      </DesignSystemButton>
+    </>
+  }
+>
+  <DesignSystemTypography variant="bodyText">
+    Conteúdo do card
+  </DesignSystemTypography>
+</DesignSystemCard>
+```
+
+#### Formulários
+
+##### Input
+
+O componente `DesignSystemInput` é uma extensão do TextField do Material-UI com estilos padronizados.
+
+| Variante | Descrição                  |
+| -------- | -------------------------- |
+| default  | Input com borda suave      |
+| filled   | Input com fundo preenchido |
+| outlined | Input com borda definida   |
+
+Exemplo de uso:
+
+```tsx
+// Input básico
+<DesignSystemInput
+  label="Nome"
+  placeholder="Digite seu nome"
+/>
+
+// Input com ícone
+<DesignSystemInput
+  label="Buscar"
+  placeholder="Digite para buscar..."
+  startIcon={<SearchIcon />}
+/>
+
+// Input com variante
+<DesignSystemInput
+  variant="filled"
+  label="Email"
+  placeholder="Digite seu email"
+/>
+```
+
+##### Select
+
+O componente `DesignSystemSelect` é uma extensão do Select do Material-UI com estilos padronizados.
+
+| Variante | Descrição                   |
+| -------- | --------------------------- |
+| default  | Select com borda suave      |
+| filled   | Select com fundo preenchido |
+| outlined | Select com borda definida   |
+
+Exemplo de uso:
+
+```tsx
+// Select básico
+<DesignSystemSelect
+  label="Selecione uma opção"
+  options={[
+    { value: "1", label: "Opção 1" },
+    { value: "2", label: "Opção 2" },
+    { value: "3", label: "Opção 3" },
+  ]}
+/>
+
+// Select com variante
+<DesignSystemSelect
+  variant="filled"
+  label="Selecione uma opção"
+  options={[
+    { value: "1", label: "Opção 1" },
+    { value: "2", label: "Opção 2" },
+    { value: "3", label: "Opção 3" },
+  ]}
+/>
+```
+
+#### Feedback
+
+##### Snackbar
+
+O componente `DesignSystemSnackbar` é uma extensão do Snackbar do Material-UI com estilos padronizados.
+
+| Variante | Descrição                      |
+| -------- | ------------------------------ |
+| default  | Snackbar com fundo padrão      |
+| success  | Snackbar com cor de sucesso    |
+| error    | Snackbar com cor de erro       |
+| warning  | Snackbar com cor de alerta     |
+| info     | Snackbar com cor de informação |
+
+Exemplo de uso:
+
+```tsx
+// Snackbar básico
+<DesignSystemSnackbar
+  open={open}
+  message="Operação realizada com sucesso!"
+  onClose={() => setOpen(false)}
+/>
+
+// Snackbar com variante e severidade
+<DesignSystemSnackbar
+  variant="success"
+  severity="success"
+  open={open}
+  message="Operação realizada com sucesso!"
+  onClose={() => setOpen(false)}
+  autoHideDuration={3000}
+/>
+```
+
+### Preview do Design System
+
+O preview do design system está disponível no modal de configurações do nutricionista, na aba "Design System". Lá você pode:
+
+1. Visualizar todos os componentes disponíveis
+2. Testar diferentes variantes
+3. Ver exemplos de uso
+4. Verificar a consistência visual
+
+### Boas Práticas
+
+1. **Sempre use os componentes do design system**
+
+   - Evite criar novos componentes semelhantes
+   - Mantenha a consistência visual
+
+2. **Tipografia**
+
+   - Use as variantes apropriadas para cada contexto
+   - Mantenha a hierarquia visual
+   - Evite estilos customizados
+
+3. **Botões**
+
+   - Use a variante correta para cada ação
+   - Mantenha a consistência de interação
+   - Evite customizações desnecessárias
+
+4. **Formulários**
+
+   - Use os componentes de input e select padronizados
+   - Mantenha a consistência visual entre campos
+   - Utilize ícones quando apropriado
+
+5. **Feedback**
+   - Use o Snackbar para mensagens temporárias
+   - Escolha a variante apropriada para cada tipo de mensagem
+   - Mantenha mensagens claras e concisas
+
+### Exemplos de Uso
+
+```tsx
+// Página com título e seções
+<DesignSystemTypography variant="pageTitle">
+  Meus Pacientes
+</DesignSystemTypography>
+
+<DesignSystemTypography variant="sectionTitle">
+  Pacientes Recentes
+</DesignSystemTypography>
+
+<DesignSystemTypography variant="bodyText">
+  Lista de pacientes atendidos recentemente.
+</DesignSystemTypography>
+
+// Ações
+<DesignSystemButton variant="primary">
+  Novo Paciente
+</DesignSystemButton>
+
+<DesignSystemButton variant="secondary">
+  Editar
+</DesignSystemButton>
+
+<DesignSystemButton variant="text">
+  Cancelar
+</DesignSystemButton>
+
+// Formulário
+<DesignSystemInput
+  label="Nome do Paciente"
+  placeholder="Digite o nome"
+/>
+
+<DesignSystemSelect
+  label="Tipo de Avaliação"
+  options={[
+    { value: "anthropometric", label: "Antropométrica" },
+    { value: "nutritional", label: "Nutricional" },
+  ]}
+/>
+
+// Feedback
+<DesignSystemSnackbar
+  variant="success"
+  message="Paciente cadastrado com sucesso!"
+  open={open}
+  onClose={() => setOpen(false)}
+/>
+```
+
 ---
 
 ## Importação com Aliases (IMPORTANTE)
@@ -357,3 +668,333 @@ Para layouts responsivos, utilize CSS Grid nativo ao invés do componente Grid d
 ## Suporte
 
 Em caso de dúvidas, consulte este documento ou entre em contato com o time de desenvolvimento.
+
+# Guia de Tema e Estilização
+
+## 🎨 Sistema de Cores
+
+### Cores Personalizáveis
+
+O tema da aplicação possui 3 cores principais que podem ser personalizadas pelo nutricionista:
+
+```typescript
+customColors = {
+  primary: { main, light, dark }, // Cor principal
+  secondary: { main, light, dark }, // Cor secundária
+  accent: { main, light, dark }, // Cor de destaque
+};
+```
+
+### Cores do Sistema (Não Personalizáveis)
+
+```typescript
+systemColors = {
+  error: { main, light, dark },    // Erros e alertas
+  warning: { main, light, dark },  // Avisos
+  info: { main, light, dark },     // Informações
+  success: { main, light, dark },  // Sucesso
+  grey: { 50-900 }                 // Tons de cinza
+}
+```
+
+## 📝 Como Usar o Tema
+
+### 1. Cores
+
+#### ❌ NUNCA FAÇA ISSO:
+
+```typescript
+// ❌ Cores hardcoded
+sx={{ color: "#FF0000" }}
+sx={{ backgroundColor: "rgb(0, 0, 0)" }}
+
+// ❌ Referências antigas
+sx={{ color: "custom.main" }}
+sx={{ bgcolor: "custom.light" }}
+```
+
+#### ✅ FAÇA ASSIM:
+
+```typescript
+// ✅ Cores principais
+sx={{ color: "primary.main" }}
+sx={{ bgcolor: "primary.light" }}
+sx={{ borderColor: "primary.dark" }}
+
+// ✅ Cores do sistema
+sx={{ color: "success.main" }}
+sx={{ bgcolor: "error.light" }}
+sx={{ borderColor: "warning.dark" }}
+
+// ✅ Cores de texto
+sx={{ color: "text.primary" }}
+sx={{ color: "text.secondary" }}
+
+// ✅ Cores de fundo
+sx={{ bgcolor: "background.paper" }}
+sx={{ bgcolor: "background.default" }}
+```
+
+### 2. Tipografia
+
+#### ❌ NUNCA FAÇA ISSO:
+
+```typescript
+// ❌ Fontes hardcoded
+sx={{ fontFamily: "Arial" }}
+sx={{ fontSize: "16px" }}
+sx={{ fontWeight: "bold" }}
+```
+
+#### ✅ FAÇA ASSIM:
+
+```typescript
+// ✅ Usando variantes do tema
+<Typography variant="h1">Título</Typography>
+<Typography variant="body1">Texto</Typography>
+
+// ✅ Customizando variantes
+sx={{
+  typography: {
+    fontFamily: "theme.typography.fontFamily",
+    fontSize: "theme.typography.h6.fontSize",
+    fontWeight: "theme.typography.h6.fontWeight"
+  }
+}}
+```
+
+### 3. Sombras e Opacidade
+
+#### ❌ NUNCA FAÇA ISSO:
+
+```typescript
+// ❌ Valores hardcoded
+sx={{ boxShadow: "0px 2px 4px rgba(0,0,0,0.1)" }}
+sx={{ opacity: 0.5 }}
+```
+
+#### ✅ FAÇA ASSIM:
+
+```typescript
+// ✅ Usando alpha para opacidade
+sx={{
+  boxShadow: (theme) =>
+    `0px 2px 4px ${alpha(theme.palette.primary.main, 0.1)}`
+}}
+
+// ✅ Usando valores do tema
+sx={{
+  boxShadow: 1, // 1-24 para diferentes níveis de sombra
+  opacity: 0.8
+}}
+```
+
+## 🔍 Checklist de Refatoração
+
+Ao trabalhar em uma nova tela ou componente, verifique:
+
+1. **Cores**
+
+   - [ ] Substituir cores hexadecimais por referências do tema
+   - [ ] Usar `primary`, `secondary` ou `accent` para elementos principais
+   - [ ] Usar cores do sistema para estados (success, error, etc)
+   - [ ] Verificar hover states usando variantes light/dark
+
+2. **Tipografia**
+
+   - [ ] Usar componentes Typography com variantes apropriadas
+   - [ ] Evitar definições diretas de fonte
+   - [ ] Manter consistência com o sistema de tipografia
+
+3. **Espaçamento**
+
+   - [ ] Usar o sistema de spacing do tema (theme.spacing)
+   - [ ] Manter consistência nos gaps e margins
+
+4. **Bordas e Sombras**
+   - [ ] Usar o sistema de elevação do Material-UI
+   - [ ] Aplicar opacidade usando alpha()
+   - [ ] Manter consistência nos border-radius
+
+## 📚 Exemplos Comuns
+
+### Botões
+
+```typescript
+// Botão Primário
+<Button
+  variant="contained"
+  sx={{
+    bgcolor: "primary.main",
+    color: "primary.contrastText",
+    "&:hover": {
+      bgcolor: "primary.dark"
+    }
+  }}
+>
+  Botão
+</Button>
+
+// Botão Secundário
+<Button
+  variant="outlined"
+  sx={{
+    borderColor: "secondary.main",
+    color: "secondary.main",
+    "&:hover": {
+      borderColor: "secondary.dark",
+      bgcolor: "secondary.light"
+    }
+  }}
+>
+  Botão
+</Button>
+```
+
+### Cards
+
+O design system inclui um componente de Card padronizado com diferentes variantes e suporte a título, subtítulo e ações.
+
+#### Variantes de Card
+
+| Variante | Descrição                    |
+| -------- | ---------------------------- |
+| default  | Card padrão com sombra suave |
+| elevated | Card com sombra pronunciada  |
+| outlined | Card com borda, sem sombra   |
+
+#### Exemplo de Uso
+
+```tsx
+// Card básico
+<DesignSystemCard variant="default">
+  <DesignSystemTypography variant="cardTitle">
+    Título do Card
+  </DesignSystemTypography>
+  <DesignSystemTypography variant="bodyText">
+    Conteúdo do card
+  </DesignSystemTypography>
+</DesignSystemCard>
+
+// Card com título, subtítulo e ações
+<DesignSystemCard
+  variant="default"
+  title={
+    <DesignSystemTypography variant="cardTitle">
+      Título do Card
+    </DesignSystemTypography>
+  }
+  subtitle={
+    <DesignSystemTypography variant="caption">
+      Subtítulo do card
+    </DesignSystemTypography>
+  }
+  actions={
+    <>
+      <DesignSystemButton variant="icon">
+        <EditIcon />
+      </DesignSystemButton>
+      <DesignSystemButton variant="icon">
+        <DeleteIcon />
+      </DesignSystemButton>
+    </>
+  }
+>
+  <DesignSystemTypography variant="bodyText">
+    Conteúdo do card
+  </DesignSystemTypography>
+</DesignSystemCard>
+```
+
+### Inputs
+
+```typescript
+<TextField
+  sx={{
+    "& .MuiOutlinedInput-root": {
+      "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
+        borderColor: "primary.main",
+      },
+    },
+    "& .MuiInputLabel-root.Mui-focused": {
+      color: "primary.main",
+    },
+  }}
+/>
+```
+
+## 🚨 Lembre-se
+
+- SEMPRE use as cores do tema
+- NUNCA use cores hardcoded
+- Mantenha consistência visual em toda a aplicação
+- Use as variantes de cor apropriadas (main, light, dark)
+- Documente qualquer exceção ao padrão
+- Teste a aplicação com diferentes temas
+
+## 🔧 Ferramentas Úteis
+
+- Use o DevTools do navegador para inspecionar elementos
+- Utilize o ThemeProvider do Material-UI para testar diferentes temas
+- Consulte a documentação do Material-UI para mais detalhes
+
+## 💡 Alteração de Cores (Live Preview)
+
+- Ao selecionar uma nova cor no modal de configurações, a alteração é aplicada imediatamente em toda a aplicação (live preview).
+- O botão **Salvar** apenas fecha o modal e exibe uma mensagem de sucesso, pois as cores já foram atualizadas.
+- Não há necessidade de clicar em salvar para ver o efeito das novas cores.
+
+## Gerenciamento de Logo
+
+O sistema possui um gerenciamento global do logo da clínica, permitindo sua personalização e persistência entre sessões.
+
+### Contexto do Logo
+
+O logo é gerenciado através do `LogoContext`, que fornece:
+
+```typescript
+interface LogoContextType {
+  logoUrl: string; // URL do logo atual
+  updateLogo: (url: string) => void; // Função para atualizar o logo
+}
+```
+
+### Como Funciona
+
+1. **Persistência**
+
+   - O logo é armazenado no localStorage do navegador
+   - Chave de armazenamento: `@smartnutri:logo`
+   - Logo padrão: `/images/logo.png`
+
+2. **Atualização**
+
+   - O logo pode ser atualizado através do modal de configurações do nutricionista
+   - A atualização é refletida imediatamente em toda a aplicação
+   - O novo logo é persistido automaticamente no localStorage
+
+3. **Uso em Componentes**
+
+   ```typescript
+   import { useLogo } from "@contexts/LogoContext";
+
+   function MeuComponente() {
+     const { logoUrl } = useLogo();
+
+     return <img src={logoUrl} alt="Logo da clínica" />;
+   }
+   ```
+
+### Fluxo de Atualização
+
+1. Usuário faz upload do novo logo no modal de configurações
+2. O `LogoContext` atualiza o estado e o localStorage
+3. Todos os componentes que usam o `useLogo` são atualizados automaticamente
+4. O logo persiste mesmo após recarregar a página
+
+### Boas Práticas
+
+- Sempre use o `useLogo` hook para acessar o logo
+- Evite referências diretas ao arquivo `/images/logo.png`
+- Mantenha a consistência do tamanho e proporção do logo em todos os lugares
+- Valide o formato e tamanho do arquivo antes do upload (PNG ou SVG, até 2MB)

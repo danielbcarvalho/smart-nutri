@@ -134,8 +134,15 @@ export function AssessmentEvolution() {
           justifyContent="space-between"
           alignItems={{ xs: "flex-start", sm: "center" }}
           spacing={{ xs: 1, sm: 2 }}
+          mb={3}
         >
-          <Typography variant="h4" component="h1">
+          <Typography
+            variant="h5"
+            fontWeight="bold"
+            sx={{
+              color: "text.primary",
+            }}
+          >
             Evolução
           </Typography>
           <Typography variant="h6" color="text.secondary" component="p">

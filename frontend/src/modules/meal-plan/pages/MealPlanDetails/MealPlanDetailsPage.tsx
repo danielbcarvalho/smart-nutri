@@ -714,7 +714,7 @@ export function MealPlanDetails() {
             py: 1,
             fontWeight: 600,
             fontSize: 18,
-            bgcolor: "custom.main",
+            bgcolor: "custom.primary",
             borderRadius: 2,
             "&:hover": {
               bgcolor: "custom.dark",

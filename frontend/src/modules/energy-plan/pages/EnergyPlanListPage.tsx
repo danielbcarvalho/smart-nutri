@@ -31,6 +31,7 @@ import {
 import FitnessCenterIcon from "@mui/icons-material/FitnessCenter";
 import MonitorWeightIcon from "@mui/icons-material/MonitorWeight";
 import CalendarMonthIcon from "@mui/icons-material/CalendarMonth";
+import { DesignSystemButton } from "../../../components/DesignSystem/Button/ButtonVariants";
 
 const EnergyPlanPage: React.FC = () => {
   const { patientId } = useParams<{ patientId: string }>();
@@ -63,25 +64,28 @@ const EnergyPlanPage: React.FC = () => {
   };
 
   return (
-    <Box>
+    <Box sx={{ p: { xs: 1, sm: 2, md: 3 } }}>
       <Box
         sx={{
           display: "flex",
           justifyContent: "space-between",
           alignItems: "center",
-          mb: 4,
+          mb: 3,
         }}
       >
-        <Typography variant="h5" fontWeight="bold">
+        <Typography
+          variant="h5"
+          fontWeight="bold"
+          sx={{
+            color: "text.primary",
+          }}
+        >
+          {" "}
           Cálculos de energia
         </Typography>
-        <Button
-          variant="contained"
-          startIcon={<AddIcon />}
-          onClick={handleOpenCreate}
-        >
+        <DesignSystemButton startIcon={<AddIcon />} onClick={handleOpenCreate}>
           Criar Novo Plano
-        </Button>
+        </DesignSystemButton>
       </Box>
       {isLoading ? (
         <Box sx={{ display: "flex", justifyContent: "center", mt: 6 }}>
@@ -102,13 +106,6 @@ const EnergyPlanPage: React.FC = () => {
           <Typography variant="body1" color="text.secondary" sx={{ mb: 3 }}>
             Comece criando o primeiro plano energético para este paciente.
           </Typography>
-          <Button
-            variant="outlined"
-            startIcon={<AddIcon />}
-            onClick={handleOpenCreate}
-          >
-            Criar primeiro plano
-          </Button>
         </Box>
       ) : (
         <Stack spacing={2.5}>
@@ -152,7 +149,6 @@ const EnergyPlanPage: React.FC = () => {
                 elevation={1}
                 sx={{
                   borderRadius: "12px",
-                  border: "1px solid",
                   borderColor: "divider",
                   transition: "all 0.2s",
                   "&:hover": {
@@ -374,24 +370,23 @@ const EnergyPlanPage: React.FC = () => {
                     gap: 1,
                   }}
                 >
-                  <Button
+                  <DesignSystemButton
                     size="small"
-                    variant="outlined"
+                    variant="secondary"
                     startIcon={<EditIcon />}
                     onClick={() => handleEditClick(plan)}
                   >
                     Editar
-                  </Button>
-                  <Button
+                  </DesignSystemButton>
+                  <DesignSystemButton
                     size="small"
                     variant="outlined"
-                    color="error"
                     startIcon={<DeleteIcon />}
                     onClick={() => handleDeleteClick(plan)}
                     disabled={deletePlanMutation.isPending}
                   >
                     Excluir
-                  </Button>
+                  </DesignSystemButton>
                 </CardActions>
               </Card>
             );
@@ -411,15 +406,20 @@ const EnergyPlanPage: React.FC = () => {
           </DialogContentText>
         </DialogContent>
         <DialogActions sx={{ p: 2 }}>
-          <Button onClick={() => setDeleteDialogOpen(false)}>Cancelar</Button>
-          <Button
+          <DesignSystemButton
+            variant="text"
+            onClick={() => setDeleteDialogOpen(false)}
+          >
+            Cancelar
+          </DesignSystemButton>
+          <DesignSystemButton
             onClick={handleConfirmDelete}
             color="error"
             variant="contained"
             disabled={deletePlanMutation.isPending}
           >
             {deletePlanMutation.isPending ? "Excluindo..." : "Excluir"}
-          </Button>
+          </DesignSystemButton>
         </DialogActions>
       </Dialog>
     </Box>

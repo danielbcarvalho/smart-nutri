@@ -234,8 +234,8 @@ export default function ProfileModal({
                 startIcon={<SettingsIcon />}
                 fullWidth
                 sx={{
-                  borderColor: "custom.main",
-                  color: "custom.main",
+                  borderColor: "custom.primary",
+                  color: "custom.primary",
                   "&:hover": {
                     borderColor: "custom.dark",
                     bgcolor: "transparent",
@@ -252,8 +252,8 @@ export default function ProfileModal({
                 startIcon={<RefreshIcon />}
                 fullWidth
                 sx={{
-                  borderColor: "custom.main",
-                  color: "custom.main",
+                  borderColor: "custom.primary",
+                  color: "custom.primary",
                   "&:hover": {
                     borderColor: "custom.dark",
                     bgcolor: "transparent",
@@ -273,8 +273,8 @@ export default function ProfileModal({
                 startIcon={<EditIcon />}
                 fullWidth
                 sx={{
-                  borderColor: "custom.main",
-                  color: "custom.main",
+                  borderColor: "custom.primary",
+                  color: "custom.primary",
                   "&:hover": {
                     borderColor: "custom.dark",
                     bgcolor: "transparent",
