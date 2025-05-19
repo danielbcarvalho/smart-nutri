@@ -72,8 +72,8 @@ export class Nutritionist {
     secondary: string;
   };
 
-  @Column({ nullable: true, name: 'logo_url' })
-  logoUrl?: string;
+  @Column({ type: 'varchar', nullable: true, name: 'logo_url' })
+  logoUrl?: string | null;
 
   @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;

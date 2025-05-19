@@ -54,6 +54,8 @@ export class NutritionistSettingsDto {
   @ApiProperty({
     description: 'URL do logo do nutricionista',
     required: false,
+    nullable: true,
   })
-  logoUrl?: string;
+  @IsOptional()
+  logoUrl?: string | null;
 }

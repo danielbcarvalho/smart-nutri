@@ -280,65 +280,62 @@ export class NutritionistsService {
     });
 
     if (!nutritionist) {
-      throw new NotFoundException('Nutritionist not found');
+      throw new NotFoundException(
+        `Nutricionista com ID ${nutritionistId} não encontrado`,
+      );
     }
 
-    // Se houver um novo arquivo de logo
+    // Se houver um novo arquivo de logo, faz upload
     if (file) {
       const ext = file.originalname.split('.').pop();
       const filename = `logo-${Date.now()}.${ext}`;
-      const url = await this.storageService.uploadFile(
-        'logos',
-        `${nutritionistId}/${filename}`,
+      const url = await this.storageService.uploadNutritionistPhoto(
+        nutritionistId,
         file.buffer,
+        filename,
         file.mimetype,
       );
-      settings.logoUrl = url;
+      nutritionist.logoUrl = url;
+    } else if (settings.logoUrl === null) {
+      // Se logoUrl for explicitamente null, remove o logo do storage e do banco
+      if (nutritionist.logoUrl) {
+        try {
+          // Extrai o nome do arquivo da URL
+          const urlParts = nutritionist.logoUrl.split('/');
+          const filename = urlParts[urlParts.length - 1];
+          const filePath = `${nutritionistId}/${filename}`;
+
+          // Remove o arquivo do storage
+          await this.storageService.deleteFile('logos', filePath);
+        } catch (error) {
+          console.error('❌ Erro ao remover arquivo do storage:', error);
+        }
+      } else {
+        console.log('ℹ️ Nenhum logo para remover');
+      }
+      nutritionist.logoUrl = null;
     }
 
-    // Atualiza as configurações
-    if (settings.customColors) {
-      nutritionist.customColors = settings.customColors;
-    }
-    if (settings.customFonts) {
-      nutritionist.customFonts = settings.customFonts;
-    }
-    if (settings.logoUrl) {
-      nutritionist.logoUrl = settings.logoUrl;
-    }
+    // Atualiza outras configurações
+    nutritionist.customColors = settings.customColors;
+    nutritionist.customFonts = settings.customFonts;
 
     // Salva as alterações
-    await this.nutritionistRepository.save(nutritionist);
+    const savedNutritionist =
+      await this.nutritionistRepository.save(nutritionist);
 
-    // Retorna o nutricionista atualizado com as configurações
-    const updatedNutritionist = await this.nutritionistRepository.findOne({
-      where: { id: nutritionistId },
-      select: [
-        'id',
-        'name',
-        'email',
-        'phone',
-        'crn',
-        'specialties',
-        'clinicName',
-        'photoUrl',
-        'instagram',
-        'customColors',
-        'customFonts',
-        'logoUrl',
-        'createdAt',
-        'updatedAt',
-      ],
+    console.log('✅ Nutricionista atualizado:', {
+      logoUrl: savedNutritionist.logoUrl,
+      customColors: savedNutritionist.customColors,
+      customFonts: savedNutritionist.customFonts,
     });
 
-    if (!updatedNutritionist) {
-      throw new NotFoundException('Nutritionist not found after update');
-    }
-
-    return updatedNutritionist;
+    return savedNutritionist;
   }
 
   async getSettings(nutritionistId: string): Promise<NutritionistSettingsDto> {
+    console.log('🔍 Buscando configurações do nutricionista:', nutritionistId);
+
     const nutritionist = await this.nutritionistRepository.findOne({
       where: { id: nutritionistId },
     });
@@ -346,6 +343,12 @@ export class NutritionistsService {
     if (!nutritionist) {
       throw new NotFoundException('Nutritionist not found');
     }
+
+    console.log('📝 Configurações encontradas:', {
+      logoUrl: nutritionist.logoUrl,
+      customColors: nutritionist.customColors,
+      customFonts: nutritionist.customFonts,
+    });
 
     return {
       customColors: nutritionist.customColors,
