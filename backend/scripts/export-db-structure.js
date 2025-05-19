@@ -75,12 +75,20 @@ async function exportDatabaseStructure() {
     let output = '# Estrutura do Banco de Dados\n\n';
     output += `Gerado em: ${new Date().toLocaleString()}\n\n`;
 
+    // Adicionar índice de tabelas
+    output += '## Índice de Tabelas\n\n';
+    const uniqueTables = [...new Set(result.rows.map((row) => row.table_name))];
+    uniqueTables.forEach((table) => {
+      output += `- [${table}](#tabela-${table.toLowerCase()})\n`;
+    });
+    output += '\n';
+
     let currentTable = '';
 
     result.rows.forEach((row) => {
       if (row.table_name !== currentTable) {
         currentTable = row.table_name;
-        output += `\n## Tabela: ${currentTable}\n\n`;
+        output += `\n## Tabela: ${currentTable} {#tabela-${currentTable.toLowerCase()}}\n\n`;
         output +=
           '| Coluna | Tipo | Tamanho | Nullable | Default | Constraints |\n';
         output +=

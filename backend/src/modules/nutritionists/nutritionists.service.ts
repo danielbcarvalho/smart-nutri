@@ -9,6 +9,7 @@ import * as bcrypt from 'bcrypt';
 import { Nutritionist } from './entities/nutritionist.entity';
 import { CreateNutritionistDto } from './dto/create-nutritionist.dto';
 import { UpdateNutritionistDto } from './dto/update-nutritionist.dto';
+import { NutritionistSettingsDto } from './dto/nutritionist-settings.dto';
 
 import axios from 'axios';
 import { StorageService } from '../../supabase/storage/storage.service';
@@ -282,5 +283,61 @@ export class NutritionistsService {
     } catch (error) {
       return null; // Retorna null se não conseguir descriptografar (ex: se for bcrypt)
     }
+  }
+
+  async updateSettings(
+    nutritionistId: string,
+    settings: NutritionistSettingsDto,
+    file?: Express.Multer.File,
+  ): Promise<Nutritionist> {
+    const nutritionist = await this.nutritionistRepository.findOne({
+      where: { id: nutritionistId },
+    });
+
+    if (!nutritionist) {
+      throw new NotFoundException('Nutritionist not found');
+    }
+
+    // Se houver um novo arquivo de logo
+    if (file) {
+      const ext = file.originalname.split('.').pop();
+      const filename = `logo-${Date.now()}.${ext}`;
+      const url = await this.storageService.uploadFile(
+        'logos',
+        `${nutritionistId}/${filename}`,
+        file.buffer,
+        file.mimetype,
+      );
+      settings.logoUrl = url;
+    }
+
+    // Atualiza as configurações
+    if (settings.customColors) {
+      nutritionist.customColors = settings.customColors;
+    }
+    if (settings.customFonts) {
+      nutritionist.customFonts = settings.customFonts;
+    }
+    if (settings.logoUrl) {
+      nutritionist.logoUrl = settings.logoUrl;
+    }
+
+    return this.nutritionistRepository.save(nutritionist);
+  }
+
+  async getSettings(nutritionistId: string): Promise<NutritionistSettingsDto> {
+    const nutritionist = await this.nutritionistRepository.findOne({
+      where: { id: nutritionistId },
+    });
+
+    if (!nutritionist) {
+      throw new NotFoundException('Nutritionist not found');
+    }
+
+    return {
+      customColors: nutritionist.customColors,
+      customFonts: nutritionist.customFonts,
+      logoUrl: nutritionist.logoUrl,
+    };
   }
 }

@@ -35,6 +35,10 @@ export class AuthService {
       role: 'nutritionist',
     };
 
+    const settings = await this.nutritionistsService.getSettings(
+      nutritionist.id,
+    );
+
     return {
       access_token: this.jwtService.sign(payload),
       nutritionist: {
@@ -45,6 +49,9 @@ export class AuthService {
         clinicName: nutritionist.clinicName,
         photoUrl: nutritionist.photoUrl,
         instagram: nutritionist.instagram,
+        customColors: settings.customColors,
+        customFonts: settings.customFonts,
+        logoUrl: settings.logoUrl,
       },
     };
   }

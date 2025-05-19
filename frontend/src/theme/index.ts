@@ -1,6 +1,11 @@
 import { createTheme, alpha } from "@mui/material/styles";
 
 declare module "@mui/material/styles" {
+  // Cores aline
+  // primary: #29605D
+  // secondary: #977E6E
+  // accent: #F2D3B9
+
   interface Palette {
     custom: {
       primary: string;
@@ -15,6 +20,12 @@ declare module "@mui/material/styles" {
       accent: string;
     };
   }
+}
+
+// Adicionar interface para fontes personalizadas
+interface CustomFonts {
+  primary: string;
+  secondary: string;
 }
 
 // Cores do sistema (não personalizáveis)
@@ -46,6 +57,12 @@ export const defaultCustomColors = {
   accent: "#ffd2bf", // Peach
 };
 
+// Fontes padrão personalizáveis
+export const defaultCustomFonts: CustomFonts = {
+  primary: "Inter",
+  secondary: "Roboto",
+};
+
 // Função auxiliar para gerar variações de cor
 const generateColorVariations = (color: string) => ({
   main: color,
@@ -53,7 +70,10 @@ const generateColorVariations = (color: string) => ({
   dark: alpha(color, 0.4),
 });
 
-export const createCustomTheme = (customColors = defaultCustomColors) => {
+export const createCustomTheme = (
+  customColors = defaultCustomColors,
+  customFonts = defaultCustomFonts
+) => {
   const primary = generateColorVariations(customColors.primary);
   const secondary = generateColorVariations(customColors.secondary);
   const accent = generateColorVariations(customColors.accent);
@@ -97,30 +117,42 @@ export const createCustomTheme = (customColors = defaultCustomColors) => {
       },
     },
     typography: {
-      fontFamily: '"inter", "Roboto", "Helvetica", "Arial", sans-serif',
+      fontFamily: `"${customFonts.primary}", "${customFonts.secondary}", "Helvetica", "Arial", sans-serif`,
       h1: {
         fontWeight: 600,
         color: systemColors.black,
+        fontFamily: `"${customFonts.primary}", sans-serif`,
       },
       h2: {
         fontWeight: 600,
         color: systemColors.black,
+        fontFamily: `"${customFonts.primary}", sans-serif`,
       },
       h3: {
         fontWeight: 600,
         color: systemColors.black,
+        fontFamily: `"${customFonts.primary}", sans-serif`,
       },
       h4: {
         fontWeight: 600,
         color: systemColors.black,
+        fontFamily: `"${customFonts.primary}", sans-serif`,
       },
       h5: {
         fontWeight: 600,
         color: systemColors.black,
+        fontFamily: `"${customFonts.primary}", sans-serif`,
       },
       h6: {
         fontWeight: 600,
         color: systemColors.black,
+        fontFamily: `"${customFonts.primary}", sans-serif`,
+      },
+      body1: {
+        fontFamily: `"${customFonts.secondary}", sans-serif`,
+      },
+      body2: {
+        fontFamily: `"${customFonts.secondary}", sans-serif`,
       },
     },
     components: {

@@ -21,6 +21,21 @@ export function LogoProvider({ children }: { children: React.ReactNode }) {
     localStorage.setItem(STORAGE_KEY, logoUrl);
   }, [logoUrl]);
 
+  // Atualiza o logo quando o usuário fizer login
+  useEffect(() => {
+    const handleUserLogin = () => {
+      const user = JSON.parse(localStorage.getItem("@smartnutri:user") || "{}");
+      if (user.logoUrl) {
+        setLogoUrl(user.logoUrl);
+      }
+    };
+
+    window.addEventListener("userLogin", handleUserLogin);
+    return () => {
+      window.removeEventListener("userLogin", handleUserLogin);
+    };
+  }, []);
+
   const updateLogo = (url: string) => {
     setLogoUrl(url);
   };

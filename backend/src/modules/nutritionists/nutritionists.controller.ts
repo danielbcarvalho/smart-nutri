@@ -26,6 +26,7 @@ import { UpdateNutritionistDto } from './dto/update-nutritionist.dto';
 import { Nutritionist } from './entities/nutritionist.entity';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { NutritionistSettingsDto } from './dto/nutritionist-settings.dto';
 
 @ApiTags('nutritionists')
 @Controller('nutritionists')
@@ -196,5 +197,34 @@ export class NutritionistsController {
   async getDecryptedPassword(@Param('id') id: string) {
     const password = await this.nutritionistsService.decryptPassword(id);
     return { password };
+  }
+
+  @Patch(':id/settings')
+  @UseGuards(JwtAuthGuard)
+  @UseInterceptors(FileInterceptor('logo'))
+  @ApiOperation({ summary: 'Atualiza as configurações do nutricionista' })
+  @ApiResponse({
+    status: 200,
+    description: 'Configurações atualizadas com sucesso',
+  })
+  @ApiResponse({ status: 404, description: 'Nutricionista não encontrado' })
+  async updateSettings(
+    @Param('id') id: string,
+    @Body() settings: NutritionistSettingsDto,
+    @UploadedFile() file?: Express.Multer.File,
+  ) {
+    return this.nutritionistsService.updateSettings(id, settings, file);
+  }
+
+  @Get(':id/settings')
+  @UseGuards(JwtAuthGuard)
+  @ApiOperation({ summary: 'Obtém as configurações do nutricionista' })
+  @ApiResponse({
+    status: 200,
+    description: 'Configurações obtidas com sucesso',
+  })
+  @ApiResponse({ status: 404, description: 'Nutricionista não encontrado' })
+  async getSettings(@Param('id') id: string) {
+    return this.nutritionistsService.getSettings(id);
   }
 }

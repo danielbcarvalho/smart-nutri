@@ -59,6 +59,22 @@ export class Nutritionist {
   @Column({ nullable: true })
   instagram: string;
 
+  @Column({ type: 'jsonb', nullable: true, name: 'custom_colors' })
+  customColors?: {
+    primary: string;
+    secondary: string;
+    accent: string;
+  };
+
+  @Column({ type: 'jsonb', nullable: true, name: 'custom_fonts' })
+  customFonts?: {
+    primary: string;
+    secondary: string;
+  };
+
+  @Column({ nullable: true, name: 'logo_url' })
+  logoUrl?: string;
+
   @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;
 

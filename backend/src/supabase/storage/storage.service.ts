@@ -153,4 +153,28 @@ export class StorageService {
       }
     }
   }
+
+  async uploadFile(
+    bucketName: string,
+    filePath: string,
+    file: Buffer,
+    contentType: string,
+  ): Promise<string> {
+    const { data, error } = await this.supabaseService.client.storage
+      .from(bucketName)
+      .upload(filePath, file, {
+        contentType,
+        upsert: true,
+      });
+
+    if (error) {
+      throw new Error(`Error uploading file: ${error.message}`);
+    }
+
+    const { data: urlData } = await this.supabaseService.client.storage
+      .from(bucketName)
+      .getPublicUrl(data.path);
+
+    return urlData.publicUrl;
+  }
 }

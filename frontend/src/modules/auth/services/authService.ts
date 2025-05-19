@@ -1,5 +1,16 @@
 import { api } from "@services/api";
 
+interface CustomColors {
+  primary: string;
+  secondary: string;
+  accent: string;
+}
+
+interface CustomFonts {
+  primary: string;
+  secondary: string;
+}
+
 export interface Nutritionist {
   id: string;
   name: string;
@@ -8,6 +19,9 @@ export interface Nutritionist {
   clinicName?: string;
   photoUrl?: string;
   instagram?: string;
+  customColors?: CustomColors;
+  customFonts?: CustomFonts;
+  logoUrl?: string;
 }
 
 interface LoginResponse {

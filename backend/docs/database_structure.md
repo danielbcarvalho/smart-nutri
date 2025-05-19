@@ -1,9 +1,27 @@
 # Estrutura do Banco de Dados
 
-Gerado em: 5/17/2025, 2:06:41 PM
+Gerado em: 5/19/2025, 12:13:11 PM
+
+## Índice de Tabelas
+
+- [consultations](#tabela-consultations)
+- [energy_plans](#tabela-energy_plans)
+- [food_templates](#tabela-food_templates)
+- [foods](#tabela-foods)
+- [meal_foods](#tabela-meal_foods)
+- [meal_plan_templates](#tabela-meal_plan_templates)
+- [meal_plans](#tabela-meal_plans)
+- [meal_templates](#tabela-meal_templates)
+- [meals](#tabela-meals)
+- [measurements](#tabela-measurements)
+- [migrations](#tabela-migrations)
+- [nutritionists](#tabela-nutritionists)
+- [patient_photos](#tabela-patient_photos)
+- [patients](#tabela-patients)
+- [photos](#tabela-photos)
 
 
-## Tabela: consultations
+## Tabela: consultations {#tabela-consultations}
 
 | Coluna | Tipo | Tamanho | Nullable | Default | Constraints |
 |--------|------|----------|----------|----------|------------|
@@ -17,7 +35,7 @@ Gerado em: 5/17/2025, 2:06:41 PM
 | created_at | timestamp without time zone | - | NO | now() | FK,PK |
 | updated_at | timestamp without time zone | - | NO | now() | FK,PK |
 
-## Tabela: energy_plans
+## Tabela: energy_plans {#tabela-energy_plans}
 
 | Coluna | Tipo | Tamanho | Nullable | Default | Constraints |
 |--------|------|----------|----------|----------|------------|
@@ -48,7 +66,7 @@ Gerado em: 5/17/2025, 2:06:41 PM
 | updated_at | timestamp without time zone | - | NO | now() | FK,PK |
 | macronutrient_distribution | jsonb | - | YES | NULL | FK,PK |
 
-## Tabela: food_templates
+## Tabela: food_templates {#tabela-food_templates}
 
 | Coluna | Tipo | Tamanho | Nullable | Default | Constraints |
 |--------|------|----------|----------|----------|------------|
@@ -66,7 +84,7 @@ Gerado em: 5/17/2025, 2:06:41 PM
 | created_at | timestamp without time zone | - | NO | now() | FK,PK |
 | updated_at | timestamp without time zone | - | NO | now() | FK,PK |
 
-## Tabela: foods
+## Tabela: foods {#tabela-foods}
 
 | Coluna | Tipo | Tamanho | Nullable | Default | Constraints |
 |--------|------|----------|----------|----------|------------|
@@ -97,7 +115,7 @@ Gerado em: 5/17/2025, 2:06:41 PM
 | updatedAt | timestamp without time zone | - | NO | now() | PK |
 | external_id | character varying | - | YES | NULL | PK |
 
-## Tabela: meal_foods
+## Tabela: meal_foods {#tabela-meal_foods}
 
 | Coluna | Tipo | Tamanho | Nullable | Default | Constraints |
 |--------|------|----------|----------|----------|------------|
@@ -110,7 +128,7 @@ Gerado em: 5/17/2025, 2:06:41 PM
 | foodId | character varying(100) | 100 | YES | NULL | FK,PK |
 | source | character varying(50) | 50 | YES | NULL | FK,PK |
 
-## Tabela: meal_plan_templates
+## Tabela: meal_plan_templates {#tabela-meal_plan_templates}
 
 | Coluna | Tipo | Tamanho | Nullable | Default | Constraints |
 |--------|------|----------|----------|----------|------------|
@@ -123,7 +141,7 @@ Gerado em: 5/17/2025, 2:06:41 PM
 | created_at | timestamp without time zone | - | NO | now() | FK,PK |
 | updated_at | timestamp without time zone | - | NO | now() | FK,PK |
 
-## Tabela: meal_plans
+## Tabela: meal_plans {#tabela-meal_plans}
 
 | Coluna | Tipo | Tamanho | Nullable | Default | Constraints |
 |--------|------|----------|----------|----------|------------|
@@ -142,7 +160,7 @@ Gerado em: 5/17/2025, 2:06:41 PM
 | dailyFat | numeric | - | NO | '0' | FK,PK |
 | energy_plan_id | uuid | - | YES | NULL | FK,PK |
 
-## Tabela: meal_templates
+## Tabela: meal_templates {#tabela-meal_templates}
 
 | Coluna | Tipo | Tamanho | Nullable | Default | Constraints |
 |--------|------|----------|----------|----------|------------|
@@ -155,7 +173,7 @@ Gerado em: 5/17/2025, 2:06:41 PM
 | created_at | timestamp without time zone | - | NO | now() | FK,PK |
 | updated_at | timestamp without time zone | - | NO | now() | FK,PK |
 
-## Tabela: meals
+## Tabela: meals {#tabela-meals}
 
 | Coluna | Tipo | Tamanho | Nullable | Default | Constraints |
 |--------|------|----------|----------|----------|------------|
@@ -171,7 +189,7 @@ Gerado em: 5/17/2025, 2:06:41 PM
 | totalFat | numeric | - | NO | '0' | FK,PK |
 | mealPlanId | uuid | - | YES | NULL | FK,PK |
 
-## Tabela: measurements
+## Tabela: measurements {#tabela-measurements}
 
 | Coluna | Tipo | Tamanho | Nullable | Default | Constraints |
 |--------|------|----------|----------|----------|------------|
@@ -200,7 +218,7 @@ Gerado em: 5/17/2025, 2:06:41 PM
 | created_at | timestamp without time zone | - | NO | now() | FK,PK |
 | updated_at | timestamp without time zone | - | NO | now() | FK,PK |
 
-## Tabela: migrations
+## Tabela: migrations {#tabela-migrations}
 
 | Coluna | Tipo | Tamanho | Nullable | Default | Constraints |
 |--------|------|----------|----------|----------|------------|
@@ -208,7 +226,7 @@ Gerado em: 5/17/2025, 2:06:41 PM
 | timestamp | bigint | - | NO | NULL | PK |
 | name | character varying | - | NO | NULL | PK |
 
-## Tabela: nutritionists
+## Tabela: nutritionists {#tabela-nutritionists}
 
 | Coluna | Tipo | Tamanho | Nullable | Default | Constraints |
 |--------|------|----------|----------|----------|------------|
@@ -224,8 +242,11 @@ Gerado em: 5/17/2025, 2:06:41 PM
 | updated_at | timestamp without time zone | - | NO | now() | PK |
 | instagram | character varying | - | YES | NULL | PK |
 | photo_url | character varying | - | YES | NULL | PK |
+| custom_colors | jsonb | - | YES | NULL | PK |
+| custom_fonts | jsonb | - | YES | NULL | PK |
+| logo_url | character varying | - | YES | NULL | PK |
 
-## Tabela: patient_photos
+## Tabela: patient_photos {#tabela-patient_photos}
 
 | Coluna | Tipo | Tamanho | Nullable | Default | Constraints |
 |--------|------|----------|----------|----------|------------|
@@ -239,7 +260,7 @@ Gerado em: 5/17/2025, 2:06:41 PM
 | created_at | timestamp without time zone | - | NO | now() | FK,PK |
 | updated_at | timestamp without time zone | - | NO | now() | FK,PK |
 
-## Tabela: patients
+## Tabela: patients {#tabela-patients}
 
 | Coluna | Tipo | Tamanho | Nullable | Default | Constraints |
 |--------|------|----------|----------|----------|------------|
@@ -271,7 +292,7 @@ Gerado em: 5/17/2025, 2:06:41 PM
 | isSample | boolean | - | NO | false | FK,PK |
 | photo_url | character varying | - | YES | NULL | FK,PK |
 
-## Tabela: photos
+## Tabela: photos {#tabela-photos}
 
 | Coluna | Tipo | Tamanho | Nullable | Default | Constraints |
 |--------|------|----------|----------|----------|------------|
