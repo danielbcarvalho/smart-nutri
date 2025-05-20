@@ -28,8 +28,10 @@ api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
+      // Não fazer refresh automático, apenas limpar o token
       localStorage.removeItem("@smartnutri:token");
-      window.location.href = "/login";
+      // Propagar o erro para ser tratado pelo componente
+      return Promise.reject(error);
     } else if (error.response) {
       const message =
         error.response.data?.message ||

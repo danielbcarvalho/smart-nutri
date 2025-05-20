@@ -344,12 +344,6 @@ export class NutritionistsService {
       throw new NotFoundException('Nutritionist not found');
     }
 
-    console.log('📝 Configurações encontradas:', {
-      logoUrl: nutritionist.logoUrl,
-      customColors: nutritionist.customColors,
-      customFonts: nutritionist.customFonts,
-    });
-
     return {
       customColors: nutritionist.customColors,
       customFonts: nutritionist.customFonts,

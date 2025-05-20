@@ -84,6 +84,9 @@ export const authService = {
     localStorage.removeItem("@smartnutri:user");
     localStorage.removeItem("@smartnutri:loginError");
     localStorage.removeItem("@smartnutri:loginSuccess");
+    localStorage.removeItem("customColors");
+    localStorage.removeItem("customFonts");
+    localStorage.removeItem("@smartnutri:logo");
     window.location.href = "/login";
   },
 };
