@@ -475,8 +475,13 @@ export function MealPlanDetails() {
     }
 
     try {
+      const totalNutrients = calculateTotalNutrients();
       const updatedPlan = await mealPlanService.updatePlan(plan.id, {
         energyPlanId: selectedEnergyPlanId || undefined,
+        dailyCalories: totalNutrients.calories,
+        dailyProtein: totalNutrients.protein,
+        dailyCarbs: totalNutrients.carbohydrates,
+        dailyFat: totalNutrients.fat,
       });
 
       // Atualiza o estado local com o novo energyPlanId

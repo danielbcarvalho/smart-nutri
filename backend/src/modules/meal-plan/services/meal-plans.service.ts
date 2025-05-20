@@ -131,11 +131,23 @@ export class MealPlansService {
       throw new NotFoundException(`Meal plan with ID ${id} not found`);
     }
 
-    // Atualiza apenas o energyPlanId
-    mealPlan.energyPlanId = mealPlanDto.energyPlanId;
+    // Verifica se estamos atualizando os totais manualmente
+    const isUpdatingTotals =
+      mealPlanDto.dailyCalories !== undefined ||
+      mealPlanDto.dailyProtein !== undefined ||
+      mealPlanDto.dailyCarbs !== undefined ||
+      mealPlanDto.dailyFat !== undefined;
+
+    // Atualiza todos os campos enviados
+    Object.assign(mealPlan, mealPlanDto);
 
     // Salva o plano atualizado
     const updatedMealPlan = await this.mealPlanRepository.save(mealPlan);
+
+    // Se não estamos atualizando os totais manualmente, recalcula
+    if (!isUpdatingTotals) {
+      await this.updateMealPlanTotals(id);
+    }
 
     // Força uma nova busca com as relações após a atualização
     const finalMealPlan = await this.mealPlanRepository.findOne({

@@ -13,6 +13,7 @@ import {
   DialogContent,
   DialogContentText,
   DialogActions,
+  alpha,
 } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
 import EditIcon from "@mui/icons-material/Edit";
@@ -32,6 +33,7 @@ import FitnessCenterIcon from "@mui/icons-material/FitnessCenter";
 import MonitorWeightIcon from "@mui/icons-material/MonitorWeight";
 import CalendarMonthIcon from "@mui/icons-material/CalendarMonth";
 import { DesignSystemButton } from "../../../components/DesignSystem/Button/ButtonVariants";
+import { theme } from "../../../theme";
 
 const EnergyPlanPage: React.FC = () => {
   const { patientId } = useParams<{ patientId: string }>();
@@ -151,6 +153,7 @@ const EnergyPlanPage: React.FC = () => {
                   borderRadius: "12px",
                   borderColor: "divider",
                   transition: "all 0.2s",
+                  borderRight: `4px solid ${theme.palette.custom.accent}`, // Slightly thinner border
                   "&:hover": {
                     boxShadow: 4,
                     borderColor: "primary.main",
@@ -285,7 +288,8 @@ const EnergyPlanPage: React.FC = () => {
                     <Box
                       sx={{
                         p: 1.5,
-                        bgcolor: "rgba(42,139,139,0.1)",
+                        bgcolor: (theme) =>
+                          alpha(theme.palette.primary.main, 0.05),
                         borderRadius: 1,
                       }}
                     >
@@ -372,7 +376,7 @@ const EnergyPlanPage: React.FC = () => {
                 >
                   <DesignSystemButton
                     size="small"
-                    variant="secondary"
+                    variant="contained"
                     startIcon={<EditIcon />}
                     onClick={() => handleEditClick(plan)}
                   >

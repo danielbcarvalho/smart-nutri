@@ -184,7 +184,7 @@ export function PatientInfo() {
           maxWidth: 900,
           mx: "auto",
           boxShadow: "0 4px 12px rgba(0,0,0,0.08)", // Softer shadow
-          borderTop: `4px solid ${theme.palette.primary.main}`, // Slightly thinner border
+          borderTop: `4px solid ${theme.palette.custom.accent}`, // Slightly thinner border
           borderRadius: theme.shape.borderRadius * 2, // More rounded corners for the card
         }}
       >

@@ -1,46 +1,40 @@
-import React, { useState, useEffect, useCallback, memo } from "react";
-import {
-  useNavigate,
-  useParams,
-  useLocation,
-  useSearchParams,
-} from "react-router-dom";
 import {
   Box,
-  Typography,
   Card,
   CardContent,
-  Stack,
-  TextField,
-  IconButton,
   CardActions,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogContentText,
-  DialogActions,
+  Typography,
+  Stack,
   Paper,
   CircularProgress,
+  Button,
+  TextField,
 } from "@mui/material";
 import {
   Add as AddIcon,
   Edit as EditIcon,
   Delete as DeleteIcon,
-  CalendarToday as CalendarTodayIcon, // Ícone para data
-  RestaurantMenu as RestaurantMenuIcon, // Ícone para refeições
-  FlagOutlined as FlagIcon, // Ícone para objetivo
-  InfoOutlined as InfoOutlinedIcon, // Ícone para estado vazio
+  CalendarMonth as CalendarMonthIcon,
 } from "@mui/icons-material";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useNavigate, useParams } from "react-router-dom";
+import { mealPlanService } from "../services/mealPlanService";
+import { useTheme } from "@mui/material/styles";
+import React, { useState, useEffect, useCallback, memo } from "react";
+import { useLocation, useSearchParams } from "react-router-dom";
 import {
-  mealPlanService,
-  type MealPlan,
-} from "@modules/meal-plan/services/mealPlanService";
+  IconButton,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogContentText,
+  DialogActions,
+} from "@mui/material";
+import { DesignSystemButton } from "../../../components/DesignSystem/Button/ButtonVariants";
 import { patientService } from "@modules/patient/services/patientService";
 import { authService } from "../../auth/services/authService";
-import { alpha, Theme } from "@mui/material/styles"; // Para cores com transparência
-import { useMediaQuery, useTheme } from "@mui/material";
-import { DesignSystemButton } from "../../../components/DesignSystem/Button/ButtonVariants";
+import { alpha } from "@mui/material/styles";
+import { useMediaQuery } from "@mui/material";
 
 // Estilo dos botões de ação para consistência
 const actionButtonSx = {
@@ -66,7 +60,7 @@ const outlinedButtonSx = {
   "&:hover": {
     borderColor: "custom.dark",
     color: "custom.dark",
-    bgcolor: (theme: Theme) => alpha(theme.palette.custom.primary, 0.08),
+    bgcolor: (theme: any) => alpha(theme.palette.custom.primary, 0.08),
   },
 };
 
@@ -276,7 +270,7 @@ export function MealPlan() {
   );
 
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [planToDelete, setPlanToDelete] = useState<MealPlan | null>(null);
+  const [planToDelete, setPlanToDelete] = useState<any | null>(null);
 
   const deletePlanMutation = useMutation({
     mutationFn: mealPlanService.deletePlan,
@@ -287,7 +281,7 @@ export function MealPlan() {
     },
   });
 
-  const handleDeleteClick = (event: React.MouseEvent, plan: MealPlan) => {
+  const handleDeleteClick = (event: React.MouseEvent, plan: any) => {
     event.stopPropagation();
     setPlanToDelete(plan);
     setDeleteDialogOpen(true);
@@ -305,7 +299,6 @@ export function MealPlan() {
   };
 
   const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
 
   if (!patientId) {
     return (
@@ -445,7 +438,7 @@ export function MealPlan() {
           sortedPlans.map((plan) => (
             <Card
               key={plan.id}
-              elevation={1} // Sombra mais sutil para os cards da lista
+              elevation={1}
               onClick={() =>
                 navigate(`/patient/${patientId}/meal-plans/${plan.id}`)
               }
@@ -453,123 +446,247 @@ export function MealPlan() {
                 borderRadius: "12px",
                 borderColor: "divider",
                 transition: "all 0.2s",
+                borderRight: `4px solid ${theme.palette.custom.accent}`,
                 "&:hover": {
                   boxShadow: 4,
                   borderColor: "primary.main",
                 },
               }}
             >
-              <CardContent sx={{ p: { xs: 2, sm: 2.5 } }}>
-                {" "}
-                {/* Padding ajustado */}
-                <Typography
-                  variant="h6"
-                  component="div"
-                  gutterBottom
+              <CardContent sx={{ p: 2.5 }}>
+                {/* Cabeçalho */}
+                <Box
                   sx={{
-                    fontWeight: "bold",
-                    color: "custom.dark" /* Ou text.primary */,
-                    fontSize: { xs: "1.1rem", sm: "1.25rem" },
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    mb: 2,
                   }}
                 >
-                  {plan.name || "Plano Sem Nome"}
-                </Typography>
-                <Stack spacing={1} sx={{ mt: 1.5 }}>
-                  <Stack direction="row" alignItems="center" spacing={1}>
-                    <CalendarTodayIcon
-                      fontSize="small"
-                      sx={{ color: "text.secondary" }}
+                  <Typography variant="h6" fontWeight="bold">
+                    {plan.name || "Plano Sem Nome"}
+                  </Typography>
+                  <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+                    <CalendarMonthIcon
+                      sx={{ fontSize: 18, color: "text.secondary" }}
                     />
-                    <Typography
-                      variant="body2"
-                      color="text.secondary"
-                      component="div"
-                      sx={{ fontSize: { xs: "0.95rem", sm: "1rem" } }}
-                    >
-                      <Box component="strong" sx={{ fontWeight: 500 }}>
-                        Criado em:
-                      </Box>{" "}
+                    <Typography variant="body2" color="text.secondary">
                       {new Date(plan.createdAt).toLocaleDateString()}
                     </Typography>
-                  </Stack>
+                  </Box>
+                </Box>
 
-                  <Stack direction="row" alignItems="center" spacing={1}>
-                    <RestaurantMenuIcon
-                      fontSize="small"
-                      sx={{ color: "text.secondary" }}
-                    />
+                {/* Resultados Principais */}
+                <Box
+                  sx={{
+                    display: "flex",
+                    gap: 3,
+                    flexWrap: "wrap",
+                    mb: 2,
+                    p: 1.5,
+                    bgcolor: "background.paper",
+                    borderRadius: 1,
+                  }}
+                >
+                  <Box sx={{ minWidth: "150px" }}>
+                    <Typography
+                      variant="caption"
+                      fontWeight={500}
+                      color="text.secondary"
+                      sx={{ fontSize: 12 }}
+                    >
+                      CALORIAS TOTAIS
+                    </Typography>
+                    <Typography
+                      variant="h6"
+                      fontWeight={700}
+                      color="primary.main"
+                      sx={{ mt: 0.5, fontSize: 22 }}
+                    >
+                      {Number(plan.dailyCalories) > 0
+                        ? `${Number(plan.dailyCalories)} kcal`
+                        : "0 kcal"}
+                    </Typography>
+                  </Box>
+                  <Box sx={{ minWidth: "150px" }}>
+                    <Typography
+                      variant="caption"
+                      fontWeight={500}
+                      color="text.secondary"
+                      sx={{ fontSize: 12 }}
+                    >
+                      REFEIÇÕES
+                    </Typography>
+                    <Typography
+                      variant="h6"
+                      fontWeight={700}
+                      color="primary.main"
+                      sx={{ mt: 0.5, fontSize: 22 }}
+                    >
+                      {plan.meals?.length || 0}
+                    </Typography>
+                  </Box>
+                </Box>
+
+                {/* Macronutrientes - Layout mais compacto */}
+                <Typography
+                  variant="subtitle1"
+                  color="primary"
+                  fontWeight={700}
+                  sx={{ mb: 1.5, fontSize: 17 }}
+                >
+                  Macronutrientes
+                </Typography>
+                <Box
+                  sx={{
+                    display: "flex",
+                    gap: 2,
+                    mb: 2,
+                    flexWrap: "wrap",
+                  }}
+                >
+                  <Box
+                    sx={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 1,
+
+                      px: 1.5,
+                      py: 0.75,
+                      borderRadius: 1,
+                    }}
+                  >
+                    <Typography
+                      variant="subtitle2"
+                      fontWeight={600}
+                      color="primary.main"
+                    >
+                      Proteínas:
+                    </Typography>
+                    <Typography variant="body2" fontWeight={500}>
+                      {Number(plan.dailyProtein) > 0
+                        ? `${Number(plan.dailyProtein)}g`
+                        : "0g"}
+                    </Typography>
+                  </Box>
+                  <Box
+                    sx={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 1,
+
+                      px: 1.5,
+                      py: 0.75,
+                      borderRadius: 1,
+                    }}
+                  >
+                    <Typography
+                      variant="subtitle2"
+                      fontWeight={600}
+                      color="primary.main"
+                    >
+                      Carboidratos:
+                    </Typography>
+                    <Typography variant="body2" fontWeight={500}>
+                      {Number(plan.dailyCarbs) > 0
+                        ? `${Number(plan.dailyCarbs)}g`
+                        : "0g"}
+                    </Typography>
+                  </Box>
+                  <Box
+                    sx={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 1,
+
+                      px: 1.5,
+                      py: 0.75,
+                      borderRadius: 1,
+                    }}
+                  >
+                    <Typography
+                      variant="subtitle2"
+                      fontWeight={600}
+                      color="primary.main"
+                    >
+                      Gorduras:
+                    </Typography>
+                    <Typography variant="body2" fontWeight={500}>
+                      {Number(plan.dailyFat) > 0
+                        ? `${Number(plan.dailyFat)}g`
+                        : "0g"}
+                    </Typography>
+                  </Box>
+                </Box>
+
+                {/* Descrição/Objetivo em formato de callout */}
+                {plan.description && (
+                  <Box
+                    sx={{
+                      mt: 2,
+                      p: 1.5,
+                      bgcolor: (theme) =>
+                        alpha(theme.palette.primary.main, 0.05),
+                      borderColor: "primary.main",
+                      borderRadius: "0 4px 4px 0",
+                    }}
+                  >
                     <Typography
                       variant="body2"
                       color="text.secondary"
-                      component="div"
-                      sx={{ fontSize: { xs: "0.95rem", sm: "1rem" } }}
+                      sx={{ fontSize: "0.95rem" }}
                     >
-                      <Box component="strong" sx={{ fontWeight: 500 }}>
-                        Refeições:
-                      </Box>{" "}
-                      {plan.meals?.length || 0}
-                    </Typography>
-                  </Stack>
-
-                  {plan.description && (
-                    <Stack direction="row" alignItems="flex-start" spacing={1}>
-                      <FlagIcon
-                        fontSize="small"
-                        sx={{ color: "text.secondary", mt: "3px" }}
-                      />
-                      <Typography
-                        variant="body2"
-                        color="text.secondary"
-                        component="div"
-                        sx={{ fontSize: { xs: "0.95rem", sm: "1rem" } }}
+                      <Box
+                        component="span"
+                        sx={{ fontWeight: 600, color: "primary.main" }}
                       >
-                        <Box component="strong" sx={{ fontWeight: 500 }}>
-                          Objetivo:
-                        </Box>{" "}
-                        {plan.description}
-                      </Typography>
-                    </Stack>
-                  )}
-                </Stack>
+                        Descrição
+                      </Box>{" "}
+                    </Typography>
+                    <Typography
+                      component="span"
+                      variant="caption"
+                      color="text.secondary"
+                    >
+                      {plan.description}
+                    </Typography>
+                  </Box>
+                )}
               </CardContent>
+
               <CardActions
                 sx={{
-                  justifyContent: { xs: "center", sm: "flex-end" },
+                  justifyContent: "flex-end",
                   pt: 0,
-                  pb: 1.5,
-                  px: 1.5,
-                  gap: { xs: 2, sm: 1 },
+                  pb: 2,
+                  px: 2,
+                  gap: 1,
                 }}
               >
-                <IconButton
-                  size={isMobile ? "large" : "medium"}
-                  onClick={(e) => handleEditClick(e, plan.id)}
-                  title="Ver Detalhes"
-                  sx={{
-                    color: "custom.primary",
-                    p: isMobile ? 1.5 : 1,
-                    "&:hover": {
-                      bgcolor: (theme: Theme) =>
-                        alpha(theme.palette.custom.primary, 0.1),
-                    },
+                <Button
+                  size="small"
+                  variant="contained"
+                  color="primary"
+                  startIcon={<EditIcon />}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleEditClick(e, plan.id);
                   }}
                 >
-                  <EditIcon fontSize="small" />
-                </IconButton>
-                <IconButton
-                  size={isMobile ? "large" : "medium"}
-                  onClick={(e) => handleDeleteClick(e, plan)}
-                  title="Excluir Plano"
-                  sx={{
-                    color: "error.main",
-                    p: isMobile ? 1.5 : 1,
-                    "&:hover": {
-                      bgcolor: (theme) => alpha(theme.palette.error.main, 0.1),
-                    },
+                  Editar
+                </Button>
+                <Button
+                  size="small"
+                  variant="outlined"
+                  color="error"
+                  startIcon={<DeleteIcon />}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleDeleteClick(e, plan);
                   }}
                 >
-                  <DeleteIcon fontSize="small" />
-                </IconButton>
+                  Excluir
+                </Button>
               </CardActions>
             </Card>
           ))

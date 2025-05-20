@@ -222,6 +222,7 @@ const COLORS = {
   protein: { light: "#FFCDD2", main: "#E53935", dark: "#C62828" },
   carbs: { light: "#FFF9C4", main: "#FFC107", dark: "#FFA000" },
   fat: { light: "#B2EBF2", main: "#00ACC1", dark: "#00838F" },
+  info: { light: "#E8F5E9", main: "#4CAF50", dark: "#2E7D32" },
 };
 
 const formatNumber = (value: number | undefined, decimalPlaces: number = 1) => {
@@ -275,6 +276,8 @@ function getCaloricDensityClass(density: number) {
   if (density < 1.5) {
     return {
       label: "Baixa Densidade",
+      color: COLORS.info.main,
+      bgColor: COLORS.info.light,
       description:
         "A densidade calórica diária está baixa, refletindo uma dieta equilibrada com ênfase em alimentos menos concentrados em calorias (carnes magras, legumes, grãos integrais).",
     };
@@ -322,8 +325,8 @@ export const NutrientAnalysis: React.FC<NutrientAnalysisProps> = ({
 
   /**
    * Cálculo de densidade calórica: kcal por grama de alimento.
-   * Fonte dos limites de densidade: Drewnowski A. & Bellisle F. (2007). “Energy density: definition and
-   * recommendations for reducing energy intake.” *Am J Clin Nutr*.
+   * Fonte dos limites de densidade: Drewnowski A. & Bellisle F. (2007). "Energy density: definition and
+   * recommendations for reducing energy intake." *Am J Clin Nutr*.
    */
 
   const density = totalWeight > 0 && calories > 0 ? calories / totalWeight : 0;
