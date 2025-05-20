@@ -68,11 +68,6 @@ export class MealPlansService {
   }
 
   async findOne(id: string, nutritionistId: string): Promise<MealPlan> {
-    this.logger.log('🔍 [MealPlansService] Buscando plano:', {
-      id,
-      nutritionistId,
-    });
-
     const mealPlan = await this.mealPlanRepository.findOne({
       where: { id, nutritionistId },
       relations: [

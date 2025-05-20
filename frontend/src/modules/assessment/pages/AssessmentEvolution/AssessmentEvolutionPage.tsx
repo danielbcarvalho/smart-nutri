@@ -4,11 +4,14 @@ import { useQuery } from "@tanstack/react-query";
 import {
   Box,
   Typography,
-  Paper,
   Stack,
   CircularProgress,
   Tabs,
   Tab,
+  Card,
+  CardContent,
+  alpha,
+  useTheme,
 } from "@mui/material";
 import { patientService } from "@/modules/patient/services/patientService";
 import { DateRangeSelector } from "./components/DateRangeSelector";
@@ -17,7 +20,6 @@ import { AnalysisTable } from "./components/AnalysisTable";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
 import { ptBR } from "date-fns/locale";
-// 1. Importar funções necessárias do date-fns
 import {
   format,
   subMonths,
@@ -26,6 +28,8 @@ import {
   parseISO,
 } from "date-fns";
 import { PhotoEvolutionSection } from "./components/PhotoEvolutionSection";
+import TimelineIcon from "@mui/icons-material/Timeline";
+import PhotoCameraIcon from "@mui/icons-material/PhotoCamera";
 
 // 2. Definir a função para calcular o range padrão (fora do componente)
 const getDefaultDateRange = () => {
@@ -39,6 +43,7 @@ const getDefaultDateRange = () => {
 };
 
 export function AssessmentEvolution() {
+  const theme = useTheme();
   const { patientId } = useParams<{ patientId: string }>();
   const location = useLocation();
   const navigate = useNavigate();
@@ -129,12 +134,13 @@ export function AssessmentEvolution() {
     <Box sx={{ p: { xs: 1, sm: 2, md: 3 } }}>
       <Stack spacing={3}>
         {/* Cabeçalho */}
-        <Stack
-          direction={{ xs: "column", sm: "row" }}
-          justifyContent="space-between"
-          alignItems={{ xs: "flex-start", sm: "center" }}
-          spacing={{ xs: 1, sm: 2 }}
-          mb={3}
+        <Box
+          sx={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            mb: 3,
+          }}
         >
           <Typography
             variant="h5"
@@ -145,63 +151,164 @@ export function AssessmentEvolution() {
           >
             Evolução
           </Typography>
-          <Typography variant="h6" color="text.secondary" component="p">
+          <Typography variant="h6" color="text.secondary">
             {patient?.name ?? "Paciente não encontrado"}
           </Typography>
-        </Stack>
+        </Box>
 
         {/* Tabs de navegação */}
-        <Paper elevation={2} sx={{ p: 0 }}>
+        <Card
+          elevation={1}
+          sx={{
+            borderRadius: "12px",
+            borderColor: "divider",
+            transition: "all 0.2s",
+            borderRight: `4px solid ${theme.palette.custom.accent}`,
+            "&:hover": {
+              boxShadow: 4,
+              borderColor: "primary.main",
+            },
+          }}
+        >
           <Tabs
             value={tabIndex}
             onChange={handleTabChange}
             indicatorColor="primary"
             textColor="primary"
             variant="fullWidth"
+            sx={{
+              "& .MuiTab-root": {
+                textTransform: "none",
+                fontWeight: 500,
+                fontSize: "1rem",
+                py: 2,
+              },
+            }}
           >
-            <Tab label="Evolução de Medidas" />
-            <Tab label="Evolução Fotográfica" />
-          </Tabs>
-        </Paper>
-
-        {/* Seletor de Datas (compartilhado) */}
-        <Paper elevation={2} sx={{ p: 2 }}>
-          <LocalizationProvider
-            dateAdapter={AdapterDateFns}
-            adapterLocale={ptBR}
-          >
-            <DateRangeSelector
-              value={dateRange}
-              onChange={setDateRange}
-              measurements={filteredMeasurements}
+            <Tab
+              label="Evolução de Medidas"
+              icon={<TimelineIcon />}
+              iconPosition="start"
             />
-          </LocalizationProvider>
-        </Paper>
+            <Tab
+              label="Evolução Fotográfica"
+              icon={<PhotoCameraIcon />}
+              iconPosition="start"
+            />
+          </Tabs>
+        </Card>
+
+        {/* Seletor de Datas */}
+        <Card
+          elevation={1}
+          sx={{
+            borderRadius: "12px",
+            borderColor: "divider",
+            transition: "all 0.2s",
+            borderRight: `4px solid ${theme.palette.custom.accent}`,
+            "&:hover": {
+              boxShadow: 4,
+              borderColor: "primary.main",
+            },
+          }}
+        >
+          <CardContent sx={{ p: 2.5 }}>
+            <LocalizationProvider
+              dateAdapter={AdapterDateFns}
+              adapterLocale={ptBR}
+            >
+              <DateRangeSelector
+                value={dateRange}
+                onChange={setDateRange}
+                measurements={filteredMeasurements}
+              />
+            </LocalizationProvider>
+          </CardContent>
+        </Card>
 
         {/* Conteúdo das abas */}
         {tabIndex === 0 ? (
           filteredMeasurements.length > 0 ? (
             <>
-              <Paper elevation={2} sx={{ p: 2 }}>
-                <CompositionChart measurements={filteredMeasurements} />
-              </Paper>
-              <AnalysisTable
-                measurements={filteredMeasurements}
-                patient={patient}
-              />
+              <Card
+                elevation={1}
+                sx={{
+                  borderRadius: "12px",
+                  borderColor: "divider",
+                  transition: "all 0.2s",
+                  borderRight: `4px solid ${theme.palette.custom.accent}`,
+                  "&:hover": {
+                    boxShadow: 4,
+                    borderColor: "primary.main",
+                  },
+                }}
+              >
+                <CardContent sx={{ p: 2.5 }}>
+                  <CompositionChart measurements={filteredMeasurements} />
+                </CardContent>
+              </Card>
+              <Card
+                elevation={1}
+                sx={{
+                  borderRadius: "12px",
+                  borderColor: "divider",
+                  transition: "all 0.2s",
+                  borderRight: `4px solid ${theme.palette.custom.accent}`,
+                  "&:hover": {
+                    boxShadow: 4,
+                    borderColor: "primary.main",
+                  },
+                }}
+              >
+                <CardContent sx={{ p: 2.5 }}>
+                  <AnalysisTable
+                    measurements={filteredMeasurements}
+                    patient={patient}
+                  />
+                </CardContent>
+              </Card>
             </>
           ) : (
-            <Paper elevation={1} sx={{ p: 3, textAlign: "center" }}>
-              <Typography color="text.secondary">
-                Nenhuma avaliação encontrada para o período selecionado.
+            <Card
+              elevation={1}
+              sx={{
+                p: 4,
+                textAlign: "center",
+                borderRadius: "12px",
+                borderColor: "divider",
+                borderRight: `4px solid ${theme.palette.custom.accent}`,
+                bgcolor: alpha(theme.palette.primary.main, 0.05),
+              }}
+            >
+              <Typography variant="h6" color="text.secondary" gutterBottom>
+                Nenhuma avaliação encontrada
               </Typography>
-            </Paper>
+              <Typography color="text.secondary" paragraph>
+                Não há avaliações registradas para o período selecionado.
+              </Typography>
+            </Card>
           )
         ) : (
-          <PhotoEvolutionSection
-            measurements={allMeasurements || []}
-            dateRange={dateRange}
-          />
+          <Card
+            elevation={1}
+            sx={{
+              borderRadius: "12px",
+              borderColor: "divider",
+              transition: "all 0.2s",
+              borderRight: `4px solid ${theme.palette.custom.accent}`,
+              "&:hover": {
+                boxShadow: 4,
+                borderColor: "primary.main",
+              },
+            }}
+          >
+            <CardContent sx={{ p: 2.5 }}>
+              <PhotoEvolutionSection
+                measurements={allMeasurements || []}
+                dateRange={dateRange}
+              />
+            </CardContent>
+          </Card>
         )}
       </Stack>
     </Box>

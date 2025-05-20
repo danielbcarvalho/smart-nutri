@@ -776,143 +776,141 @@ export const PhotoEvolutionSection: React.FC<PhotoEvolutionSectionProps> = ({
 
   return (
     <Box>
-      <Paper elevation={2} sx={{ p: 3, mb: 3, borderRadius: 2 }}>
-        <Box sx={{ mb: 3 }}>
-          <Typography
-            variant="h5"
-            gutterBottom
-            fontWeight="medium"
-            color="primary.main"
-          >
-            Evolução Fotográfica
-          </Typography>
-          <Divider sx={{ mb: 3 }} />
-        </Box>
+      <Box sx={{ mb: 3 }}>
+        <Typography
+          variant="h5"
+          gutterBottom
+          fontWeight="medium"
+          color="primary.main"
+        >
+          Evolução Fotográfica
+        </Typography>
+        <Divider sx={{ mb: 3 }} />
+      </Box>
 
-        <Box sx={{ mb: 3 }}>
-          <Box
-            sx={{
-              display: "grid",
-              gap: 2,
-              gridTemplateColumns: {
-                xs: "1fr",
-                sm: "1fr",
-                md: "1fr",
-              },
-            }}
-          >
-            <Box>
-              <Typography variant="subtitle1" gutterBottom fontWeight="medium">
-                Tipo de Foto
-              </Typography>
-
-              {/* Improved styling for photo type selection */}
-              <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1 }}>
-                {availablePhotoTypes.map((type) => (
-                  <Button
-                    key={type}
-                    variant={
-                      selectedPhotoType === type ? "contained" : "outlined"
-                    }
-                    color="primary"
-                    size="small"
-                    onClick={() => handlePhotoTypeChange({} as any, type)}
-                    disabled={!availablePhotoTypes.includes(type)}
-                    sx={{
-                      borderRadius: 2,
-                      px: 2,
-                      transition: "all 0.2s",
-                      minWidth: 100,
-                    }}
-                  >
-                    {type === "all"
-                      ? "Todos os tipos"
-                      : type === "front"
-                      ? "Frente"
-                      : type === "back"
-                      ? "Costas"
-                      : type === "left"
-                      ? "Lateral Esquerda"
-                      : "Lateral Direita"}
-                  </Button>
-                ))}
-              </Box>
-            </Box>
-          </Box>
-          <Box sx={{ mt: 2 }}>
+      <Box sx={{ mb: 3 }}>
+        <Box
+          sx={{
+            display: "grid",
+            gap: 2,
+            gridTemplateColumns: {
+              xs: "1fr",
+              sm: "1fr",
+              md: "1fr",
+            },
+          }}
+        >
+          <Box>
             <Typography variant="subtitle1" gutterBottom fontWeight="medium">
-              Modo de Visualização
+              Tipo de Foto
             </Typography>
 
-            {/* Improved styling for view mode selection with text and icons */}
-            <Box
-              sx={{
-                display: "flex",
-                flexWrap: "wrap",
-                gap: 1,
-              }}
-            >
-              <Button
-                variant={viewMode === "grid" ? "contained" : "outlined"}
-                color="primary"
-                size="small"
-                onClick={() => handleViewModeChange({} as any, "grid")}
-                startIcon={<GridViewIcon />}
-                sx={{ borderRadius: 2 }}
-              >
-                Grid
-              </Button>
-              <Button
-                variant={viewMode === "compare" ? "contained" : "outlined"}
-                color="primary"
-                size="small"
-                onClick={() => handleViewModeChange({} as any, "compare")}
-                startIcon={<CompareIcon />}
-                sx={{ borderRadius: 2 }}
-              >
-                Comparar
-              </Button>
-              <Button
-                variant={viewMode === "timeline" ? "contained" : "outlined"}
-                color="primary"
-                size="small"
-                onClick={() => handleViewModeChange({} as any, "timeline")}
-                startIcon={<TimelineIcon />}
-                sx={{ borderRadius: 2 }}
-              >
-                Timeline
-              </Button>
+            {/* Improved styling for photo type selection */}
+            <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1 }}>
+              {availablePhotoTypes.map((type) => (
+                <Button
+                  key={type}
+                  variant={
+                    selectedPhotoType === type ? "contained" : "outlined"
+                  }
+                  color="primary"
+                  size="small"
+                  onClick={() => handlePhotoTypeChange({} as any, type)}
+                  disabled={!availablePhotoTypes.includes(type)}
+                  sx={{
+                    borderRadius: 2,
+                    px: 2,
+                    transition: "all 0.2s",
+                    minWidth: 100,
+                  }}
+                >
+                  {type === "all"
+                    ? "Todos os tipos"
+                    : type === "front"
+                    ? "Frente"
+                    : type === "back"
+                    ? "Costas"
+                    : type === "left"
+                    ? "Lateral Esquerda"
+                    : "Lateral Direita"}
+                </Button>
+              ))}
             </Box>
           </Box>
         </Box>
+        <Box sx={{ mt: 2 }}>
+          <Typography variant="subtitle1" gutterBottom fontWeight="medium">
+            Modo de Visualização
+          </Typography>
 
-        {/* Comparação de fotos */}
-        {viewMode === "compare" && (
-          <PhotoComparison
-            selectedPhotos={selectedPhotos}
-            onExport={() => {}}
-            onShare={() => {}}
-            onAddNote={() => {}}
-            onFullscreen={() => {}}
-          />
-        )}
+          {/* Improved styling for view mode selection with text and icons */}
+          <Box
+            sx={{
+              display: "flex",
+              flexWrap: "wrap",
+              gap: 1,
+            }}
+          >
+            <Button
+              variant={viewMode === "grid" ? "contained" : "outlined"}
+              color="primary"
+              size="small"
+              onClick={() => handleViewModeChange({} as any, "grid")}
+              startIcon={<GridViewIcon />}
+              sx={{ borderRadius: 2 }}
+            >
+              Grid
+            </Button>
+            <Button
+              variant={viewMode === "compare" ? "contained" : "outlined"}
+              color="primary"
+              size="small"
+              onClick={() => handleViewModeChange({} as any, "compare")}
+              startIcon={<CompareIcon />}
+              sx={{ borderRadius: 2 }}
+            >
+              Comparar
+            </Button>
+            <Button
+              variant={viewMode === "timeline" ? "contained" : "outlined"}
+              color="primary"
+              size="small"
+              onClick={() => handleViewModeChange({} as any, "timeline")}
+              startIcon={<TimelineIcon />}
+              sx={{ borderRadius: 2 }}
+            >
+              Timeline
+            </Button>
+          </Box>
+        </Box>
+      </Box>
 
-        {/* Galeria/Timeline */}
-        <PhotoGallery
-          photos={availablePhotos}
+      {/* Comparação de fotos */}
+      {viewMode === "compare" && (
+        <PhotoComparison
           selectedPhotos={selectedPhotos}
-          viewMode={viewMode === "timeline" ? "timeline" : "grid"}
-          isLoading={isLoading}
-          onPhotoSelect={handlePhotoSelect}
-          onPhotoClick={(photo, date, measurementData) =>
-            setSelectedPhoto({
-              url: photo.url,
-              date: formatDate(date),
-              measurementData,
-            })
-          }
+          onExport={() => {}}
+          onShare={() => {}}
+          onAddNote={() => {}}
+          onFullscreen={() => {}}
         />
-      </Paper>
+      )}
+
+      {/* Galeria/Timeline */}
+      <PhotoGallery
+        photos={availablePhotos}
+        selectedPhotos={selectedPhotos}
+        viewMode={viewMode === "timeline" ? "timeline" : "grid"}
+        isLoading={isLoading}
+        onPhotoSelect={handlePhotoSelect}
+        onPhotoClick={(photo, date, measurementData) =>
+          setSelectedPhoto({
+            url: photo.url,
+            date: formatDate(date),
+            measurementData,
+          })
+        }
+      />
 
       {/* Photo Modal Ampliada */}
       <Dialog

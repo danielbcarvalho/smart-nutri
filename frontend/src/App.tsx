@@ -10,7 +10,7 @@ import { Login } from "./modules/auth/pages/Login/LoginPage";
 import { Register } from "./modules/auth/pages/Register/RegisterPage";
 import { PrivateRoute } from "./components/PrivateRoute";
 import { Box, Typography, Button } from "@mui/material";
-import { Assessments } from "@modules/assessment/pages/AssessentsPage";
+import { Assessments } from "@/modules/assessment/pages/AssessentsListPage";
 import { AssessmentEvolution } from "@modules/assessment/pages/AssessmentEvolution/AssessmentEvolutionPage";
 import { useRouteError, isRouteErrorResponse, Link } from "react-router-dom";
 import { Patients } from "./modules/patient/pages/Patients/PatientsPage";
