@@ -170,7 +170,7 @@ export const HeaderGlobal = ({
                 onClick={() => navigate("/")}
               >
                 <img
-                  src={logoUrl}
+                  src={logoUrl || "/images/logo.png"}
                   alt="Smart Nutri"
                   style={{
                     height: 40,
