@@ -15,6 +15,7 @@ import {
   Edit as EditIcon,
   Delete as DeleteIcon,
   CalendarMonth as CalendarMonthIcon,
+  InfoOutlined as InfoOutlinedIcon,
 } from "@mui/icons-material";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate, useParams } from "react-router-dom";
