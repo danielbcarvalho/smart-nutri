@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import {
   Table,
   TableBody,
@@ -13,14 +13,14 @@ import {
   Chip,
   Stack,
   IconButton,
-  Button,
+  Menu,
+  MenuItem,
 } from "@mui/material";
 import {
   Visibility as VisibilityIcon,
   Edit as EditIcon,
   Delete as DeleteIcon,
-  Assessment as AssessmentIcon,
-  RestaurantMenu as RestaurantMenuIcon,
+  MoreVert as MoreVertIcon,
 } from "@mui/icons-material";
 import { Patient } from "@/modules/patient/services/patientService";
 import { NavigateFunction } from "react-router-dom";
@@ -36,37 +36,9 @@ interface PatientTableProps {
   orderBy: OrderBy;
   onRequestSort: (property: OrderBy) => void;
   onDeleteClick: (patient: Patient) => void;
-  onMenuOpen?: (event: React.MouseEvent<HTMLElement>, patient: Patient) => void;
   navigate: NavigateFunction;
   onEditClick: (patient: Patient) => void;
 }
-
-// Function to generate initials from name
-const getInitials = (name: string) => {
-  return name
-    .split(" ")
-    .map((n) => n[0])
-    .join("")
-    .toUpperCase()
-    .slice(0, 2);
-};
-
-// Function to generate random color for avatar
-const stringToColor = (string: string) => {
-  let hash = 0;
-  for (let i = 0; i < string.length; i++) {
-    hash = string.charCodeAt(i) + ((hash << 5) - hash);
-  }
-  const colors = [
-    "#2196F3", // Azul
-    "#4CAF50", // Verde
-    "#FFC107", // Amarelo
-    "#9C27B0", // Roxo
-    "#F44336", // Vermelho
-    "#009688", // Teal
-  ];
-  return colors[Math.abs(hash) % colors.length];
-};
 
 export const PatientsTable: React.FC<PatientTableProps> = ({
   patients,
@@ -77,6 +49,43 @@ export const PatientsTable: React.FC<PatientTableProps> = ({
   navigate,
   onEditClick,
 }) => {
+  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+  const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
+
+  const handleMenuOpen = (
+    event: React.MouseEvent<HTMLElement>,
+    patient: Patient
+  ) => {
+    setAnchorEl(event.currentTarget);
+    setSelectedPatient(patient);
+  };
+
+  const handleMenuClose = () => {
+    setAnchorEl(null);
+    setSelectedPatient(null);
+  };
+
+  const handleView = () => {
+    if (selectedPatient) {
+      navigate(`/patient/${selectedPatient.id}`);
+    }
+    handleMenuClose();
+  };
+
+  const handleEdit = () => {
+    if (selectedPatient) {
+      onEditClick(selectedPatient);
+    }
+    handleMenuClose();
+  };
+
+  const handleDelete = () => {
+    if (selectedPatient) {
+      onDeleteClick(selectedPatient);
+    }
+    handleMenuClose();
+  };
+
   return (
     <TableContainer>
       <Table>
@@ -134,9 +143,8 @@ export const PatientsTable: React.FC<PatientTableProps> = ({
                         : undefined
                     }
                     sx={{
-                      bgcolor: !patient.photoUrl
-                        ? stringToColor(patient.name)
-                        : undefined,
+                      bgcolor: !patient.photoUrl ? "grey.200" : undefined,
+                      color: !patient.photoUrl ? "grey.500" : undefined,
                       width: 40,
                       height: 40,
                       cursor: "pointer",
@@ -146,7 +154,7 @@ export const PatientsTable: React.FC<PatientTableProps> = ({
                     }}
                     onClick={() => navigate(`/patient/${patient.id}`)}
                   >
-                    {!patient.photoUrl && getInitials(patient.name)}
+                    {!patient.photoUrl && patient.name.charAt(0)}
                   </Avatar>
                   <Box sx={{ display: "flex", flexDirection: "column" }}>
                     <Typography
@@ -167,7 +175,6 @@ export const PatientsTable: React.FC<PatientTableProps> = ({
                         patientId={patient.id}
                         variant="contained"
                       />
-
                       <MealPlanButton
                         patientId={patient.id}
                         variant="contained"
@@ -204,33 +211,43 @@ export const PatientsTable: React.FC<PatientTableProps> = ({
                 />
               </TableCell>
               <TableCell align="right">
-                <Stack direction="row" spacing={1} justifyContent="flex-end">
-                  <IconButton
-                    size="small"
-                    onClick={() => navigate(`/patient/${patient.id}`)}
-                  >
-                    <VisibilityIcon fontSize="small" />
-                  </IconButton>
-                  <IconButton
-                    size="small"
-                    onClick={() => onEditClick(patient)}
-                    sx={{ color: "primary.main" }}
-                  >
-                    <EditIcon fontSize="small" />
-                  </IconButton>
-                  <IconButton
-                    size="small"
-                    onClick={() => onDeleteClick(patient)}
-                    sx={{ color: "error.main" }}
-                  >
-                    <DeleteIcon fontSize="small" />
-                  </IconButton>
-                </Stack>
+                <IconButton
+                  size="small"
+                  onClick={(e) => handleMenuOpen(e, patient)}
+                >
+                  <MoreVertIcon fontSize="small" />
+                </IconButton>
               </TableCell>
             </TableRow>
           ))}
         </TableBody>
       </Table>
+
+      <Menu
+        anchorEl={anchorEl}
+        open={Boolean(anchorEl)}
+        onClose={handleMenuClose}
+        PaperProps={{
+          elevation: 1,
+          sx: {
+            borderRadius: 1,
+            minWidth: 150,
+          },
+        }}
+      >
+        <MenuItem onClick={handleView}>
+          <VisibilityIcon fontSize="small" sx={{ mr: 1 }} />
+          Ver
+        </MenuItem>
+        <MenuItem onClick={handleEdit}>
+          <EditIcon fontSize="small" sx={{ mr: 1 }} />
+          Editar
+        </MenuItem>
+        <MenuItem onClick={handleDelete} sx={{ color: "error.main" }}>
+          <DeleteIcon fontSize="small" sx={{ mr: 1 }} />
+          Excluir
+        </MenuItem>
+      </Menu>
     </TableContainer>
   );
 };
