@@ -26,6 +26,10 @@ import { EnergyPlanModule } from './modules/energy-plan/energy-plan.module';
       useFactory: (configService: ConfigService) => {
         const databaseUrl = configService.get<string>('DATABASE_URL');
         if (databaseUrl) {
+          console.log(
+            '🚀 ~ app.module.ts:29 ~ databaseUrl 🚀🚀🚀:',
+            databaseUrl,
+          );
           return {
             type: 'postgres',
             url: databaseUrl,
@@ -34,6 +38,10 @@ import { EnergyPlanModule } from './modules/energy-plan/energy-plan.module';
             logging: false,
           };
         }
+        console.log(
+          '🚀 ~ app.module.ts:41 ~ DB_HOST 🚀🚀🚀:',
+          configService.get('DB_HOST'),
+        );
         return {
           type: 'postgres',
           host: configService.get('DB_HOST'),
