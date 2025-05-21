@@ -48,6 +48,9 @@ export function AssessmentEvolution() {
   const location = useLocation();
   const navigate = useNavigate();
   const [dateRange, setDateRange] = useState(getDefaultDateRange);
+  const [selectedMeasurements, setSelectedMeasurements] = useState<string[]>(
+    []
+  );
   // Define a aba inicial baseada na rota
   const getTabIndexFromPath = () => {
     if (location.pathname.endsWith("/photos")) return 1;
@@ -113,7 +116,17 @@ export function AssessmentEvolution() {
     });
 
     return filtered;
-  }, [allMeasurements, dateRange]); // Recalcula SOMENTE se as medições totais ou o dateRange mudarem
+  }, [allMeasurements, dateRange]);
+
+  // Filtrar medições baseado nas seleções do usuário
+  const displayedMeasurements = useMemo(() => {
+    if (selectedMeasurements.length === 0) {
+      return filteredMeasurements;
+    }
+    return filteredMeasurements.filter((m) =>
+      selectedMeasurements.includes(m.id)
+    );
+  }, [filteredMeasurements, selectedMeasurements]);
 
   // Estado de Carregamento
   if (isLoadingPatient || isLoadingMeasurements) {
@@ -221,6 +234,8 @@ export function AssessmentEvolution() {
                 value={dateRange}
                 onChange={setDateRange}
                 measurements={filteredMeasurements}
+                selectedMeasurements={selectedMeasurements}
+                onMeasurementsChange={setSelectedMeasurements}
               />
             </LocalizationProvider>
           </CardContent>
@@ -228,7 +243,7 @@ export function AssessmentEvolution() {
 
         {/* Conteúdo das abas */}
         {tabIndex === 0 ? (
-          filteredMeasurements.length > 0 ? (
+          displayedMeasurements.length > 0 ? (
             <>
               <Card
                 elevation={1}
@@ -244,7 +259,7 @@ export function AssessmentEvolution() {
                 }}
               >
                 <CardContent sx={{ p: 2.5 }}>
-                  <CompositionChart measurements={filteredMeasurements} />
+                  <CompositionChart measurements={displayedMeasurements} />
                 </CardContent>
               </Card>
               <Card
@@ -261,10 +276,7 @@ export function AssessmentEvolution() {
                 }}
               >
                 <CardContent sx={{ p: 2.5 }}>
-                  <AnalysisTable
-                    measurements={filteredMeasurements}
-                    patient={patient}
-                  />
+                  <AnalysisTable measurements={displayedMeasurements} />
                 </CardContent>
               </Card>
             </>
@@ -304,7 +316,7 @@ export function AssessmentEvolution() {
           >
             <CardContent sx={{ p: 2.5 }}>
               <PhotoEvolutionSection
-                measurements={allMeasurements || []}
+                measurements={displayedMeasurements}
                 dateRange={dateRange}
               />
             </CardContent>

@@ -6,6 +6,11 @@ import {
   ToggleButton,
   ToggleButtonGroup,
   Button,
+  Menu,
+  MenuItem,
+  Checkbox,
+  ListItemText,
+  Tooltip,
 } from "@mui/material";
 import { DatePicker } from "@mui/x-date-pickers";
 import {
@@ -16,22 +21,26 @@ import {
   isValid,
   parseISO,
 } from "date-fns";
+import FilterListIcon from "@mui/icons-material/FilterList";
 
 // Defina ou importe seu tipo Measurement
 export interface Measurement {
   id: string;
   date: string; // "yyyy-MM-dd"
-  value: number;
-  type: string;
+  value?: number;
+  type?: string;
+  // Adicione outros campos necessários aqui
 }
 
 interface DateRangeSelectorProps {
   value: {
-    startDate?: string; // Espera "yyyy-MM-dd"
-    endDate?: string; // Espera "yyyy-MM-dd"
+    startDate: string; // Espera "yyyy-MM-dd"
+    endDate: string; // Espera "yyyy-MM-dd"
   };
-  onChange: (value: { startDate?: string; endDate?: string }) => void;
-  measurements: Measurement[]; // Ou apenas a contagem, se preferir: measurementCount: number;
+  onChange: (value: { startDate: string; endDate: string }) => void;
+  measurements: Measurement[];
+  selectedMeasurements?: string[];
+  onMeasurementsChange?: (selectedIds: string[]) => void;
 }
 
 type PeriodOption = "1m" | "3m" | "6m" | "1y" | "custom";
@@ -79,6 +88,8 @@ export function DateRangeSelector({
   value,
   onChange,
   measurements,
+  selectedMeasurements = [],
+  onMeasurementsChange,
 }: DateRangeSelectorProps) {
   const [selectedPeriod, setSelectedPeriod] = useState<PeriodOption>(() =>
     getPeriodFromDates(value.startDate, value.endDate)
@@ -87,6 +98,9 @@ export function DateRangeSelector({
     startDate: value.startDate,
     endDate: value.endDate,
   });
+  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+  const [localSelectedMeasurements, setLocalSelectedMeasurements] =
+    useState<string[]>(selectedMeasurements);
 
   // Efeito para SINCRONIZAR estado interno com MUDANÇAS no 'value' vindo do pai
   useEffect(() => {
@@ -97,6 +111,19 @@ export function DateRangeSelector({
       endDate: value.endDate,
     });
   }, [value]);
+
+  // Efeito para selecionar as 5 últimas avaliações quando o componente é montado
+  useEffect(() => {
+    if (measurements.length > 0 && localSelectedMeasurements.length === 0) {
+      // Ordena as avaliações por data (mais recentes primeiro) e pega as 5 primeiras
+      const sortedMeasurements = [...measurements].sort(
+        (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
+      );
+      const lastFiveIds = sortedMeasurements.slice(0, 5).map((m) => m.id);
+      setLocalSelectedMeasurements(lastFiveIds);
+      onMeasurementsChange?.(lastFiveIds);
+    }
+  }, [measurements]);
 
   const handlePeriodChange = useCallback(
     (_: React.MouseEvent<HTMLElement>, newPeriod: PeriodOption | null) => {
@@ -185,6 +212,34 @@ export function DateRangeSelector({
       }
     }
   }, [tempDateRange, onChange, selectedPeriod]); // Adiciona selectedPeriod como dependência
+
+  const handleFilterClick = (event: React.MouseEvent<HTMLElement>) => {
+    setAnchorEl(event.currentTarget);
+  };
+
+  const handleFilterClose = () => {
+    setAnchorEl(null);
+  };
+
+  const handleMeasurementToggle = (measurementId: string) => {
+    const newSelected = localSelectedMeasurements.includes(measurementId)
+      ? localSelectedMeasurements.filter((id) => id !== measurementId)
+      : [...localSelectedMeasurements, measurementId];
+
+    setLocalSelectedMeasurements(newSelected);
+    onMeasurementsChange?.(newSelected);
+  };
+
+  const handleSelectAll = () => {
+    const allIds = measurements.map((m) => m.id);
+    setLocalSelectedMeasurements(allIds);
+    onMeasurementsChange?.(allIds);
+  };
+
+  const handleDeselectAll = () => {
+    setLocalSelectedMeasurements([]);
+    onMeasurementsChange?.([]);
+  };
 
   const startDateValue = tempDateRange.startDate
     ? parseISO(tempDateRange.startDate)
@@ -312,11 +367,161 @@ export function DateRangeSelector({
         </Stack>
       )}
 
-      {/* Mantém a exibição da contagem */}
-      <Typography variant="body2" color="text.secondary">
-        {Array.isArray(measurements) ? measurements.length : 0} avaliações
-        encontradas no período selecionado
-      </Typography>
+      {/* Container para contagem e filtro de avaliações */}
+      <Box
+        sx={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          mt: 2,
+        }}
+      >
+        <Typography variant="body2" color="text.secondary">
+          {Array.isArray(measurements) ? measurements.length : 0} avaliações
+          encontradas no período
+          {localSelectedMeasurements.length > 0 && (
+            <Typography
+              component="span"
+              variant="body2"
+              color="primary"
+              sx={{ ml: 0.5 }}
+            >
+              ,{" "}
+              {localSelectedMeasurements.length === measurements.length
+                ? "todas selecionadas"
+                : `${localSelectedMeasurements.length} selecionadas`}
+            </Typography>
+          )}
+        </Typography>
+
+        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+          <Tooltip title="Filtrar avaliações">
+            <Button
+              onClick={handleFilterClick}
+              size="small"
+              color={
+                localSelectedMeasurements.length > 0 ? "primary" : "inherit"
+              }
+              startIcon={<FilterListIcon />}
+              sx={{
+                textTransform: "none",
+                minWidth: "auto",
+                px: 1.5,
+              }}
+            >
+              Filtrar Avaliações
+            </Button>
+          </Tooltip>
+        </Box>
+      </Box>
+
+      {/* Menu de seleção de avaliações */}
+      <Menu
+        anchorEl={anchorEl}
+        open={Boolean(anchorEl)}
+        onClose={handleFilterClose}
+        PaperProps={{
+          sx: {
+            maxHeight: 500,
+            width: 400,
+            "& .MuiMenuItem-root": {
+              py: 1.5,
+            },
+          },
+        }}
+      >
+        <Box
+          sx={{
+            p: 2,
+            borderBottom: 1,
+            borderColor: "divider",
+            bgcolor: "background.paper",
+            position: "sticky",
+            top: 0,
+            zIndex: 1,
+          }}
+        >
+          <Typography variant="subtitle1" gutterBottom>
+            Selecionar Avaliações
+          </Typography>
+          <Stack direction="row" spacing={1}>
+            <Button
+              size="small"
+              onClick={handleSelectAll}
+              variant="outlined"
+              fullWidth
+            >
+              Selecionar Todas
+            </Button>
+            <Button
+              size="small"
+              onClick={handleDeselectAll}
+              variant="outlined"
+              fullWidth
+            >
+              Desmarcar Todas
+            </Button>
+          </Stack>
+        </Box>
+        <Box
+          sx={{
+            maxHeight: 400,
+            overflowY: "auto",
+            "&::-webkit-scrollbar": {
+              width: "8px",
+            },
+            "&::-webkit-scrollbar-track": {
+              background: "transparent",
+            },
+            "&::-webkit-scrollbar-thumb": {
+              background: "rgba(0,0,0,0.2)",
+              borderRadius: "4px",
+            },
+          }}
+        >
+          {measurements.map((measurement) => (
+            <MenuItem
+              key={measurement.id}
+              onClick={() => handleMeasurementToggle(measurement.id)}
+              sx={{
+                borderBottom: "1px solid",
+                borderColor: "divider",
+                "&:last-child": {
+                  borderBottom: "none",
+                },
+              }}
+            >
+              <Checkbox
+                edge="start"
+                checked={localSelectedMeasurements.includes(measurement.id)}
+                tabIndex={-1}
+                disableRipple
+              />
+              <ListItemText
+                primary={
+                  <Typography variant="subtitle2">
+                    {format(parseISO(measurement.date), "dd/MM/yyyy")}
+                  </Typography>
+                }
+                secondary={
+                  <Stack direction="row" spacing={1} sx={{ mt: 0.5 }}>
+                    {measurement.value && (
+                      <Typography variant="body2" color="text.secondary">
+                        Valor: {measurement.value}
+                      </Typography>
+                    )}
+                    {measurement.type && (
+                      <Typography variant="body2" color="text.secondary">
+                        Tipo: {measurement.type}
+                      </Typography>
+                    )}
+                  </Stack>
+                }
+              />
+            </MenuItem>
+          ))}
+        </Box>
+      </Menu>
     </Box>
   );
 }
