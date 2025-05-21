@@ -12,14 +12,12 @@ import { EnergyFormula } from './enums/energy-formulas.enum';
 import { ActivityFactor } from './enums/activity-factors.enum';
 import { InjuryFactor } from './enums/injury-factors.enum';
 import { Gender } from './enums/gender.enum';
-import { NutritionistsService } from '../nutritionists/nutritionists.service';
 
 @Injectable()
 export class EnergyPlanService {
   constructor(
     @InjectRepository(EnergyPlan)
     private readonly energyPlanRepository: Repository<EnergyPlan>,
-    private readonly nutritionistsService: NutritionistsService,
   ) {}
 
   private toResponseDto(energyPlan: EnergyPlan): EnergyPlanResponseDto {
@@ -50,17 +48,6 @@ export class EnergyPlanService {
   async create(
     createEnergyPlanDto: CreateEnergyPlanDto,
   ): Promise<EnergyPlanResponseDto> {
-    // Verificar se o nutricionista existe
-    try {
-      await this.nutritionistsService.findOne(
-        createEnergyPlanDto.nutritionistId,
-      );
-    } catch (error) {
-      throw new NotFoundException(
-        `Nutricionista com ID ${createEnergyPlanDto.nutritionistId} não encontrado`,
-      );
-    }
-
     const {
       goalWeightChangeKg,
       goalDaysToAchieve,

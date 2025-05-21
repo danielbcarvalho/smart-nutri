@@ -6,7 +6,6 @@ import {
   Box,
   IconButton,
   Tooltip,
-  Avatar,
   useTheme,
   Drawer,
   Typography,
@@ -18,7 +17,6 @@ import {
   Notifications as NotificationsIcon,
   Search as SearchIcon,
   Groups as GroupsIcon,
-  Person as PersonIcon,
   Menu as MenuIcon,
   MoreVert as MoreVertIcon,
 } from "@mui/icons-material";
@@ -34,6 +32,8 @@ import {
   authService,
   Nutritionist,
 } from "../../modules/auth/services/authService";
+import { OptimizedAvatar } from "./OptimizedAvatar";
+// Importando o novo componente
 
 // Adiciona tipos para as novas props
 interface HeaderGlobalProps {
@@ -87,10 +87,8 @@ export const HeaderGlobal = ({
       const updatedUser = { ...user, photoUrl: response.data.photoUrl };
       localStorage.setItem("@smartnutri:user", JSON.stringify(updatedUser));
 
-      const updatedUrl = response.data.photoUrl
-        ? `${response.data.photoUrl}?t=${Date.now()}`
-        : undefined;
-      setAvatarUrl(updatedUrl);
+      // Remover a adição de timestamp aqui para evitar problemas de cache
+      setAvatarUrl(response.data.photoUrl);
     } catch (err) {
       console.log("🚀 ~ HeaderGlobal.tsx:222 ~ err 🚀🚀🚀:", err);
       // Pode adicionar notificação de erro aqui
@@ -102,16 +100,15 @@ export const HeaderGlobal = ({
   // Adiciona função para atualizar user local e avatar após edição
   const handleProfileSave = (updatedUser: Nutritionist) => {
     localStorage.setItem("@smartnutri:user", JSON.stringify(updatedUser));
-    const updatedUrl = updatedUser.photoUrl
-      ? `${updatedUser.photoUrl}?t=${Date.now()}`
-      : undefined;
-    setAvatarUrl(updatedUrl);
+    // Não adicionar timestamp para evitar problemas de cache
+    setAvatarUrl(updatedUser.photoUrl);
     window.location.reload(); // Garante atualização dos dados em toda a UI
   };
 
   const handleMoreMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
     setMoreMenuAnchorEl(event.currentTarget);
   };
+
   const handleMoreMenuClose = () => {
     setMoreMenuAnchorEl(null);
   };
@@ -159,7 +156,7 @@ export const HeaderGlobal = ({
             </>
           ) : (
             <>
-              {/* Logo/Título padrão */}
+              {/* Logo/Título padrão - Imagem do logo otimizada */}
               <Box
                 sx={{
                   flexGrow: 1,
@@ -169,20 +166,27 @@ export const HeaderGlobal = ({
                 }}
                 onClick={() => navigate("/")}
               >
-                <img
-                  src={logoUrl || "/images/logo.png"}
-                  alt="Smart Nutri"
-                  style={{
-                    height: 40,
-                    width: "auto",
-                    display: "block",
-                    objectFit: "contain",
-                    imageRendering: "crisp-edges",
-                    WebkitFontSmoothing: "antialiased",
-                    MozOsxFontSmoothing: "grayscale",
-                  }}
-                  loading="eager"
-                />
+                <picture>
+                  <source
+                    srcSet={logoUrl || "/images/logo.png"}
+                    type="image/png"
+                  />
+                  <img
+                    src={logoUrl || "/images/logo.png"}
+                    alt="Smart Nutri"
+                    style={{
+                      height: 40,
+                      width: "auto",
+                      display: "block",
+                      objectFit: "contain",
+                      imageRendering: "-webkit-optimize-contrast", // Melhor que crisp-edges
+                      WebkitFontSmoothing: "antialiased",
+                      MozOsxFontSmoothing: "grayscale",
+                      transform: "translateZ(0)", // Forçar aceleração de hardware
+                    }}
+                    loading="eager"
+                  />
+                </picture>
               </Box>
 
               {/* Ícones do lado direito */}
@@ -201,42 +205,22 @@ export const HeaderGlobal = ({
                         <NotificationsIcon />
                       </IconButton>
                     </Tooltip>
-                    {/* Perfil */}
+                    {/* Perfil - Usando novo componente de Avatar */}
                     <Tooltip title="Perfil">
                       <IconButton
                         onClick={() => setProfileOpen(true)}
                         sx={{
                           color: "text.secondary",
                           "&:hover": { color: "text.primary" },
+                          padding: 0,
                         }}
                       >
-                        <Avatar
-                          key={
-                            typeof avatarUrl === "string"
-                              ? avatarUrl
-                              : undefined
-                          }
-                          src={
-                            typeof avatarUrl === "string"
-                              ? avatarUrl
-                              : undefined
-                          }
-                          sx={{
-                            width: 44,
-                            height: 44,
-                            bgcolor: "primary.main",
-                            fontSize: "1.15rem",
-                            border: `3px solid ${theme.palette.custom.accent}`,
-                            boxShadow: `0 2px 8px 0 ${theme.palette.custom.lightest}`,
-                            background: `linear-gradient(135deg, ${theme.palette.primary.main} 60%, ${theme.palette.custom.accent} 100%)`,
-                            transition: "box-shadow 0.2s",
-                            "&:hover": {
-                              boxShadow: `0 4px 16px 0 ${theme.palette.custom.light}`,
-                            },
-                          }}
-                        >
-                          {!avatarUrl && <PersonIcon />}
-                        </Avatar>
+                        <OptimizedAvatar
+                          src={avatarUrl}
+                          size={44}
+                          isLoading={uploading}
+                          onClick={() => setProfileOpen(true)}
+                        />
                       </IconButton>
                     </Tooltip>
                     {/* Botão de três pontos verticais */}
@@ -272,11 +256,29 @@ export const HeaderGlobal = ({
                           handleMoreMenuClose();
                         }}
                       >
-                        <img
-                          src="/images/ai-animated.gif"
-                          alt="IA"
-                          style={{ height: 20, width: 20, marginRight: 8 }}
-                        />
+                        {/* Ícone de IA otimizado */}
+                        <Box
+                          component="span"
+                          sx={{
+                            mr: 1,
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            width: 24,
+                            height: 24,
+                          }}
+                        >
+                          <img
+                            src="/images/ai-animated.gif"
+                            alt="IA"
+                            style={{
+                              height: 20,
+                              width: 20,
+                              display: "block",
+                              objectFit: "contain",
+                            }}
+                          />
+                        </Box>
                         Inteligência Artificial
                       </MenuItem>
                       <MenuItem
@@ -311,11 +313,29 @@ export const HeaderGlobal = ({
                           "&:hover": { color: "text.primary" },
                         }}
                       >
-                        <img
-                          src="/images/ai-animated.gif"
-                          alt="IA"
-                          style={{ height: 24, width: 24 }}
-                        />
+                        {/* Ícone de IA otimizado */}
+                        <Box
+                          component="span"
+                          sx={{
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            width: 24,
+                            height: 24,
+                          }}
+                        >
+                          <img
+                            src="/images/ai-animated.gif"
+                            alt="IA"
+                            style={{
+                              height: 24,
+                              width: 24,
+                              display: "block",
+                              objectFit: "contain",
+                              transform: "translateZ(0)", // Forçar aceleração de hardware
+                            }}
+                          />
+                        </Box>
                       </IconButton>
                     </Tooltip>
 
@@ -349,35 +369,16 @@ export const HeaderGlobal = ({
                         sx={{
                           color: "text.secondary",
                           "&:hover": { color: "text.primary" },
+                          padding: 0,
                         }}
                       >
-                        <Avatar
-                          key={
-                            typeof avatarUrl === "string"
-                              ? avatarUrl
-                              : undefined
-                          }
-                          src={
-                            typeof avatarUrl === "string"
-                              ? avatarUrl
-                              : undefined
-                          }
-                          sx={{
-                            width: 44,
-                            height: 44,
-                            bgcolor: "primary.main",
-                            fontSize: "1.15rem",
-                            border: `3px solid ${theme.palette.custom.accent}`,
-                            boxShadow: `0 2px 8px 0 ${theme.palette.custom.lightest}`,
-                            background: `linear-gradient(135deg, ${theme.palette.primary.main} 60%, ${theme.palette.custom.accent} 100%)`,
-                            transition: "box-shadow 0.2s",
-                            "&:hover": {
-                              boxShadow: `0 4px 16px 0 ${theme.palette.custom.light}`,
-                            },
-                          }}
-                        >
-                          {!avatarUrl && <PersonIcon />}
-                        </Avatar>
+                        {/* Usando o novo componente de Avatar */}
+                        <OptimizedAvatar
+                          src={avatarUrl}
+                          size={44}
+                          isLoading={uploading}
+                          onClick={() => setProfileOpen(true)}
+                        />
                       </IconButton>
                     </Tooltip>
                   </>

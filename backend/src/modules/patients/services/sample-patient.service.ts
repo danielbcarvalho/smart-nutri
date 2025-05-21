@@ -16,12 +16,17 @@ import {
 import { MealPlan } from '../../meal-plan/entities/meal-plan.entity';
 import { Meal } from '../../meal-plan/entities/meal.entity';
 import { MealFood } from '../../meal-plan/entities/meal-food.entity';
-import { Gender } from '../enums/gender.enum';
+import { Gender as PatientGender } from '../enums/gender.enum';
 import { Food } from '../../foods/entities/food.entity';
 import { PhotosService } from '../../photos/photos.service';
 import { PhotoType } from '../../photos/entities/photo.entity';
 import * as fs from 'fs';
 import * as path from 'path';
+import { EnergyPlanService } from '../../energy-plan/energy-plan.service';
+import { EnergyFormula } from '../../energy-plan/enums/energy-formulas.enum';
+import { ActivityFactor } from '../../energy-plan/enums/activity-factors.enum';
+import { InjuryFactor } from '../../energy-plan/enums/injury-factors.enum';
+import { Gender as EnergyPlanGender } from '../../energy-plan/enums/gender.enum';
 
 @Injectable()
 export class SamplePatientService {
@@ -44,6 +49,7 @@ export class SamplePatientService {
     @InjectRepository(Food)
     private readonly foodRepository: Repository<Food>,
     private readonly photosService: PhotosService,
+    private readonly energyPlanService: EnergyPlanService,
   ) {
     this.loadFoodsData();
   }
@@ -139,6 +145,9 @@ export class SamplePatientService {
       // Create sample meal plan
       await this.createMealPlan(patient);
 
+      // Create sample energy plan
+      await this.createEnergyPlan(patient);
+
       this.logger.log(
         `Sample patient created successfully for nutritionist ${nutritionistId}`,
       );
@@ -221,7 +230,7 @@ export class SamplePatientService {
       phone: '(11) 98765-4321',
       address: 'Av. Paulista, 1000, São Paulo - SP',
       birthDate: '1990-05-15',
-      gender: Gender.FEMALE,
+      gender: PatientGender.FEMALE,
       instagram: '@maria.exemplo',
       status: PatientStatus.ACTIVE,
       height: 165,
@@ -1300,5 +1309,54 @@ export class SamplePatientService {
       dailyCarbs: totalCarbs / days,
       dailyFat: totalFat / days,
     });
+  }
+
+  /**
+   * Creates a sample energy plan for a patient
+   * @param patient The patient to create an energy plan for
+   */
+  private async createEnergyPlan(patient: Patient): Promise<void> {
+    const birthDate = new Date(patient.birthDate);
+    const age = Math.floor(
+      (new Date().getTime() - birthDate.getTime()) /
+        (1000 * 60 * 60 * 24 * 365.25),
+    );
+
+    // Mapear o gênero do enum de pacientes para o enum de planos energéticos
+    const genderMapping = {
+      [PatientGender.MALE]: EnergyPlanGender.MALE,
+      [PatientGender.FEMALE]: EnergyPlanGender.FEMALE,
+      [PatientGender.OTHER]: EnergyPlanGender.OTHER,
+    };
+
+    // Criar plano energético usando a fórmula FAO/WHO 2004
+    const energyPlan = await this.energyPlanService.calculateEnergyPlan({
+      name: 'Plano Energético Inicial',
+      patientId: patient.id,
+      nutritionistId: patient.nutritionistId,
+      weightAtCalculationKg: patient.weight,
+      heightAtCalculationCm: patient.height,
+      ageAtCalculationYears: age,
+      genderAtCalculation: genderMapping[patient.gender],
+      formulaKey: EnergyFormula.FAO_WHO_2004,
+      activityFactorKey: ActivityFactor.MODERATE, // Moderadamente ativo (3-5 dias/semana)
+      injuryFactorKey: InjuryFactor.NONE, // Sem lesão/estresse
+      fatFreeMassAtCalculationKg: patient.weight * 0.7, // Estimativa de massa magra (70% do peso)
+      weightGoalDetails: {
+        target_weight_change_kg: -5, // Objetivo de perda de 5kg
+        days_to_achieve: 90, // Em 90 dias
+        calculated_kcal_adjustment: -500, // Déficit de 500kcal/dia
+      },
+      macronutrientDistribution: {
+        proteins: 30, // 30% de proteínas
+        carbs: 45, // 45% de carboidratos
+        fats: 25, // 25% de gorduras
+      },
+      calculatedGetKcal: 0, // Será calculado pelo serviço
+    });
+
+    this.logger.log(
+      `[Sample] Plano energético criado: TMB=${energyPlan.calculatedTmbKcal}, GET=${energyPlan.calculatedGetKcal}`,
+    );
   }
 }
