@@ -23,8 +23,6 @@ export const pollock3Formula: BodyDensityFormula = {
   reference:
     "Pollock ML, Schmidt DH, Jackson AS. Measurement of cardiorespiratory fitness and body composition in the clinical setting. Compr Ther. 1980;6(9):12-27. / Jackson, A. S., Pollock, M. L., & Ward, A. (1980). Generalized equations for predicting body density of women. Medicine and Science in Sports and Exercise, 12(3), 175-182.",
   calculate: (skinfolds: SkinfoldsInput, gender?: string, age?: number) => {
-    console.log("🔍 Pollock3 Debug - Inputs:", { skinfolds, gender, age });
-
     if (!gender || !age || age < 0) {
       console.log("❌ Pollock3 Debug - Invalid inputs:", { gender, age });
       return NaN;
@@ -37,15 +35,6 @@ export const pollock3Formula: BodyDensityFormula = {
     const tricipital = parseFloat(skinfolds.tricipital || "0") || 0;
     const suprailiac = parseFloat(skinfolds.suprailiac || "0") || 0;
 
-    console.log("🔍 Pollock3 Debug - Parsed values:", {
-      g,
-      thoracic,
-      abdominal,
-      thigh,
-      tricipital,
-      suprailiac,
-    });
-
     let sum: number;
 
     if (g === "M") {
@@ -56,8 +45,6 @@ export const pollock3Formula: BodyDensityFormula = {
       console.log("❌ Pollock3 Debug - Invalid gender:", g);
       return 0;
     }
-
-    console.log("🔍 Pollock3 Debug - Sum of skinfolds:", sum);
 
     if (sum <= 0) {
       console.log("❌ Pollock3 Debug - Sum is less than or equal to 0");
@@ -81,8 +68,6 @@ export const pollock3Formula: BodyDensityFormula = {
         0.0000023 * Math.pow(sum, 2) -
         0.0001392 * age;
     }
-
-    console.log("🔍 Pollock3 Debug - Calculated density:", density);
 
     if (isNaN(density) || !isFinite(density) || density <= 0) {
       console.log("❌ Pollock3 Debug - Invalid density result:", density);

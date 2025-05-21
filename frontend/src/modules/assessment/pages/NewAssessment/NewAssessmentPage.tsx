@@ -31,6 +31,12 @@ import { ActionButtons } from "./components/ActionButtons";
 import { AnalyticalResults } from "./components/AnalyticalResults";
 import { calculateAnthropometricResults } from "../../calcs/anthropometricCalculations";
 import { bodyDensityFormulas } from "../../calcs/formulas";
+import {
+  calculateBodyDensity,
+  calculateBodyFatPercentage,
+  calculateFatMass,
+  calculateFatFreeMass,
+} from "@/modules/assessment/calcs/anthropometricCalculations/bodyComposition";
 
 // Definindo o tipo para o estado local `skinfolds` explicitamente.
 type LocalSkinfoldsState = {
@@ -271,14 +277,14 @@ export function NewAssessment() {
           (new Date().getTime() - new Date(patient.birthDate).getTime()) /
             (365.25 * 24 * 60 * 60 * 1000)
         )
-      : 30; // Default age if not available
+      : 30;
 
     // Convert string skinfold values to numbers for calculation
     const numericSkinfolds: { [key: string]: number } = {};
     for (const key in skinfolds) {
       const typedKey = key as keyof LocalSkinfoldsState;
       const value = parseFloat(skinfolds[typedKey]);
-      numericSkinfolds[typedKey] = isNaN(value) ? 0 : value; // Use 0 if NaN, Guedes formula handles sum=0
+      numericSkinfolds[typedKey] = isNaN(value) ? 0 : value;
     }
 
     // Convert string circumference values to numbers
@@ -297,16 +303,48 @@ export function NewAssessment() {
       numericBoneDiameters[typedKey] = isNaN(value) ? 0 : value;
     }
 
-    return calculateAnthropometricResults({
+    const results = calculateAnthropometricResults({
       gender: calculationGender,
       age: calculationAge,
       weight: parseFloat(basicData.weight) || 0,
       height: parseFloat(basicData.height) || 0,
-      skinfolds: numericSkinfolds as SkinfoldsType, // Cast to expected type
-      circumferences: numericCircumferences as BodyMeasurements, // Cast to expected type
-      boneDiameters: numericBoneDiameters as BoneDiameters, // Cast to expected type
+      skinfolds: numericSkinfolds as SkinfoldsType,
+      circumferences: numericCircumferences as BodyMeasurements,
+      boneDiameters: numericBoneDiameters as BoneDiameters,
       skinfoldFormula,
     });
+
+    // Calcular a densidade corporal
+    const skinfoldValues: Record<string, string> = {};
+    Object.entries(numericSkinfolds).forEach(([key, value]) => {
+      skinfoldValues[key] = String(value);
+    });
+
+    const { density } = calculateBodyDensity(
+      skinfoldValues,
+      calculationGender,
+      calculationAge,
+      skinfoldFormula
+    );
+
+    // Calcular o percentual de gordura
+    const bodyFatValue =
+      density > 0 ? calculateBodyFatPercentage(density) : null;
+
+    // Calcular massa gorda e massa livre de gordura
+    const weight = parseFloat(basicData.weight) || 0;
+    const fatMass = bodyFatValue
+      ? calculateFatMass(weight, bodyFatValue)
+      : null;
+    const fatFreeMass = fatMass ? calculateFatFreeMass(weight, fatMass) : null;
+
+    return {
+      ...results,
+      bodyFatPercentage: bodyFatValue ? `${bodyFatValue.toFixed(1)}%` : "",
+      fatMass: fatMass ? `${fatMass.toFixed(1)} kg` : "",
+      fatFreeMass: fatFreeMass ? `${fatFreeMass.toFixed(1)} kg` : "",
+      bodyDensity: density ? density.toFixed(4) : "",
+    };
   }, [
     basicData,
     circumferences,
@@ -346,7 +384,6 @@ export function NewAssessment() {
       isSaving.current = false; // Reset saving flag on success
     },
     onError: (error: Error) => {
-      // Tipo explícito para error
       console.error("Erro ao salvar avaliação:", error);
       setSnackbar({
         open: true,
@@ -401,7 +438,7 @@ export function NewAssessment() {
     };
 
     // Preparar skinfolds
-    const skinfoldData: Partial<SkinfoldsType> = {}; // Use Partial
+    const skinfoldData: Partial<SkinfoldsType> = {};
     (Object.keys(skinfolds) as Array<keyof LocalSkinfoldsState>).forEach(
       (key) => {
         const val = toNumber(skinfolds[key]);
@@ -427,6 +464,13 @@ export function NewAssessment() {
       }
     );
 
+    // Extrair o valor numérico do bodyFatPercentage
+    const bodyFatValue = anthropometricResults.bodyFatPercentage
+      ? parseFloat(
+          anthropometricResults.bodyFatPercentage.replace(/[^\d.-]/g, "")
+        )
+      : undefined;
+
     const measurementData: CreateMeasurementDto = {
       date: (assessmentDate
         ? new Date(assessmentDate)
@@ -443,11 +487,7 @@ export function NewAssessment() {
       fatFreeMass: anthropometricResults.fatFreeMass
         ? parseFloat(anthropometricResults.fatFreeMass.replace(/[^\d.-]/g, ""))
         : undefined,
-      bodyFat: anthropometricResults.bodyFatPercentage
-        ? parseFloat(
-            anthropometricResults.bodyFatPercentage.replace(/[^\d.-]/g, "")
-          )
-        : undefined,
+      bodyFat: bodyFatValue,
       muscleMass: anthropometricResults.muscleMass
         ? parseFloat(anthropometricResults.muscleMass.replace(/[^\d.-]/g, ""))
         : undefined,

@@ -205,3 +205,17 @@ export const calculateMuscleMass = (
 ): number => {
   return weight - fatMass - boneMass - residualWeight;
 };
+
+/**
+ * Calcula a massa livre de gordura
+ * Fórmula: Massa Livre de Gordura = Peso Total - Massa Gorda
+ * @param weight Peso total em kg
+ * @param fatMass Massa gorda em kg
+ * @returns Massa livre de gordura em kg
+ */
+export const calculateFatFreeMass = (
+  weight: number,
+  fatMass: number
+): number => {
+  return weight - fatMass;
+};

@@ -336,7 +336,9 @@ export function Assessments() {
                         fontWeight={600}
                         color="primary.main"
                       >
-                        {measurement.bodyFat ? `${measurement.bodyFat}%` : "-"}
+                        {measurement.bodyFat
+                          ? `${Number(measurement.bodyFat).toFixed(1)}%`
+                          : "-"}
                       </Typography>
                     </Box>
                     <Box
