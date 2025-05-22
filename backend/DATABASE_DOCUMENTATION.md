@@ -724,3 +724,79 @@ O script irá dropar e recriar o banco local `smartnutri_db` e restaurar o backu
 | ...       | 3344        | taco          | Salame       | ... |
 | ...       | 12394       | tbca          | Coração ...  | ... |
 | ...       | uuid-xyz    | personalizado | Meu Alimento | ... |
+
+## 📦 Scripts de Backup e Restauração
+
+### Backup do Banco de Produção
+
+O script `backend/scripts/backup-prod-db.sh` gera um backup completo do banco de dados de produção.
+
+```bash
+# Torne o script executável
+chmod +x backend/scripts/backup-prod-db.sh
+
+# Execute o backup
+./backend/scripts/backup-prod-db.sh
+```
+
+O backup será salvo no formato `.backup` no diretório `backend/scripts` com um nome que inclui a data e hora.
+
+### Restauração em Produção
+
+O script `backend/scripts/restore-prod-db.sh` restaura um backup no banco de dados de produção.
+
+```bash
+# Torne o script executável
+chmod +x backend/scripts/restore-prod-db.sh
+
+# Restaure o backup
+./backend/scripts/restore-prod-db.sh backend/scripts/backup_producao_railway_YYYY-MM-DD_HH-MM-SS.backup
+```
+
+⚠️ **IMPORTANTE**: O script pedirá confirmação antes de restaurar em produção.
+
+### Restauração Local
+
+O script `backend/scripts/restore-local-db.sh` restaura um backup no banco de dados local.
+
+```bash
+# Torne o script executável
+chmod +x backend/scripts/restore-local-db.sh
+
+# Restaure o backup
+./backend/scripts/restore-local-db.sh backend/scripts/backup_producao_railway_YYYY-MM-DD_HH-MM-SS.backup
+```
+
+### ⚠️ Boas Práticas
+
+1. **Sempre faça backup antes de:**
+
+   - Executar migrations em produção
+   - Restaurar qualquer backup
+   - Fazer alterações estruturais no banco
+
+2. **Mantenha os backups:**
+
+   - Em local seguro
+   - Com nome descritivo incluindo data/hora
+   - Por pelo menos 30 dias
+
+3. **Ao restaurar em produção:**
+
+   - Verifique se o arquivo de backup está correto
+   - Confirme a operação quando solicitado
+   - Monitore o processo de restauração
+
+4. **Em ambiente local:**
+   - O banco será recriado automaticamente
+   - Todos os dados existentes serão perdidos
+   - Não é necessária confirmação
+
+### 🔄 Fluxo Recomendado para Alterações em Produção
+
+1. Faça backup do banco atual
+2. Teste as alterações em ambiente local
+3. Execute as migrations em staging (se disponível)
+4. Faça novo backup antes de aplicar em produção
+5. Execute as migrations em produção
+6. Mantenha o backup por pelo menos 30 dias
