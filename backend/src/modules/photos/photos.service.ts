@@ -4,6 +4,7 @@ import { Repository, SelectQueryBuilder } from 'typeorm';
 import { Photo, PhotoType } from './entities/photo.entity';
 import { validate as isUuid } from 'uuid';
 import { StorageService } from '../../supabase/storage/storage.service';
+
 interface ListPhotosParams {
   patientId: string;
   assessmentId?: string;
@@ -31,42 +32,19 @@ export class PhotosService {
   }): Promise<Photo> {
     const { file, patientId, assessmentId, type } = params;
 
-    // Se tiver assessmentId, busca e deleta fotos existentes do mesmo tipo
-    if (assessmentId) {
-      // Busca fotos existentes do mesmo tipo e avaliação
-      const existingPhotos = await this.photoRepository.find({
-        where: {
-          patientId,
-          assessmentId,
-          type,
-        },
-      });
-
-      // Deleta as fotos existentes (caso existam)
-      if (existingPhotos.length > 0) {
-        for (const existingPhoto of existingPhotos) {
-          await this.removePhoto(existingPhoto.id);
-        }
-
-        // Aguarda um pequeno intervalo para garantir que a exclusão foi concluída
-        await new Promise((resolve) => setTimeout(resolve, 200));
-      }
-    }
-
     const ext = file.originalname.split('.').pop();
-    const fileName = `${type}.${ext}`;
+    const uniqueId = Date.now();
+    const fileName = `${type}_${uniqueId}.${ext}`;
     const folder = assessmentId
       ? `${patientId}/${assessmentId}`
       : `${patientId}/no-assessment`;
     const storagePath = `${folder}/${fileName}`;
-    // Upload para o Supabase Storage
     const url = await this.storageService.uploadPatientPhoto(
       patientId,
       file.buffer,
-      `${assessmentId ? assessmentId + '_' : ''}${fileName}`,
+      fileName,
       file.mimetype,
     );
-    // Por enquanto, thumbnail é igual à url
     const thumbnailUrl = url;
     const validAssessmentId =
       assessmentId && isUuid(assessmentId) ? assessmentId : null;

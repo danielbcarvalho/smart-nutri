@@ -133,16 +133,15 @@ export function NewAssessment() {
 
   // Estado local para fotos (utilizado pelo handlePhotosChange)
   const [, setPhotos] = useState<{
-    // photosState não é usado, apenas setPhotos
-    front: AssessmentPhoto | null;
-    back: AssessmentPhoto | null;
-    left: AssessmentPhoto | null;
-    right: AssessmentPhoto | null;
+    front: AssessmentPhoto[];
+    back: AssessmentPhoto[];
+    left: AssessmentPhoto[];
+    right: AssessmentPhoto[];
   }>({
-    front: null,
-    back: null,
-    left: null,
-    right: null,
+    front: [],
+    back: [],
+    left: [],
+    right: [],
   });
 
   // Criar ref para controlar se já preenchemos dados
@@ -538,10 +537,10 @@ export function NewAssessment() {
   };
 
   const handlePhotosChange = (updatedPhotos: {
-    front: AssessmentPhoto | null;
-    back: AssessmentPhoto | null;
-    left: AssessmentPhoto | null;
-    right: AssessmentPhoto | null;
+    front: AssessmentPhoto[];
+    back: AssessmentPhoto[];
+    left: AssessmentPhoto[];
+    right: AssessmentPhoto[];
   }) => {
     setPhotos(updatedPhotos); // Atualiza o estado local de fotos
   };
@@ -586,7 +585,13 @@ export function NewAssessment() {
           gap: { xs: 2, sm: 3 },
         }}
       >
-        <Box sx={{ flex: isMobile ? "1 1 auto" : "0 0 58.333%" }}>
+        <Box
+          sx={{
+            flex: isMobile ? "1 1 auto" : "0 0 58.333%",
+            minWidth: 0,
+            maxWidth: "100%",
+          }}
+        >
           <AssessmentDate
             assessmentDate={assessmentDate}
             onAssessmentDateChange={setAssessmentDate}
@@ -595,7 +600,7 @@ export function NewAssessment() {
             elevation={1}
             sx={{
               borderRadius: 2,
-              overflow: "hidden",
+              overflow: "auto",
               p: { xs: 1.5, sm: 2.5 },
               mb: 2,
             }}
@@ -647,7 +652,7 @@ export function NewAssessment() {
             isSaving={createMutation.isPending}
           />
         </Box>
-        <Box sx={{ flex: isMobile ? "1 1 auto" : "0 0 41.667%" }}>
+        <Box sx={{ flex: isMobile ? "1 1 auto" : "0 0 41.667%", minWidth: 0 }}>
           <AnalyticalResults
             anthropometricResults={anthropometricResults}
             openGraphsModal={openGraphsModal}

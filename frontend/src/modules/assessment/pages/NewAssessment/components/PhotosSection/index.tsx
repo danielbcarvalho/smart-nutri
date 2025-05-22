@@ -1,18 +1,15 @@
-import React, { useState, useEffect, useCallback, useRef } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
   Box,
   Typography,
-  Grid,
   CircularProgress,
   Accordion,
   AccordionSummary,
   AccordionDetails,
+  Stack,
 } from "@mui/material";
 import { PhotoUpload } from "../../../../../../components/PhotoUpload";
-import {
-  AssessmentPhoto,
-  PhotoService,
-} from "../../../../../../services/photoService";
+import { PhotoService } from "../../../../../../services/photoService";
 import { Measurement } from "../../../../../patient/services/patientService";
 import ExpandMoreIcon from "@mui/icons-material/ArrowDropDown";
 
@@ -30,14 +27,25 @@ interface MeasurementPhoto {
   deletedAt?: null;
 }
 
+// Ensure AssessmentPhoto type matches PhotoUpload component
+type AssessmentPhoto = {
+  id: string;
+  type: PhotoType;
+  url: string;
+  thumbnailUrl: string;
+  storagePath: string;
+  createdAt: Date;
+  updatedAt: Date;
+};
+
 interface PhotosSectionProps {
   measurementId?: string;
   patientId: string;
   sharePhotos: boolean;
   onSharePhotosChange: (checked: boolean) => void;
-  onPhotosChange?: (photos: PhotosState) => void; // Type already correct
+  onPhotosChange?: (photos: PhotosState) => void;
   measurement?: Measurement;
-  onRefreshMeasurement?: () => Promise<void>; // Make async if it returns promise
+  onRefreshMeasurement?: () => Promise<void>;
   expanded: boolean;
   onAccordionChange: (
     panel: string
@@ -45,19 +53,28 @@ interface PhotosSectionProps {
 }
 
 type PhotosState = {
-  front: AssessmentPhoto | null;
-  back: AssessmentPhoto | null;
-  left: AssessmentPhoto | null;
-  right: AssessmentPhoto | null;
+  front: AssessmentPhoto[];
+  back: AssessmentPhoto[];
+  left: AssessmentPhoto[];
+  right: AssessmentPhoto[];
 };
 
 type PhotoType = "front" | "back" | "left" | "right";
 
+// Define the type for uploaded photo from PhotoUpload component
+type UploadedPhoto = {
+  id: string;
+  type: PhotoType;
+  url: string;
+  thumbnailUrl?: string;
+  storagePath?: string;
+  createdAt?: Date;
+  updatedAt?: Date;
+};
+
 export const PhotosSection: React.FC<PhotosSectionProps> = ({
   measurementId,
   patientId,
-  sharePhotos,
-  onSharePhotosChange,
   onPhotosChange,
   measurement,
   onRefreshMeasurement,
@@ -65,16 +82,14 @@ export const PhotosSection: React.FC<PhotosSectionProps> = ({
   onAccordionChange,
 }) => {
   const [photos, setPhotos] = useState<PhotosState>({
-    front: null,
-    back: null,
-    left: null,
-    right: null,
+    front: [],
+    back: [],
+    left: [],
+    right: [],
   });
 
-  // State for initial loading of photos from measurement
   const [isLoadingMeasurementPhotos, setIsLoadingMeasurementPhotos] =
-    useState(true); // Start true
-  // State for managing deletion/preparation status
+    useState(true);
   const [isProcessing, setIsProcessing] = useState<Record<PhotoType, boolean>>({
     front: false,
     back: false,
@@ -82,24 +97,10 @@ export const PhotosSection: React.FC<PhotosSectionProps> = ({
     right: false,
   });
 
-  // Ref to track photos marked for deletion from the initial load (if replaced)
-  const initialPhotosToDeleteRef = useRef<Record<PhotoType, string[]>>({
-    front: [],
-    back: [],
-    left: [],
-    right: [],
-  });
-
   // --- Effect to Process Initial Measurement Photos ---
   useEffect(() => {
-    setIsLoadingMeasurementPhotos(true); // Set loading true when measurement changes
-    setPhotos({ front: null, back: null, left: null, right: null }); // Clear previous photos
-    initialPhotosToDeleteRef.current = {
-      front: [],
-      back: [],
-      left: [],
-      right: [],
-    }; // Reset delete list
+    setIsLoadingMeasurementPhotos(true);
+    setPhotos({ front: [], back: [], left: [], right: [] });
 
     if (!measurement?.photos || measurement.photos.length === 0) {
       setIsLoadingMeasurementPhotos(false);
@@ -107,53 +108,33 @@ export const PhotosSection: React.FC<PhotosSectionProps> = ({
     }
 
     const processedPhotos: PhotosState = {
-      front: null,
-      back: null,
-      left: null,
-      right: null,
-    };
-    const photoIdsToDelete: Record<PhotoType, string[]> = {
       front: [],
       back: [],
       left: [],
       right: [],
     };
-    const photosByType: Record<string, MeasurementPhoto> = {};
+    const photosByType: Record<string, MeasurementPhoto[]> = {};
 
-    // Filter for the most recent, non-deleted photo of each valid type
+    // Group photos by type
     (measurement.photos as unknown as MeasurementPhoto[]).forEach((photo) => {
-      if (photo.deletedAt) return; // Skip soft-deleted
+      if (photo.deletedAt) return;
 
       const photoType = photo.type as PhotoType;
       const validTypes: PhotoType[] = ["front", "back", "left", "right"];
-      if (!validTypes.includes(photoType)) return; // Skip invalid types
+      if (!validTypes.includes(photoType)) return;
 
-      const currentPhotoInMap = photosByType[photoType];
-      const currentPhotoTimestamp = currentPhotoInMap?.createdAt
-        ? new Date(currentPhotoInMap.createdAt).getTime()
-        : 0;
-      const newPhotoTimestamp = photo.createdAt
-        ? new Date(photo.createdAt).getTime()
-        : 0;
-
-      if (!currentPhotoInMap || newPhotoTimestamp > currentPhotoTimestamp) {
-        // If we're replacing an older photo of the same type, mark the older one for potential deletion
-        if (currentPhotoInMap) {
-          photoIdsToDelete[photoType].push(currentPhotoInMap.id);
-        }
-        photosByType[photoType] = photo; // Keep the newest one
-      } else {
-        // This photo is older than the one we already have, mark it for potential deletion
-        photoIdsToDelete[photoType].push(photo.id);
+      if (!photosByType[photoType]) {
+        photosByType[photoType] = [];
       }
+      photosByType[photoType].push(photo);
     });
 
-    // Convert the selected latest photos
+    // Sort photos by creation date and convert to AssessmentPhoto
     const convertToAssessmentPhoto = (
       mPhoto: MeasurementPhoto
     ): AssessmentPhoto => ({
       id: mPhoto.id,
-      type: mPhoto.type as PhotoType, // Already validated
+      type: mPhoto.type as PhotoType,
       url: mPhoto.url,
       thumbnailUrl: mPhoto.thumbnailUrl || mPhoto.url,
       storagePath: mPhoto.storagePath || "",
@@ -161,15 +142,20 @@ export const PhotosSection: React.FC<PhotosSectionProps> = ({
       updatedAt: mPhoto.updatedAt ? new Date(mPhoto.updatedAt) : new Date(),
     });
 
-    // Populate the state object
+    // Process each type of photo
     (Object.keys(photosByType) as PhotoType[]).forEach((type) => {
-      processedPhotos[type] = convertToAssessmentPhoto(photosByType[type]);
+      const sortedPhotos = photosByType[type].sort((a, b) => {
+        const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+        const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+        return dateB - dateA; // Most recent first
+      });
+
+      processedPhotos[type] = sortedPhotos.map(convertToAssessmentPhoto);
     });
 
     setPhotos(processedPhotos);
-    initialPhotosToDeleteRef.current = photoIdsToDelete; // Store IDs that *weren't* the latest
-    setIsLoadingMeasurementPhotos(false); // Loading finished
-  }, [measurement]); // Dependency: measurement
+    setIsLoadingMeasurementPhotos(false);
+  }, [measurement]);
 
   // --- Effect to Notify Parent Component of Photo State Changes ---
   useEffect(() => {
@@ -182,21 +168,19 @@ export const PhotosSection: React.FC<PhotosSectionProps> = ({
   const deletePhotoByIds = useCallback(
     async (ids: string[], type: PhotoType): Promise<boolean> => {
       if (!ids || ids.length === 0) {
-        return true; // Nothing to delete
+        return true;
       }
 
       setIsProcessing((prev) => ({ ...prev, [type]: true }));
       try {
         const deletePromises = ids.map((id) => PhotoService.deletePhoto(id));
         await Promise.all(deletePromises);
-
         return true;
       } catch (error) {
         console.error(
           `PhotosSection (${type}): Error deleting photo(s) ${ids}:`,
           error
         );
-        // Handle error appropriately - maybe show a notification
         return false;
       } finally {
         setIsProcessing((prev) => ({ ...prev, [type]: false }));
@@ -205,49 +189,13 @@ export const PhotosSection: React.FC<PhotosSectionProps> = ({
     []
   );
 
-  // --- Handler for Upload Start (Prepare Step) ---
-  // This is called by PhotoUpload *before* it starts the actual upload.
-  // It should delete any *previously existing* photo of the same type.
+  // --- Handler for Upload Start ---
   const handleUploadStart = useCallback(
     async (type: PhotoType): Promise<boolean> => {
       if (isProcessing[type]) {
-        return false; // Prevent concurrent operations for the same type
+        return false;
       }
 
-      // Check if there's an *existing* photo in the current state that needs deleting
-      const currentPhotoId = photos[type]?.id;
-      // Also check the initial list of deletable photos (older ones from measurement load)
-      const initialDeletableIds = initialPhotosToDeleteRef.current[type] || [];
-
-      const idsToDelete = [...initialDeletableIds];
-      if (currentPhotoId) {
-        // Ensure we don't add the same ID twice if it was also in the initial list
-        if (!idsToDelete.includes(currentPhotoId)) {
-          idsToDelete.push(currentPhotoId);
-        }
-      }
-
-      if (idsToDelete.length > 0) {
-        const success = await deletePhotoByIds(idsToDelete, type);
-        if (!success) {
-          console.error(
-            `PhotosSection (${type}): Failed to delete existing photos. Aborting upload start.`
-          );
-          return false; // Abort if deletion failed
-        }
-        // Clear the list for this type after successful deletion
-        initialPhotosToDeleteRef.current[type] = [];
-        // Clear the photo from state if its ID was deleted
-        if (currentPhotoId && idsToDelete.includes(currentPhotoId)) {
-          setPhotos((prev) => ({ ...prev, [type]: null }));
-        }
-      } else {
-        console.log(
-          `PhotosSection (${type}): No existing/old photos to delete.`
-        );
-      }
-
-      // Optional: Refresh measurement data after deletion, before upload
       if (onRefreshMeasurement) {
         try {
           await onRefreshMeasurement();
@@ -256,65 +204,62 @@ export const PhotosSection: React.FC<PhotosSectionProps> = ({
             `PhotosSection (${type}): Error refreshing measurement data:`,
             refreshError
           );
-          // Decide if this is critical - maybe proceed anyway?
         }
       }
 
-      // Add a small delay to allow backend processing if needed (optional)
-      // await new Promise(resolve => setTimeout(resolve, 200));
-
-      return true; // Allow PhotoUpload to proceed
+      return true;
     },
-    [photos, isProcessing, deletePhotoByIds, onRefreshMeasurement]
+    [isProcessing, onRefreshMeasurement]
   );
 
   // --- Handler for Upload Completion ---
-  // Called by PhotoUpload when its upload is successful.
   const handlePhotoChange = useCallback(
-    (type: PhotoType) => (uploadedPhoto: AssessmentPhoto) => {
-      setPhotos((prevPhotos) => ({
-        ...prevPhotos,
-        [type]: uploadedPhoto, // Update state with the new photo object
-      }));
-      // No need to refresh measurement here usually, as the upload is the latest action.
-      // Parent component might refresh later if needed.
+    (type: PhotoType) => (uploadedPhoto: UploadedPhoto) => {
+      // Ensure thumbnailUrl is always defined
+      const photo: AssessmentPhoto = {
+        ...uploadedPhoto,
+        thumbnailUrl: uploadedPhoto.thumbnailUrl || uploadedPhoto.url,
+        storagePath: uploadedPhoto.storagePath || "",
+        createdAt: uploadedPhoto.createdAt || new Date(),
+        updatedAt: uploadedPhoto.updatedAt || new Date(),
+      };
+      setPhotos((prevPhotos) => {
+        // Não adicionar se já houver 2 fotos
+        if (prevPhotos[type].length >= 2) return prevPhotos;
+        // Evitar duplicidade pelo id
+        if (prevPhotos[type].some((p) => p.id === photo.id)) return prevPhotos;
+        const updated = {
+          ...prevPhotos,
+          [type]: [...prevPhotos[type], photo],
+        };
+
+        return updated;
+      });
     },
     []
   );
 
-  // --- Handler for Explicit Photo Removal (via Delete Button) ---
-  // Called by PhotoUpload's onRemove prop.
+  // --- Handler for Photo Removal ---
   const handleRemovePhoto = useCallback(
-    async (type: PhotoType): Promise<void> => {
+    async (type: PhotoType, photoId: string): Promise<void> => {
       if (isProcessing[type]) {
-        return; // Prevent concurrent operations
+        return;
       }
-      const photoToRemove = photos[type];
 
-      if (photoToRemove && photoToRemove.id) {
-        // No need to clear local state here, PhotoUpload did it for immediate feedback.
-        // Just call the delete API.
-        const success = await deletePhotoByIds([photoToRemove.id], type);
-        if (success) {
-          // Clear the initial deletable list for this type as well, just in case
-          initialPhotosToDeleteRef.current[type] = [];
-          // Ensure local state is definitely null after successful API delete
-          setPhotos((prev) => ({ ...prev, [type]: null }));
-          // Optionally refresh measurement data
-          onRefreshMeasurement?.();
-        } else {
-          console.error(
-            `PhotosSection (${type}): Failed to remove photo via API. UI might be out of sync.`
-          );
-          // Handle error - maybe try to restore the photo in UI or show message?
-          // For now, log it. The UI state is already cleared in PhotoUpload.
-        }
+      const success = await deletePhotoByIds([photoId], type);
+      if (success) {
+        setPhotos((prev) => ({
+          ...prev,
+          [type]: prev[type].filter((photo) => photo.id !== photoId),
+        }));
+        onRefreshMeasurement?.();
       } else {
-        // Ensure local state is null if somehow it wasn't cleared by PhotoUpload
-        setPhotos((prev) => ({ ...prev, [type]: null }));
+        console.error(
+          `PhotosSection (${type}): Failed to remove photo via API.`
+        );
       }
     },
-    [photos, isProcessing, deletePhotoByIds, onRefreshMeasurement]
+    [isProcessing, deletePhotoByIds, onRefreshMeasurement]
   );
 
   // --- Handler for Upload Error ---
@@ -324,26 +269,26 @@ export const PhotosSection: React.FC<PhotosSectionProps> = ({
         `PhotosSection (${type}): Upload error reported by PhotoUpload:`,
         err
       );
-      // Reset processing state for this type if an error occurs during upload sequence
       setIsProcessing((prev) => ({ ...prev, [type]: false }));
-      // Maybe show a general error notification to the user (e.g., using a Snackbar)
     },
     []
   );
 
   // --- Render Logic ---
   const renderPhotoUpload = (type: PhotoType, label: string) => (
-    <Grid key={type}>
-      <Typography variant="body2" gutterBottom sx={{ fontWeight: "medium" }}>
-        {label}
-      </Typography>
+    <Box key={type}>
+      <Stack direction="row" alignItems="center" spacing={1} mb={1}>
+        <Typography variant="body2" sx={{ fontWeight: "medium" }}>
+          {label}
+        </Typography>
+      </Stack>
       {isLoadingMeasurementPhotos ? (
         <Box
           sx={{
             display: "flex",
             justifyContent: "center",
             alignItems: "center",
-            height: 250,
+            height: 190,
             bgcolor: "grey.100",
             borderRadius: 1,
           }}
@@ -351,19 +296,41 @@ export const PhotosSection: React.FC<PhotosSectionProps> = ({
           <CircularProgress size={30} />
         </Box>
       ) : (
-        <PhotoUpload
-          type={type}
-          assessmentId={measurementId || ""}
-          patientId={patientId}
-          onUploadComplete={handlePhotoChange(type)}
-          onUploadError={handlePhotoError(type)}
-          onUploadStart={() => handleUploadStart(type)}
-          onRemove={handleRemovePhoto}
-          initialPhotoUrl={photos[type]?.url || ""}
-          previewSize={{ width: 200, height: 250 }}
-        />
+        <Stack direction="row" spacing={2}>
+          {photos[type].map((photo) => (
+            <Box key={photo.id} sx={{ position: "relative" }}>
+              <PhotoUpload
+                type={type}
+                assessmentId={measurementId || ""}
+                patientId={patientId}
+                onUploadComplete={handlePhotoChange(type)}
+                onUploadError={handlePhotoError(type)}
+                onUploadStart={() => handleUploadStart(type)}
+                onRemove={() => handleRemovePhoto(type, photo.id)}
+                initialPhotoUrl={photo.url}
+                previewSize={{ width: 160, height: 190 }}
+              />
+            </Box>
+          ))}
+          {/* Placeholder para adicionar nova foto, se menos de 2 fotos */}
+          {photos[type].length < 2 && (
+            <Box key="placeholder" sx={{ position: "relative" }}>
+              <PhotoUpload
+                type={type}
+                assessmentId={measurementId || ""}
+                patientId={patientId}
+                onUploadComplete={handlePhotoChange(type)}
+                onUploadError={handlePhotoError(type)}
+                onUploadStart={() => handleUploadStart(type)}
+                onRemove={() => Promise.resolve()}
+                initialPhotoUrl=""
+                previewSize={{ width: 160, height: 190 }}
+              />
+            </Box>
+          )}
+        </Stack>
       )}
-    </Grid>
+    </Box>
   );
 
   return (
@@ -383,12 +350,24 @@ export const PhotosSection: React.FC<PhotosSectionProps> = ({
         <Typography variant="h6">Fotos</Typography>
       </AccordionSummary>
       <AccordionDetails>
-        <Grid container spacing={2}>
+        <Box
+          sx={{
+            display: "grid",
+            gap: 3,
+            gridTemplateColumns: {
+              xs: "1fr",
+              sm: "repeat(auto-fit, minmax(220px, 1fr))",
+              md: "repeat(auto-fit, minmax(200px, 1fr))",
+            },
+            width: "100%",
+            minWidth: 0,
+          }}
+        >
           {renderPhotoUpload("front", "Frente")}
           {renderPhotoUpload("back", "Costas")}
           {renderPhotoUpload("left", "Lateral Esquerda")}
           {renderPhotoUpload("right", "Lateral Direita")}
-        </Grid>
+        </Box>
       </AccordionDetails>
     </Accordion>
   );
