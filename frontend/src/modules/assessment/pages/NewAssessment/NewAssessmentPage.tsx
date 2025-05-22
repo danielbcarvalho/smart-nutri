@@ -69,6 +69,9 @@ export function NewAssessment() {
   const queryClient = useQueryClient();
   const isEditMode = !!measurementId;
   const isSaving = useRef(false);
+  const [createdMeasurementId, setCreatedMeasurementId] = useState<
+    string | null
+  >(null);
 
   // Dados básicos
   const [basicData, setBasicData] = useState({
@@ -358,27 +361,41 @@ export function NewAssessment() {
     mutationFn: async (dto: CreateMeasurementDto) => {
       if (isEditMode && measurementId) {
         return patientService.updateMeasurement(patientId!, measurementId, dto);
+      } else if (createdMeasurementId) {
+        return patientService.updateMeasurement(
+          patientId!,
+          createdMeasurementId,
+          dto
+        );
       } else {
         return patientService.createMeasurement(patientId!, dto);
       }
     },
-    onSuccess: async () => {
+    onSuccess: async (data) => {
+      if (!isEditMode && !createdMeasurementId) {
+        setCreatedMeasurementId(data.id);
+      }
       await queryClient.refetchQueries({
         queryKey: ["measurements"],
         exact: false,
       });
-      if (isEditMode && measurementId) {
+      if ((isEditMode && measurementId) || createdMeasurementId) {
         await queryClient.refetchQueries({
-          queryKey: ["measurement", patientId, measurementId],
+          queryKey: [
+            "measurement",
+            patientId,
+            createdMeasurementId || measurementId,
+          ],
         });
       }
       await queryClient.invalidateQueries({ queryKey: ["all-measurements"] });
 
       setSnackbar({
         open: true,
-        message: isEditMode
-          ? "Avaliação atualizada com sucesso!"
-          : "Avaliação criada com sucesso!",
+        message:
+          isEditMode || createdMeasurementId
+            ? "Avaliação atualizada com sucesso!"
+            : "Avaliação criada com sucesso!",
         severity: "success",
       });
       isSaving.current = false; // Reset saving flag on success
