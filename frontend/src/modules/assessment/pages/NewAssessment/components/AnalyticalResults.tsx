@@ -41,16 +41,6 @@ export const AnalyticalResults: React.FC<AnalyticalResultsProps> = ({
             </span>
           </Tooltip>
         </Box>
-        <Button
-          variant="outlined"
-          startIcon={<BarChartIcon />}
-          onClick={() =>
-            navigate(`/patient/${patientId}/assessments/evolution/measurements`)
-          }
-          sx={{ borderRadius: 2 }}
-        >
-          Ver evolução
-        </Button>
       </Box>
 
       {/* Análises de pesos e medidas */}

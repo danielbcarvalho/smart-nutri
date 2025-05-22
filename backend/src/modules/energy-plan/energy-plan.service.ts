@@ -221,6 +221,15 @@ export class EnergyPlanService {
         return this.calculateFaoWho2004(weight, height, age, gender);
       case EnergyFormula.IOM_EER_2005:
         return this.calculateIomEer2005(weight, height, age, gender);
+      case EnergyFormula.MIFFLIN_ST_JEOR_1990:
+        return this.calculateMifflinStJeor1990(weight, height, age, gender);
+      case EnergyFormula.MIFFLIN_ST_JEOR_MODIFIED_1980:
+        return this.calculateMifflinStJeorModified1980(
+          weight,
+          height,
+          age,
+          gender,
+        );
       default:
         throw new Error(`Fórmula ${formula} não implementada`);
     }
@@ -286,6 +295,32 @@ export class EnergyPlanService {
       return 662 - 9.53 * age + 15.91 * weight + 539.6 * (height / 100);
     } else {
       return 354 - 6.91 * age + 9.36 * weight + 726 * (height / 100);
+    }
+  }
+
+  private calculateMifflinStJeor1990(
+    weight: number,
+    height: number,
+    age: number,
+    gender: string,
+  ): number {
+    if (gender === 'male') {
+      return 10 * weight + 6.25 * height - 5 * age + 5;
+    } else {
+      return 10 * weight + 6.25 * height - 5 * age - 161;
+    }
+  }
+
+  private calculateMifflinStJeorModified1980(
+    weight: number,
+    height: number,
+    age: number,
+    gender: string,
+  ): number {
+    if (gender === 'male') {
+      return 10 * weight + 6.25 * height - 5 * age + 5 - 0.5 * weight;
+    } else {
+      return 10 * weight + 6.25 * height - 5 * age - 161 - 0.5 * weight;
     }
   }
 
