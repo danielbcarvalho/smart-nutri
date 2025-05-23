@@ -37,6 +37,7 @@ import {
 import { authService } from "../../auth/services/authService";
 import { CreateEnergyPlanDto } from "../services/energyPlanService";
 import EnergyPlanMethodSection from "../components/EnergyPlanMethodSection";
+import { DesignSystemButton } from "../../../components/DesignSystem/Button/ButtonVariants";
 
 export interface DadosPlanoEnergetico {
   nome: string;
@@ -552,23 +553,11 @@ const EnergyPlanMain: React.FC = () => {
           goalDays={goalDays}
         />
 
-        <Button
+        <DesignSystemButton
           type="submit"
           variant="contained"
           fullWidth
           startIcon={<SaveIcon />}
-          sx={{
-            mt: 1.5,
-            py: 1.5,
-            borderRadius: "8px",
-            fontWeight: "600",
-            fontSize: "1rem",
-            textTransform: "none",
-            bgcolor: "#1976d2",
-            "&:hover": {
-              bgcolor: "#1565c0",
-            },
-          }}
           disabled={
             createPlan.isPending ||
             updatePlan.isPending ||
@@ -584,7 +573,7 @@ const EnergyPlanMain: React.FC = () => {
             : planId
             ? "Atualizar Plano"
             : "Salvar Plano"}
-        </Button>
+        </DesignSystemButton>
       </Box>
 
       <ImportMeasurementsModal

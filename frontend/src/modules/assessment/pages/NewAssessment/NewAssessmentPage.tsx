@@ -9,6 +9,8 @@ import {
   Paper,
   Stack,
 } from "@mui/material";
+import SaveIcon from "@mui/icons-material/Save";
+import CancelIcon from "@mui/icons-material/Cancel";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   patientService,
@@ -27,7 +29,6 @@ import { CircumferenceSection } from "./components/CircumferenceSection";
 import { BoneDiameterSection } from "./components/BoneDiameterSection";
 import { AssessmentHeader } from "./components/AssessmentHeader";
 import { AssessmentDate } from "./components/AssessmentDate";
-import { ActionButtons } from "./components/ActionButtons";
 import { AnalyticalResults } from "./components/AnalyticalResults";
 import { calculateAnthropometricResults } from "../../calcs/anthropometricCalculations";
 import { bodyDensityFormulas } from "../../calcs/formulas";
@@ -37,6 +38,7 @@ import {
   calculateFatMass,
   calculateFatFreeMass,
 } from "@/modules/assessment/calcs/anthropometricCalculations/bodyComposition";
+import { DesignSystemButton } from "../../../../components/DesignSystem/Button/ButtonVariants";
 
 // Definindo o tipo para o estado local `skinfolds` explicitamente.
 type LocalSkinfoldsState = {
@@ -646,11 +648,24 @@ export function NewAssessment() {
               />
             </Stack>
           </Paper>
-          <ActionButtons
-            onSave={handleSaveAssessment}
-            onCancel={handleCancel}
-            isSaving={createMutation.isPending}
-          />
+          <Stack direction="column" spacing={2} sx={{ width: "100%", mb: 2 }}>
+            <DesignSystemButton
+              variant="contained"
+              color="primary"
+              startIcon={<SaveIcon />}
+              onClick={handleSaveAssessment}
+            >
+              {createMutation.isPending ? "Salvando..." : "Salvar Avaliação"}
+            </DesignSystemButton>
+            <DesignSystemButton
+              variant="outlined"
+              color="secondary"
+              startIcon={<CancelIcon />}
+              onClick={handleCancel}
+            >
+              Cancelar
+            </DesignSystemButton>
+          </Stack>
         </Box>
         <Box sx={{ flex: isMobile ? "1 1 auto" : "0 0 41.667%", minWidth: 0 }}>
           <AnalyticalResults

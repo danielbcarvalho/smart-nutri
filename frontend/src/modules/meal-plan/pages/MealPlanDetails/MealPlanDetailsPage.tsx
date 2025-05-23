@@ -54,6 +54,7 @@ import {
   INJURY_FACTOR_DESCRIPTIONS,
   FORMULA_DESCRIPTIONS,
 } from "@/modules/energy-plan/constants/energyPlanConstants";
+import { DesignSystemButton } from "../../../../components/DesignSystem/Button/ButtonVariants";
 
 // Componente principal
 export function MealPlanDetails() {
@@ -709,40 +710,22 @@ export function MealPlanDetails() {
 
       {/* Botões Salvar e Ver planejamento em PDF */}
       <Stack direction="column" spacing={2} sx={{ width: "100%", mb: 2 }}>
-        <Button
+        <DesignSystemButton
           variant="contained"
           color="primary"
           startIcon={<SaveIcon />}
           onClick={handleSaveMealPlan}
-          fullWidth
-          sx={{
-            py: 1,
-            fontWeight: 600,
-            fontSize: 18,
-            bgcolor: "custom.primary",
-            borderRadius: 2,
-            "&:hover": {
-              bgcolor: "custom.dark",
-            },
-          }}
         >
           Salvar
-        </Button>
-        <Button
-          variant="contained"
+        </DesignSystemButton>
+        <DesignSystemButton
+          variant="outlined"
           color="secondary"
           startIcon={<PdfIcon />}
           onClick={handleOpenPdfInNewTab}
-          fullWidth
-          sx={{
-            py: 1,
-            fontWeight: 600,
-            fontSize: 18,
-            borderRadius: 2,
-          }}
         >
           Ver planejamento em PDF
-        </Button>
+        </DesignSystemButton>
       </Stack>
 
       {/* Dialog para adicionar/editar refeição */}
