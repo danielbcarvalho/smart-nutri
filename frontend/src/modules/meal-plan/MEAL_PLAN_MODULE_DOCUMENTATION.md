@@ -278,3 +278,89 @@ A coluna "Medida caseira" agora permite edição direta: possui dois campos de i
   ]
 }
 ```
+
+1. Fluxo de Criação de Plano Alimentar
+   Início do Fluxo
+   O nutricionista acessa a página MealPlanPage.tsx
+   Clica no botão "Criar Novo Plano"
+   Preenche os dados básicos do plano:
+   Nome do plano
+   Tipo (alimentos)
+   Data de início
+   Data de término
+   Status (rascunho)
+   Salvamento do Plano
+   Os dados são enviados via mealPlanService.ts para a API
+   O plano é salvo e aparece na listagem principal
+   Utiliza React Query para gerenciar o cache e atualizações
+2. Fluxo de Gerenciamento de Refeições
+   Acesso aos Detalhes
+   Nutricionista clica em um plano na listagem
+   É redirecionado para MealPlanDetailsPage.tsx
+   Adição de Refeições
+   Pode adicionar novas refeições com:
+   Nome da refeição
+   Horário
+   Observações
+   As refeições são salvas via API através do mealPlanService.ts
+   Edição de Refeições
+   Pode reordenar refeições
+   Editar detalhes existentes
+   Excluir refeições
+3. Fluxo de Prescrição de Alimentos
+   Acesso à Base de Alimentos
+   A base de alimentos é local, armazenada em alimentos.json no Supabase Storage
+   O arquivo é baixado via foodDbService.ts
+   Utiliza o hook useFoodDb para cache e performance
+   Busca de Alimentos
+   Nutricionista abre o AddFoodToMealModal
+   A busca é feita localmente usando foodService.ts
+   Filtragem considera:
+   Acentuação
+   Case insensitive
+   Priorização de resultados relevantes
+   Prescrição do Alimento
+   Ao selecionar um alimento, o nutricionista:
+   Define a quantidade
+   Seleciona a medida caseira
+   Pode adicionar observações
+   O alimento é adicionado à refeição com:
+   ID do alimento
+   Fonte (taco, tbca, personalizado)
+   Quantidade
+   Unidade
+   Análise Nutricional
+   O componente NutrientAnalysis mostra:
+   Macronutrientes
+   Densidade calórica
+   Classificação visual
+   Gráfico de distribuição calórica
+4. Fluxo de Atualização da Base de Alimentos
+   Processo de Atualização
+   A base é atualizada substituindo o arquivo alimentos.json no Supabase Storage
+   Não requer deploy do frontend
+   O cache é atualizado automaticamente via React Query
+5. Fluxo de Dados e Integração
+   Comunicação com Backend
+   Todas as operações CRUD usam o mealPlanService.ts
+   Dados são enviados em formato JSON
+   Exemplo de payload para alimentos:
+   Apply
+   }
+   Cache e Performance
+   React Query gerencia o cache de:
+   Planos alimentares
+   Base de alimentos
+   Detalhes do plano
+   Atualizações são automáticas após mutações
+6. Fluxo de Interface do Usuário
+   Componentes Principais
+   MealPlanPage: Listagem e criação
+   MealPlanDetailsPage: Detalhes e edição
+   AddFoodToMealModal: Prescrição de alimentos
+   NutrientAnalysis: Análise nutricional
+   Interações
+   Botões de ação para todas as operações
+   Menus contextuais para ações secundárias
+   Feedback visual imediato após operações
+   Campos numéricos com validação e formatação

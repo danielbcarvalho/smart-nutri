@@ -1,0 +1,161 @@
+1. Qual é o objetivo principal do seu projeto Smart Nutri?
+Smart Nutri é uma plataforma completa de gestão nutricional que capacita nutricionistas a oferecer atendimento personalizado e baseado em evidências científicas. O sistema automatiza cálculos complexos, centraliza dados dos pacientes e otimiza o tempo de consulta, permitindo que profissionais foquem no que mais importa: o cuidado individualizado.
+
+Proposta de Valor
+
+Eficiência: Reduz tempo de consulta em até 60% através de automação
+Precisão: Cálculos baseados em fórmulas científicas validadas
+Organização: Centralização completa de dados e histórico do paciente
+Escalabilidade: Reutilização inteligente de planos alimentares
+Profissionalismo: Relatórios e prescrições com visual profissional
+
+2. Funcionalidades Principais Existentes
+2.1 Gestão de Pacientes
+Status: ✅ Implementado
+
+2.2 Avaliação Antropométrica Digital
+Status: ✅ Implementado
+
+Medidas Corporais: Peso, altura, circunferências (cintura, quadril, braço, coxa e etc)
+Composição Corporal: % gordura, massa magra e etc
+Cálculos Automáticos: IMC, RCQ, TMB, GET usando fórmulas científicas
+Classificações: Automáticas baseadas em referências
+
+2.3 Acompanhamento Visual por Fotos
+Status: ✅ Implementado
+
+Upload via Supabase
+Categorização por ângulos (frontal, lateral esquerda, lateral direita, costas)
+Comparativo visual entre datas
+Galeria organizada por paciente e data
+
+2.4 Análise de Evolução
+Status: ✅ Implementado
+
+Gráficos Interativos: Peso, medidas, composição corporal ao longo do tempo
+Relatórios de Progresso: Automáticos com métricas-chave
+
+2.5 Prescrição de Planos Alimentares
+Status: ✅ Implementado
+
+Base de Alimentos local json : +3000 alimentos com dados nutricionais 
+Cálculo Energético: VET baseado em TMB, fator atividade e objetivo
+Distribuição de Macros: Personalizável por refeição e dia
+Planos Estruturados
+
+3. Novas Funcionalidades Prioritárias
+3.1 Sistema de Alimentos Substitutos ⭐ ALTA PRIORIDADE
+Inspiração: Nutrium, Webdiet
+Funcionalidades Detalhadas:
+
+Substitutos Personalizados: Nutricionista pode adicionar manualmente
+Múltiplas Opções: Até 5 substitutos por alimento
+Equivalências Visuais: "1 xícara de arroz = 2 fatias de pão integral"
+Filtros: Por restrições (sem lactose, vegano, etc.)
+Favoritos: Substitutos mais usados pelo nutricionista
+
+Interface:
+CopyCafé da Manhã
+├── 🥛 Leite integral (200ml) - 120 kcal
+│   ├── 🔄 Substitutos disponíveis
+│   ├── → Leite de soja (200ml) - 115 kcal
+│   ├── → Leite de amêndoas (200ml) - 80 kcal
+│   └── → Iogurte natural (150g) - 110 kcal
+│   └── ➕ Adicionar substituto
+
+3.2 Biblioteca de Planos Reutilizáveis ⭐ ALTA PRIORIDADE
+Inspiração: Nutrium, EasyDiet, Webdiet
+Funcionalidades Detalhadas:
+
+Categorização Inteligente:
+
+Por objetivo (emagrecimento, ganho de massa, manutenção)
+Por perfil (atleta, sedentário, idoso, gestante)
+Por VET (1200-1500, 1500-1800, 1800-2200, etc.)
+Por restrições (diabetes, hipertensão, vegetariano)
+
+
+Sistema de Tags: #lowcarb #hiperproteico #antiinflamatorio
+Busca Avançada: Por múltiplos critérios combinados
+Versionamento: Controle de versões dos planos
+Compartilhamento: Entre nutricionistas da mesma clínica
+Adaptação Automática: Ajuste de porções baseado no VET do paciente
+
+Interface:
+Copy📚 Biblioteca de Planos
+┌─────────────────────────────────────┐
+│ 🔍 Buscar planos...                  │
+│ 📊 VET: 1500-1800  🎯 Emagrecimento │
+│ 🏃 Ativo  🥗 Sem restrições         │
+└─────────────────────────────────────┘
+
+📋 Plano Low Carb 1600kcal - Ativo
+   👤 Usado por: 15 pacientes
+   ⭐ Rating: 4.8/5
+   🏷️ #lowcarb #emagrecimento #ativo
+
+4. Funcionalidades Complementares (Roadmap)
+4.1 Funcionalidades Inspiradas no Mercado
+4.1.1 Central de Receitas (Inspiração: Yazio, MyFitnessPal)
+
+Biblioteca com +500 receitas saudáveis
+Cálculo nutricional automático
+Tempo de preparo e dificuldade
+Lista de compras gerada automaticamente
+Receitas por categoria (fit, diabéticos, etc.)
+
+4.1.2 Sistema de Anamnese Digital (Inspiração: Dietbox)
+
+Questionários personalizáveis
+Anamnese alimentar com recordatório 24h
+Questionários de frequência alimentar
+Avaliação de sintomas gastrointestinais
+Histórico familiar e patologias
+
+4.1.3 Alertas e Lembretes (Inspiração: Nutrium)
+
+Lembretes de retorno automáticos
+Alertas de metas não cumpridas
+Notificações para o paciente (futuro app mobile)
+Dashboard com pacientes que precisam de atenção
+
+4.1.4 Relatórios Avançados (Inspiração: NutriAdmin)
+
+Relatórios de evolução personalizáveis
+Comparativo entre pacientes (anonimizado)
+Estatísticas da prática profissional
+Exportação para PDF profissional
+
+4.1.5 Integração com Exames Laboratoriais
+
+Upload e catalogação de exames
+Correlação com evolução nutricional
+Alertas baseados em valores de referência
+Gráficos de biomarcadores ao longo do tempo
+
+
+5. Arquitetura e Tecnologias
+Stack Atual ✅
+
+Frontend: Vite + React + TypeScript
+Backend: NestJS + TypeScript
+Banco: PostgreSQL
+Storage: Supabase (fotos)
+
+Requisitos Técnicos
+
+✅ Interface responsiva (mobile-first)
+✅ API RESTful documentada
+✅ Cada módulo deve ter sua própria documentação e ela deve ser atualizada sempre que o módulo for atualizado.
+
+
+
+
+Ambos projetos estão dentro do mesmo repositório, e o frontend está dentro da pasta frontend e o backend está dentro da pasta backend.
+
+Documentação atual do Frontend:
+frontend/FRONTEND_DOCUMENTATION.md
+
+Documentação atual do Backend:
+backend/BACKEND_DOCUMENTATION.md
+

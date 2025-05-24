@@ -9,6 +9,12 @@ USER="postgres"
 DB="smartnutri_db"
 PASSWORD="smartnutri"
 
+# Função para verificar se o banco existe
+check_db_exists() {
+    PGPASSWORD=$PASSWORD psql -h $HOST -p $PORT -U $USER -lqt | cut -d \| -f 1 | grep -qw $DB
+    return $?
+}
+
 # Função para encontrar o backup mais recente
 find_latest_backup() {
     local backup_dir="../backups"
@@ -46,19 +52,34 @@ echo "Data de modificação: $(date -r "$BACKUP_FILE" "+%d/%m/%Y %H:%M:%S")"
 
 echo -e "\n🔄 Iniciando restauração local..."
 
-# Primeiro, tenta dropar o banco se existir
-echo "🗑️  Removendo banco de dados local se existir..."
-PGPASSWORD=$PASSWORD dropdb -h $HOST -p $PORT -U $USER --if-exists $DB
+# Verifica se o banco existe antes de tentar deletar
+if check_db_exists; then
+    echo "📝 Banco de dados '$DB' encontrado. Iniciando processo de deleção..."
+    
+    # Tenta dropar o banco
+    echo "🗑️  Removendo banco de dados local..."
+    if PGPASSWORD=$PASSWORD dropdb -h $HOST -p $PORT -U $USER --if-exists $DB; then
+        echo "✅ Banco de dados '$DB' deletado com sucesso!"
+    else
+        echo "❌ Erro ao deletar banco de dados '$DB'!"
+        exit 1
+    fi
+else
+    echo "ℹ️  Banco de dados '$DB' não encontrado. Prosseguindo com a criação..."
+fi
 
 # Cria o banco novamente
 echo "📦 Criando banco de dados local..."
-PGPASSWORD=$PASSWORD createdb -h $HOST -p $PORT -U $USER $DB
+if PGPASSWORD=$PASSWORD createdb -h $HOST -p $PORT -U $USER $DB; then
+    echo "✅ Banco de dados '$DB' criado com sucesso!"
+else
+    echo "❌ Erro ao criar banco de dados '$DB'!"
+    exit 1
+fi
 
 # Restaura o backup
-echo "�� Restaurando backup..."
-PGPASSWORD=$PASSWORD pg_restore -h $HOST -p $PORT -U $USER -d $DB --clean --if-exists --no-owner --no-privileges "$BACKUP_FILE"
-
-if [ $? -eq 0 ]; then
+echo "🔄 Restaurando backup..."
+if PGPASSWORD=$PASSWORD pg_restore -h $HOST -p $PORT -U $USER -d $DB --clean --if-exists --no-owner --no-privileges "$BACKUP_FILE"; then
     echo -e "\n✅ Backup restaurado com sucesso localmente!"
     echo "📝 Detalhes da restauração:"
     echo "- Banco: $DB"
@@ -67,4 +88,5 @@ if [ $? -eq 0 ]; then
 else
     echo -e "\n❌ Erro ao restaurar backup!"
     echo "Verifique os logs acima para mais detalhes."
+    exit 1
 fi
