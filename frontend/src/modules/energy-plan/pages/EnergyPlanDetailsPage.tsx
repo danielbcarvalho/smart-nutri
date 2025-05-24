@@ -207,6 +207,11 @@ const EnergyPlanMain: React.FC = () => {
         validationMessage: "Peso e altura são necessários para o cálculo.",
       };
     }
+
+    // Calculate BMI for Mifflin Modified validation
+    const heightInMeters = height / 100;
+    const bmi = weight / (heightInMeters * heightInMeters);
+
     switch (formula) {
       case "harris_benedict_1984":
         if (age < 18) {
@@ -223,6 +228,31 @@ const EnergyPlanMain: React.FC = () => {
             isValid: false,
             validationMessage:
               "A fórmula FAO/OMS tem limitações para idosos acima de 60 anos.",
+          };
+        }
+        break;
+      case "mifflin_st_jeor_1990":
+        if (age < 18) {
+          return {
+            isValid: false,
+            validationMessage:
+              "A fórmula Mifflin-St Jeor é recomendada apenas para adultos (18+ anos).",
+          };
+        }
+        break;
+      case "mifflin_st_jeor_modified_1980":
+        if (age < 18) {
+          return {
+            isValid: false,
+            validationMessage:
+              "A fórmula Mifflin-St Jeor Modificada é recomendada apenas para adultos (18+ anos).",
+          };
+        }
+        if (bmi < 25) {
+          return {
+            isValid: false,
+            validationMessage:
+              "A fórmula Mifflin-St Jeor Modificada é recomendada apenas para indivíduos com IMC ≥ 25 kg/m².",
           };
         }
         break;

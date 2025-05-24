@@ -28,6 +28,23 @@ export const FORMULA_DESCRIPTIONS = {
       female: "Varia conforme idade e inclui ajustes para atividade física.",
     },
   },
+  mifflin_st_jeor_1990: {
+    name: "Mifflin-St Jeor (1990)",
+    description: "Fórmula moderna e precisa para cálculo de TMB em adultos.",
+    formula: {
+      male: "TMB = (10 × peso) + (6.25 × altura) - (5 × idade) + 5",
+      female: "TMB = (10 × peso) + (6.25 × altura) - (5 × idade) - 161",
+    },
+  },
+  mifflin_st_jeor_modified_1980: {
+    name: "Mifflin-St Jeor Modificada (1980)",
+    description: "Versão adaptada para indivíduos com sobrepeso ou obesidade.",
+    formula: {
+      male: "TMB = (10 × peso) + (6.25 × altura) - (5 × idade) + 5 - (0.5 × peso)",
+      female:
+        "TMB = (10 × peso) + (6.25 × altura) - (5 × idade) - 161 - (0.5 × peso)",
+    },
+  },
 };
 
 export const ACTIVITY_FACTOR_DESCRIPTIONS = {
