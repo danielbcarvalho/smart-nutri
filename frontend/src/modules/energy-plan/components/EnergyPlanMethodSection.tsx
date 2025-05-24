@@ -3,7 +3,6 @@ import {
   Card,
   CardContent,
   Typography,
-  Grid,
   TextField,
   IconButton,
   Tooltip,
@@ -11,7 +10,7 @@ import {
   Box,
   Alert,
 } from "@mui/material";
-import { Controller, Control } from "react-hook-form";
+import { Controller, Control, FieldValues } from "react-hook-form";
 import InfoIcon from "@mui/icons-material/Info";
 import {
   FORMULA_DESCRIPTIONS,
@@ -20,17 +19,37 @@ import {
 } from "../constants/energyPlanConstants"; // Certifique-se que este caminho está correto
 
 interface EnergyPlanMethodSectionProps {
-  control: Control<any>; // Ou um tipo mais específico do seu formulário, se disponível
+  control: Control<FieldValues>;
   calculationDetails: {
     isValid: boolean;
     validationMessage?: string;
   } | null;
 }
 
+interface SelectField {
+  name: string;
+  label: string;
+  options: Array<{
+    label: string;
+    value: string;
+  }>;
+  descriptions: {
+    [key: string]: {
+      name: string;
+      description: string;
+    };
+  };
+}
+
 const EQUACOES = [
   { label: "Harris-Benedict (1984)", value: "harris_benedict_1984" },
   { label: "FAO/OMS (2004)", value: "fao_who_2004" },
   { label: "IOM EER (2005)", value: "iom_eer_2005" },
+  { label: "Mifflin-St Jeor (1990)", value: "mifflin_st_jeor_1990" },
+  {
+    label: "Mifflin-St Jeor Modificada (1980)",
+    value: "mifflin_st_jeor_modified_1980",
+  },
 ];
 
 const NIVEL_ATIVIDADE = [
@@ -107,9 +126,18 @@ const EnergyPlanMethodSection: React.FC<EnergyPlanMethodSectionProps> = ({
           </IconButton>
         </Tooltip>
       </Box>
-      <Grid container spacing={2.5}>
-        {" "}
-        {/* O espaçamento entre os itens do grid */}
+      <Box
+        sx={{
+          display: "grid",
+          gap: 2.5,
+          gridTemplateColumns: {
+            xs: "minmax(280px, 1fr)",
+            sm: "repeat(auto-fit, minmax(280px, 1fr))",
+          },
+          width: "100%",
+          justifyContent: "center",
+        }}
+      >
         {[
           {
             name: "equacao",
@@ -129,12 +157,13 @@ const EnergyPlanMethodSection: React.FC<EnergyPlanMethodSectionProps> = ({
             options: FATOR_CLINICO,
             descriptions: INJURY_FACTOR_DESCRIPTIONS,
           },
-        ].map((selectField) => (
-          // Cada Grid item terá 1/3 da largura em telas 'md' e maiores, garantindo larguras iguais.
-          // Em telas menores ('xs', 'sm'), ocuparão 100% da largura, empilhados.
-          <Grid item xs={12} md={4} key={selectField.name}>
+        ].map((selectField: SelectField) => (
+          <Box
+            key={selectField.name}
+            sx={{ width: "100%", minWidth: 280, maxWidth: 400 }}
+          >
             <Controller
-              name={selectField.name as any} // Cast para 'any' ou tipo mais específico se tiver
+              name={selectField.name}
               control={control}
               rules={{ required: `${selectField.label} é obrigatório(a)` }}
               render={({ field, fieldState }) => (
@@ -144,17 +173,15 @@ const EnergyPlanMethodSection: React.FC<EnergyPlanMethodSectionProps> = ({
                   size="small"
                   {...field}
                   error={!!fieldState.error}
-                  helperText={fieldState.error?.message || " "} // Espaço para evitar colapso de altura
-                  fullWidth // Faz o TextField ocupar a largura total do Grid item pai
+                  helperText={fieldState.error?.message || " "}
+                  fullWidth
                   sx={{
-                    minWidth: { md: 300 }, // Inputs maiores
-                    maxWidth: { md: 300 },
-                    width: "100%", // Responsivo
+                    width: "100%",
                     "& .MuiInputBase-root": { alignItems: "flex-start" },
                   }}
                   InputLabelProps={{
                     sx: {
-                      fontSize: "1rem", // Garante proporção do label
+                      fontSize: "1rem",
                     },
                   }}
                   SelectProps={{
@@ -164,9 +191,7 @@ const EnergyPlanMethodSection: React.FC<EnergyPlanMethodSectionProps> = ({
                         (opt) => opt.value === valueStr
                       );
                       const description =
-                        selectField.descriptions[
-                          valueStr as keyof typeof selectField.descriptions
-                        ]?.description;
+                        selectField.descriptions[valueStr]?.description;
                       return (
                         <Box>
                           <Typography
@@ -205,9 +230,8 @@ const EnergyPlanMethodSection: React.FC<EnergyPlanMethodSectionProps> = ({
                     >
                       <Box>
                         <Typography variant="body2">{option.label}</Typography>
-                        {selectField.descriptions[
-                          option.value as keyof typeof selectField.descriptions
-                        ]?.description && (
+                        {selectField.descriptions[option.value]
+                          ?.description && (
                           <Typography
                             variant="caption"
                             color="text.secondary"
@@ -217,9 +241,8 @@ const EnergyPlanMethodSection: React.FC<EnergyPlanMethodSectionProps> = ({
                             }}
                           >
                             {
-                              selectField.descriptions[
-                                option.value as keyof typeof selectField.descriptions
-                              ]?.description
+                              selectField.descriptions[option.value]
+                                ?.description
                             }
                           </Typography>
                         )}
@@ -229,9 +252,9 @@ const EnergyPlanMethodSection: React.FC<EnergyPlanMethodSectionProps> = ({
                 </TextField>
               )}
             />
-          </Grid>
+          </Box>
         ))}
-      </Grid>
+      </Box>
       {calculationDetails &&
         !calculationDetails.isValid &&
         calculationDetails.validationMessage && (

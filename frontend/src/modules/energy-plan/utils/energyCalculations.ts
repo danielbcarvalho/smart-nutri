@@ -103,6 +103,24 @@ export const calculateTMB = (params: TMBCalculationParams): number => {
         }
       }
 
+    case EnergyFormula.MIFFLIN_ST_JEOR_1990:
+      if (gender === "male") {
+        return 10 * weightKg + 6.25 * heightCm - 5 * ageYears + 5;
+      } else {
+        return 10 * weightKg + 6.25 * heightCm - 5 * ageYears - 161;
+      }
+
+    case EnergyFormula.MIFFLIN_ST_JEOR_MODIFIED_1980:
+      if (gender === "male") {
+        return (
+          10 * weightKg + 6.25 * heightCm - 5 * ageYears + 5 - 0.5 * weightKg
+        );
+      } else {
+        return (
+          10 * weightKg + 6.25 * heightCm - 5 * ageYears - 161 - 0.5 * weightKg
+        );
+      }
+
     default:
       return 0;
   }
