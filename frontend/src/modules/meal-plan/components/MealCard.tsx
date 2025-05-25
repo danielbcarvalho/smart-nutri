@@ -23,7 +23,7 @@ import AddIcon from "@mui/icons-material/Add";
 import InfoIcon from "@mui/icons-material/Info";
 import { Meal } from "@/modules/meal-plan/services/mealPlanService";
 import type { Alimento } from "./AddFoodToMealModal";
-import MealFoodItem from "./MealFoodItem";
+import type { MealFood } from "@/services/foodService";
 import MealNutritionSummary from "./MealNutritionSummary";
 
 interface MealCardProps {
@@ -33,7 +33,7 @@ interface MealCardProps {
   onExpand: (mealId: string) => void;
   onAddFood: (mealId: string) => void;
   onOpenMenu: (event: React.MouseEvent<HTMLElement>, mealId: string) => void;
-  children?: React.ReactNode;
+  renderFoodItem?: (mealFood: MealFood) => React.ReactNode;
 }
 
 const getMealTypeColor = (mealName: string) => {
@@ -53,7 +53,7 @@ const MealCard: React.FC<MealCardProps> = ({
   onExpand,
   onAddFood,
   onOpenMenu,
-  children,
+  renderFoodItem,
 }) => {
   return (
     <Card
@@ -115,7 +115,6 @@ const MealCard: React.FC<MealCardProps> = ({
           >
             <MoreVertIcon />
           </IconButton>
-          {children}
         </Box>
         {/* Conteúdo Expandido */}
         {expanded && (
@@ -196,14 +195,25 @@ const MealCard: React.FC<MealCardProps> = ({
                         </TableRow>
                       </TableHead>
                       <TableBody>
-                        {meal.mealFoods.map((mealFood) => (
-                          <MealFoodItem
-                            key={mealFood.id || mealFood.foodId}
-                            mealFood={mealFood}
-                            foodDb={foodDb}
-                            asTableRow
-                          />
-                        ))}
+                        {meal.mealFoods.map((mealFood) =>
+                          renderFoodItem ? (
+                            renderFoodItem(mealFood)
+                          ) : (
+                            <TableRow key={mealFood.id}>
+                              <TableCell>{mealFood.amount}</TableCell>
+                              <TableCell>{mealFood.unit}</TableCell>
+                              <TableCell>
+                                {
+                                  foodDb.find((f) => f.id === mealFood.foodId)
+                                    ?.nome
+                                }
+                              </TableCell>
+                              <TableCell>
+                                {/* Calorias calculadas aqui, se necessário */}
+                              </TableCell>
+                            </TableRow>
+                          )
+                        )}
                       </TableBody>
                     </Table>
                   </TableContainer>

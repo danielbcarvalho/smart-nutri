@@ -55,6 +55,8 @@ import {
   FORMULA_DESCRIPTIONS,
 } from "@/modules/energy-plan/constants/energyPlanConstants";
 import { DesignSystemButton } from "../../../../components/DesignSystem/Button/ButtonVariants";
+import AddSubstituteModal from "@/modules/meal-plan/components/AddSubstituteModal";
+import FoodItemWithSubstitutes from "@/modules/meal-plan/components/FoodItemWithSubstitutes";
 
 // Componente principal
 export function MealPlanDetails() {
@@ -551,6 +553,32 @@ export function MealPlanDetails() {
     navigate(`/patient/${patientId}/energy-plans/new`);
   };
 
+  // Adicionar estados
+  const [substituteModalOpen, setSubstituteModalOpen] = useState(false);
+  const [selectedMealFood, setSelectedMealFood] = useState<MealFood | null>(
+    null
+  );
+
+  // Adicionar handlers
+  const handleAddSubstitute = (mealFood: MealFood) => {
+    setSelectedMealFood(mealFood);
+    setSubstituteModalOpen(true);
+  };
+
+  const handleRemoveSubstitute = async (substituteId: string) => {
+    if (!selectedMealFood) return;
+    try {
+      await mealPlanService.removeSubstitute(selectedMealFood.id, substituteId);
+      queryClient.invalidateQueries({ queryKey: ["mealPlan", planId] });
+    } catch (error) {
+      setSnackbar({
+        open: true,
+        message: "Erro ao remover substituto. Tente novamente.",
+        severity: "error",
+      });
+    }
+  };
+
   if (isLoading) {
     return (
       <Box sx={{ maxWidth: 1200, mx: "auto", p: 3 }}>
@@ -670,6 +698,41 @@ export function MealPlanDetails() {
             onExpand={handleExpandMeal}
             onAddFood={handleAddFood}
             onOpenMenu={handleOpenMenu}
+            renderFoodItem={(mealFood) => {
+              const food = foodDb.find((f) => f.id === mealFood.foodId);
+              if (!food) return null;
+
+              const substitutes =
+                mealFood.substitutes
+                  ?.map((sub) => {
+                    const subFood = foodDb.find((f) => f.id === sub.foodId);
+                    if (!subFood) return null;
+                    return {
+                      id: sub.id,
+                      name: subFood.nome,
+                      amount: sub.amount,
+                      unit: sub.unit,
+                      calories: Number(subFood.kcal) * (sub.amount / 100),
+                    };
+                  })
+                  .filter(Boolean) || [];
+
+              return (
+                <FoodItemWithSubstitutes
+                  key={mealFood.id}
+                  food={{
+                    id: mealFood.id,
+                    name: food.nome,
+                    amount: mealFood.amount,
+                    unit: mealFood.unit,
+                    calories: Number(food.kcal) * (mealFood.amount / 100),
+                  }}
+                  substitutes={substitutes}
+                  onAddSubstitute={() => handleAddSubstitute(mealFood)}
+                  onRemoveSubstitute={handleRemoveSubstitute}
+                />
+              );
+            }}
           />
         ))}
       </Box>
@@ -1090,6 +1153,30 @@ export function MealPlanDetails() {
           <Button onClick={handleCloseEnergyPlanModal}>Cancelar</Button>
         </DialogActions>
       </Dialog>
+
+      {/* Modal de Substitutos */}
+      <AddSubstituteModal
+        open={substituteModalOpen}
+        onClose={() => {
+          setSubstituteModalOpen(false);
+          setSelectedMealFood(null);
+        }}
+        mealFoodId={selectedMealFood?.id || ""}
+        originalFood={
+          selectedMealFood
+            ? {
+                name:
+                  foodDb.find((f) => f.id === selectedMealFood.foodId)?.nome ||
+                  "",
+                amount: selectedMealFood.amount,
+                unit: selectedMealFood.unit,
+              }
+            : { name: "", amount: 0, unit: "" }
+        }
+        onSubstituteAdded={() => {
+          queryClient.invalidateQueries({ queryKey: ["mealPlan", planId] });
+        }}
+      />
 
       <Snackbar
         open={snackbar.open}
