@@ -219,7 +219,6 @@ export const HeaderGlobal = ({
                           src={avatarUrl}
                           size={44}
                           isLoading={uploading}
-                          onClick={() => setProfileOpen(true)}
                         />
                       </IconButton>
                     </Tooltip>
@@ -372,12 +371,10 @@ export const HeaderGlobal = ({
                           padding: 0,
                         }}
                       >
-                        {/* Usando o novo componente de Avatar */}
                         <OptimizedAvatar
                           src={avatarUrl}
                           size={44}
                           isLoading={uploading}
-                          onClick={() => setProfileOpen(true)}
                         />
                       </IconButton>
                     </Tooltip>

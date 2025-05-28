@@ -5,13 +5,13 @@ import {
   Typography,
   Stack,
   useTheme,
-  Tooltip,
+  Tooltip as MuiTooltip,
   Button,
   LinearProgress,
-  Grid,
   Chip,
 } from "@mui/material";
 import { PieChart } from "@mui/x-charts/PieChart";
+import { ChartsTooltip } from "@mui/x-charts";
 
 import { alpha } from "@mui/material/styles";
 import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
@@ -19,6 +19,7 @@ import LocalFireDepartmentIcon from "@mui/icons-material/LocalFireDepartment";
 // Ícones para macros - use os que preferir ou tenha em seu projeto
 import FiberManualRecordIcon from "@mui/icons-material/FiberManualRecord"; // Para simular os pontos coloridos
 import { useNavigate } from "react-router-dom";
+
 interface MuiDonutChartProps {
   protein: number;
   fat: number;
@@ -125,21 +126,24 @@ const SimpleDonutChart: React.FC<MuiDonutChartProps> = ({
         slotProps={{
           legend: { hidden: true },
         }}
-        renderTooltip={({ datum }) => {
-          if (!datum) return null;
-          const item = datum.original;
-          return (
-            <Box sx={{ p: 1 }}>
-              <Typography variant="subtitle2">{item.label}</Typography>
-              <Typography variant="body2">
-                {formatNumber(item.value, 0)} kcal (
-                {formatNumber(item.grams, 1)}g) —{" "}
-                {formatNumber(item.percentage, 0)}%
-              </Typography>
-            </Box>
-          );
-        }}
-      />
+      >
+        <ChartsTooltip
+          slotProps={{
+            popper: {
+              sx: {
+                "& .MuiTooltip-tooltip": {
+                  p: 1,
+                  bgcolor: "background.paper",
+                  color: "text.primary",
+                  boxShadow: 1,
+                  border: "1px solid",
+                  borderColor: "divider",
+                },
+              },
+            },
+          }}
+        />
+      </PieChart>
       <Box
         sx={{
           position: "absolute",
@@ -449,7 +453,7 @@ export const NutrientAnalysis: React.FC<NutrientAnalysisProps> = ({
         >
           Análise de Nutrientes
         </Typography>
-        <Tooltip
+        <MuiTooltip
           title="O Plano Atual se refere aos valores do planejamento alimentar atual, enquanto a Meta foi definida através do planejamento energético."
           arrow
           placement="top"
@@ -462,7 +466,7 @@ export const NutrientAnalysis: React.FC<NutrientAnalysisProps> = ({
               cursor: "pointer",
             }}
           />
-        </Tooltip>
+        </MuiTooltip>
       </Box>
 
       {!hasTargetData && (
@@ -550,14 +554,17 @@ export const NutrientAnalysis: React.FC<NutrientAnalysisProps> = ({
               border: `1px solid ${theme.palette.divider}`,
             }}
           >
-            <Grid
-              container
-              spacing={1}
-              alignItems="flex-end"
-              justifyContent="space-between"
-              mb={1.5}
+            <Box
+              sx={{
+                display: "grid",
+                gap: 2,
+                gridTemplateColumns: {
+                  xs: "1fr",
+                  sm: "repeat(2, 1fr)",
+                },
+              }}
             >
-              <Grid item xs={12} sm>
+              <Box>
                 <Typography
                   variant="caption"
                   color="text.secondary"
@@ -575,13 +582,8 @@ export const NutrientAnalysis: React.FC<NutrientAnalysisProps> = ({
                     kcal
                   </Typography>
                 </Typography>
-              </Grid>
-              <Grid
-                item
-                xs={12}
-                sm
-                sx={{ textAlign: { xs: "left", sm: "right" } }}
-              >
+              </Box>
+              <Box sx={{ textAlign: { xs: "left", sm: "right" } }}>
                 <Typography
                   variant="caption"
                   color="text.secondary"
@@ -603,8 +605,8 @@ export const NutrientAnalysis: React.FC<NutrientAnalysisProps> = ({
                     kcal
                   </Typography>
                 </Typography>
-              </Grid>
-            </Grid>
+              </Box>
+            </Box>
 
             <Box mb={tmb && tmb > 0 ? 1.5 : 0}>
               <Box
@@ -677,7 +679,7 @@ export const NutrientAnalysis: React.FC<NutrientAnalysisProps> = ({
                   <Typography variant="caption" color="text.secondary">
                     Taxa Metabólica Basal (TMB)
                   </Typography>
-                  <Tooltip
+                  <MuiTooltip
                     title="Energia mínima para funções vitais em repouso."
                     arrow
                   >
@@ -689,7 +691,7 @@ export const NutrientAnalysis: React.FC<NutrientAnalysisProps> = ({
                         cursor: "pointer",
                       }}
                     />
-                  </Tooltip>
+                  </MuiTooltip>
                 </Box>
                 <Typography
                   variant="subtitle1"
@@ -727,7 +729,7 @@ export const NutrientAnalysis: React.FC<NutrientAnalysisProps> = ({
               <Typography variant="h6" color="primary" fontWeight="medium">
                 Distribuição de Macronutrientes
               </Typography>
-              <Tooltip
+              <MuiTooltip
                 title="Distribuição percentual de calorias e comparação em gramas com as metas."
                 arrow
               >
@@ -739,7 +741,7 @@ export const NutrientAnalysis: React.FC<NutrientAnalysisProps> = ({
                     cursor: "pointer",
                   }}
                 />
-              </Tooltip>
+              </MuiTooltip>
             </Box>
             <Box
               sx={{
@@ -944,7 +946,7 @@ export const NutrientAnalysis: React.FC<NutrientAnalysisProps> = ({
                     >
                       Densidade Calórica
                     </Typography>
-                    <Tooltip title={densityClass.description} arrow>
+                    <MuiTooltip title={densityClass.description} arrow>
                       <InfoOutlinedIcon
                         sx={{
                           ml: 0.5,
@@ -953,7 +955,7 @@ export const NutrientAnalysis: React.FC<NutrientAnalysisProps> = ({
                           cursor: "pointer",
                         }}
                       />
-                    </Tooltip>
+                    </MuiTooltip>
                   </Box>
                   <Typography variant="caption" color="text.secondary">
                     Relação Kcal/g da dieta.

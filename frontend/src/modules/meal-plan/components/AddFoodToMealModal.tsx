@@ -25,6 +25,7 @@ import { mealPlanService } from "../services/mealPlanService";
 import type { CreateMeal, UpdateMeal } from "../services/mealPlanService";
 import CloseIcon from "@mui/icons-material/Close";
 import NutrientAnalysisIndividualMeal from "./NutrientAnalysisIndividualMeal";
+import FoodSearchModal from "./FoodSearchModal";
 
 interface AddFoodToMealModalProps {
   open: boolean;
@@ -100,6 +101,14 @@ export interface Alimento {
   // Adicione outros campos conforme necessário
 }
 
+// Novo tipo para alimento prescrito com substitutos
+interface PrescribedFood {
+  food: Alimento;
+  amount: number;
+  mcIndex?: number;
+  substitutes?: Array<{ food: Alimento; amount: number; mcIndex?: number }>;
+}
+
 export const AddFoodToMealModal: React.FC<AddFoodToMealModalProps> = ({
   open,
   onClose,
@@ -113,10 +122,7 @@ export const AddFoodToMealModal: React.FC<AddFoodToMealModalProps> = ({
 }) => {
   const [foodSearch, setFoodSearch] = useState("");
   const [searchResults, setSearchResults] = useState<Alimento[]>([]);
-  const [selectedFoods, setSelectedFoods] =
-    useState<Array<{ food: Alimento; amount: number; mcIndex?: number }>>(
-      initialFoods
-    );
+  const [selectedFoods, setSelectedFoods] = useState<PrescribedFood[]>([]);
   const [loadingFoods, setLoadingFoods] = useState(false);
   const [showDropdown, setShowDropdown] = useState(false);
   const [notes, setNotes] = useState(initialNotes);
@@ -126,6 +132,13 @@ export const AddFoodToMealModal: React.FC<AddFoodToMealModalProps> = ({
     useState<Alimento | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [substituteTargetFoodId, setSubstituteTargetFoodId] = useState<
+    string | null
+  >(null);
+  const [searchModalOpen, setSearchModalOpen] = useState(false);
+  const [searchContext, setSearchContext] = useState<
+    "principal" | "substituto" | null
+  >(null);
 
   const { data: foodDb } = useFoodDb();
 
@@ -231,43 +244,6 @@ export const AddFoodToMealModal: React.FC<AddFoodToMealModalProps> = ({
     return acc + pesoItem;
   }, 0);
 
-  // Função utilitária para identificar medidas contáveis
-  const isCountableUnit = (nome: string) => {
-    const keywords = [
-      "unidade",
-      "fatia",
-      "colher",
-      "pedaço",
-      "porção",
-      "concha",
-      "copo",
-      "xícara",
-      "biscoito",
-      "tablete",
-      "fatias",
-      "unidades",
-      "unid",
-    ];
-    return keywords.some((kw) => nome.includes(kw));
-  };
-
-  // Handlers para interação com alimentos
-  const handleSelectFood = (food: Alimento) => {
-    if (!selectedFoods.find((f) => f.food.id === food.id)) {
-      // Define mcIndex como 0 se houver medidas caseiras, caso contrário undefined
-      const defaultMcIndex = food.mc && food.mc.length > 0 ? 0 : undefined;
-      const nome = food.mc?.[0]?.nome_mc?.toLowerCase() || "";
-      const isCountable = isCountableUnit(nome);
-      const defaultAmount = isCountable ? 1 : Number(food.mc?.[0]?.peso) || 100;
-      setSelectedFoods([
-        ...selectedFoods,
-        { food, amount: defaultAmount, mcIndex: defaultMcIndex },
-      ]); // Começa com 1 unidade ou peso padrão
-    }
-    setShowDropdown(false);
-    setFoodSearch("");
-  };
-
   const handleRemoveFood = (foodId: string) => {
     setSelectedFoods(selectedFoods.filter((f) => f.food.id !== foodId));
   };
@@ -280,7 +256,7 @@ export const AddFoodToMealModal: React.FC<AddFoodToMealModalProps> = ({
   const handleUpdatePrescribedFood = (
     foodId: string,
     newAmount: number,
-    newMcIndex: number | undefined // Aceita undefined se não houver medida caseira
+    newMcIndex: number
   ) => {
     setSelectedFoods((prev) =>
       prev.map((item) =>
@@ -291,6 +267,91 @@ export const AddFoodToMealModal: React.FC<AddFoodToMealModalProps> = ({
     );
   };
 
+  const handleRemoveSubstitute = (foodId: string, substituteId: string) => {
+    setSelectedFoods((prev) =>
+      prev.map((item) =>
+        item.food.id === foodId
+          ? {
+              ...item,
+              substitutes: item.substitutes?.filter(
+                (sub) => sub.food.id !== substituteId
+              ),
+            }
+          : item
+      )
+    );
+  };
+
+  const handleUpdateSubstitute = (
+    foodId: string,
+    substituteId: string,
+    newAmount: number,
+    newMcIndex: number
+  ) => {
+    setSelectedFoods((prev) =>
+      prev.map((item) =>
+        item.food.id === foodId
+          ? {
+              ...item,
+              substitutes: item.substitutes?.map((sub) =>
+                sub.food.id === substituteId
+                  ? { ...sub, amount: newAmount, mcIndex: newMcIndex }
+                  : sub
+              ),
+            }
+          : item
+      )
+    );
+  };
+
+  // Handler para abrir modal de busca para alimento principal
+  const handleOpenAddFoodModal = () => {
+    setSearchContext("principal");
+    setSearchModalOpen(true);
+  };
+
+  // Handler para abrir modal de busca para substituto
+  const handleOpenAddSubstituteModal = (foodId: string) => {
+    setSubstituteTargetFoodId(foodId);
+    setSearchContext("substituto");
+    setSearchModalOpen(true);
+  };
+
+  // Handler para fechar modal de busca
+  const handleCloseSearchModal = () => {
+    setSearchModalOpen(false);
+    setSearchContext(null);
+    setSubstituteTargetFoodId(null);
+  };
+
+  // Handler para seleção no modal de busca
+  const handleFoodSearchSelect = (
+    food: Alimento,
+    amount: number,
+    mcIndex?: number
+  ) => {
+    if (searchContext === "principal") {
+      // Adiciona alimento principal
+      if (!selectedFoods.find((f) => f.food.id === food.id)) {
+        setSelectedFoods([...selectedFoods, { food, amount, mcIndex }]);
+      }
+    } else if (searchContext === "substituto" && substituteTargetFoodId) {
+      setSelectedFoods((prev) =>
+        prev.map((item) =>
+          item.food.id === substituteTargetFoodId
+            ? {
+                ...item,
+                substitutes: [
+                  ...(item.substitutes || []),
+                  { food, amount, mcIndex },
+                ],
+              }
+            : item
+        )
+      );
+    }
+  };
+
   // Handler para salvar os dados ao confirmar
   const handleSave = async () => {
     setError(null);
@@ -298,23 +359,52 @@ export const AddFoodToMealModal: React.FC<AddFoodToMealModalProps> = ({
       setError("Dados obrigatórios ausentes. Tente novamente.");
       return;
     }
-    if (selectedFoods.length === 0) {
-      setError("Selecione pelo menos um alimento.");
-      return;
-    }
     setLoading(true);
-    const mealFoods = selectedFoods.map(({ food, amount, mcIndex }) => {
-      let unit = food.unidade || "g";
-      if (food.mc && typeof mcIndex === "number" && food.mc[mcIndex]) {
-        unit = food.mc[mcIndex].nome_mc || unit;
+    const mealFoods = selectedFoods.map(
+      ({ food, amount, mcIndex, substitutes }) => {
+        let unit = food.unidade || "g";
+        if (food.mc && typeof mcIndex === "number" && food.mc[mcIndex]) {
+          unit = food.mc[mcIndex].nome_mc || unit;
+        }
+
+        const baseFood = {
+          foodId: food.id,
+          source: food.origem || "taco",
+          amount: Number(amount),
+          unit,
+        };
+
+        // Se houver substitutos, adiciona ao payload
+        if (substitutes && substitutes.length > 0) {
+          const substitutesPayload = substitutes.map(
+            ({ food: subFood, amount: subAmount, mcIndex: subMcIndex }) => {
+              let subUnit = subFood.unidade || "g";
+              if (
+                subFood.mc &&
+                typeof subMcIndex === "number" &&
+                subFood.mc[subMcIndex]
+              ) {
+                subUnit = subFood.mc[subMcIndex].nome_mc || subUnit;
+              }
+              return {
+                foodId: subFood.id,
+                source: subFood.origem || "taco",
+                name: subFood.nome,
+                amount: Number(subAmount),
+                unit: subUnit,
+              };
+            }
+          );
+          return {
+            ...baseFood,
+            substitutes: substitutesPayload,
+          };
+        }
+
+        return baseFood;
       }
-      return {
-        foodId: food.id,
-        source: food.origem || "taco",
-        amount: Number(amount),
-        unit,
-      };
-    });
+    );
+
     try {
       if (mealId) {
         const updatePayload: UpdateMeal = { mealFoods, notes };
@@ -359,22 +449,19 @@ export const AddFoodToMealModal: React.FC<AddFoodToMealModalProps> = ({
     }
   };
 
-  // Resetar estado ao fechar
   useEffect(() => {
-    if (!open) {
-      setFoodSearch("");
-      setSearchResults([]);
-      setSelectedFoods(initialFoods.map((item) => ({ ...item })));
-      setNotes(initialNotes);
-      setLoadingFoods(false);
-      setShowDropdown(false);
-      setSelectedFoodForDetails(null);
-    } else {
+    if (open) {
       setSelectedFoods(initialFoods.map((item) => ({ ...item })));
       setNotes(initialNotes);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open]); // Remove initialFoods e initialNotes das dependências para evitar loop
+  }, [open, initialFoods, initialNotes]);
+
+  useEffect(() => {
+    if (open && initialFoods.length === 0) {
+      setSearchContext("principal");
+      setSearchModalOpen(true);
+    }
+  }, [open, initialFoods.length]);
 
   return (
     <Dialog
@@ -411,7 +498,7 @@ export const AddFoodToMealModal: React.FC<AddFoodToMealModalProps> = ({
           maxWidth: isMobile ? "100vw" : 1040,
           width: "100%",
           mx: "auto",
-          overflow: "visible", // Garante que não haverá scroll interno
+          overflow: "visible",
           position: "relative",
         }}
       >
@@ -440,28 +527,16 @@ export const AddFoodToMealModal: React.FC<AddFoodToMealModalProps> = ({
         >
           {mealName ? `Refeição: ${mealName}` : "Adicionar Alimento à Refeição"}
         </Typography>
-        {/* Seção de Adicionar Alimento */}
-        <AddFoodSection
-          foodSearch={foodSearch}
-          setFoodSearch={setFoodSearch}
-          searchResults={searchResults}
-          setSearchResults={setSearchResults}
-          loadingFoods={loadingFoods}
-          setLoadingFoods={setLoadingFoods}
-          showDropdown={showDropdown}
-          setShowDropdown={setShowDropdown}
-          anchorRef={anchorRef}
-          inputWidth={inputWidth}
-          setInputWidth={setInputWidth}
-          handleSelectFood={handleSelectFood}
-          handleOpenDetails={handleOpenDetails}
-        />
-        {/* Seção de Alimentos Prescritos/Selecionados */}
+        {/* Lista de alimentos prescritos */}
         <PrescribedFoodsSection
           selectedFoods={selectedFoods}
           handleRemoveFood={handleRemoveFood}
           handleUpdatePrescribedFood={handleUpdatePrescribedFood}
           handleOpenDetails={handleOpenDetails}
+          onAddSubstitute={handleOpenAddSubstituteModal}
+          onAddFood={handleOpenAddFoodModal}
+          handleRemoveSubstitute={handleRemoveSubstitute}
+          handleUpdateSubstitute={handleUpdateSubstitute}
         />
         {/* Seção de Análise de Nutrientes */}
         <NutrientAnalysisIndividualMeal
@@ -550,7 +625,7 @@ export const AddFoodToMealModal: React.FC<AddFoodToMealModalProps> = ({
             fullWidth={isMobile}
             size={isMobile ? "large" : "medium"}
             sx={{ minWidth: 100, borderRadius: 2 }}
-            disabled={loading || selectedFoods.length === 0}
+            disabled={loading}
           >
             Confirmar
           </Button>
@@ -577,6 +652,18 @@ export const AddFoodToMealModal: React.FC<AddFoodToMealModalProps> = ({
           }
           setSelectedFoodForDetails(null);
         }}
+      />
+      <FoodSearchModal
+        open={searchModalOpen}
+        onClose={handleCloseSearchModal}
+        onSelect={handleFoodSearchSelect}
+        context={searchContext || "principal"}
+        targetFoodName={
+          searchContext === "substituto"
+            ? selectedFoods.find((f) => f.food.id === substituteTargetFoodId)
+                ?.food.nome
+            : undefined
+        }
       />
     </Dialog>
   );

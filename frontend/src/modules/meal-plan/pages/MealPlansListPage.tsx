@@ -35,7 +35,6 @@ import { DesignSystemButton } from "../../../components/DesignSystem/Button/Butt
 import { patientService } from "@modules/patient/services/patientService";
 import { authService } from "../../auth/services/authService";
 import { alpha } from "@mui/material/styles";
-import { useMediaQuery } from "@mui/material";
 
 // Estilo dos botões de ação para consistência
 const actionButtonSx = {

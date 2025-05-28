@@ -1,6 +1,6 @@
 ---
-description: 
-globs: 
+description:
+globs:
 alwaysApply: true
 ---
 
@@ -21,9 +21,56 @@ If you are not sure about file content or codebase structure pertaining to the u
 Cada vez que receber uma nova solicitação, valide rapidamente:
 
 ### Checklist rápido:
+
 - [ ] Li a documentação antes de iniciar (ok para iniciar desenvolvimento).
 - [ ] Atualizei/revisei documentação específica após o término (finalização).
 
 ### Validação anti-duplicação:
+
 - [ ] Foi identificado código existente?
 - [ ] Houve reutilização ou necessidade de adaptação de código existente?
+
+1. Qual é o objetivo principal do seu projeto Smart Nutri?
+   Smart Nutri é uma plataforma completa de gestão nutricional que capacita nutricionistas a oferecer atendimento personalizado e baseado em evidências científicas. O sistema automatiza cálculos complexos, centraliza dados dos pacientes e otimiza o tempo de consulta, permitindo que profissionais foquem no que mais importa: o cuidado individualizado.
+
+Proposta de Valor
+
+Eficiência: Reduz tempo de consulta em até 60% através de automação
+Precisão: Cálculos baseados em fórmulas científicas validadas
+Organização: Centralização completa de dados e histórico do paciente
+Escalabilidade: Reutilização inteligente de planos alimentares
+Profissionalismo: Relatórios e prescrições com visual profissional
+
+2. Funcionalidades Principais Existentes
+   2.1 Gestão de Pacientes
+   Status: ✅ Implementado
+
+2.2 Avaliação Antropométrica Digital
+Status: ✅ Implementado
+
+Medidas Corporais: Peso, altura, circunferências (cintura, quadril, braço, coxa e etc)
+Composição Corporal: % gordura, massa magra e etc
+Cálculos Automáticos: IMC, RCQ, TMB, GET usando fórmulas científicas
+Classificações: Automáticas baseadas em referências
+
+2.3 Acompanhamento Visual por Fotos
+Status: ✅ Implementado
+
+Upload via Supabase
+Categorização por ângulos (frontal, lateral esquerda, lateral direita, costas)
+Comparativo visual entre datas
+Galeria organizada por paciente e data
+
+2.4 Análise de Evolução
+Status: ✅ Implementado
+
+Gráficos Interativos: Peso, medidas, composição corporal ao longo do tempo
+Relatórios de Progresso: Automáticos com métricas-chave
+
+2.5 Prescrição de Planos Alimentares
+Status: ✅ Implementado
+
+Base de Alimentos local json : +3000 alimentos com dados nutricionais
+Cálculo Energético: VET baseado em TMB, fator atividade e objetivo
+Distribuição de Macros: Personalizável por refeição e dia
+Planos Estruturados

@@ -20,11 +20,12 @@ import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import FastfoodIcon from "@mui/icons-material/Restaurant";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
 import AddIcon from "@mui/icons-material/Add";
-import InfoIcon from "@mui/icons-material/Info";
 import { Meal } from "@/modules/meal-plan/services/mealPlanService";
 import type { Alimento } from "./AddFoodToMealModal";
-import MealFoodItem from "./MealFoodItem";
+import type { MealFood } from "@/services/foodService";
 import MealNutritionSummary from "./MealNutritionSummary";
+import { alpha } from "@mui/material/styles";
+import { useTheme } from "@mui/material/styles";
 
 interface MealCardProps {
   meal: Meal;
@@ -33,18 +34,8 @@ interface MealCardProps {
   onExpand: (mealId: string) => void;
   onAddFood: (mealId: string) => void;
   onOpenMenu: (event: React.MouseEvent<HTMLElement>, mealId: string) => void;
-  children?: React.ReactNode;
+  renderFoodItem?: (mealFood: MealFood) => React.ReactNode;
 }
-
-const getMealTypeColor = (mealName: string) => {
-  const name = mealName.toLowerCase();
-  if (name.includes("café")) return "#FF9800";
-  if (name.includes("almoço")) return "#4CAF50";
-  if (name.includes("jantar")) return "#2196F3";
-  if (name.includes("lanche")) return "#9C27B0";
-  if (name.includes("ceia")) return "#795548";
-  return "#607D8B";
-};
 
 const MealCard: React.FC<MealCardProps> = ({
   meal,
@@ -53,17 +44,22 @@ const MealCard: React.FC<MealCardProps> = ({
   onExpand,
   onAddFood,
   onOpenMenu,
-  children,
+  renderFoodItem,
 }) => {
+  const theme = useTheme();
+
   return (
     <Card
       elevation={1}
       sx={{
         mb: 1.5,
-        borderLeft: `4px solid ${getMealTypeColor(meal.name)}`,
-        transition: "all 0.2s ease",
+        borderRadius: "12px",
+        borderColor: "divider",
+        transition: "all 0.2s",
+        borderRight: `4px solid ${theme.palette.custom.accent}`,
         "&:hover": {
-          boxShadow: 3,
+          boxShadow: 4,
+          borderColor: "primary.main",
         },
       }}
     >
@@ -73,10 +69,10 @@ const MealCard: React.FC<MealCardProps> = ({
           sx={{
             display: "flex",
             alignItems: "center",
-            px: 2,
-            py: 1.2,
+            px: 2.5,
+            py: 1.5,
             cursor: "pointer",
-            bgcolor: expanded ? "rgba(0,0,0,0.03)" : "transparent",
+            bgcolor: expanded ? alpha("#000", 0.03) : "transparent",
           }}
           onClick={() => onExpand(meal.id)}
         >
@@ -90,12 +86,23 @@ const MealCard: React.FC<MealCardProps> = ({
               }}
             />
           </Box>
-          <Typography fontWeight="medium" sx={{ width: 100 }}>
+          <Typography
+            fontWeight="medium"
+            sx={{
+              width: 100,
+              color: "text.secondary",
+              fontSize: "0.9rem",
+            }}
+          >
             {meal.time}
           </Typography>
           <Typography
-            variant="subtitle1"
-            sx={{ flex: 1, fontWeight: "medium" }}
+            variant="h6"
+            sx={{
+              flex: 1,
+              fontWeight: "bold",
+              fontSize: "1.1rem",
+            }}
           >
             {meal.name}
           </Typography>
@@ -115,13 +122,12 @@ const MealCard: React.FC<MealCardProps> = ({
           >
             <MoreVertIcon />
           </IconButton>
-          {children}
         </Box>
         {/* Conteúdo Expandido */}
         {expanded && (
           <Box>
             <Divider />
-            <Box sx={{ p: 2 }}>
+            <Box sx={{ p: 2.5 }}>
               {/* Botão de Ação Principal */}
               <Box sx={{ display: "flex", justifyContent: "flex-end", mb: 2 }}>
                 <Button
@@ -132,6 +138,11 @@ const MealCard: React.FC<MealCardProps> = ({
                     e.stopPropagation();
                     onAddFood(meal.id);
                   }}
+                  sx={{
+                    borderRadius: "8px",
+                    textTransform: "none",
+                    fontWeight: 600,
+                  }}
                 >
                   Adicionar ou editar alimentos
                 </Button>
@@ -139,7 +150,12 @@ const MealCard: React.FC<MealCardProps> = ({
               {/* Lista de Alimentos */}
               <Paper
                 variant="outlined"
-                sx={{ p: meal.mealFoods?.length ? 2 : 0, mb: 2 }}
+                sx={{
+                  p: meal.mealFoods?.length ? 2 : 0,
+                  mb: 2,
+                  borderRadius: "12px",
+                  boxShadow: "none",
+                }}
               >
                 {meal.mealFoods && meal.mealFoods.length > 0 ? (
                   <TableContainer
@@ -162,8 +178,21 @@ const MealCard: React.FC<MealCardProps> = ({
                             sx={{
                               fontWeight: "bold",
                               px: 1,
-                              py: 0.5,
+                              py: 1,
+                              color: "text.secondary",
+                              fontSize: "0.875rem",
+                            }}
+                          >
+                            Alimento
+                          </TableCell>
+                          <TableCell
+                            sx={{
+                              fontWeight: "bold",
+                              px: 1,
+                              py: 1,
                               width: 70,
+                              color: "text.secondary",
+                              fontSize: "0.875rem",
                             }}
                           >
                             Qtde
@@ -172,23 +201,22 @@ const MealCard: React.FC<MealCardProps> = ({
                             sx={{
                               fontWeight: "bold",
                               px: 1,
-                              py: 0.5,
+                              py: 1,
                               width: 70,
+                              color: "text.secondary",
+                              fontSize: "0.875rem",
                             }}
                           >
                             Unidade
                           </TableCell>
                           <TableCell
-                            sx={{ fontWeight: "bold", px: 1, py: 0.5 }}
-                          >
-                            Alimento
-                          </TableCell>
-                          <TableCell
                             sx={{
                               fontWeight: "bold",
                               px: 1,
-                              py: 0.5,
+                              py: 1,
                               width: 100,
+                              color: "text.secondary",
+                              fontSize: "0.875rem",
                             }}
                           >
                             Calorias
@@ -196,14 +224,29 @@ const MealCard: React.FC<MealCardProps> = ({
                         </TableRow>
                       </TableHead>
                       <TableBody>
-                        {meal.mealFoods.map((mealFood) => (
-                          <MealFoodItem
-                            key={mealFood.id || mealFood.foodId}
-                            mealFood={mealFood}
-                            foodDb={foodDb}
-                            asTableRow
-                          />
-                        ))}
+                        {meal.mealFoods.map((mealFood) =>
+                          renderFoodItem ? (
+                            renderFoodItem(mealFood)
+                          ) : (
+                            <TableRow key={mealFood.id}>
+                              <TableCell sx={{ py: 1.5 }}>
+                                {
+                                  foodDb.find((f) => f.id === mealFood.foodId)
+                                    ?.nome
+                                }
+                              </TableCell>
+                              <TableCell sx={{ py: 1.5 }}>
+                                {mealFood.amount}
+                              </TableCell>
+                              <TableCell sx={{ py: 1.5 }}>
+                                {mealFood.unit}
+                              </TableCell>
+                              <TableCell sx={{ py: 1.5 }}>
+                                {/* Calorias calculadas aqui, se necessário */}
+                              </TableCell>
+                            </TableRow>
+                          )
+                        )}
                       </TableBody>
                     </Table>
                   </TableContainer>
@@ -226,7 +269,12 @@ const MealCard: React.FC<MealCardProps> = ({
                       size="small"
                       startIcon={<AddIcon />}
                       onClick={() => onAddFood(meal.id)}
-                      sx={{ mt: 1 }}
+                      sx={{
+                        mt: 1,
+                        borderRadius: "8px",
+                        textTransform: "none",
+                        fontWeight: 600,
+                      }}
                     >
                       Adicionar alimento
                     </Button>
@@ -244,19 +292,30 @@ const MealCard: React.FC<MealCardProps> = ({
               {meal.notes && (
                 <Box
                   sx={{
-                    p: 2,
-                    bgcolor: "rgba(255, 243, 224, 0.5)",
-                    borderRadius: 1,
-                    display: "flex",
-                    alignItems: "flex-start",
+                    mt: 2,
+                    p: 1.5,
+                    bgcolor: (theme) => alpha(theme.palette.primary.main, 0.05),
+                    borderColor: "primary.main",
+                    borderRadius: "0 4px 4px 0",
                   }}
                 >
-                  <InfoIcon
-                    fontSize="small"
-                    color="action"
-                    sx={{ mr: 1, mt: 0.3 }}
-                  />
-                  <Typography variant="body2" color="text.secondary">
+                  <Typography
+                    variant="body2"
+                    color="text.secondary"
+                    sx={{ fontSize: "0.95rem" }}
+                  >
+                    <Box
+                      component="span"
+                      sx={{ fontWeight: 600, color: "primary.main" }}
+                    >
+                      Notas
+                    </Box>{" "}
+                  </Typography>
+                  <Typography
+                    component="span"
+                    variant="caption"
+                    color="text.secondary"
+                  >
                     {meal.notes}
                   </Typography>
                 </Box>

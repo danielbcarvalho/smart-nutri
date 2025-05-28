@@ -10,7 +10,10 @@ import {
 } from "@mui/material";
 import DeleteIcon from "@mui/icons-material/RemoveCircle";
 import InfoIcon from "@mui/icons-material/Info";
+import SwapHorizIcon from "@mui/icons-material/SwapHoriz";
 import { Alimento } from "./AddFoodToMealModal";
+import { formatNumber } from "@/utils/numberFormat";
+import { formatMeasure } from "@/utils/measureFormat";
 
 interface PrescribedFoodItemProps {
   food: Alimento;
@@ -19,6 +22,8 @@ interface PrescribedFoodItemProps {
   onRemove: (foodId: string) => void;
   onUpdate?: (foodId: string, newAmount: number, newMcIndex: number) => void;
   onOpenDetails?: (food: Alimento) => void;
+  onAddSubstitute?: (foodId: string) => void;
+  sx?: any;
 }
 
 const PrescribedFoodItem: React.FC<PrescribedFoodItemProps> = ({
@@ -28,6 +33,8 @@ const PrescribedFoodItem: React.FC<PrescribedFoodItemProps> = ({
   onRemove,
   onUpdate,
   onOpenDetails,
+  onAddSubstitute,
+  sx,
 }) => {
   const [mcIndex, setMcIndex] = React.useState(mcIndexProp ?? 0);
   const [mcValue, setMcValue] = React.useState(
@@ -87,6 +94,7 @@ const PrescribedFoodItem: React.FC<PrescribedFoodItemProps> = ({
       sx={{
         minHeight: 40,
         borderBottom: "none",
+        ...sx,
       }}
     >
       <TableCell
@@ -106,6 +114,9 @@ const PrescribedFoodItem: React.FC<PrescribedFoodItemProps> = ({
               overflow: "hidden",
               textOverflow: "ellipsis",
               whiteSpace: "nowrap",
+              display: "flex",
+              alignItems: "center",
+              gap: 4,
             }}
           >
             {food.nome}
@@ -177,7 +188,7 @@ const PrescribedFoodItem: React.FC<PrescribedFoodItemProps> = ({
         >
           {food.mc?.map((mc, idx) => (
             <MenuItem key={idx} value={idx}>
-              {mc.nome_mc}
+              {formatMeasure(mc.nome_mc, mcValue)}
             </MenuItem>
           ))}
         </Select>
@@ -195,7 +206,7 @@ const PrescribedFoodItem: React.FC<PrescribedFoodItemProps> = ({
           borderBottom: "none",
         }}
       >
-        {quantidadeGramas.toFixed(1)}g
+        {formatNumber(quantidadeGramas)}g
       </TableCell>
       <TableCell
         align="center"
@@ -210,7 +221,7 @@ const PrescribedFoodItem: React.FC<PrescribedFoodItemProps> = ({
           borderBottom: "none",
         }}
       >
-        {(Number(food.ptn ?? 0) * fator).toFixed(1)}g
+        {formatNumber(Number(food.ptn ?? 0) * fator)}g
       </TableCell>
       <TableCell
         align="center"
@@ -225,7 +236,7 @@ const PrescribedFoodItem: React.FC<PrescribedFoodItemProps> = ({
           borderBottom: "none",
         }}
       >
-        {(Number(food.lip ?? 0) * fator).toFixed(1)}g
+        {formatNumber(Number(food.lip ?? 0) * fator)}g
       </TableCell>
       <TableCell
         align="center"
@@ -240,7 +251,7 @@ const PrescribedFoodItem: React.FC<PrescribedFoodItemProps> = ({
           borderBottom: "none",
         }}
       >
-        {(Number(food.cho ?? 0) * fator).toFixed(1)}g
+        {formatNumber(Number(food.cho ?? 0) * fator)}g
       </TableCell>
       <TableCell
         align="center"
@@ -255,7 +266,7 @@ const PrescribedFoodItem: React.FC<PrescribedFoodItemProps> = ({
           borderBottom: "none",
         }}
       >
-        {(Number(food.kcal ?? 0) * fator).toFixed(1)} Kcal
+        {formatNumber(Number(food.kcal ?? 0) * fator)} Kcal
       </TableCell>
       <TableCell
         align="right"
@@ -269,6 +280,17 @@ const PrescribedFoodItem: React.FC<PrescribedFoodItemProps> = ({
             gap: 4,
           }}
         >
+          {onAddSubstitute && (
+            <Tooltip title="Adicionar substituto" arrow>
+              <IconButton
+                size="small"
+                onClick={() => onAddSubstitute(food.id)}
+                aria-label={`Adicionar substituto para ${food.nome}`}
+              >
+                <SwapHorizIcon fontSize="small" />
+              </IconButton>
+            </Tooltip>
+          )}
           <Tooltip title={`Ver detalhes de ${food.nome}`} arrow>
             <IconButton
               onClick={() => onOpenDetails && onOpenDetails(food)}

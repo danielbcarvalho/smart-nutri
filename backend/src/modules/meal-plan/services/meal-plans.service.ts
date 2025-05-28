@@ -4,10 +4,14 @@ import { Repository, ILike } from 'typeorm';
 import { MealPlan } from '../entities/meal-plan.entity';
 import { Meal } from '../entities/meal.entity';
 import { MealFood } from '../entities/meal-food.entity';
+import { FoodSubstitute } from '../entities/food-substitute.entity';
 import { CreateMealPlanDto } from '../dto/create-meal-plan.dto';
 import { UpdateMealPlanDto } from '../dto/update-meal-plan.dto';
 import { CreateMealDto } from '../dto/create-meal.dto';
 import { PatientsService } from '../../patients/patients.service';
+import { MealResponseDto } from '../dto/meal.response.dto';
+import { MealFoodResponseDto } from '../dto/meal-food.response.dto';
+import { FoodsService } from '../../foods/foods.service';
 
 @Injectable()
 export class MealPlansService {
@@ -20,7 +24,10 @@ export class MealPlansService {
     private readonly mealRepository: Repository<Meal>,
     @InjectRepository(MealFood)
     private readonly mealFoodRepository: Repository<MealFood>,
+    @InjectRepository(FoodSubstitute)
+    private readonly foodSubstituteRepository: Repository<FoodSubstitute>,
     private readonly patientsService: PatientsService,
+    private readonly foodsService: FoodsService,
   ) {}
 
   async create(
@@ -59,6 +66,7 @@ export class MealPlansService {
       relations: [
         'meals',
         'meals.mealFoods',
+        'meals.mealFoods.substitutes',
         'patient',
         'nutritionist',
         'energyPlan',
@@ -73,6 +81,7 @@ export class MealPlansService {
       relations: [
         'meals',
         'meals.mealFoods',
+        'meals.mealFoods.substitutes',
         'patient',
         'nutritionist',
         'energyPlan',
@@ -80,10 +89,6 @@ export class MealPlansService {
     });
 
     if (!mealPlan) {
-      this.logger.log('❌ [MealPlansService] Plano não encontrado:', {
-        id,
-        nutritionistId,
-      });
       throw new NotFoundException(`Meal plan with ID ${id} not found`);
     }
 
@@ -179,18 +184,46 @@ export class MealPlansService {
   ): Promise<Meal> {
     const mealPlan = await this.findOne(planId, nutritionistId);
 
+    // Criar a refeição sem os mealFoods inicialmente
     const meal = this.mealRepository.create({
-      ...createMealDto,
-      mealPlan,
+      name: createMealDto.name,
+      time: createMealDto.time,
+      description: createMealDto.description,
+      mealPlan: { id: mealPlan.id }, // Usar apenas o ID para a relação
     });
 
     try {
       const savedMeal = await this.mealRepository.save(meal);
 
+      // Se houver mealFoods, criar eles separadamente
+      if (createMealDto.mealFoods?.length > 0) {
+        const mealFoods = createMealDto.mealFoods.map((foodDto) => ({
+          amount: Number(foodDto.amount),
+          unit: foodDto.unit,
+          foodId: foodDto.foodId,
+          source: foodDto.source.toLowerCase(),
+          meal: { id: savedMeal.id },
+          mealId: savedMeal.id,
+        }));
+
+        const savedMealFoods = await this.mealFoodRepository.save(mealFoods);
+        savedMeal.mealFoods = savedMealFoods;
+      }
+
       // Atualiza os totais do plano
       await this.updateMealPlanTotals(planId);
 
-      return savedMeal;
+      // Buscar a refeição completa com todas as relações
+      const completeMeal = await this.mealRepository.findOne({
+        where: { id: savedMeal.id },
+        relations: ['mealFoods', 'mealFoods.substitutes'],
+      });
+
+      if (!completeMeal) {
+        throw new NotFoundException('Refeição não encontrada após criação');
+      }
+
+      return completeMeal;
     } catch (error) {
       throw error;
     }
@@ -287,12 +320,78 @@ export class MealPlansService {
     }
   }
 
+  private async transformMealToResponseDto(
+    meal: Meal,
+  ): Promise<MealResponseDto> {
+    const mealFoods = await Promise.all(
+      meal.mealFoods.map(async (mealFood) => {
+        // Busca os substitutos diretamente do banco para garantir que temos os dados mais recentes
+        const substitutes = await this.foodSubstituteRepository.find({
+          where: {
+            originalFoodId: mealFood.foodId,
+            originalSource: mealFood.source,
+          },
+        });
+
+        const substitutesWithNames = await Promise.all(
+          substitutes.map(async (substitute) => {
+            const food = await this.foodsService.findBySourceAndSourceId(
+              substitute.substituteSource,
+              substitute.substituteFoodId,
+            );
+
+            return {
+              foodId: substitute.substituteFoodId,
+              source: substitute.substituteSource,
+              name: food?.name || 'Alimento não encontrado',
+              amount: substitute.substituteAmount,
+              unit: substitute.substituteUnit,
+            };
+          }),
+        );
+
+        // Buscar o nome do alimento principal
+        const mainFood = await this.foodsService.findBySourceAndSourceId(
+          mealFood.source,
+          mealFood.foodId,
+        );
+
+        return {
+          id: mealFood.id,
+          amount: mealFood.amount.toString(),
+          unit: mealFood.unit,
+          foodId: mealFood.foodId,
+          source: mealFood.source,
+          name: mainFood?.name || 'Alimento não encontrado',
+          mealId: mealFood.mealId,
+          createdAt: mealFood.createdAt,
+          updatedAt: mealFood.updatedAt,
+          substitutes: substitutesWithNames,
+        };
+      }),
+    );
+
+    return {
+      id: meal.id,
+      name: meal.name,
+      time: meal.time,
+      description: meal.description,
+      mealFoods,
+      createdAt: meal.createdAt,
+      updatedAt: meal.updatedAt,
+      totalCalories: meal.totalCalories.toString(),
+      totalProtein: meal.totalProtein.toString(),
+      totalCarbs: meal.totalCarbs.toString(),
+      totalFat: meal.totalFat.toString(),
+    };
+  }
+
   async updateMeal(
     planId: string,
     mealId: string,
     updateMealDto: any,
     nutritionistId: string,
-  ): Promise<Meal> {
+  ): Promise<MealResponseDto> {
     // Verifica se o plano e a refeição existem e pertencem ao nutricionista
     const mealPlan = await this.mealPlanRepository.findOne({
       where: { id: planId, nutritionistId },
@@ -369,6 +468,29 @@ export class MealPlansService {
             existingFood.unit = foodDto.unit;
             foodsToUpdate.push(existingFood);
           }
+
+          // Process substitutes if they exist
+          if (foodDto.substitutes?.length > 0) {
+            // Remove existing substitutes for this food
+            await this.foodSubstituteRepository.delete({
+              originalFoodId: existingFood.foodId,
+              originalSource: existingFood.source,
+              nutritionistId,
+            });
+
+            // Add new substitutes
+            for (const substitute of foodDto.substitutes) {
+              await this.foodSubstituteRepository.save({
+                originalFoodId: existingFood.foodId,
+                originalSource: existingFood.source,
+                substituteFoodId: substitute.foodId,
+                substituteSource: substitute.source,
+                substituteAmount: substitute.amount,
+                substituteUnit: substitute.unit,
+                nutritionistId,
+              });
+            }
+          }
         } else {
           // Food is new, add it
           foodsToAdd.push({
@@ -379,13 +501,43 @@ export class MealPlansService {
             meal: meal, // Associate with the current meal entity
             mealId: meal.id,
           });
+
+          // Process substitutes for new food
+          if (foodDto.substitutes?.length > 0) {
+            for (const substitute of foodDto.substitutes) {
+              await this.foodSubstituteRepository.save({
+                originalFoodId: foodDto.foodId,
+                originalSource: foodDto.source.toLowerCase(),
+                substituteFoodId: substitute.foodId,
+                substituteSource: substitute.source,
+                substituteAmount: substitute.amount,
+                substituteUnit: substitute.unit,
+                nutritionistId,
+              });
+            }
+          }
         }
       }
 
       // Perform DB operations
       let dbChanged = false;
       if (foodIdsToRemove.length > 0) {
+        // Remove substitutes for foods being removed
+        for (const foodId of foodIdsToRemove) {
+          const foodToRemove = existingMealFoods.find((mf) => mf.id === foodId);
+          if (foodToRemove) {
+            await this.foodSubstituteRepository.delete({
+              originalFoodId: foodToRemove.foodId,
+              originalSource: foodToRemove.source,
+              nutritionistId,
+            });
+          }
+        }
         await this.mealFoodRepository.delete(foodIdsToRemove);
+        // Atualiza a coleção em memória removendo os alimentos excluídos
+        meal.mealFoods = meal.mealFoods.filter(
+          (mf) => !foodIdsToRemove.includes(mf.id),
+        );
         dbChanged = true;
       }
       if (foodsToUpdate.length > 0) {
@@ -402,9 +554,17 @@ export class MealPlansService {
       // If any DB operation happened regarding mealFoods, set mealUpdated flag
       if (dbChanged) mealUpdated = true;
     } else if (updateMealDto.mealFoods === null) {
-      // If mealFoods is explicitly null, remove all existing foods
+      // If mealFoods is explicitly null, remove all existing foods and their substitutes
       const existingFoodIds = (meal.mealFoods || []).map((mf) => mf.id);
       if (existingFoodIds.length > 0) {
+        // Remove all substitutes for this meal's foods
+        for (const mealFood of meal.mealFoods) {
+          await this.foodSubstituteRepository.delete({
+            originalFoodId: mealFood.foodId,
+            originalSource: mealFood.source,
+            nutritionistId,
+          });
+        }
         await this.mealFoodRepository.delete(existingFoodIds);
         mealUpdated = true;
       }
@@ -419,17 +579,30 @@ export class MealPlansService {
     await this.updateMealNutritionTotals(meal.id);
     await this.updateMealPlanTotals(planId);
 
-    // Re-fetch the meal with relations to ensure we return the latest state from DB
-    const finalMealState = await this.mealRepository.findOne({
-      where: { id: meal.id },
-      relations: ['mealFoods'], // Ensure relations are loaded
-    });
+    // Buscar a refeição atualizada com todas as relações necessárias
+    const updatedMeal = await this.mealRepository
+      .createQueryBuilder('meal')
+      .leftJoinAndSelect('meal.mealFoods', 'mealFoods')
+      .leftJoinAndSelect('mealFoods.substitutes', 'substitutes')
+      .leftJoinAndSelect('meal.mealPlan', 'mealPlan')
+      .where('meal.id = :mealId', { mealId: meal.id })
+      .andWhere('mealPlan.nutritionistId = :nutritionistId', { nutritionistId })
+      .getOne();
 
-    if (!finalMealState) {
+    if (!updatedMeal) {
       throw new NotFoundException('Refeição não encontrada após atualização');
     }
 
-    return finalMealState;
+    // Força uma nova busca dos alimentos para garantir que temos apenas os ativos
+    const activeMealFoods = await this.mealFoodRepository.find({
+      where: { mealId: meal.id },
+      relations: ['substitutes'],
+    });
+
+    // Atualiza a coleção de alimentos da refeição
+    updatedMeal.mealFoods = activeMealFoods;
+
+    return this.transformMealToResponseDto(updatedMeal);
   }
 
   async deleteMeal(

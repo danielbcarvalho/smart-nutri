@@ -3,45 +3,36 @@ import { useParams, useNavigate } from "react-router-dom";
 import {
   Box,
   Typography,
-  Stack,
-  Button,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  TextField,
   LinearProgress,
   Snackbar,
   Alert,
+  Dialog,
+  DialogTitle,
+  Stack,
   Card,
   CardContent,
   CardActions,
+  Button,
+  DialogActions,
+  DialogContent,
+  TextField,
 } from "@mui/material";
-import {
-  ExpandMore as ExpandMoreIcon,
-  Add as AddIcon,
-  UnfoldMore as UnfoldMoreIcon,
-  Coffee as CoffeeIcon,
-  Restaurant as RestaurantIcon,
-  Save as SaveIcon,
-  PictureAsPdf as PdfIcon,
-  CalendarMonth as CalendarMonthIcon,
-  MonitorWeight as MonitorWeightIcon,
-  FitnessCenter as FitnessCenterIcon,
-} from "@mui/icons-material";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { Add as AddIcon, Save as SaveIcon } from "@mui/icons-material";
+
 import {
   mealPlanService,
   Meal,
   UpdateMeal,
+  CreateMeal,
+  CreateMealFood,
 } from "@/modules/meal-plan/services/mealPlanService";
-import AddFoodToMealModal from "@/modules/meal-plan/components/AddFoodToMealModal";
 import { useFoodDb } from "@/services/useFoodDb";
 import type { MealFood } from "@/services/foodService";
-import type { Alimento } from "@/modules/meal-plan/components/AddFoodToMealModal";
-import MealCard from "@/modules/meal-plan/components/MealCard";
-import MealMenu from "@/modules/meal-plan/components/MealMenu";
-import NutrientAnalysis from "@/modules/meal-plan/components/NutrientAnalysis";
+import {
+  AddFoodToMealModal,
+  type Alimento,
+} from "@/modules/meal-plan/components/AddFoodToMealModal";
 import { pdf } from "@react-pdf/renderer";
 import { patientService } from "@/modules/patient/services/patientService";
 import { authService } from "../../../auth/services/authService";
@@ -49,12 +40,16 @@ import { MealPlanPDF } from "@/modules/meal-plan/components/MealPlanPDF";
 import { useEnergyPlan } from "../../hooks/useEnergyPlan";
 import { calculateMacronutrientTargetsFromDistribution } from "../../utils/nutrientComparison";
 import { usePatientEnergyPlans } from "@/modules/energy-plan/hooks/useEnergyPlans";
+import { MealPlanHeader } from "./components/MealPlanHeader";
+import { MealList } from "./components/MealList";
+import { NutrientAnalysisSection } from "./components/NutrientAnalysisSection";
+import AddSubstituteModal from "../../components/AddSubstituteModal";
 import {
   ACTIVITY_FACTOR_DESCRIPTIONS,
-  INJURY_FACTOR_DESCRIPTIONS,
   FORMULA_DESCRIPTIONS,
-} from "@/modules/energy-plan/constants/energyPlanConstants";
-import { DesignSystemButton } from "../../../../components/DesignSystem/Button/ButtonVariants";
+  INJURY_FACTOR_DESCRIPTIONS,
+} from "../../../energy-plan/constants/energyPlanConstants";
+import MealMenu from "../../components/MealMenu";
 
 // Componente principal
 export function MealPlanDetails() {
@@ -119,19 +114,17 @@ export function MealPlanDetails() {
   // Carregar dados do plano energético
   const { data: energyPlan } = useEnergyPlan(patientId as string);
 
-  // NOVO: Buscar todos os planos energéticos do paciente
+  // Buscar todos os planos energéticos do paciente
   const { data: energyPlans } = usePatientEnergyPlans(patientId!);
-  // NOVO: Estado para o plano energético selecionado
   const [selectedEnergyPlanId, setSelectedEnergyPlanId] = useState<
     string | null
   >(null);
 
-  // NOVO: Definir o plano selecionado (por padrão, o mais recente)
+  // Definir o plano selecionado (por padrão, o mais recente)
   useEffect(() => {
     if (plan?.energyPlanId) {
       setSelectedEnergyPlanId(plan.energyPlanId);
     } else if (energyPlans && energyPlans.length > 0 && !selectedEnergyPlanId) {
-      // Ordena do mais novo para o mais antigo
       const sorted = [...energyPlans].sort(
         (a, b) =>
           new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
@@ -140,7 +133,7 @@ export function MealPlanDetails() {
     }
   }, [plan?.energyPlanId, energyPlans]);
 
-  // NOVO: Atualizar o plano selecionado quando o plano for atualizado
+  // Atualizar o plano selecionado quando o plano for atualizado
   useEffect(() => {
     if (plan?.energyPlanId) {
       setSelectedEnergyPlanId(plan.energyPlanId);
@@ -152,7 +145,7 @@ export function MealPlanDetails() {
     energyPlans?.[energyPlans.length - 1];
 
   const addMealMutation = useMutation({
-    mutationFn: (newMeal: Omit<Meal, "id">) =>
+    mutationFn: (newMeal: CreateMeal) =>
       mealPlanService.addMeal(planId as string, newMeal),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["mealPlan", planId] });
@@ -193,7 +186,7 @@ export function MealPlanDetails() {
               time: formatTime(meal.time),
               notes: "",
               mealFoods: [],
-            });
+            } as CreateMeal);
           }
         } catch {
           // Não resetamos o defaultMealsCreated aqui, pois queremos tentar apenas uma vez
@@ -203,6 +196,107 @@ export function MealPlanDetails() {
 
     createDefaultMeals();
   }, [plan?.id, addMealMutation]);
+
+  const convertMealFoodsToInitialFoods = (
+    mealFoods: MealFood[] | undefined
+  ): {
+    food: Alimento;
+    amount: number;
+    mcIndex?: number;
+    substitutes?: { food: Alimento; amount: number; mcIndex?: number }[];
+  }[] => {
+    if (!Array.isArray(mealFoods) || !Array.isArray(foodDb)) return [];
+    const seen = new Set();
+    return mealFoods
+      .filter((mf) => {
+        if (seen.has(mf.foodId)) return false;
+        seen.add(mf.foodId);
+        return !!foodDb.find((f: Alimento) => f.id === mf.foodId);
+      })
+      .map((mf) => {
+        const food = foodDb.find((f: Alimento) => f.id === mf.foodId)!;
+        let mcIndex: number | undefined = undefined;
+        let mcList = food.mc ? [...food.mc] : [];
+
+        if (mcList && Array.isArray(mcList)) {
+          mcIndex = mcList.findIndex(
+            (mc: { nome_mc: string }) => mc.nome_mc === mf.unit
+          );
+          // Se não encontrou, adiciona medida temporária
+          if (mcIndex === -1) {
+            // Tenta usar o peso do próprio alimento se disponível, senão 1
+            const peso =
+              mf.unit.toLowerCase().includes("ml") ||
+              mf.unit.toLowerCase().includes("mililitro")
+                ? 1 // Para líquidos, normalmente 1ml = 1g
+                : 1;
+            mcList = [
+              ...mcList,
+              {
+                nome_mc: mf.unit,
+                peso: peso,
+              },
+            ];
+            mcIndex = mcList.length - 1;
+          }
+        }
+
+        // Processa os substitutos se existirem
+        const substitutes = mf.substitutes
+          ?.map((substitute) => {
+            const substituteFood = foodDb.find(
+              (f: Alimento) => f.id === substitute.substituteFoodId
+            );
+            if (!substituteFood) return null;
+
+            let substituteMcIndex: number | undefined = undefined;
+            let substituteMcList = substituteFood.mc
+              ? [...substituteFood.mc]
+              : [];
+
+            if (substituteMcList && Array.isArray(substituteMcList)) {
+              substituteMcIndex = substituteMcList.findIndex(
+                (mc: { nome_mc: string }) =>
+                  mc.nome_mc === substitute.substituteUnit
+              );
+              if (substituteMcIndex === -1) {
+                const peso =
+                  substitute.substituteUnit.toLowerCase().includes("ml") ||
+                  substitute.substituteUnit.toLowerCase().includes("mililitro")
+                    ? 1
+                    : 1;
+                substituteMcList = [
+                  ...substituteMcList,
+                  {
+                    nome_mc: substitute.substituteUnit,
+                    peso: peso,
+                  },
+                ];
+                substituteMcIndex = substituteMcList.length - 1;
+              }
+            }
+
+            return {
+              food: { ...substituteFood, mc: substituteMcList },
+              amount: Number(substitute.substituteAmount),
+              mcIndex: substituteMcIndex,
+            };
+          })
+          .filter(Boolean) as {
+          food: Alimento;
+          amount: number;
+          mcIndex?: number;
+        }[];
+
+        // Retorna o alimento com a lista de medidas atualizada e os substitutos
+        return {
+          food: { ...food, mc: mcList },
+          amount: mf.amount,
+          mcIndex,
+          substitutes: substitutes.length > 0 ? substitutes : undefined,
+        };
+      });
+  };
 
   const deleteMealMutation = useMutation({
     mutationFn: (mealId: string) =>
@@ -219,7 +313,7 @@ export function MealPlanDetails() {
       time: formatTime(selectedTime),
       notes: "",
       mealFoods: [],
-    });
+    } as CreateMeal);
   };
 
   const handleExpandMeal = (mealId: string) => {
@@ -285,9 +379,24 @@ export function MealPlanDetails() {
         time: mealToDuplicate.time,
         notes: mealToDuplicate.notes,
         mealFoods: mealToDuplicate.mealFoods || [],
-      });
+      } as CreateMeal);
     }
     setAnchorEl(null);
+  };
+
+  const saveTemplate = () => {
+    if (templateName && selectedTemplate) {
+      setTemplates([
+        ...templates,
+        {
+          id: Date.now().toString(),
+          name: templateName,
+          meal: selectedTemplate,
+        },
+      ]);
+      setOpenTemplateDialog(false);
+      setTemplateName("");
+    }
   };
 
   const handleOpenMenu = (
@@ -316,7 +425,7 @@ export function MealPlanDetails() {
     setTemplateName(`Template ${meal.name}`);
   };
 
-  const saveTemplate = () => {
+  const c = () => {
     if (templateName && selectedTemplate) {
       setTemplates([
         ...templates,
@@ -329,54 +438,6 @@ export function MealPlanDetails() {
       setOpenTemplateDialog(false);
       setTemplateName("");
     }
-  };
-
-  const convertMealFoodsToInitialFoods = (
-    mealFoods: MealFood[] | undefined
-  ): { food: Alimento; amount: number; mcIndex?: number }[] => {
-    if (!Array.isArray(mealFoods) || !Array.isArray(foodDb)) return [];
-    const seen = new Set();
-    return mealFoods
-      .filter((mf) => {
-        if (seen.has(mf.foodId)) return false;
-        seen.add(mf.foodId);
-        return !!foodDb.find((f: Alimento) => f.id === mf.foodId);
-      })
-      .map((mf) => {
-        const food = foodDb.find((f: Alimento) => f.id === mf.foodId)!;
-        let mcIndex: number | undefined = undefined;
-        let mcList = food.mc ? [...food.mc] : [];
-
-        if (mcList && Array.isArray(mcList)) {
-          mcIndex = mcList.findIndex(
-            (mc: { nome_mc: string }) => mc.nome_mc === mf.unit
-          );
-          // Se não encontrou, adiciona medida temporária
-          if (mcIndex === -1) {
-            // Tenta usar o peso do próprio alimento se disponível, senão 1
-            const peso =
-              mf.unit.toLowerCase().includes("ml") ||
-              mf.unit.toLowerCase().includes("mililitro")
-                ? 1 // Para líquidos, normalmente 1ml = 1g
-                : 1;
-            mcList = [
-              ...mcList,
-              {
-                nome_mc: mf.unit,
-                peso: peso,
-              },
-            ];
-            mcIndex = mcList.length - 1;
-          }
-        }
-
-        // Retorna o alimento com a lista de medidas atualizada (se necessário)
-        return {
-          food: { ...food, mc: mcList },
-          amount: mf.amount,
-          mcIndex,
-        };
-      });
   };
 
   // Função para calcular os nutrientes totais do plano
@@ -401,7 +462,6 @@ export function MealPlanDetails() {
             const mc = food.mc?.find((m) => m.nome_mc === mealFood.unit);
             if (!mc) return mealAcc;
 
-            // Calcula o fator de conversão baseado no peso da medida caseira
             const conversionFactor = Number(mc.peso) / 100;
 
             return {
@@ -433,7 +493,6 @@ export function MealPlanDetails() {
       { protein: 0, fat: 0, carbohydrates: 0, calories: 0, totalWeight: 0 }
     );
 
-    // Adiciona metas do plano energético se disponível
     if (energyPlan) {
       const targets = calculateMacronutrientTargetsFromDistribution(
         Number(energyPlan.calculatedGetKcal),
@@ -485,7 +544,6 @@ export function MealPlanDetails() {
         dailyFat: totalNutrients.fat,
       });
 
-      // Atualiza o estado local com o novo energyPlanId
       setSelectedEnergyPlanId(updatedPlan.energyPlanId || null);
 
       await queryClient.invalidateQueries({ queryKey: ["mealPlan", planId] });
@@ -546,9 +604,34 @@ export function MealPlanDetails() {
   };
 
   const navigate = useNavigate();
-
   const handleCreateNewEnergyPlan = () => {
     navigate(`/patient/${patientId}/energy-plans/new`);
+  };
+
+  // Adicionar estados
+  const [substituteModalOpen, setSubstituteModalOpen] = useState(false);
+  const [selectedMealFood, setSelectedMealFood] = useState<MealFood | null>(
+    null
+  );
+
+  // Adicionar handlers
+  const handleAddSubstitute = (mealFood: MealFood) => {
+    setSelectedMealFood(mealFood);
+    setSubstituteModalOpen(true);
+  };
+
+  const handleRemoveSubstitute = async (substituteId: string) => {
+    if (!selectedMealFood) return;
+    try {
+      await mealPlanService.removeSubstitute(selectedMealFood.id, substituteId);
+      queryClient.invalidateQueries({ queryKey: ["mealPlan", planId] });
+    } catch {
+      setSnackbar({
+        open: true,
+        message: "Erro ao remover substituto. Tente novamente.",
+        severity: "error",
+      });
+    }
   };
 
   if (isLoading) {
@@ -578,197 +661,40 @@ export function MealPlanDetails() {
 
   return (
     <Box sx={{ maxWidth: 1200, mx: "auto", p: { xs: 1, sm: 1 } }}>
-      <Stack
-        direction={{ xs: "column", sm: "row" }}
-        alignItems={{ xs: "stretch", sm: "center" }}
-        justifyContent="space-between"
-        spacing={2}
-        sx={{ mb: 2, gap: { xs: 1.5, sm: 0 } }}
-      >
-        <Box>
-          <Typography
-            variant="h6"
-            sx={{
-              display: "flex",
-              alignItems: "center",
-              mb: 0.5,
-              fontSize: { xs: "1.3rem", sm: "2rem" },
-            }}
-          >
-            Plano Alimentar
-          </Typography>
-          <Typography
-            variant="h6"
-            color="text.secondary"
-            sx={{ fontSize: { xs: "1.05rem", sm: "1.25rem" } }}
-          >
-            {plan.name}
-          </Typography>
-        </Box>
-        <Stack
-          direction={{ xs: "column", sm: "row" }}
-          spacing={1}
-          sx={{ width: { xs: "100%", sm: "auto" } }}
-        >
-          <Button
-            variant="outlined"
-            startIcon={
-              expandedMeals.length === sortedMeals.length ? (
-                <ExpandMoreIcon />
-              ) : (
-                <UnfoldMoreIcon />
-              )
-            }
-            onClick={
-              expandedMeals.length === sortedMeals.length
-                ? handleCollapseAll
-                : handleExpandAll
-            }
-            size={"large"}
-            fullWidth
-            sx={{ fontWeight: 600, fontSize: 16, py: 0 }}
-          >
-            {expandedMeals.length === sortedMeals.length
-              ? "Recolher tudo"
-              : "Expandir tudo"}
-          </Button>
-          <Button
-            variant="contained"
-            startIcon={<AddIcon />}
-            onClick={() => {
-              setNewMealName("");
-              setSelectedTime("12:00");
-              setMealMenuId("");
-              setOpenMealDialog(true);
-            }}
-            size={"large"}
-            color="success"
-            fullWidth
-            sx={{ fontWeight: 600, fontSize: 16, py: 0 }}
-          >
-            Nova refeição
-          </Button>
-        </Stack>
-      </Stack>
-
-      {/* Lista de Refeições */}
-      <Box
-        sx={{
-          borderRadius: { xs: 2, sm: 2 },
-          overflow: "hidden",
-          mb: 3,
-          bgcolor: "transparent",
-          p: { xs: 0.5, sm: 0 },
+      <MealPlanHeader
+        planName={plan.name}
+        expandedMealsCount={expandedMeals.length}
+        totalMealsCount={sortedMeals.length}
+        onExpandAll={handleExpandAll}
+        onCollapseAll={handleCollapseAll}
+        onAddMeal={() => {
+          setNewMealName("");
+          setSelectedTime("12:00");
+          setMealMenuId("");
+          setOpenMealDialog(true);
         }}
-      >
-        {sortedMeals.map((meal) => (
-          <MealCard
-            key={meal.id}
-            meal={meal}
-            foodDb={foodDb}
-            expanded={expandedMeals.includes(meal.id)}
-            onExpand={handleExpandMeal}
-            onAddFood={handleAddFood}
-            onOpenMenu={handleOpenMenu}
-          />
-        ))}
-      </Box>
+      />
 
-      {/* Análise de Nutrientes Total */}
-      <Box sx={{ mb: 3 }}>
-        <NutrientAnalysis
-          {...calculateTotalNutrients()}
-          targetCalories={selectedEnergyPlan?.calculatedGetKcal}
-          tmb={selectedEnergyPlan?.calculatedTmbKcal}
-          targetProteinPercentage={
-            selectedEnergyPlan?.macronutrientDistribution?.proteins
-          }
-          targetFatPercentage={
-            selectedEnergyPlan?.macronutrientDistribution?.fats
-          }
-          targetCarbohydratesPercentage={
-            selectedEnergyPlan?.macronutrientDistribution?.carbs
-          }
-          selectedEnergyPlan={
-            selectedEnergyPlan
-              ? {
-                  id: selectedEnergyPlan.id,
-                  name: selectedEnergyPlan.name,
-                  createdAt: selectedEnergyPlan.createdAt,
-                }
-              : undefined
-          }
-          energyPlans={energyPlans?.map((plan) => ({
-            id: plan.id,
-            name: plan.name,
-            createdAt: plan.createdAt,
-          }))}
-          onEnergyPlanChange={handleOpenEnergyPlanModal}
-          patientId={patientId as string}
-        />
-      </Box>
+      <MealList
+        meals={sortedMeals}
+        foodDb={foodDb}
+        expandedMeals={expandedMeals}
+        onExpandMeal={handleExpandMeal}
+        onAddFood={handleAddFood}
+        onOpenMenu={handleOpenMenu}
+        onAddSubstitute={handleAddSubstitute}
+        onRemoveSubstitute={handleRemoveSubstitute}
+      />
 
-      {/* Botões Salvar e Ver planejamento em PDF */}
-      <Stack direction="column" spacing={2} sx={{ width: "100%", mb: 2 }}>
-        <DesignSystemButton
-          variant="contained"
-          color="primary"
-          startIcon={<SaveIcon />}
-          onClick={handleSaveMealPlan}
-        >
-          Salvar
-        </DesignSystemButton>
-        <DesignSystemButton
-          variant="outlined"
-          color="secondary"
-          startIcon={<PdfIcon />}
-          onClick={handleOpenPdfInNewTab}
-        >
-          Ver planejamento em PDF
-        </DesignSystemButton>
-      </Stack>
-
-      {/* Dialog para adicionar/editar refeição */}
-      <Dialog
-        open={openMealDialog}
-        onClose={() => setOpenMealDialog(false)}
-        fullWidth
-        maxWidth="sm"
-      >
-        <DialogTitle>
-          {mealMenuId ? "Editar refeição" : "Adicionar nova refeição"}
-        </DialogTitle>
-        <DialogContent>
-          <Stack spacing={2} sx={{ mt: 1 }}>
-            <TextField
-              label="Nome da refeição"
-              value={newMealName}
-              onChange={(e) => setNewMealName(e.target.value)}
-              fullWidth
-              autoFocus
-            />
-            <TextField
-              label="Horário"
-              type="time"
-              value={selectedTime}
-              onChange={(e) => setSelectedTime(e.target.value)}
-              fullWidth
-              InputLabelProps={{ shrink: true }}
-            />
-          </Stack>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setOpenMealDialog(false)}>Cancelar</Button>
-          <Button
-            onClick={mealMenuId ? handleUpdateMeal : handleAddMeal}
-            variant="contained"
-            color="primary"
-            startIcon={mealMenuId ? <SaveIcon /> : <AddIcon />}
-          >
-            {mealMenuId ? "Salvar" : "Adicionar"}
-          </Button>
-        </DialogActions>
-      </Dialog>
+      <NutrientAnalysisSection
+        totalNutrients={calculateTotalNutrients()}
+        selectedEnergyPlan={selectedEnergyPlan}
+        energyPlans={energyPlans}
+        onEnergyPlanChange={handleOpenEnergyPlanModal}
+        onSave={handleSaveMealPlan}
+        onOpenPdf={handleOpenPdfInNewTab}
+        patientId={patientId as string}
+      />
 
       {/* Menu de opções da refeição */}
       <MealMenu
@@ -899,9 +825,9 @@ export function MealPlanDetails() {
                       <Box
                         sx={{ display: "flex", alignItems: "center", gap: 0.5 }}
                       >
-                        <CalendarMonthIcon
+                        {/* <CalendarMonthIcon
                           sx={{ fontSize: 18, color: "text.secondary" }}
-                        />
+                        /> */}
                         <Typography variant="body2" color="text.secondary">
                           {new Date(plan.createdAt).toLocaleDateString()}
                         </Typography>
@@ -977,7 +903,7 @@ export function MealPlanDetails() {
                       <Box
                         sx={{ display: "flex", alignItems: "center", gap: 0.5 }}
                       >
-                        <MonitorWeightIcon fontSize="small" color="action" />
+                        {/* <MonitorWeightIcon fontSize="small" color="action" /> */}
                         <Typography variant="body2" fontWeight={500}>
                           {plan.weightAtCalculationKg} kg
                         </Typography>
@@ -990,7 +916,7 @@ export function MealPlanDetails() {
                             gap: 0.5,
                           }}
                         >
-                          <FitnessCenterIcon fontSize="small" color="action" />
+                          {/* <FitnessCenterIcon fontSize="small" color="action" /> */}
                           <Typography variant="body2" fontWeight={500}>
                             Massa magra: {plan.fatFreeMassAtCalculationKg} kg
                           </Typography>
@@ -1083,13 +1009,79 @@ export function MealPlanDetails() {
             variant="contained"
             color="primary"
             onClick={handleCreateNewEnergyPlan}
-            startIcon={<AddIcon />}
+            // startIcon={<AddIcon />}
           >
             Novo Plano Energético
           </Button>
           <Button onClick={handleCloseEnergyPlanModal}>Cancelar</Button>
         </DialogActions>
       </Dialog>
+
+      {/* Dialog para adicionar/editar refeição */}
+      <Dialog
+        open={openMealDialog}
+        onClose={() => setOpenMealDialog(false)}
+        fullWidth
+        maxWidth="sm"
+      >
+        <DialogTitle>
+          {mealMenuId ? "Editar refeição" : "Adicionar nova refeição"}
+        </DialogTitle>
+        <DialogContent>
+          <Stack spacing={2} sx={{ mt: 1 }}>
+            <TextField
+              label="Nome da refeição"
+              value={newMealName}
+              onChange={(e) => setNewMealName(e.target.value)}
+              fullWidth
+              autoFocus
+            />
+            <TextField
+              label="Horário"
+              type="time"
+              value={selectedTime}
+              onChange={(e) => setSelectedTime(e.target.value)}
+              fullWidth
+              InputLabelProps={{ shrink: true }}
+            />
+          </Stack>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setOpenMealDialog(false)}>Cancelar</Button>
+          <Button
+            onClick={mealMenuId ? handleUpdateMeal : handleAddMeal}
+            variant="contained"
+            color="primary"
+            startIcon={mealMenuId ? <SaveIcon /> : <AddIcon />}
+          >
+            {mealMenuId ? "Salvar" : "Adicionar"}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Modal de Substitutos */}
+      <AddSubstituteModal
+        open={substituteModalOpen}
+        onClose={() => {
+          setSubstituteModalOpen(false);
+          setSelectedMealFood(null);
+        }}
+        mealFoodId={selectedMealFood?.id || ""}
+        originalFood={
+          selectedMealFood
+            ? {
+                name:
+                  foodDb.find((f) => f.id === selectedMealFood.foodId)?.nome ||
+                  "",
+                amount: selectedMealFood.amount,
+                unit: selectedMealFood.unit,
+              }
+            : { name: "", amount: 0, unit: "" }
+        }
+        onSubstituteAdded={() => {
+          queryClient.invalidateQueries({ queryKey: ["mealPlan", planId] });
+        }}
+      />
 
       <Snackbar
         open={snackbar.open}
@@ -1110,9 +1102,9 @@ export function MealPlanDetails() {
 
 // Constantes necessárias para o componente
 const DEFAULT_MEALS = [
-  { name: "Café da manhã", time: "07:00", icon: <CoffeeIcon /> },
-  { name: "Almoço", time: "12:00", icon: <RestaurantIcon /> },
-  { name: "Jantar", time: "19:00", icon: <RestaurantIcon /> },
+  { name: "Café da manhã", time: "07:00" },
+  { name: "Almoço", time: "12:00" },
+  { name: "Jantar", time: "19:00" },
 ];
 
 const formatTime = (time: string) => {
