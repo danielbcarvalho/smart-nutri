@@ -25,7 +25,6 @@ import {
   Meal,
   UpdateMeal,
   CreateMeal,
-  CreateMealFood,
 } from "@/modules/meal-plan/services/mealPlanService";
 import { useFoodDb } from "@/services/useFoodDb";
 import type { MealFood } from "@/services/foodService";
@@ -50,6 +49,7 @@ import {
   INJURY_FACTOR_DESCRIPTIONS,
 } from "../../../energy-plan/constants/energyPlanConstants";
 import MealMenu from "../../components/MealMenu";
+import { PatientInstructionsCard } from "./components/PatientInstructionsCard";
 
 // Componente principal
 export function MealPlanDetails() {
@@ -87,12 +87,22 @@ export function MealPlanDetails() {
   const [templateName, setTemplateName] = useState("");
   const [selectedTemplate, setSelectedTemplate] = useState<Meal | null>(null);
 
+  // Adicionar estados
+  const [patientInstructions, setPatientInstructions] = useState("");
+
   // Carregar dados do plano alimentar
   const { data: plan, isLoading } = useQuery({
     queryKey: ["mealPlan", planId],
     queryFn: () => mealPlanService.getById(planId as string),
     enabled: !!planId,
   });
+
+  // Efeito para carregar as instruções do paciente
+  useEffect(() => {
+    if (plan?.description) {
+      setPatientInstructions(plan.description);
+    }
+  }, [plan?.description]);
 
   // Carregar dados do paciente
   const { data: patient } = useQuery({
@@ -425,21 +435,6 @@ export function MealPlanDetails() {
     setTemplateName(`Template ${meal.name}`);
   };
 
-  const c = () => {
-    if (templateName && selectedTemplate) {
-      setTemplates([
-        ...templates,
-        {
-          id: Date.now().toString(),
-          name: templateName,
-          meal: selectedTemplate,
-        },
-      ]);
-      setOpenTemplateDialog(false);
-      setTemplateName("");
-    }
-  };
-
   // Função para calcular os nutrientes totais do plano
   const calculateTotalNutrients = () => {
     if (!plan?.meals)
@@ -542,6 +537,7 @@ export function MealPlanDetails() {
         dailyProtein: totalNutrients.protein,
         dailyCarbs: totalNutrients.carbohydrates,
         dailyFat: totalNutrients.fat,
+        description: patientInstructions,
       });
 
       setSelectedEnergyPlanId(updatedPlan.energyPlanId || null);
@@ -614,26 +610,6 @@ export function MealPlanDetails() {
     null
   );
 
-  // Adicionar handlers
-  const handleAddSubstitute = (mealFood: MealFood) => {
-    setSelectedMealFood(mealFood);
-    setSubstituteModalOpen(true);
-  };
-
-  const handleRemoveSubstitute = async (substituteId: string) => {
-    if (!selectedMealFood) return;
-    try {
-      await mealPlanService.removeSubstitute(selectedMealFood.id, substituteId);
-      queryClient.invalidateQueries({ queryKey: ["mealPlan", planId] });
-    } catch {
-      setSnackbar({
-        open: true,
-        message: "Erro ao remover substituto. Tente novamente.",
-        severity: "error",
-      });
-    }
-  };
-
   if (isLoading) {
     return (
       <Box sx={{ maxWidth: 1200, mx: "auto", p: 3 }}>
@@ -682,8 +658,11 @@ export function MealPlanDetails() {
         onExpandMeal={handleExpandMeal}
         onAddFood={handleAddFood}
         onOpenMenu={handleOpenMenu}
-        onAddSubstitute={handleAddSubstitute}
-        onRemoveSubstitute={handleRemoveSubstitute}
+      />
+
+      <PatientInstructionsCard
+        instructions={patientInstructions}
+        onSave={setPatientInstructions}
       />
 
       <NutrientAnalysisSection

@@ -15,8 +15,6 @@ interface MealListProps {
   onExpandMeal: (mealId: string) => void;
   onAddFood: (mealId: string) => void;
   onOpenMenu: (event: React.MouseEvent<HTMLElement>, mealId: string) => void;
-  onAddSubstitute: (mealFood: MealFood) => void;
-  onRemoveSubstitute: (substituteId: string) => void;
 }
 
 export function MealList({
@@ -26,8 +24,6 @@ export function MealList({
   onExpandMeal,
   onAddFood,
   onOpenMenu,
-  onAddSubstitute,
-  onRemoveSubstitute,
 }: MealListProps) {
   return (
     <Box
@@ -99,8 +95,6 @@ export function MealList({
                   peso: peso,
                 }}
                 substitutes={substitutes}
-                onAddSubstitute={() => onAddSubstitute(mealFood)}
-                onRemoveSubstitute={onRemoveSubstitute}
               />
             );
           }}

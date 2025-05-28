@@ -41,8 +41,6 @@ interface FoodItemWithSubstitutesProps {
     peso?: number; // Peso da unidade em gramas
   };
   substitutes: Substitute[];
-  onAddSubstitute: () => void;
-  onRemoveSubstitute: (substituteId: string) => void;
 }
 
 const FoodItemWithSubstitutes: React.FC<FoodItemWithSubstitutesProps> = ({

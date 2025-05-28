@@ -215,6 +215,15 @@ const pdfStyles = StyleSheet.create({
     fontSize: 8,
     color: "#9E9E9E",
   },
+  section: {
+    marginBottom: 10,
+  },
+  instructions: {
+    fontSize: 10,
+    marginTop: 5,
+    lineHeight: 1.4,
+    textAlign: "justify",
+  },
 });
 
 interface MealPlanPDFProps {
@@ -295,12 +304,13 @@ export const MealPlanPDF: React.FC<MealPlanPDFProps> = ({
               : "-"}
             a {plan.endDate ? new Date(plan.endDate).toLocaleDateString() : "-"}
           </Text>
+        </View>
 
-          {plan.description && (
-            <Text style={pdfStyles.planObjective}>
-              Objetivo: {plan.description}
-            </Text>
-          )}
+        <View style={pdfStyles.section}>
+          <Text style={pdfStyles.sectionTitle}>Orientações</Text>
+          <Text style={pdfStyles.instructions}>
+            {plan.description || "Nenhuma orientação cadastrada."}
+          </Text>
         </View>
 
         <Text style={pdfStyles.sectionTitle}>Refeições Diárias</Text>
