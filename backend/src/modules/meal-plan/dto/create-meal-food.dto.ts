@@ -5,7 +5,11 @@ import {
   IsNumber,
   Min,
   IsOptional,
+  IsArray,
+  ValidateNested,
 } from 'class-validator';
+import { Type } from 'class-transformer';
+import { MealFoodSubstituteDto } from './meal-food-substitute.dto';
 
 export class CreateMealFoodDto {
   @ApiProperty({
@@ -40,6 +44,16 @@ export class CreateMealFoodDto {
   @IsString()
   @IsNotEmpty()
   unit: string;
+
+  @ApiPropertyOptional({
+    description: 'Lista de alimentos substitutos',
+    type: [MealFoodSubstituteDto],
+  })
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => MealFoodSubstituteDto)
+  substitutes?: MealFoodSubstituteDto[];
 
   // Campos opcionais para criação automática de alimento personalizado
   @ApiPropertyOptional({

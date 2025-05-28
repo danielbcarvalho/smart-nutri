@@ -35,6 +35,18 @@ export interface MealFood {
   amount: number;
   unit: string;
   source: string;
+  substitutes?: {
+    id: string;
+    originalFoodId: string;
+    originalSource: string;
+    substituteFoodId: string;
+    substituteSource: string;
+    substituteAmount: string;
+    substituteUnit: string;
+    nutritionistId: string;
+    createdAt: string;
+    updatedAt: string;
+  }[];
 }
 
 export interface Meal {

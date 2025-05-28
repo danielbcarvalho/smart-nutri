@@ -12,6 +12,8 @@ import DeleteIcon from "@mui/icons-material/RemoveCircle";
 import InfoIcon from "@mui/icons-material/Info";
 import SwapHorizIcon from "@mui/icons-material/SwapHoriz";
 import { Alimento } from "./AddFoodToMealModal";
+import { formatNumber } from "@/utils/numberFormat";
+import { formatMeasure } from "@/utils/measureFormat";
 
 interface PrescribedFoodItemProps {
   food: Alimento;
@@ -186,7 +188,7 @@ const PrescribedFoodItem: React.FC<PrescribedFoodItemProps> = ({
         >
           {food.mc?.map((mc, idx) => (
             <MenuItem key={idx} value={idx}>
-              {mc.nome_mc}
+              {formatMeasure(mc.nome_mc, mcValue)}
             </MenuItem>
           ))}
         </Select>
@@ -204,7 +206,7 @@ const PrescribedFoodItem: React.FC<PrescribedFoodItemProps> = ({
           borderBottom: "none",
         }}
       >
-        {quantidadeGramas.toFixed(1)}g
+        {formatNumber(quantidadeGramas)}g
       </TableCell>
       <TableCell
         align="center"
@@ -219,7 +221,7 @@ const PrescribedFoodItem: React.FC<PrescribedFoodItemProps> = ({
           borderBottom: "none",
         }}
       >
-        {(Number(food.ptn ?? 0) * fator).toFixed(1)}g
+        {formatNumber(Number(food.ptn ?? 0) * fator)}g
       </TableCell>
       <TableCell
         align="center"
@@ -234,7 +236,7 @@ const PrescribedFoodItem: React.FC<PrescribedFoodItemProps> = ({
           borderBottom: "none",
         }}
       >
-        {(Number(food.lip ?? 0) * fator).toFixed(1)}g
+        {formatNumber(Number(food.lip ?? 0) * fator)}g
       </TableCell>
       <TableCell
         align="center"
@@ -249,7 +251,7 @@ const PrescribedFoodItem: React.FC<PrescribedFoodItemProps> = ({
           borderBottom: "none",
         }}
       >
-        {(Number(food.cho ?? 0) * fator).toFixed(1)}g
+        {formatNumber(Number(food.cho ?? 0) * fator)}g
       </TableCell>
       <TableCell
         align="center"
@@ -264,7 +266,7 @@ const PrescribedFoodItem: React.FC<PrescribedFoodItemProps> = ({
           borderBottom: "none",
         }}
       >
-        {(Number(food.kcal ?? 0) * fator).toFixed(1)} Kcal
+        {formatNumber(Number(food.kcal ?? 0) * fator)} Kcal
       </TableCell>
       <TableCell
         align="right"

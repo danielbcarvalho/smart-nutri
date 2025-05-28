@@ -31,6 +31,7 @@ import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { CurrentUser } from '../../auth/decorators/current-user.decorator';
 import { AuthenticatedUser } from '../../auth/interfaces/authenticated-user.interface';
 import { UpdateMealDto } from '../dto/update-meal.dto';
+import { MealResponseDto } from '../dto/meal.response.dto';
 
 interface RequestWithUser extends Request {
   user: {
@@ -305,36 +306,47 @@ export class MealPlansController {
 
   @Patch(':planId/meals/:mealId')
   @ApiOperation({
-    summary: 'Atualizar uma refeição de um plano alimentar',
-    description:
-      'Atualiza os alimentos e observações de uma refeição específica de um plano alimentar.',
+    summary: 'Atualizar refeição',
+    description: 'Atualiza uma refeição específica de um plano alimentar',
   })
   @ApiParam({
     name: 'planId',
     description: 'ID do plano alimentar',
     example: '123e4567-e89b-12d3-a456-426614174000',
+    schema: {
+      type: 'string',
+      format: 'uuid',
+    },
   })
   @ApiParam({
     name: 'mealId',
     description: 'ID da refeição',
     example: '123e4567-e89b-12d3-a456-426614174000',
+    schema: {
+      type: 'string',
+      format: 'uuid',
+    },
   })
   @ApiBody({ type: UpdateMealDto })
   @ApiResponse({
     status: 200,
     description: 'Refeição atualizada com sucesso',
-    type: Meal,
+    type: MealResponseDto,
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'Dados inválidos fornecidos',
   })
   @ApiResponse({
     status: 404,
-    description: 'Plano ou refeição não encontrados',
+    description: 'Plano alimentar ou refeição não encontrados',
   })
   async updateMeal(
     @Param('planId') planId: string,
     @Param('mealId') mealId: string,
     @Body() updateMealDto: UpdateMealDto,
     @Request() req: RequestWithUser,
-  ) {
+  ): Promise<MealResponseDto> {
     return this.mealPlansService.updateMeal(
       planId,
       mealId,

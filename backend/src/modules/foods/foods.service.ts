@@ -24,6 +24,15 @@ export class FoodsService {
     return food;
   }
 
+  async findBySourceAndSourceId(
+    source: string,
+    sourceId: string,
+  ): Promise<Food | null> {
+    return this.foodRepository.findOne({
+      where: { source, sourceId },
+    });
+  }
+
   async create(createFoodDto: CreateFoodDto): Promise<Food> {
     const food = this.foodRepository.create(createFoodDto);
     return await this.foodRepository.save(food);

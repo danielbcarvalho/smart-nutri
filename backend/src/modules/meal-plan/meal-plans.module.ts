@@ -6,6 +6,7 @@ import { MealFood } from './entities/meal-food.entity';
 import { MealPlanTemplate } from './entities/meal-plan-template.entity';
 import { MealTemplate } from './entities/meal-template.entity';
 import { FoodTemplate } from './entities/food-template.entity';
+import { FoodSubstitute } from './entities/food-substitute.entity';
 import { MealPlansService } from './services/meal-plans.service';
 import { MealPlansController } from './controllers/meal-plans.controller';
 import { MealPlanTemplatesService } from './services/meal-plan-templates.service';
@@ -24,6 +25,7 @@ import { PatientsModule } from '../patients/patients.module';
       MealTemplate,
       FoodTemplate,
       Food,
+      FoodSubstitute,
     ]),
     PatientsModule,
     FoodsModule,

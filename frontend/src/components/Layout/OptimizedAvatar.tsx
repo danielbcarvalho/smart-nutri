@@ -13,6 +13,11 @@ export const OptimizedAvatar = ({
   size = 44,
   onClick,
   isLoading = false,
+}: {
+  src: string | undefined;
+  size?: number;
+  onClick?: () => void;
+  isLoading?: boolean;
 }) => {
   const theme = useTheme();
   const [imageLoaded, setImageLoaded] = useState(false);

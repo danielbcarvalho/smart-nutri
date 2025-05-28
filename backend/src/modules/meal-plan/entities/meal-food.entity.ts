@@ -6,8 +6,10 @@ import {
   CreateDateColumn,
   UpdateDateColumn,
   JoinColumn,
+  OneToMany,
 } from 'typeorm';
 import { Meal } from './meal.entity';
+import { FoodSubstitute } from './food-substitute.entity';
 
 @Entity('meal_foods')
 export class MealFood {
@@ -35,6 +37,11 @@ export class MealFood {
   })
   @JoinColumn({ name: 'mealId' })
   meal: Meal;
+
+  @OneToMany(() => FoodSubstitute, (substitute) => substitute.mealFood, {
+    cascade: true,
+  })
+  substitutes: FoodSubstitute[];
 
   @CreateDateColumn()
   createdAt: Date;

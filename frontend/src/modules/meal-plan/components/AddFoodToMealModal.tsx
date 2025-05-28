@@ -122,9 +122,7 @@ export const AddFoodToMealModal: React.FC<AddFoodToMealModalProps> = ({
 }) => {
   const [foodSearch, setFoodSearch] = useState("");
   const [searchResults, setSearchResults] = useState<Alimento[]>([]);
-  const [selectedFoods, setSelectedFoods] = useState<PrescribedFood[]>(
-    initialFoods as PrescribedFood[]
-  );
+  const [selectedFoods, setSelectedFoods] = useState<PrescribedFood[]>([]);
   const [loadingFoods, setLoadingFoods] = useState(false);
   const [showDropdown, setShowDropdown] = useState(false);
   const [notes, setNotes] = useState(initialNotes);
@@ -134,7 +132,6 @@ export const AddFoodToMealModal: React.FC<AddFoodToMealModalProps> = ({
     useState<Alimento | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [substituteModalOpen, setSubstituteModalOpen] = useState(false);
   const [substituteTargetFoodId, setSubstituteTargetFoodId] = useState<
     string | null
   >(null);
@@ -247,43 +244,6 @@ export const AddFoodToMealModal: React.FC<AddFoodToMealModalProps> = ({
     return acc + pesoItem;
   }, 0);
 
-  // Função utilitária para identificar medidas contáveis
-  const isCountableUnit = (nome: string) => {
-    const keywords = [
-      "unidade",
-      "fatia",
-      "colher",
-      "pedaço",
-      "porção",
-      "concha",
-      "copo",
-      "xícara",
-      "biscoito",
-      "tablete",
-      "fatias",
-      "unidades",
-      "unid",
-    ];
-    return keywords.some((kw) => nome.includes(kw));
-  };
-
-  // Handlers para interação com alimentos
-  const handleSelectFood = (food: Alimento) => {
-    if (!selectedFoods.find((f) => f.food.id === food.id)) {
-      // Define mcIndex como 0 se houver medidas caseiras, caso contrário undefined
-      const defaultMcIndex = food.mc && food.mc.length > 0 ? 0 : undefined;
-      const nome = food.mc?.[0]?.nome_mc?.toLowerCase() || "";
-      const isCountable = isCountableUnit(nome);
-      const defaultAmount = isCountable ? 1 : Number(food.mc?.[0]?.peso) || 100;
-      setSelectedFoods([
-        ...selectedFoods,
-        { food, amount: defaultAmount, mcIndex: defaultMcIndex },
-      ]); // Começa com 1 unidade ou peso padrão
-    }
-    setShowDropdown(false);
-    setFoodSearch("");
-  };
-
   const handleRemoveFood = (foodId: string) => {
     setSelectedFoods(selectedFoods.filter((f) => f.food.id !== foodId));
   };
@@ -344,18 +304,6 @@ export const AddFoodToMealModal: React.FC<AddFoodToMealModalProps> = ({
     );
   };
 
-  // Handler para abrir o mini-modal
-  const handleOpenSubstituteModal = (foodId: string) => {
-    setSubstituteTargetFoodId(foodId);
-    setSubstituteModalOpen(true);
-  };
-
-  // Handler para fechar o mini-modal
-  const handleCloseSubstituteModal = () => {
-    setSubstituteModalOpen(false);
-    setSubstituteTargetFoodId(null);
-  };
-
   // Handler para abrir modal de busca para alimento principal
   const handleOpenAddFoodModal = () => {
     setSearchContext("principal");
@@ -409,10 +357,6 @@ export const AddFoodToMealModal: React.FC<AddFoodToMealModalProps> = ({
     setError(null);
     if (!planId || !mealName || !mealTime) {
       setError("Dados obrigatórios ausentes. Tente novamente.");
-      return;
-    }
-    if (selectedFoods.length === 0) {
-      setError("Selecione pelo menos um alimento.");
       return;
     }
     setLoading(true);
@@ -505,29 +449,19 @@ export const AddFoodToMealModal: React.FC<AddFoodToMealModalProps> = ({
     }
   };
 
-  // Resetar estado ao fechar
   useEffect(() => {
-    if (!open) {
-      setFoodSearch("");
-      setSearchResults([]);
-      setSelectedFoods(initialFoods.map((item) => ({ ...item })));
-      setNotes(initialNotes);
-      setLoadingFoods(false);
-      setShowDropdown(false);
-      setSelectedFoodForDetails(null);
-    } else {
+    if (open) {
       setSelectedFoods(initialFoods.map((item) => ({ ...item })));
       setNotes(initialNotes);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open]); // Remove initialFoods e initialNotes das dependências para evitar loop
+  }, [open, initialFoods, initialNotes]);
 
   useEffect(() => {
-    if (open && selectedFoods.length === 0) {
+    if (open && initialFoods.length === 0) {
       setSearchContext("principal");
       setSearchModalOpen(true);
     }
-  }, [open]);
+  }, [open, initialFoods.length]);
 
   return (
     <Dialog
@@ -691,7 +625,7 @@ export const AddFoodToMealModal: React.FC<AddFoodToMealModalProps> = ({
             fullWidth={isMobile}
             size={isMobile ? "large" : "medium"}
             sx={{ minWidth: 100, borderRadius: 2 }}
-            disabled={loading || selectedFoods.length === 0}
+            disabled={loading}
           >
             Confirmar
           </Button>
