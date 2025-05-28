@@ -35,6 +35,10 @@ import { DesignSystemButton } from "../../../components/DesignSystem/Button/Butt
 import { patientService } from "@modules/patient/services/patientService";
 import { authService } from "../../auth/services/authService";
 import { alpha } from "@mui/material/styles";
+import { useFoodDb } from "@/services/useFoodDb";
+import { Meal } from "../services/mealPlanService";
+import type { MealFood } from "@/services/foodService";
+import type { Alimento } from "@/modules/meal-plan/components/AddFoodToMealModal";
 
 // Estilo dos botões de ação para consistência
 const actionButtonSx = {
@@ -203,6 +207,8 @@ export function MealPlan() {
   const [searchParams] = useSearchParams();
   const { patientId } = useParams<{ patientId: string }>();
   const queryPatientId = searchParams.get("patientId");
+  const { data: foodDbRaw } = useFoodDb();
+  const foodDb = Array.isArray(foodDbRaw) ? foodDbRaw : [];
 
   // Redirect effect to handle old URL format
   useEffect(() => {
@@ -299,6 +305,84 @@ export function MealPlan() {
   };
 
   const theme = useTheme();
+
+  // Função para calcular os nutrientes totais do plano
+  const calculateTotalNutrients = (plan: { meals?: Meal[] }) => {
+    if (!plan?.meals) {
+      return {
+        protein: 0,
+        fat: 0,
+        carbohydrates: 0,
+        calories: 0,
+        totalWeight: 0,
+      };
+    }
+
+    const nutrients = plan.meals.reduce(
+      (
+        acc: {
+          protein: number;
+          fat: number;
+          carbohydrates: number;
+          calories: number;
+          totalWeight: number;
+        },
+        meal: Meal
+      ) => {
+        const mealNutrients = meal.mealFoods.reduce(
+          (
+            mealAcc: {
+              protein: number;
+              fat: number;
+              carbohydrates: number;
+              calories: number;
+              totalWeight: number;
+            },
+            mealFood: MealFood
+          ) => {
+            const food = foodDb.find((f: Alimento) => f.id === mealFood.foodId);
+            if (!food) return mealAcc;
+
+            const amount = mealFood.amount;
+            const mc = food.mc?.find(
+              (m: { nome_mc: string; peso: number }) =>
+                m.nome_mc === mealFood.unit
+            );
+            if (!mc) return mealAcc;
+
+            const conversionFactor = Number(mc.peso) / 100;
+
+            return {
+              protein:
+                mealAcc.protein +
+                Number(food.ptn || 0) * amount * conversionFactor,
+              fat:
+                mealAcc.fat + Number(food.lip || 0) * amount * conversionFactor,
+              carbohydrates:
+                mealAcc.carbohydrates +
+                Number(food.cho || 0) * amount * conversionFactor,
+              calories:
+                mealAcc.calories +
+                Number(food.kcal || 0) * amount * conversionFactor,
+              totalWeight: mealAcc.totalWeight + amount * Number(mc.peso),
+            };
+          },
+          { protein: 0, fat: 0, carbohydrates: 0, calories: 0, totalWeight: 0 }
+        );
+
+        return {
+          protein: acc.protein + mealNutrients.protein,
+          fat: acc.fat + mealNutrients.fat,
+          carbohydrates: acc.carbohydrates + mealNutrients.carbohydrates,
+          calories: acc.calories + mealNutrients.calories,
+          totalWeight: acc.totalWeight + mealNutrients.totalWeight,
+        };
+      },
+      { protein: 0, fat: 0, carbohydrates: 0, calories: 0, totalWeight: 0 }
+    );
+
+    return nutrients;
+  };
 
   if (!patientId) {
     return (
@@ -435,261 +519,263 @@ export function MealPlan() {
             </Typography>
           </Box>
         ) : (
-          sortedPlans.map((plan) => (
-            <Card
-              key={plan.id}
-              elevation={1}
-              onClick={() =>
-                navigate(`/patient/${patientId}/meal-plans/${plan.id}`)
-              }
-              sx={{
-                borderRadius: "12px",
-                borderColor: "divider",
-                transition: "all 0.2s",
-                borderRight: `4px solid ${theme.palette.custom.accent}`,
-                "&:hover": {
-                  boxShadow: 4,
-                  borderColor: "primary.main",
-                },
-              }}
-            >
-              <CardContent sx={{ p: 2.5 }}>
-                {/* Cabeçalho */}
-                <Box
-                  sx={{
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "space-between",
-                    mb: 2,
-                  }}
-                >
-                  <Typography variant="h6" fontWeight="bold">
-                    {plan.name || "Plano Sem Nome"}
-                  </Typography>
-                  <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
-                    <CalendarMonthIcon
-                      sx={{ fontSize: 18, color: "text.secondary" }}
-                    />
-                    <Typography variant="body2" color="text.secondary">
-                      {new Date(plan.createdAt).toLocaleDateString()}
-                    </Typography>
-                  </Box>
-                </Box>
-
-                {/* Resultados Principais */}
-                <Box
-                  sx={{
-                    display: "flex",
-                    gap: 3,
-                    flexWrap: "wrap",
-                    mb: 2,
-                    p: 1.5,
-                    bgcolor: "background.paper",
-                    borderRadius: 1,
-                  }}
-                >
-                  <Box sx={{ minWidth: "150px" }}>
-                    <Typography
-                      variant="caption"
-                      fontWeight={500}
-                      color="text.secondary"
-                      sx={{ fontSize: 12 }}
-                    >
-                      CALORIAS TOTAIS
-                    </Typography>
-                    <Typography
-                      variant="h6"
-                      fontWeight={700}
-                      color="primary.main"
-                      sx={{ mt: 0.5, fontSize: 22 }}
-                    >
-                      {Number(plan.dailyCalories) > 0
-                        ? `${Number(plan.dailyCalories)} kcal`
-                        : "0 kcal"}
-                    </Typography>
-                  </Box>
-                  <Box sx={{ minWidth: "150px" }}>
-                    <Typography
-                      variant="caption"
-                      fontWeight={500}
-                      color="text.secondary"
-                      sx={{ fontSize: 12 }}
-                    >
-                      REFEIÇÕES
-                    </Typography>
-                    <Typography
-                      variant="h6"
-                      fontWeight={700}
-                      color="primary.main"
-                      sx={{ mt: 0.5, fontSize: 22 }}
-                    >
-                      {plan.meals?.length || 0}
-                    </Typography>
-                  </Box>
-                </Box>
-
-                {/* Macronutrientes - Layout mais compacto */}
-                <Typography
-                  variant="subtitle1"
-                  color="primary"
-                  fontWeight={700}
-                  sx={{ mb: 1.5, fontSize: 17 }}
-                >
-                  Macronutrientes
-                </Typography>
-                <Box
-                  sx={{
-                    display: "flex",
-                    gap: 2,
-                    mb: 2,
-                    flexWrap: "wrap",
-                  }}
-                >
-                  <Box
-                    sx={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: 1,
-
-                      px: 1.5,
-                      py: 0.75,
-                      borderRadius: 1,
-                    }}
-                  >
-                    <Typography
-                      variant="subtitle2"
-                      fontWeight={600}
-                      color="primary.main"
-                    >
-                      Proteínas:
-                    </Typography>
-                    <Typography variant="body2" fontWeight={500}>
-                      {Number(plan.dailyProtein) > 0
-                        ? `${Number(plan.dailyProtein)}g`
-                        : "0g"}
-                    </Typography>
-                  </Box>
-                  <Box
-                    sx={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: 1,
-
-                      px: 1.5,
-                      py: 0.75,
-                      borderRadius: 1,
-                    }}
-                  >
-                    <Typography
-                      variant="subtitle2"
-                      fontWeight={600}
-                      color="primary.main"
-                    >
-                      Carboidratos:
-                    </Typography>
-                    <Typography variant="body2" fontWeight={500}>
-                      {Number(plan.dailyCarbs) > 0
-                        ? `${Number(plan.dailyCarbs)}g`
-                        : "0g"}
-                    </Typography>
-                  </Box>
-                  <Box
-                    sx={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: 1,
-
-                      px: 1.5,
-                      py: 0.75,
-                      borderRadius: 1,
-                    }}
-                  >
-                    <Typography
-                      variant="subtitle2"
-                      fontWeight={600}
-                      color="primary.main"
-                    >
-                      Gorduras:
-                    </Typography>
-                    <Typography variant="body2" fontWeight={500}>
-                      {Number(plan.dailyFat) > 0
-                        ? `${Number(plan.dailyFat)}g`
-                        : "0g"}
-                    </Typography>
-                  </Box>
-                </Box>
-
-                {/* Descrição/Objetivo em formato de callout */}
-                {plan.description && (
-                  <Box
-                    sx={{
-                      mt: 2,
-                      p: 1.5,
-                      bgcolor: (theme) =>
-                        alpha(theme.palette.primary.main, 0.05),
-                      borderColor: "primary.main",
-                      borderRadius: "0 4px 4px 0",
-                    }}
-                  >
-                    <Typography
-                      variant="body2"
-                      color="text.secondary"
-                      sx={{ fontSize: "0.95rem" }}
-                    >
-                      <Box
-                        component="span"
-                        sx={{ fontWeight: 600, color: "primary.main" }}
-                      >
-                        Descrição
-                      </Box>{" "}
-                    </Typography>
-                    <Typography
-                      component="span"
-                      variant="caption"
-                      color="text.secondary"
-                    >
-                      {plan.description}
-                    </Typography>
-                  </Box>
-                )}
-              </CardContent>
-
-              <CardActions
+          sortedPlans.map((plan) => {
+            const nutrients = calculateTotalNutrients(plan);
+            return (
+              <Card
+                key={plan.id}
+                elevation={1}
+                onClick={() =>
+                  navigate(`/patient/${patientId}/meal-plans/${plan.id}`)
+                }
                 sx={{
-                  justifyContent: "flex-end",
-                  pt: 0,
-                  pb: 2,
-                  px: 2,
-                  gap: 1,
+                  borderRadius: "12px",
+                  borderColor: "divider",
+                  transition: "all 0.2s",
+                  borderRight: `4px solid ${theme.palette.custom.accent}`,
+                  "&:hover": {
+                    boxShadow: 4,
+                    borderColor: "primary.main",
+                  },
                 }}
               >
-                <Button
-                  size="small"
-                  variant="contained"
-                  color="primary"
-                  startIcon={<EditIcon />}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleEditClick(e, plan.id);
+                <CardContent sx={{ p: 2.5 }}>
+                  {/* Cabeçalho */}
+                  <Box
+                    sx={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      mb: 2,
+                    }}
+                  >
+                    <Typography variant="h6" fontWeight="bold">
+                      {plan.name || "Plano Sem Nome"}
+                    </Typography>
+                    <Box
+                      sx={{ display: "flex", alignItems: "center", gap: 0.5 }}
+                    >
+                      <CalendarMonthIcon
+                        sx={{ fontSize: 18, color: "text.secondary" }}
+                      />
+                      <Typography variant="body2" color="text.secondary">
+                        {new Date(plan.createdAt).toLocaleDateString()}
+                      </Typography>
+                    </Box>
+                  </Box>
+
+                  {/* Resultados Principais */}
+                  <Box
+                    sx={{
+                      display: "flex",
+                      gap: 3,
+                      flexWrap: "wrap",
+                      mb: 2,
+                      p: 1.5,
+                      bgcolor: "background.paper",
+                      borderRadius: 1,
+                    }}
+                  >
+                    <Box sx={{ minWidth: "150px" }}>
+                      <Typography
+                        variant="caption"
+                        fontWeight={500}
+                        color="text.secondary"
+                        sx={{ fontSize: 12 }}
+                      >
+                        CALORIAS TOTAIS
+                      </Typography>
+                      <Typography
+                        variant="h6"
+                        fontWeight={700}
+                        color="primary.main"
+                        sx={{ mt: 0.5, fontSize: 22 }}
+                      >
+                        {nutrients.calories > 0
+                          ? `${Math.round(nutrients.calories)} kcal`
+                          : "0 kcal"}
+                      </Typography>
+                    </Box>
+                    <Box sx={{ minWidth: "150px" }}>
+                      <Typography
+                        variant="caption"
+                        fontWeight={500}
+                        color="text.secondary"
+                        sx={{ fontSize: 12 }}
+                      >
+                        REFEIÇÕES
+                      </Typography>
+                      <Typography
+                        variant="h6"
+                        fontWeight={700}
+                        color="primary.main"
+                        sx={{ mt: 0.5, fontSize: 22 }}
+                      >
+                        {plan.meals?.length || 0}
+                      </Typography>
+                    </Box>
+                  </Box>
+
+                  {/* Macronutrientes - Layout mais compacto */}
+                  <Typography
+                    variant="subtitle1"
+                    color="primary"
+                    fontWeight={700}
+                    sx={{ mb: 1.5, fontSize: 17 }}
+                  >
+                    Macronutrientes
+                  </Typography>
+                  <Box
+                    sx={{
+                      display: "flex",
+                      gap: 2,
+                      mb: 2,
+                      flexWrap: "wrap",
+                    }}
+                  >
+                    <Box
+                      sx={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 1,
+                        px: 1.5,
+                        py: 0.75,
+                        borderRadius: 1,
+                      }}
+                    >
+                      <Typography
+                        variant="subtitle2"
+                        fontWeight={600}
+                        color="primary.main"
+                      >
+                        Proteínas:
+                      </Typography>
+                      <Typography variant="body2" fontWeight={500}>
+                        {nutrients.protein > 0
+                          ? `${Math.round(nutrients.protein)}g`
+                          : "0g"}
+                      </Typography>
+                    </Box>
+                    <Box
+                      sx={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 1,
+                        px: 1.5,
+                        py: 0.75,
+                        borderRadius: 1,
+                      }}
+                    >
+                      <Typography
+                        variant="subtitle2"
+                        fontWeight={600}
+                        color="primary.main"
+                      >
+                        Carboidratos:
+                      </Typography>
+                      <Typography variant="body2" fontWeight={500}>
+                        {nutrients.carbohydrates > 0
+                          ? `${Math.round(nutrients.carbohydrates)}g`
+                          : "0g"}
+                      </Typography>
+                    </Box>
+                    <Box
+                      sx={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 1,
+                        px: 1.5,
+                        py: 0.75,
+                        borderRadius: 1,
+                      }}
+                    >
+                      <Typography
+                        variant="subtitle2"
+                        fontWeight={600}
+                        color="primary.main"
+                      >
+                        Gorduras:
+                      </Typography>
+                      <Typography variant="body2" fontWeight={500}>
+                        {nutrients.fat > 0
+                          ? `${Math.round(nutrients.fat)}g`
+                          : "0g"}
+                      </Typography>
+                    </Box>
+                  </Box>
+
+                  {/* Descrição/Objetivo em formato de callout */}
+                  {plan.description && (
+                    <Box
+                      sx={{
+                        mt: 2,
+                        p: 1.5,
+                        bgcolor: (theme) =>
+                          alpha(theme.palette.primary.main, 0.05),
+                        borderColor: "primary.main",
+                        borderRadius: "0 4px 4px 0",
+                      }}
+                    >
+                      <Typography
+                        variant="body2"
+                        color="text.secondary"
+                        sx={{ fontSize: "0.95rem" }}
+                      >
+                        <Box
+                          component="span"
+                          sx={{ fontWeight: 600, color: "primary.main" }}
+                        >
+                          Descrição
+                        </Box>{" "}
+                      </Typography>
+                      <Typography
+                        component="span"
+                        variant="caption"
+                        color="text.secondary"
+                      >
+                        {plan.description}
+                      </Typography>
+                    </Box>
+                  )}
+                </CardContent>
+
+                <CardActions
+                  sx={{
+                    justifyContent: "flex-end",
+                    pt: 0,
+                    pb: 2,
+                    px: 2,
+                    gap: 1,
                   }}
                 >
-                  Editar
-                </Button>
-                <Button
-                  size="small"
-                  variant="outlined"
-                  color="error"
-                  startIcon={<DeleteIcon />}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleDeleteClick(e, plan);
-                  }}
-                >
-                  Excluir
-                </Button>
-              </CardActions>
-            </Card>
-          ))
+                  <Button
+                    size="small"
+                    variant="contained"
+                    color="primary"
+                    startIcon={<EditIcon />}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleEditClick(e, plan.id);
+                    }}
+                  >
+                    Editar
+                  </Button>
+                  <Button
+                    size="small"
+                    variant="outlined"
+                    color="error"
+                    startIcon={<DeleteIcon />}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleDeleteClick(e, plan);
+                    }}
+                  >
+                    Excluir
+                  </Button>
+                </CardActions>
+              </Card>
+            );
+          })
         )}
       </Stack>
 
