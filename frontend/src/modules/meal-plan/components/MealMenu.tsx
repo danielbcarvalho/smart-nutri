@@ -2,9 +2,7 @@ import React from "react";
 import { Menu, MenuItem, Divider, ListItemIcon } from "@mui/material";
 import EditIcon from "@mui/icons-material/Edit";
 import AddIcon from "@mui/icons-material/Add";
-import ContentCopyIcon from "@mui/icons-material/ContentCopy";
-import SaveIcon from "@mui/icons-material/Save";
-import NoteAddIcon from "@mui/icons-material/NoteAdd";
+
 import DeleteIcon from "@mui/icons-material/Delete";
 
 interface MealMenuProps {
@@ -14,10 +12,7 @@ interface MealMenuProps {
   onEdit: () => void;
   onAddFood: () => void;
   onDuplicate: () => void;
-  onSaveAsTemplate: () => void;
   onDelete: () => void;
-  hasTemplates: boolean;
-  onApplyTemplate?: () => void;
 }
 
 const MealMenu: React.FC<MealMenuProps> = ({
@@ -27,10 +22,7 @@ const MealMenu: React.FC<MealMenuProps> = ({
   onEdit,
   onAddFood,
   onDuplicate,
-  onSaveAsTemplate,
   onDelete,
-  hasTemplates,
-  onApplyTemplate,
 }) => (
   <Menu anchorEl={anchorEl} open={open} onClose={onClose}>
     <MenuItem
@@ -56,20 +48,6 @@ const MealMenu: React.FC<MealMenuProps> = ({
       Adicionar alimento
     </MenuItem>
 
-    {hasTemplates && (
-      <MenuItem
-        onClick={(e) => {
-          e.stopPropagation();
-          if (onApplyTemplate) onApplyTemplate();
-          onClose();
-        }}
-      >
-        <ListItemIcon>
-          <NoteAddIcon fontSize="small" />
-        </ListItemIcon>
-        Aplicar template
-      </MenuItem>
-    )}
     <Divider />
     <MenuItem
       onClick={() => {

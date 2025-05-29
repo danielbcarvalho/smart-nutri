@@ -47,12 +47,8 @@ export function PatientInstructionsCard({
           sx={{
             display: "flex",
             alignItems: "center",
-            justifyContent: "space-between",
           }}
         >
-          <Typography variant="h6" fontWeight="bold">
-            Orientações para o Paciente
-          </Typography>
           <IconButton onClick={handleExpandClick}>
             <ExpandMoreIcon
               sx={{
@@ -61,6 +57,9 @@ export function PatientInstructionsCard({
               }}
             />
           </IconButton>
+          <Typography variant="h6" fontWeight="bold">
+            Orientações para o Paciente
+          </Typography>
         </Box>
 
         <Collapse in={expanded}>

@@ -79,14 +79,6 @@ export function MealPlanDetails() {
     severity: "success",
   });
 
-  // Template de refeições
-  const [templates, setTemplates] = useState<
-    { id: string; name: string; meal: Meal }[]
-  >([]);
-  const [openTemplateDialog, setOpenTemplateDialog] = useState(false);
-  const [templateName, setTemplateName] = useState("");
-  const [selectedTemplate, setSelectedTemplate] = useState<Meal | null>(null);
-
   // Adicionar estados
   const [patientInstructions, setPatientInstructions] = useState("");
 
@@ -394,21 +386,6 @@ export function MealPlanDetails() {
     setAnchorEl(null);
   };
 
-  const saveTemplate = () => {
-    if (templateName && selectedTemplate) {
-      setTemplates([
-        ...templates,
-        {
-          id: Date.now().toString(),
-          name: templateName,
-          meal: selectedTemplate,
-        },
-      ]);
-      setOpenTemplateDialog(false);
-      setTemplateName("");
-    }
-  };
-
   const handleOpenMenu = (
     event: React.MouseEvent<HTMLElement>,
     mealId: string
@@ -419,20 +396,6 @@ export function MealPlanDetails() {
 
   const handleCloseMenu = () => {
     setAnchorEl(null);
-  };
-
-  const handleSaveAsTemplate = () => {
-    const mealToSave = plan?.meals?.find((m) => m.id === mealMenuId);
-    if (mealToSave) {
-      setSelectedTemplate(mealToSave);
-      setTemplateNameFromMeal(mealToSave);
-      setOpenTemplateDialog(true);
-    }
-    setAnchorEl(null);
-  };
-
-  const setTemplateNameFromMeal = (meal: Meal) => {
-    setTemplateName(`Template ${meal.name}`);
   };
 
   // Função para calcular os nutrientes totais do plano
@@ -685,33 +648,8 @@ export function MealPlanDetails() {
         }
         onAddFood={() => handleAddFood(mealMenuId)}
         onDuplicate={() => handleDuplicateMeal(mealMenuId)}
-        onSaveAsTemplate={handleSaveAsTemplate}
         onDelete={() => deleteMealMutation.mutate(mealMenuId)}
-        hasTemplates={templates.length > 0}
       />
-
-      {/* Dialog para salvar template */}
-      <Dialog
-        open={openTemplateDialog}
-        onClose={() => setOpenTemplateDialog(false)}
-      >
-        <DialogTitle>Salvar como template</DialogTitle>
-        <DialogContent>
-          <TextField
-            label="Nome do template"
-            value={templateName}
-            onChange={(e) => setTemplateName(e.target.value)}
-            fullWidth
-            sx={{ mt: 1 }}
-          />
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setOpenTemplateDialog(false)}>Cancelar</Button>
-          <Button onClick={saveTemplate} variant="contained">
-            Salvar
-          </Button>
-        </DialogActions>
-      </Dialog>
 
       {/* Modal para adicionar alimentos */}
       <AddFoodToMealModal
