@@ -1,11 +1,12 @@
 # Estrutura do Banco de Dados
 
-Gerado em: 5/19/2025, 12:13:11 PM
+Gerado em: 5/30/2025, 11:06:56 AM
 
 ## Índice de Tabelas
 
 - [consultations](#tabela-consultations)
 - [energy_plans](#tabela-energy_plans)
+- [food_substitutes](#tabela-food_substitutes)
 - [food_templates](#tabela-food_templates)
 - [foods](#tabela-foods)
 - [meal_foods](#tabela-meal_foods)
@@ -25,7 +26,7 @@ Gerado em: 5/19/2025, 12:13:11 PM
 
 | Coluna | Tipo | Tamanho | Nullable | Default | Constraints |
 |--------|------|----------|----------|----------|------------|
-| id | uuid | - | NO | uuid_generate_v4() | FK,PK |
+| id | uuid | - | NO | extensions.uuid_generate_v4() | FK,PK |
 | date | timestamp without time zone | - | NO | NULL | FK,PK |
 | patient_id | uuid | - | NO | NULL | FK,PK |
 | nutritionist_id | uuid | - | NO | NULL | FK,PK |
@@ -39,7 +40,7 @@ Gerado em: 5/19/2025, 12:13:11 PM
 
 | Coluna | Tipo | Tamanho | Nullable | Default | Constraints |
 |--------|------|----------|----------|----------|------------|
-| id | uuid | - | NO | uuid_generate_v4() | FK,PK |
+| id | uuid | - | NO | extensions.uuid_generate_v4() | FK,PK |
 | patient_id | uuid | - | NO | NULL | FK,PK |
 | nutritionist_id | uuid | - | NO | NULL | FK,PK |
 | consultation_id | uuid | - | YES | NULL | FK,PK |
@@ -66,11 +67,26 @@ Gerado em: 5/19/2025, 12:13:11 PM
 | updated_at | timestamp without time zone | - | NO | now() | FK,PK |
 | macronutrient_distribution | jsonb | - | YES | NULL | FK,PK |
 
+## Tabela: food_substitutes {#tabela-food_substitutes}
+
+| Coluna | Tipo | Tamanho | Nullable | Default | Constraints |
+|--------|------|----------|----------|----------|------------|
+| id | uuid | - | NO | extensions.uuid_generate_v4() | FK,PK |
+| original_food_id | character varying(100) | 100 | NO | NULL | FK,PK |
+| original_source | character varying(50) | 50 | NO | NULL | FK,PK |
+| substitute_food_id | character varying(100) | 100 | NO | NULL | FK,PK |
+| substitute_source | character varying(50) | 50 | NO | NULL | FK,PK |
+| substitute_amount | numeric | - | NO | NULL | FK,PK |
+| substitute_unit | character varying(100) | 100 | NO | NULL | FK,PK |
+| nutritionist_id | uuid | - | YES | NULL | FK,PK |
+| created_at | timestamp without time zone | - | YES | now() | FK,PK |
+| updated_at | timestamp without time zone | - | YES | now() | FK,PK |
+
 ## Tabela: food_templates {#tabela-food_templates}
 
 | Coluna | Tipo | Tamanho | Nullable | Default | Constraints |
 |--------|------|----------|----------|----------|------------|
-| id | uuid | - | NO | uuid_generate_v4() | FK,PK |
+| id | uuid | - | NO | extensions.uuid_generate_v4() | FK,PK |
 | meal_template_id | uuid | - | NO | NULL | FK,PK |
 | name | character varying | - | NO | NULL | FK,PK |
 | portion | character varying | - | NO | NULL | FK,PK |
@@ -88,7 +104,7 @@ Gerado em: 5/19/2025, 12:13:11 PM
 
 | Coluna | Tipo | Tamanho | Nullable | Default | Constraints |
 |--------|------|----------|----------|----------|------------|
-| id | uuid | - | NO | uuid_generate_v4() | PK |
+| id | uuid | - | NO | extensions.uuid_generate_v4() | PK |
 | name | character varying | - | NO | NULL | PK |
 | externalId | character varying | - | YES | NULL | PK |
 | servingSize | numeric | - | NO | NULL | PK |
@@ -119,7 +135,7 @@ Gerado em: 5/19/2025, 12:13:11 PM
 
 | Coluna | Tipo | Tamanho | Nullable | Default | Constraints |
 |--------|------|----------|----------|----------|------------|
-| id | uuid | - | NO | uuid_generate_v4() | FK,PK |
+| id | uuid | - | NO | extensions.uuid_generate_v4() | FK,PK |
 | amount | numeric | - | NO | NULL | FK,PK |
 | unit | character varying | - | NO | NULL | FK,PK |
 | createdAt | timestamp without time zone | - | NO | now() | FK,PK |
@@ -132,7 +148,7 @@ Gerado em: 5/19/2025, 12:13:11 PM
 
 | Coluna | Tipo | Tamanho | Nullable | Default | Constraints |
 |--------|------|----------|----------|----------|------------|
-| id | uuid | - | NO | uuid_generate_v4() | FK,PK |
+| id | uuid | - | NO | extensions.uuid_generate_v4() | FK,PK |
 | name | character varying | - | NO | NULL | FK,PK |
 | description | text | - | YES | NULL | FK,PK |
 | nutritionist_id | uuid | - | YES | NULL | FK,PK |
@@ -145,7 +161,7 @@ Gerado em: 5/19/2025, 12:13:11 PM
 
 | Coluna | Tipo | Tamanho | Nullable | Default | Constraints |
 |--------|------|----------|----------|----------|------------|
-| id | uuid | - | NO | uuid_generate_v4() | FK,PK |
+| id | uuid | - | NO | extensions.uuid_generate_v4() | FK,PK |
 | name | character varying | - | NO | NULL | FK,PK |
 | description | text | - | YES | NULL | FK,PK |
 | patient_id | uuid | - | NO | NULL | FK,PK |
@@ -164,7 +180,7 @@ Gerado em: 5/19/2025, 12:13:11 PM
 
 | Coluna | Tipo | Tamanho | Nullable | Default | Constraints |
 |--------|------|----------|----------|----------|------------|
-| id | uuid | - | NO | uuid_generate_v4() | FK,PK |
+| id | uuid | - | NO | extensions.uuid_generate_v4() | FK,PK |
 | plan_template_id | uuid | - | NO | NULL | FK,PK |
 | name | character varying | - | NO | NULL | FK,PK |
 | description | text | - | YES | NULL | FK,PK |
@@ -177,7 +193,7 @@ Gerado em: 5/19/2025, 12:13:11 PM
 
 | Coluna | Tipo | Tamanho | Nullable | Default | Constraints |
 |--------|------|----------|----------|----------|------------|
-| id | uuid | - | NO | uuid_generate_v4() | FK,PK |
+| id | uuid | - | NO | extensions.uuid_generate_v4() | FK,PK |
 | name | character varying | - | NO | NULL | FK,PK |
 | time | time without time zone | - | NO | NULL | FK,PK |
 | description | text | - | YES | NULL | FK,PK |
@@ -188,12 +204,13 @@ Gerado em: 5/19/2025, 12:13:11 PM
 | totalCarbs | numeric | - | NO | '0' | FK,PK |
 | totalFat | numeric | - | NO | '0' | FK,PK |
 | mealPlanId | uuid | - | YES | NULL | FK,PK |
+| is_active_for_calculation | boolean | - | NO | true | FK,PK |
 
 ## Tabela: measurements {#tabela-measurements}
 
 | Coluna | Tipo | Tamanho | Nullable | Default | Constraints |
 |--------|------|----------|----------|----------|------------|
-| id | uuid | - | NO | uuid_generate_v4() | FK,PK |
+| id | uuid | - | NO | extensions.uuid_generate_v4() | FK,PK |
 | date | date | - | NO | NULL | FK,PK |
 | weight | numeric | - | NO | NULL | FK,PK |
 | height | numeric | - | YES | NULL | FK,PK |
@@ -230,7 +247,7 @@ Gerado em: 5/19/2025, 12:13:11 PM
 
 | Coluna | Tipo | Tamanho | Nullable | Default | Constraints |
 |--------|------|----------|----------|----------|------------|
-| id | uuid | - | NO | uuid_generate_v4() | PK |
+| id | uuid | - | NO | extensions.uuid_generate_v4() | PK |
 | name | character varying | - | NO | NULL | PK |
 | email | character varying | - | NO | NULL | PK |
 | passwordHash | character varying | - | NO | NULL | PK |
@@ -240,8 +257,8 @@ Gerado em: 5/19/2025, 12:13:11 PM
 | clinicName | character varying | - | YES | NULL | PK |
 | created_at | timestamp without time zone | - | NO | now() | PK |
 | updated_at | timestamp without time zone | - | NO | now() | PK |
-| instagram | character varying | - | YES | NULL | PK |
 | photo_url | character varying | - | YES | NULL | PK |
+| instagram | character varying | - | YES | NULL | PK |
 | custom_colors | jsonb | - | YES | NULL | PK |
 | custom_fonts | jsonb | - | YES | NULL | PK |
 | logo_url | character varying | - | YES | NULL | PK |
@@ -250,7 +267,7 @@ Gerado em: 5/19/2025, 12:13:11 PM
 
 | Coluna | Tipo | Tamanho | Nullable | Default | Constraints |
 |--------|------|----------|----------|----------|------------|
-| id | uuid | - | NO | uuid_generate_v4() | FK,PK |
+| id | uuid | - | NO | extensions.uuid_generate_v4() | FK,PK |
 | patient_id | uuid | - | NO | NULL | FK,PK |
 | nutritionist_id | uuid | - | NO | NULL | FK,PK |
 | photoUrl | character varying | - | NO | NULL | FK,PK |
@@ -264,7 +281,7 @@ Gerado em: 5/19/2025, 12:13:11 PM
 
 | Coluna | Tipo | Tamanho | Nullable | Default | Constraints |
 |--------|------|----------|----------|----------|------------|
-| id | uuid | - | NO | uuid_generate_v4() | FK,PK |
+| id | uuid | - | NO | extensions.uuid_generate_v4() | FK,PK |
 | name | character varying | - | NO | NULL | FK,PK |
 | email | character varying | - | YES | NULL | FK,PK |
 | cpf | character varying | - | YES | NULL | FK,PK |
@@ -296,7 +313,7 @@ Gerado em: 5/19/2025, 12:13:11 PM
 
 | Coluna | Tipo | Tamanho | Nullable | Default | Constraints |
 |--------|------|----------|----------|----------|------------|
-| id | uuid | - | NO | uuid_generate_v4() | FK,PK |
+| id | uuid | - | NO | extensions.uuid_generate_v4() | FK,PK |
 | patientId | uuid | - | NO | NULL | FK,PK |
 | assessmentId | uuid | - | YES | NULL | FK,PK |
 | type | USER-DEFINED | - | NO | NULL | FK,PK |

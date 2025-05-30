@@ -15,14 +15,15 @@ import {
   TableBody,
   TableRow,
   TableCell,
+  Switch,
+  Tooltip,
 } from "@mui/material";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import FastfoodIcon from "@mui/icons-material/Restaurant";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
 import AddIcon from "@mui/icons-material/Add";
-import { Meal } from "@/modules/meal-plan/services/mealPlanService";
+import { Meal, MealFood } from "@/modules/meal-plan/services/mealPlanService";
 import type { Alimento } from "./AddFoodToMealModal";
-import type { MealFood } from "@/services/foodService";
 import MealNutritionSummary from "./MealNutritionSummary";
 import { alpha } from "@mui/material/styles";
 import { useTheme } from "@mui/material/styles";
@@ -34,7 +35,8 @@ interface MealCardProps {
   onExpand: (mealId: string) => void;
   onAddFood: (mealId: string) => void;
   onOpenMenu: (event: React.MouseEvent<HTMLElement>, mealId: string) => void;
-  renderFoodItem?: (mealFood: MealFood) => React.ReactNode;
+  onToggleCalculation: (mealId: string, isActive: boolean) => void;
+  renderFoodItem: (mealFood: MealFood) => React.ReactNode;
 }
 
 const MealCard: React.FC<MealCardProps> = ({
@@ -44,6 +46,7 @@ const MealCard: React.FC<MealCardProps> = ({
   onExpand,
   onAddFood,
   onOpenMenu,
+  onToggleCalculation,
   renderFoodItem,
 }) => {
   const theme = useTheme();
@@ -56,7 +59,11 @@ const MealCard: React.FC<MealCardProps> = ({
         borderRadius: "12px",
         borderColor: "divider",
         transition: "all 0.2s",
-        borderRight: `4px solid ${theme.palette.custom.accent}`,
+        borderRight: `4px solid ${
+          meal.isActiveForCalculation
+            ? theme.palette.custom.accent
+            : theme.palette.grey[300]
+        }`,
         "&:hover": {
           boxShadow: 4,
           borderColor: "primary.main",
@@ -113,15 +120,35 @@ const MealCard: React.FC<MealCardProps> = ({
           >
             <FastfoodIcon color="action" />
           </Badge>
-          <IconButton
-            size="small"
-            onClick={(e) => {
-              e.stopPropagation();
-              onOpenMenu(e, meal.id);
-            }}
-          >
-            <MoreVertIcon />
-          </IconButton>
+          <Box display="flex" alignItems="center">
+            <Tooltip
+              title={
+                meal.isActiveForCalculation
+                  ? "Esta refeição está incluída nos cálculos. Clique para remover."
+                  : "Esta refeição não está incluída nos cálculos. Clique para incluir."
+              }
+              arrow
+            >
+              <Switch
+                checked={meal.isActiveForCalculation}
+                onChange={(e) => {
+                  e.stopPropagation();
+                  onToggleCalculation(meal.id, e.target.checked);
+                }}
+                color="primary"
+                onClick={(e) => e.stopPropagation()}
+              />
+            </Tooltip>
+            <IconButton
+              size="small"
+              onClick={(e) => {
+                e.stopPropagation();
+                onOpenMenu(e, meal.id);
+              }}
+            >
+              <MoreVertIcon />
+            </IconButton>
+          </Box>
         </Box>
         {/* Conteúdo Expandido */}
         {expanded && (
@@ -225,27 +252,7 @@ const MealCard: React.FC<MealCardProps> = ({
                       </TableHead>
                       <TableBody>
                         {meal.mealFoods.map((mealFood) =>
-                          renderFoodItem ? (
-                            renderFoodItem(mealFood)
-                          ) : (
-                            <TableRow key={mealFood.id}>
-                              <TableCell sx={{ py: 1.5 }}>
-                                {
-                                  foodDb.find((f) => f.id === mealFood.foodId)
-                                    ?.nome
-                                }
-                              </TableCell>
-                              <TableCell sx={{ py: 1.5 }}>
-                                {mealFood.amount}
-                              </TableCell>
-                              <TableCell sx={{ py: 1.5 }}>
-                                {mealFood.unit}
-                              </TableCell>
-                              <TableCell sx={{ py: 1.5 }}>
-                                {/* Calorias calculadas aqui, se necessário */}
-                              </TableCell>
-                            </TableRow>
-                          )
+                          renderFoodItem(mealFood)
                         )}
                       </TableBody>
                     </Table>

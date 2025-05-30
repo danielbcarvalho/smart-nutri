@@ -1,4 +1,4 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
   IsString,
   IsDate,
@@ -14,32 +14,26 @@ import { Type } from 'class-transformer';
 import { CreateMealDto } from './create-meal.dto';
 import { IsAfterStartDate } from '../validators/date-range.validator';
 
+export class UpdateMealDto extends CreateMealDto {
+  @ApiProperty({ description: 'ID da refeição' })
+  @IsUUID()
+  id: string;
+}
+
 export class UpdateMealPlanDto {
-  @ApiProperty({
-    description: 'Nome do plano alimentar',
-    example: 'Plano Semanal',
-    required: false,
-  })
+  @ApiPropertyOptional({ description: 'Nome do plano alimentar' })
   @IsOptional()
   @IsString()
   @IsNotEmpty()
   name?: string;
 
-  @ApiProperty({
-    description: 'Data de início do plano',
-    example: '2025-04-05',
-    required: false,
-  })
+  @ApiPropertyOptional({ description: 'Data de início do plano' })
   @IsOptional()
   @IsDate()
   @Type(() => Date)
   startDate?: Date;
 
-  @ApiProperty({
-    description: 'Data de término do plano',
-    example: '2025-04-12',
-    required: false,
-  })
+  @ApiPropertyOptional({ description: 'Data de término do plano' })
   @IsOptional()
   @IsDate()
   @Type(() => Date)
@@ -49,67 +43,55 @@ export class UpdateMealPlanDto {
   })
   endDate?: Date;
 
-  @ApiProperty({
-    description: 'Observações sobre o plano',
-    required: false,
-  })
+  @ApiPropertyOptional({ description: 'Descrição do plano alimentar' })
   @IsOptional()
   @IsString()
   description?: string;
 
-  @ApiProperty({
-    description: 'ID do plano energético de referência',
-    example: '123e4567-e89b-12d3-a456-426614174000',
-    required: false,
-  })
+  @ApiPropertyOptional({ description: 'ID do plano energético' })
   @IsOptional()
-  @IsUUID('4')
+  @IsUUID()
   energyPlanId?: string;
 
-  @ApiProperty({
-    description: 'Calorias diárias do plano',
-    example: 2000.5,
-    required: false,
+  @ApiPropertyOptional({
+    description: 'Calorias diárias',
+    type: Number,
   })
   @IsOptional()
   @IsNumber()
   dailyCalories?: number;
 
-  @ApiProperty({
-    description: 'Proteínas diárias do plano (em gramas)',
-    example: 150.75,
-    required: false,
+  @ApiPropertyOptional({
+    description: 'Proteína diária (g)',
+    type: Number,
   })
   @IsOptional()
   @IsNumber()
   dailyProtein?: number;
 
-  @ApiProperty({
-    description: 'Carboidratos diários do plano (em gramas)',
-    example: 250.3,
-    required: false,
+  @ApiPropertyOptional({
+    description: 'Carboidratos diários (g)',
+    type: Number,
   })
   @IsOptional()
   @IsNumber()
   dailyCarbs?: number;
 
-  @ApiProperty({
-    description: 'Gorduras diárias do plano (em gramas)',
-    example: 80.2,
-    required: false,
+  @ApiPropertyOptional({
+    description: 'Gorduras diárias (g)',
+    type: Number,
   })
   @IsOptional()
   @IsNumber()
   dailyFat?: number;
 
-  @ApiProperty({
+  @ApiPropertyOptional({
     description: 'Lista de refeições do plano',
-    type: [CreateMealDto],
-    required: false,
+    type: [UpdateMealDto],
   })
   @IsOptional()
   @IsArray()
   @ValidateNested({ each: true })
-  @Type(() => CreateMealDto)
-  meals?: CreateMealDto[];
+  @Type(() => UpdateMealDto)
+  meals?: UpdateMealDto[];
 }

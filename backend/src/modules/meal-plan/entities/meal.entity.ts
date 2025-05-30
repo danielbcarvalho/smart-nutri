@@ -37,6 +37,13 @@ export class Meal {
   @Column({ type: 'text', nullable: true })
   description: string;
 
+  @Column({ name: 'is_active_for_calculation', type: 'boolean', default: true })
+  @ApiProperty({
+    example: true,
+    description: 'Indica se a refeição deve ser contabilizada nos cálculos',
+  })
+  isActiveForCalculation: boolean;
+
   @ManyToOne(() => MealPlan, (mealPlan) => mealPlan.meals, {
     onDelete: 'CASCADE',
   })

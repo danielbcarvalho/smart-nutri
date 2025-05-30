@@ -15,6 +15,7 @@ interface MealListProps {
   onExpandMeal: (mealId: string) => void;
   onAddFood: (mealId: string) => void;
   onOpenMenu: (event: React.MouseEvent<HTMLElement>, mealId: string) => void;
+  onToggleCalculation: (mealId: string, isActive: boolean) => void;
 }
 
 export function MealList({
@@ -24,6 +25,7 @@ export function MealList({
   onExpandMeal,
   onAddFood,
   onOpenMenu,
+  onToggleCalculation,
 }: MealListProps) {
   return (
     <Box
@@ -44,6 +46,7 @@ export function MealList({
           onExpand={onExpandMeal}
           onAddFood={onAddFood}
           onOpenMenu={onOpenMenu}
+          onToggleCalculation={onToggleCalculation}
           renderFoodItem={(mealFood) => {
             const food = foodDb.find((f) => f.id === mealFood.foodId);
             if (!food) return null;

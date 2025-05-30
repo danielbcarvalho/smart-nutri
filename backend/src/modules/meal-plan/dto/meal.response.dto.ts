@@ -28,6 +28,12 @@ export class MealResponseDto {
   description: string | null;
 
   @ApiProperty({
+    description: 'Indica se a refeição deve ser contabilizada nos cálculos',
+    example: true,
+  })
+  isActiveForCalculation: boolean;
+
+  @ApiProperty({
     description: 'Lista de alimentos da refeição',
     type: [MealFoodResponseDto],
   })

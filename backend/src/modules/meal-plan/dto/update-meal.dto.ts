@@ -6,6 +6,7 @@ import {
   ValidateNested,
   IsNotEmpty,
   IsNumber,
+  IsBoolean,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 import { CreateMealFoodDto } from './create-meal-food.dto';
@@ -28,6 +29,14 @@ export class UpdateMealDto {
   @IsOptional()
   @IsString()
   description?: string;
+
+  @ApiPropertyOptional({
+    description: 'Indica se a refeição deve ser contabilizada nos cálculos',
+    example: true,
+  })
+  @IsOptional()
+  @IsBoolean()
+  isActiveForCalculation?: boolean;
 
   @ApiPropertyOptional({
     description: 'Lista de alimentos da refeição',

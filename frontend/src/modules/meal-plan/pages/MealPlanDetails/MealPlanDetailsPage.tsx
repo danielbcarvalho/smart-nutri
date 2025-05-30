@@ -187,6 +187,12 @@ export function MealPlanDetails() {
               name: meal.name,
               time: formatTime(meal.time),
               notes: "",
+              mealType: meal.mealType,
+              isActiveForCalculation: true,
+              totalCalories: 0,
+              totalProtein: 0,
+              totalCarbs: 0,
+              totalFat: 0,
               mealFoods: [],
             } as CreateMeal);
           }
@@ -314,6 +320,12 @@ export function MealPlanDetails() {
       name: newMealName,
       time: formatTime(selectedTime),
       notes: "",
+      mealType: "other",
+      isActiveForCalculation: true,
+      totalCalories: 0,
+      totalProtein: 0,
+      totalCarbs: 0,
+      totalFat: 0,
       mealFoods: [],
     } as CreateMeal);
   };
@@ -380,6 +392,12 @@ export function MealPlanDetails() {
         name: `${mealToDuplicate.name} (cópia)`,
         time: mealToDuplicate.time,
         notes: mealToDuplicate.notes,
+        mealType: mealToDuplicate.mealType,
+        isActiveForCalculation: mealToDuplicate.isActiveForCalculation,
+        totalCalories: mealToDuplicate.totalCalories,
+        totalProtein: mealToDuplicate.totalProtein,
+        totalCarbs: mealToDuplicate.totalCarbs,
+        totalFat: mealToDuplicate.totalFat,
         mealFoods: mealToDuplicate.mealFoods || [],
       } as CreateMeal);
     }
@@ -398,7 +416,7 @@ export function MealPlanDetails() {
     setAnchorEl(null);
   };
 
-  // Função para calcular os nutrientes totais do plano
+  // Modificar a função calculateTotalNutrients para considerar o estado local
   const calculateTotalNutrients = () => {
     if (!plan?.meals)
       return {
@@ -411,6 +429,14 @@ export function MealPlanDetails() {
 
     const nutrients = plan.meals.reduce(
       (acc, meal) => {
+        // Verificar se a refeição está ativa para cálculo (considerando mudanças locais)
+        const isActiveForCalculation =
+          localMealChanges[meal.id] !== undefined
+            ? localMealChanges[meal.id]
+            : meal.isActiveForCalculation;
+
+        if (!isActiveForCalculation) return acc;
+
         const mealNutrients = meal.mealFoods.reduce(
           (mealAcc, mealFood) => {
             const food = foodDb.find((f) => f.id === mealFood.foodId);
@@ -481,7 +507,20 @@ export function MealPlanDetails() {
     return nutrients;
   };
 
-  // Função para salvar o plano alimentar
+  // Adicionar estado local para controlar as mudanças
+  const [localMealChanges, setLocalMealChanges] = useState<
+    Record<string, boolean>
+  >({});
+
+  // Modificar o handler para atualizar apenas o estado local
+  const handleToggleCalculation = (mealId: string, isActive: boolean) => {
+    setLocalMealChanges((prev) => ({
+      ...prev,
+      [mealId]: isActive,
+    }));
+  };
+
+  // Modificar a função de salvar para incluir as mudanças de cálculo
   const handleSaveMealPlan = async () => {
     if (!plan) {
       setSnackbar({
@@ -494,6 +533,18 @@ export function MealPlanDetails() {
 
     try {
       const totalNutrients = calculateTotalNutrients();
+
+      // Atualizar as refeições com as mudanças locais
+      const updatedMeals = plan.meals.map((meal) => {
+        if (localMealChanges[meal.id] !== undefined) {
+          return {
+            ...meal,
+            isActiveForCalculation: localMealChanges[meal.id],
+          };
+        }
+        return meal;
+      });
+
       const updatedPlan = await mealPlanService.updatePlan(plan.id, {
         energyPlanId: selectedEnergyPlanId || undefined,
         dailyCalories: totalNutrients.calories,
@@ -501,9 +552,11 @@ export function MealPlanDetails() {
         dailyCarbs: totalNutrients.carbohydrates,
         dailyFat: totalNutrients.fat,
         description: patientInstructions,
+        meals: updatedMeals,
       });
 
       setSelectedEnergyPlanId(updatedPlan.energyPlanId || null);
+      setLocalMealChanges({}); // Limpar as mudanças locais após salvar
 
       await queryClient.invalidateQueries({ queryKey: ["mealPlan", planId] });
       setSnackbar({
@@ -615,12 +668,19 @@ export function MealPlanDetails() {
       />
 
       <MealList
-        meals={sortedMeals}
+        meals={sortedMeals.map((meal) => ({
+          ...meal,
+          isActiveForCalculation:
+            localMealChanges[meal.id] !== undefined
+              ? localMealChanges[meal.id]
+              : meal.isActiveForCalculation,
+        }))}
         foodDb={foodDb}
         expandedMeals={expandedMeals}
         onExpandMeal={handleExpandMeal}
         onAddFood={handleAddFood}
         onOpenMenu={handleOpenMenu}
+        onToggleCalculation={handleToggleCalculation}
       />
 
       <PatientInstructionsCard
@@ -1019,9 +1079,9 @@ export function MealPlanDetails() {
 
 // Constantes necessárias para o componente
 const DEFAULT_MEALS = [
-  { name: "Café da manhã", time: "07:00" },
-  { name: "Almoço", time: "12:00" },
-  { name: "Jantar", time: "19:00" },
+  { name: "Café da manhã", time: "07:00", mealType: "breakfast" },
+  { name: "Almoço", time: "12:00", mealType: "lunch" },
+  { name: "Jantar", time: "19:00", mealType: "dinner" },
 ];
 
 const formatTime = (time: string) => {

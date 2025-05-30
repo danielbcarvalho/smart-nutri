@@ -13,45 +13,60 @@ export type UpdateMeal = Partial<Omit<Meal, "id" | "mealFoods">> & {
   energyPlanId?: string;
 };
 
-export interface Meal {
+export interface Substitute {
   id: string;
-  time: string;
-  name: string;
-  notes?: string;
-  mealFoods: MealFood[];
-}
-
-export interface MealPlan {
-  id: string;
-  patientId: string;
+  originalFoodId: string;
+  originalSource: string;
+  substituteFoodId: string;
+  substituteSource: string;
+  substituteAmount: string;
+  substituteUnit: string;
   nutritionistId: string;
-  name: string;
-  type: "alimentos" | "equivalentes" | "qualitativa";
-  status: "draft" | "active" | "archived";
-  startDate: string;
-  endDate: string;
-  meals: Meal[];
   createdAt: string;
   updatedAt: string;
-  description?: string;
-  dailyCalories?: number;
-  dailyProtein?: number;
-  dailyCarbs?: number;
-  dailyFat?: number;
-  energyPlanId?: string;
 }
 
-// Adicionar tipos para substitutos
-interface Substitute {
+export interface MealFood {
   id: string;
   foodId: string;
   source: string;
   amount: number;
   unit: string;
+  description?: string;
+  substitutes?: Substitute[];
 }
 
-interface MealFood extends FoodServiceMealFood {
-  substitutes?: Substitute[];
+export interface Meal {
+  id: string;
+  name: string;
+  time: string;
+  notes?: string;
+  mealType: string;
+  isActiveForCalculation: boolean;
+  totalCalories: number;
+  totalProtein: number;
+  totalCarbs: number;
+  totalFat: number;
+  mealFoods: MealFood[];
+}
+
+export interface MealPlan {
+  id: string;
+  name: string;
+  patientId: string;
+  nutritionistId: string;
+  startDate: string;
+  endDate: string;
+  status: string;
+  meals: Meal[];
+  createdAt: string;
+  updatedAt: string;
+  description?: string;
+  energyPlanId?: string;
+  dailyCalories?: number;
+  dailyProtein?: number;
+  dailyCarbs?: number;
+  dailyFat?: number;
 }
 
 export const mealPlanService = {
@@ -130,5 +145,26 @@ export const mealPlanService = {
 
   removeSubstitute: async (mealFoodId: string, substituteId: string) => {
     await api.delete(`/meal-foods/${mealFoodId}/substitutes/${substituteId}`);
+  },
+
+  toggleMealCalculation: async (
+    planId: string,
+    mealId: string,
+    isActive: boolean
+  ) => {
+    const response = await api.patch(
+      `/meal-plans/${planId}/meals/${mealId}/calculation`,
+      {
+        isActiveForCalculation: isActive,
+      }
+    );
+    return response.data;
+  },
+
+  getMealCalculationStatus: async (planId: string, mealId: string) => {
+    const response = await api.get(
+      `/meal-plans/${planId}/meals/${mealId}/calculation`
+    );
+    return response.data;
   },
 };
