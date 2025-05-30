@@ -46,6 +46,7 @@ meal-plan/
 
 - **Plano Alimentar (`MealPlan`)**: Um plano alimentar específico associado a um paciente e a um nutricionista. Contém refeições (`Meal`) e alimentos (`MealFood`) detalhados, com datas de início e fim. Inclui cálculos nutricionais totais e diários.
 - **Modelo de Plano Alimentar (`MealPlanTemplate`)**: Um modelo reutilizável que pode ser público ou privado para um nutricionista. Contém modelos de refeições (`MealTemplate`) e modelos de alimentos (`FoodTemplate`). Serve como base para criar rapidamente novos `MealPlan` para pacientes.
+- **Refeição Ativa (`isActiveForCalculation`)**: Uma refeição pode ser marcada como ativa ou inativa para os cálculos nutricionais do plano. Apenas refeições ativas são consideradas no cálculo dos totais diários de calorias, proteínas, carboidratos e gorduras.
 
 ## Entidades (Banco de Dados)
 
@@ -76,7 +77,8 @@ graph TD
   - Campos Chave: `name`, `patientId`, `nutritionistId`, `startDate`, `endDate`, `dailyCalories`, `dailyProtein`, `dailyCarbs`, `dailyFat`.
 - **`Meal`**: Representa uma refeição dentro de um `MealPlan`.
   - Relacionamentos: `MealPlan` (ManyToOne), `MealFood` (OneToMany).
-  - Campos Chave: `name`, `time`, `description`, `totalCalories`, `totalProtein`, `totalCarbs`, `totalFat`.
+  - Campos Chave: `name`, `time`, `description`, `totalCalories`, `totalProtein`, `totalCarbs`, `totalFat`, `isActiveForCalculation`.
+  - O campo `isActiveForCalculation` (boolean) determina se a refeição deve ser incluída nos cálculos nutricionais do plano.
 - **`MealFood`**: Tabela de junção entre `Meal` e `Food`, especificando a quantidade de um alimento em uma refeição.
   - Relacionamentos: `Meal` (ManyToOne), `Food` (ManyToOne).
   - Campos Chave: `amount`, `unit`, `description`.
@@ -107,7 +109,7 @@ _(Nota: A entidade `Food` pertence ao módulo `foods`)_
     - `getMeals(id, nutritionistId)`: Lista as refeições de um plano.
     - `search(query, nutritionistId)`: Busca planos por nome.
     - `updateMealNutritionTotals(mealId)`: (Privado) Calcula e atualiza os totais nutricionais de uma refeição.
-    - `updateMealPlanTotals(mealPlanId)`: (Privado) Calcula e atualiza os totais nutricionais diários de um plano.
+    - `updateMealPlanTotals(mealPlanId)`: (Privado) Calcula e atualiza os totais nutricionais diários de um plano, considerando apenas refeições ativas (`isActiveForCalculation = true`).
   - **Dependências**: `MealPlanRepository`, `MealRepository`, `MealFoodRepository`, `PatientsService`.
 
 - **`MealPlanTemplatesService`**:

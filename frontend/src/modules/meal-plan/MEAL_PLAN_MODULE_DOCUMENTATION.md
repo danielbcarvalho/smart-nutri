@@ -14,6 +14,7 @@ src/modules/meal-plan/
 │       └── MealPlanDetailsPage.tsx       # Página de detalhes e edição de um plano alimentar
 ├── components/
 │   ├── AddFoodToMealModal.tsx            # Modal para adicionar alimentos a uma refeição
+│   ├── MealCard.tsx                      # Card de refeição com controle de inclusão nos cálculos
 │   ├── MealPlan.tsx                      # Componente principal do plano alimentar
 │   └── MealPlanButton.tsx                # Botão de ação para planos alimentares
 ├── services/
@@ -26,6 +27,11 @@ src/modules/meal-plan/
 
 - **MealPlanPage**: Página principal para listar, criar e excluir planos alimentares de um paciente.
 - **MealPlanDetailsPage**: Página para visualizar, editar e gerenciar refeições de um plano alimentar.
+- **MealCard**: Componente que representa uma refeição individual, com controles para:
+  - Expandir/recolher detalhes da refeição
+  - Ativar/desativar inclusão nos cálculos nutricionais
+  - Adicionar/editar alimentos
+  - Acessar menu de ações
 - **AddFoodToMealModal**: Modal centralizado para busca, seleção e prescrição de alimentos em uma refeição. Toda a lógica de busca, seleção, análise de nutrientes e observações está encapsulada neste componente, que é utilizado pelo `MealPlanDetailsPage`.
 - **Componentes de UI**: Utiliza componentes globais (ex: botões, diálogos) de `src/components`.
 
@@ -75,6 +81,54 @@ Para mais detalhes, consulte também a seção "Busca de Alimentos (Food Databas
 
 > **Uso:**
 > Integrado ao `AddFoodToMealModal` para exibir a análise nutricional da refeição conforme alimentos prescritos.
+
+---
+
+## 🧩 Componente MealCard
+
+O componente `MealCard` é responsável por exibir e gerenciar uma refeição individual dentro do plano alimentar. Suas principais características incluem:
+
+### Visual e Interação
+
+- Borda direita colorida indicando status de inclusão nos cálculos:
+  - Cor de destaque quando ativo
+  - Cinza quando inativo
+- Cabeçalho com:
+  - Ícone de expansão
+  - Horário da refeição
+  - Nome da refeição
+  - Badge com quantidade de alimentos
+  - Switch para controle de inclusão nos cálculos
+  - Menu de ações
+
+### Funcionalidades
+
+- **Controle de Cálculos**: Switch com tooltip explicativo:
+  - Ativo: "Esta refeição está incluída nos cálculos. Clique para remover."
+  - Inativo: "Esta refeição não está incluída nos cálculos. Clique para incluir."
+- **Expansão**: Mostra detalhes da refeição:
+  - Lista de alimentos
+  - Resumo nutricional
+  - Notas da refeição
+- **Ações**:
+  - Adicionar/editar alimentos
+  - Reordenar refeições
+  - Excluir refeição
+
+### Props
+
+```typescript
+interface MealCardProps {
+  meal: Meal;
+  foodDb: Alimento[];
+  expanded: boolean;
+  onExpand: (mealId: string) => void;
+  onAddFood: (mealId: string) => void;
+  onOpenMenu: (event: React.MouseEvent<HTMLElement>, mealId: string) => void;
+  onToggleCalculation: (mealId: string, isActive: boolean) => void;
+  renderFoodItem: (mealFood: MealFood) => React.ReactNode;
+}
+```
 
 ---
 
