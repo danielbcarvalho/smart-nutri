@@ -1227,6 +1227,7 @@ export class SamplePatientService {
       foodId: food.sourceId, // id do JSON, igual ao fluxo normal do frontend
       source: food.source,
       meal: { id: meal.id },
+      substitutes: [], // Inicializa array vazio de substitutos
     });
     await this.mealFoodRepository.save(mealFood);
   }
