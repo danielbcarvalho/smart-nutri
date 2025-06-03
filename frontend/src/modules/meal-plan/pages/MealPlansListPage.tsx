@@ -39,6 +39,7 @@ import { useFoodDb } from "@/services/useFoodDb";
 import { Meal } from "../services/mealPlanService";
 import type { MealFood } from "@/services/foodService";
 import type { Alimento } from "@/modules/meal-plan/components/AddFoodToMealModal";
+import { calculateTotalNutrients } from "../utils/nutrientCalculations";
 
 // Estilo dos botões de ação para consistência
 const actionButtonSx = {
@@ -307,7 +308,7 @@ export function MealPlan() {
   const theme = useTheme();
 
   // Função para calcular os nutrientes totais do plano
-  const calculateTotalNutrients = (plan: { meals?: Meal[] }) => {
+  const calculatePlanNutrients = (plan: { meals?: Meal[] }) => {
     if (!plan?.meals) {
       return {
         protein: 0,
@@ -318,70 +319,7 @@ export function MealPlan() {
       };
     }
 
-    const nutrients = plan.meals.reduce(
-      (
-        acc: {
-          protein: number;
-          fat: number;
-          carbohydrates: number;
-          calories: number;
-          totalWeight: number;
-        },
-        meal: Meal
-      ) => {
-        const mealNutrients = meal.mealFoods.reduce(
-          (
-            mealAcc: {
-              protein: number;
-              fat: number;
-              carbohydrates: number;
-              calories: number;
-              totalWeight: number;
-            },
-            mealFood: MealFood
-          ) => {
-            const food = foodDb.find((f: Alimento) => f.id === mealFood.foodId);
-            if (!food) return mealAcc;
-
-            const amount = mealFood.amount;
-            const mc = food.mc?.find(
-              (m: { nome_mc: string; peso: number }) =>
-                m.nome_mc === mealFood.unit
-            );
-            if (!mc) return mealAcc;
-
-            const conversionFactor = Number(mc.peso) / 100;
-
-            return {
-              protein:
-                mealAcc.protein +
-                Number(food.ptn || 0) * amount * conversionFactor,
-              fat:
-                mealAcc.fat + Number(food.lip || 0) * amount * conversionFactor,
-              carbohydrates:
-                mealAcc.carbohydrates +
-                Number(food.cho || 0) * amount * conversionFactor,
-              calories:
-                mealAcc.calories +
-                Number(food.kcal || 0) * amount * conversionFactor,
-              totalWeight: mealAcc.totalWeight + amount * Number(mc.peso),
-            };
-          },
-          { protein: 0, fat: 0, carbohydrates: 0, calories: 0, totalWeight: 0 }
-        );
-
-        return {
-          protein: acc.protein + mealNutrients.protein,
-          fat: acc.fat + mealNutrients.fat,
-          carbohydrates: acc.carbohydrates + mealNutrients.carbohydrates,
-          calories: acc.calories + mealNutrients.calories,
-          totalWeight: acc.totalWeight + mealNutrients.totalWeight,
-        };
-      },
-      { protein: 0, fat: 0, carbohydrates: 0, calories: 0, totalWeight: 0 }
-    );
-
-    return nutrients;
+    return calculateTotalNutrients(plan.meals, foodDb);
   };
 
   if (!patientId) {
@@ -520,7 +458,7 @@ export function MealPlan() {
           </Box>
         ) : (
           sortedPlans.map((plan) => {
-            const nutrients = calculateTotalNutrients(plan);
+            const nutrients = calculatePlanNutrients(plan);
             return (
               <Card
                 key={plan.id}

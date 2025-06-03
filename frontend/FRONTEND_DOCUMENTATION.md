@@ -121,6 +121,68 @@ Componentes reutilizáveis (UI, botões, modais, etc) ficam em `src/components/`
   import { PatientFormModal } from "@components/PatientForm/PatientFormModal";
   ```
 
+### FloatingSaveButton
+
+O `FloatingSaveButton` é um componente de botão flutuante que permanece sempre visível durante a rolagem da página. É ideal para ações importantes que precisam estar sempre acessíveis.
+
+#### Características
+
+- Botão flutuante com ícone de salvar
+- Posicionado no canto inferior direito
+- Sempre visível durante a rolagem
+- Tooltip informativo
+- Animação de entrada suave
+- Sombra e efeito hover
+
+#### Uso
+
+```tsx
+import { FloatingSaveButton } from "@components/FloatingSaveButton";
+
+function MinhaTela() {
+  const handleSave = () => {
+    // Lógica de salvamento
+  };
+
+  return (
+    <div>
+      {/* Conteúdo da tela */}
+      <FloatingSaveButton onClick={handleSave} />
+    </div>
+  );
+}
+```
+
+#### Props
+
+| Prop    | Tipo     | Descrição                         |
+| ------- | -------- | --------------------------------- |
+| onClick | function | Função chamada ao clicar no botão |
+
+#### Boas Práticas
+
+1. **Uso Apropriado**
+
+   - Use para ações de salvamento importantes
+   - Ideal para formulários longos ou páginas com muito conteúdo
+   - Mantenha a consistência visual em toda a aplicação
+
+2. **Posicionamento**
+
+   - O botão é fixo no canto inferior direito
+   - Não interfere com outros elementos da interface
+   - Mantém-se visível durante a rolagem
+
+3. **Acessibilidade**
+
+   - Inclui tooltip para melhor usabilidade
+   - Mantém contraste adequado
+   - Ícone claro e reconhecível
+
+4. **Performance**
+   - Renderizado via Portal para evitar problemas de z-index
+   - Otimizado para não afetar a performance da página
+
 ## Design System
 
 O SmartNutri possui um design system consistente e reutilizável, disponível através de componentes pré-configurados.
@@ -998,3 +1060,226 @@ interface LogoContextType {
 - Evite referências diretas ao arquivo `/images/logo.png`
 - Mantenha a consistência do tamanho e proporção do logo em todos os lugares
 - Valide o formato e tamanho do arquivo antes do upload (PNG ou SVG, até 2MB)
+
+## Sistema de Notificações (Snackbar)
+
+O SmartNutri utiliza um sistema global de notificações através do componente `GlobalSnackbar`. Este componente é responsável por exibir mensagens de feedback para o usuário de forma consistente em toda a aplicação.
+
+### Implementação
+
+O `GlobalSnackbar` é um componente reutilizável que deve ser usado em todos os layouts da aplicação. Ele é configurado para aparecer no topo da tela e permanecer visível durante a rolagem.
+
+```tsx
+// src/components/GlobalSnackbar.tsx
+import React from "react";
+import { Snackbar, Alert } from "@mui/material";
+
+interface GlobalSnackbarProps {
+  open: boolean;
+  message: string;
+  severity: "success" | "error" | "info" | "warning";
+  onClose: () => void;
+}
+
+export const GlobalSnackbar: React.FC<GlobalSnackbarProps> = ({
+  open,
+  message,
+  severity,
+  onClose,
+}) => {
+  return (
+    <Snackbar
+      open={open}
+      autoHideDuration={6000}
+      onClose={onClose}
+      anchorOrigin={{ vertical: "top", horizontal: "center" }}
+      sx={{
+        position: "fixed",
+        top: "24px !important",
+        left: "50% !important",
+        transform: "translateX(-50%) !important",
+        zIndex: 9999,
+        "& .MuiAlert-root": {
+          minWidth: "300px",
+          boxShadow: "0px 4px 12px rgba(0, 0, 0, 0.15)",
+        },
+      }}
+    >
+      <Alert
+        onClose={onClose}
+        severity={severity}
+        sx={{
+          width: "100%",
+          "& .MuiAlert-message": {
+            fontWeight: 500,
+          },
+        }}
+      >
+        {message}
+      </Alert>
+    </Snackbar>
+  );
+};
+```
+
+### Uso em Layouts
+
+O `GlobalSnackbar` deve ser implementado em todos os layouts da aplicação. Exemplo de implementação:
+
+```tsx
+// src/layouts/Layout.tsx ou src/layouts/PatientLayout.tsx
+import { useState } from "react";
+import { GlobalSnackbar } from "@components/GlobalSnackbar";
+
+export const Layout = () => {
+  const [snackbar, setSnackbar] = useState({
+    open: false,
+    message: "",
+    severity: "success" as "success" | "error" | "info" | "warning",
+  });
+
+  // Função para mostrar notificação
+  const showNotification = (
+    message: string,
+    severity: "success" | "error" | "info" | "warning" = "success"
+  ) => {
+    setSnackbar({ open: true, message, severity });
+  };
+
+  // Função para fechar notificação
+  const handleCloseSnackbar = () => {
+    setSnackbar((prev) => ({ ...prev, open: false }));
+  };
+
+  return (
+    <>
+      {/* Resto do layout */}
+      <GlobalSnackbar
+        open={snackbar.open}
+        message={snackbar.message}
+        severity={snackbar.severity}
+        onClose={handleCloseSnackbar}
+      />
+    </>
+  );
+};
+```
+
+### Uso em Componentes
+
+Para usar o sistema de notificações em qualquer componente:
+
+```tsx
+import { useOutletContext } from "react-router-dom";
+
+function MeuComponente() {
+  const { showNotification } = useOutletContext<{
+    showNotification: (
+      message: string,
+      severity?: "success" | "error" | "info" | "warning"
+    ) => void;
+  }>();
+
+  const handleAction = async () => {
+    try {
+      // Realizar alguma ação
+      await saveData();
+      showNotification("Operação realizada com sucesso!", "success");
+    } catch (error) {
+      showNotification("Erro ao realizar operação.", "error");
+    }
+  };
+
+  return <Button onClick={handleAction}>Salvar</Button>;
+}
+```
+
+### Tipos de Notificações
+
+O sistema suporta quatro tipos de notificações:
+
+1. **Success** (Verde)
+
+   ```tsx
+   showNotification("Operação realizada com sucesso!", "success");
+   ```
+
+2. **Error** (Vermelho)
+
+   ```tsx
+   showNotification("Ocorreu um erro ao processar sua solicitação.", "error");
+   ```
+
+3. **Warning** (Amarelo)
+
+   ```tsx
+   showNotification(
+     "Atenção: alguns dados podem estar incompletos.",
+     "warning"
+   );
+   ```
+
+4. **Info** (Azul)
+   ```tsx
+   showNotification("Sua sessão expirará em 5 minutos.", "info");
+   ```
+
+### Boas Práticas
+
+1. **Mensagens Claras e Concisas**
+
+   - Use mensagens curtas e diretas
+   - Evite jargões técnicos
+   - Seja específico sobre o que aconteceu
+
+2. **Uso Apropriado dos Tipos**
+
+   - `success`: Operações concluídas com sucesso
+   - `error`: Falhas e erros que precisam de atenção
+   - `warning`: Avisos importantes mas não críticos
+   - `info`: Informações gerais e atualizações
+
+3. **Posicionamento**
+
+   - O Snackbar sempre aparece no topo da tela
+   - Mantém-se visível durante a rolagem
+   - Não interfere com outros elementos da interface
+
+4. **Duração**
+   - Duração padrão: 6 segundos
+   - Mensagens de erro podem ter duração maior
+   - O usuário pode fechar manualmente
+
+### Exemplos de Uso Comum
+
+```tsx
+// Sucesso em operação
+showNotification("Paciente cadastrado com sucesso!", "success");
+
+// Erro em operação
+showNotification("Não foi possível salvar as alterações.", "error");
+
+// Aviso importante
+showNotification("Alguns campos obrigatórios estão vazios.", "warning");
+
+// Informação geral
+showNotification("Novas atualizações disponíveis.", "info");
+```
+
+### Considerações Técnicas
+
+1. **Contexto**
+
+   - O `showNotification` é fornecido através do contexto do React Router
+   - Deve ser acessado usando `useOutletContext`
+
+2. **Estilização**
+
+   - O Snackbar usa o tema da aplicação
+   - Cores e estilos são consistentes com o design system
+   - Sombra e z-index garantem visibilidade
+
+3. **Responsividade**
+   - Funciona em todos os tamanhos de tela
+   - Mantém a legibilidade em dispositivos móveis
+   - Adapta-se ao layout da aplicação

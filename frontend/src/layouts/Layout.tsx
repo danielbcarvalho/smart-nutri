@@ -1,13 +1,32 @@
 import { Box, useTheme, alpha } from "@mui/material";
 import { Outlet } from "react-router-dom";
 import { Container } from "../components/Layout/Container";
-
 import { HeaderGlobal } from "../components/Layout/HeaderGlobal";
 import { Footer } from "../components/Layout/Footer";
 import FloatingHelpButton from "../components/FloatingHelpButton";
+import { useState } from "react";
+import { GlobalSnackbar } from "../components/GlobalSnackbar";
 
 export const Layout = () => {
   const theme = useTheme();
+  const [snackbar, setSnackbar] = useState({
+    open: false,
+    message: "",
+    severity: "success" as "success" | "error" | "info" | "warning",
+  });
+
+  // Função para mostrar notificação
+  const showNotification = (
+    message: string,
+    severity: "success" | "error" | "info" | "warning" = "success"
+  ) => {
+    setSnackbar({ open: true, message, severity });
+  };
+
+  // Função para fechar notificação
+  const handleCloseSnackbar = () => {
+    setSnackbar((prev) => ({ ...prev, open: false }));
+  };
 
   return (
     <Box
@@ -33,6 +52,8 @@ export const Layout = () => {
         },
         WebkitOverflowScrolling: "touch",
         touchAction: "manipulation",
+        position: "relative",
+        overflow: "hidden",
       }}
     >
       <Container
@@ -90,11 +111,18 @@ export const Layout = () => {
             WebkitTapHighlightColor: "transparent",
           }}
         >
-          <Outlet />
+          <Outlet context={{ showNotification }} />
         </Box>
         <Footer />
         <FloatingHelpButton />
       </Container>
+
+      <GlobalSnackbar
+        open={snackbar.open}
+        message={snackbar.message}
+        severity={snackbar.severity}
+        onClose={handleCloseSnackbar}
+      />
     </Box>
   );
 };

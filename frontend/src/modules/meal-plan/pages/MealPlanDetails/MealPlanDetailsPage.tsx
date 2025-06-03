@@ -1,11 +1,9 @@
 import React, { useState, useEffect, useRef } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useOutletContext } from "react-router-dom";
 import {
   Box,
   Typography,
   LinearProgress,
-  Snackbar,
-  Alert,
   Dialog,
   DialogTitle,
   Stack,
@@ -19,6 +17,7 @@ import {
 } from "@mui/material";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Add as AddIcon, Save as SaveIcon } from "@mui/icons-material";
+import { FloatingSaveButton } from "@/components/FloatingSaveButton";
 
 import {
   mealPlanService,
@@ -50,6 +49,7 @@ import {
 } from "../../../energy-plan/constants/energyPlanConstants";
 import MealMenu from "../../components/MealMenu";
 import { PatientInstructionsCard } from "./components/PatientInstructionsCard";
+import { calculateTotalNutrients as calculateTotalNutrientsFromUtils } from "../../utils/nutrientCalculations";
 
 // Componente principal
 export function MealPlanDetails() {
@@ -69,15 +69,12 @@ export function MealPlanDetails() {
   const foodDb: Alimento[] = Array.isArray(foodDbRaw) ? foodDbRaw : [];
   const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
   const [mealMenuId, setMealMenuId] = useState("");
-  const [snackbar, setSnackbar] = useState<{
-    open: boolean;
-    message: string;
-    severity: "success" | "error";
-  }>({
-    open: false,
-    message: "",
-    severity: "success",
-  });
+  const { showNotification } = useOutletContext<{
+    showNotification: (
+      message: string,
+      severity?: "success" | "error" | "info" | "warning"
+    ) => void;
+  }>();
 
   // Adicionar estados
   const [patientInstructions, setPatientInstructions] = useState("");
@@ -416,9 +413,9 @@ export function MealPlanDetails() {
     setAnchorEl(null);
   };
 
-  // Modificar a função calculateTotalNutrients para considerar o estado local
+  // Modificar a função calculateTotalNutrients para usar a função centralizada
   const calculateTotalNutrients = () => {
-    if (!plan?.meals)
+    if (!plan?.meals) {
       return {
         protein: 0,
         fat: 0,
@@ -426,55 +423,20 @@ export function MealPlanDetails() {
         calories: 0,
         totalWeight: 0,
       };
+    }
 
-    const nutrients = plan.meals.reduce(
-      (acc, meal) => {
-        // Verificar se a refeição está ativa para cálculo (considerando mudanças locais)
-        const isActiveForCalculation =
-          localMealChanges[meal.id] !== undefined
-            ? localMealChanges[meal.id]
-            : meal.isActiveForCalculation;
+    // Aplica as mudanças locais de isActiveForCalculation
+    const mealsWithLocalChanges = plan.meals.map((meal) => ({
+      ...meal,
+      isActiveForCalculation:
+        localMealChanges[meal.id] !== undefined
+          ? localMealChanges[meal.id]
+          : meal.isActiveForCalculation,
+    }));
 
-        if (!isActiveForCalculation) return acc;
-
-        const mealNutrients = meal.mealFoods.reduce(
-          (mealAcc, mealFood) => {
-            const food = foodDb.find((f) => f.id === mealFood.foodId);
-            if (!food) return mealAcc;
-
-            const amount = mealFood.amount;
-            const mc = food.mc?.find((m) => m.nome_mc === mealFood.unit);
-            if (!mc) return mealAcc;
-
-            const conversionFactor = Number(mc.peso) / 100;
-
-            return {
-              protein:
-                mealAcc.protein +
-                Number(food.ptn || 0) * amount * conversionFactor,
-              fat:
-                mealAcc.fat + Number(food.lip || 0) * amount * conversionFactor,
-              carbohydrates:
-                mealAcc.carbohydrates +
-                Number(food.cho || 0) * amount * conversionFactor,
-              calories:
-                mealAcc.calories +
-                Number(food.kcal || 0) * amount * conversionFactor,
-              totalWeight: mealAcc.totalWeight + amount * Number(mc.peso),
-            };
-          },
-          { protein: 0, fat: 0, carbohydrates: 0, calories: 0, totalWeight: 0 }
-        );
-
-        return {
-          protein: acc.protein + mealNutrients.protein,
-          fat: acc.fat + mealNutrients.fat,
-          carbohydrates: acc.carbohydrates + mealNutrients.carbohydrates,
-          calories: acc.calories + mealNutrients.calories,
-          totalWeight: acc.totalWeight + mealNutrients.totalWeight,
-        };
-      },
-      { protein: 0, fat: 0, carbohydrates: 0, calories: 0, totalWeight: 0 }
+    const nutrients = calculateTotalNutrientsFromUtils(
+      mealsWithLocalChanges,
+      foodDb
     );
 
     if (energyPlan) {
@@ -484,7 +446,7 @@ export function MealPlanDetails() {
         Number(energyPlan.macronutrientDistribution?.fats),
         Number(energyPlan.macronutrientDistribution?.carbs)
       );
-      const result = {
+      return {
         ...nutrients,
         targetCalories: Number(energyPlan.calculatedGetKcal),
         tmb: Number(energyPlan.calculatedTmbKcal),
@@ -501,7 +463,6 @@ export function MealPlanDetails() {
           energyPlan.macronutrientDistribution?.carbs ?? undefined
         ),
       };
-      return result;
     }
 
     return nutrients;
@@ -523,27 +484,46 @@ export function MealPlanDetails() {
   // Modificar a função de salvar para incluir as mudanças de cálculo
   const handleSaveMealPlan = async () => {
     if (!plan) {
-      setSnackbar({
-        open: true,
-        message: "Plano alimentar não encontrado.",
-        severity: "error",
-      });
+      showNotification("Plano alimentar não encontrado.", "error");
       return;
     }
 
     try {
       const totalNutrients = calculateTotalNutrients();
 
-      // Atualizar as refeições com as mudanças locais
-      const updatedMeals = plan.meals.map((meal) => {
-        if (localMealChanges[meal.id] !== undefined) {
-          return {
-            ...meal,
-            isActiveForCalculation: localMealChanges[meal.id],
-          };
-        }
-        return meal;
-      });
+      const updatedMeals = plan.meals.map((meal) => ({
+        ...meal,
+        isActiveForCalculation:
+          localMealChanges[meal.id] !== undefined
+            ? localMealChanges[meal.id]
+            : meal.isActiveForCalculation,
+        mealFoods: meal.mealFoods.map((mealFood) => ({
+          ...mealFood,
+          substitutes:
+            mealFood.substitutes?.map((substitute) => {
+              const substituteFood = foodDb.find(
+                (f) => f.id === substitute.substituteFoodId
+              );
+              return {
+                id: substitute.id,
+                originalFoodId: mealFood.foodId,
+                originalSource: mealFood.source,
+                substituteFoodId: substitute.substituteFoodId,
+                substituteSource: substitute.substituteSource || "taco",
+                substituteAmount: String(substitute.substituteAmount),
+                substituteUnit: substitute.substituteUnit,
+                nutritionistId: nutritionist?.id || "",
+                createdAt: substitute.createdAt,
+                updatedAt: substitute.updatedAt,
+                foodId: substitute.substituteFoodId,
+                source: substitute.substituteSource || "taco",
+                name: substituteFood?.nome || "",
+                amount: Number(substitute.substituteAmount),
+                unit: substitute.substituteUnit,
+              };
+            }) || [],
+        })),
+      }));
 
       const updatedPlan = await mealPlanService.updatePlan(plan.id, {
         energyPlanId: selectedEnergyPlanId || undefined,
@@ -556,25 +536,17 @@ export function MealPlanDetails() {
       });
 
       setSelectedEnergyPlanId(updatedPlan.energyPlanId || null);
-      setLocalMealChanges({}); // Limpar as mudanças locais após salvar
+      setLocalMealChanges({});
 
       await queryClient.invalidateQueries({ queryKey: ["mealPlan", planId] });
-      setSnackbar({
-        open: true,
-        message: "Plano alimentar salvo com sucesso!",
-        severity: "success",
-      });
-    } catch {
-      setSnackbar({
-        open: true,
-        message: "Erro ao salvar plano alimentar. Tente novamente.",
-        severity: "error",
-      });
+      showNotification("Plano alimentar salvo com sucesso!", "success");
+    } catch (error) {
+      console.error("Erro ao salvar plano:", error);
+      showNotification(
+        "Erro ao salvar plano alimentar. Tente novamente.",
+        "error"
+      );
     }
-  };
-
-  const handleCloseSnackbar = () => {
-    setSnackbar((prev) => ({ ...prev, open: false }));
   };
 
   // Função para abrir o PDF em nova aba
@@ -697,6 +669,9 @@ export function MealPlanDetails() {
         onOpenPdf={handleOpenPdfInNewTab}
         patientId={patientId as string}
       />
+
+      {/* Botão flutuante de salvar */}
+      <FloatingSaveButton onClick={handleSaveMealPlan} />
 
       {/* Menu de opções da refeição */}
       <MealMenu
@@ -1059,20 +1034,6 @@ export function MealPlanDetails() {
           queryClient.invalidateQueries({ queryKey: ["mealPlan", planId] });
         }}
       />
-
-      <Snackbar
-        open={snackbar.open}
-        autoHideDuration={6000}
-        onClose={handleCloseSnackbar}
-      >
-        <Alert
-          onClose={handleCloseSnackbar}
-          severity={snackbar.severity}
-          sx={{ width: "100%" }}
-        >
-          {snackbar.message}
-        </Alert>
-      </Snackbar>
     </Box>
   );
 }

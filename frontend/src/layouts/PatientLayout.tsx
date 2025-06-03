@@ -28,6 +28,7 @@ import { patientService } from "../modules/patient/services/patientService";
 import { Container } from "../components/Layout/Container";
 import { getPreloadFoodDb } from "@/services/useFoodDb";
 import { HeaderGlobal } from "../components/Layout/HeaderGlobal";
+import { GlobalSnackbar } from "../components/GlobalSnackbar";
 
 export function PatientLayout() {
   const { patientId } = useParams<{ patientId: string }>();
@@ -35,6 +36,24 @@ export function PatientLayout() {
   const [sidebarMinimized, setSidebarMinimized] = useState(false);
   const queryClient = useQueryClient();
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
+  const [snackbar, setSnackbar] = useState({
+    open: false,
+    message: "",
+    severity: "success" as "success" | "error" | "info" | "warning",
+  });
+
+  // Função para mostrar notificação
+  const showNotification = (
+    message: string,
+    severity: "success" | "error" | "info" | "warning" = "success"
+  ) => {
+    setSnackbar({ open: true, message, severity });
+  };
+
+  // Função para fechar notificação
+  const handleCloseSnackbar = () => {
+    setSnackbar((prev) => ({ ...prev, open: false }));
+  };
 
   // Buscar os dados do paciente
   const { data: patient } = useQuery({
@@ -208,9 +227,16 @@ export function PatientLayout() {
             overflow: "auto",
           }}
         >
-          <Outlet />
+          <Outlet context={{ showNotification }} />
         </Box>
       </Box>
+
+      <GlobalSnackbar
+        open={snackbar.open}
+        message={snackbar.message}
+        severity={snackbar.severity}
+        onClose={handleCloseSnackbar}
+      />
     </Container>
   );
 }

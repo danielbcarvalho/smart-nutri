@@ -1224,7 +1224,7 @@ export class SamplePatientService {
     const mealFood = this.mealFoodRepository.create({
       amount: amount,
       unit: unit,
-      foodId: food.sourceId, // id do JSON, igual ao fluxo normal do frontend
+      foodId: food.sourceId,
       source: food.source,
       meal: { id: meal.id },
       substitutes: [], // Inicializa array vazio de substitutos
