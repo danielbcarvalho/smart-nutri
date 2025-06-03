@@ -1,5 +1,10 @@
 import React, { useState, useEffect, useRef } from "react";
-import { useParams, useNavigate, useOutletContext } from "react-router-dom";
+import {
+  useParams,
+  useNavigate,
+  useOutletContext,
+  useLocation,
+} from "react-router-dom";
 import {
   Box,
   Typography,
@@ -39,7 +44,7 @@ import { useEnergyPlan } from "../../hooks/useEnergyPlan";
 import { calculateMacronutrientTargetsFromDistribution } from "../../utils/nutrientComparison";
 import { usePatientEnergyPlans } from "@/modules/energy-plan/hooks/useEnergyPlans";
 import { MealPlanHeader } from "./components/MealPlanHeader";
-import { MealList } from "./components/MealList";
+import MealList from "./components/MealList";
 import { NutrientAnalysisSection } from "./components/NutrientAnalysisSection";
 import AddSubstituteModal from "../../components/AddSubstituteModal";
 import {
@@ -78,6 +83,11 @@ export function MealPlanDetails() {
 
   // Adicionar estados
   const [patientInstructions, setPatientInstructions] = useState("");
+  const [isCreatingDefaultMeals, setIsCreatingDefaultMeals] = useState(false);
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const location = useLocation();
+  const navigate = useNavigate();
+  const isSavingRef = useRef(false);
 
   // Carregar dados do plano alimentar
   const { data: plan, isLoading } = useQuery({
@@ -146,11 +156,23 @@ export function MealPlanDetails() {
   const addMealMutation = useMutation({
     mutationFn: (newMeal: CreateMeal) =>
       mealPlanService.addMeal(planId as string, newMeal),
+    onMutate: () => {
+      console.log("addMealMutation - Iniciando mutation");
+    },
     onSuccess: () => {
+      console.log("addMealMutation - Sucesso");
       queryClient.invalidateQueries({ queryKey: ["mealPlan", planId] });
       setOpenMealDialog(false);
       setNewMealName("");
       setSelectedTime("12:00");
+      // Só mostra a notificação se não estiver criando refeições padrão
+      if (!isCreatingDefaultMeals) {
+        showNotification("Refeição adicionada com sucesso!", "success");
+      }
+    },
+    onError: () => {
+      console.log("addMealMutation - Erro");
+      showNotification("Erro ao adicionar refeição. Tente novamente.", "error");
     },
   });
 
@@ -178,6 +200,7 @@ export function MealPlanDetails() {
         !defaultMealsCreated.current
       ) {
         defaultMealsCreated.current = true;
+        setIsCreatingDefaultMeals(true);
         try {
           for (const meal of DEFAULT_MEALS) {
             await addMealMutation.mutateAsync({
@@ -195,6 +218,8 @@ export function MealPlanDetails() {
           }
         } catch {
           // Não resetamos o defaultMealsCreated aqui, pois queremos tentar apenas uma vez
+        } finally {
+          setIsCreatingDefaultMeals(false);
         }
       }
     };
@@ -306,13 +331,25 @@ export function MealPlanDetails() {
   const deleteMealMutation = useMutation({
     mutationFn: (mealId: string) =>
       mealPlanService.deleteMeal(planId as string, mealId),
+    onMutate: () => {
+      console.log("deleteMealMutation - Iniciando mutation");
+    },
     onSuccess: () => {
+      console.log("deleteMealMutation - Sucesso");
       queryClient.invalidateQueries({ queryKey: ["mealPlan", planId] });
+      showNotification("Refeição excluída com sucesso!", "success");
+    },
+    onError: () => {
+      console.log("deleteMealMutation - Erro");
+      showNotification("Erro ao excluir refeição. Tente novamente.", "error");
     },
   });
 
   const handleAddMeal = () => {
-    if (!newMealName || !selectedTime) return;
+    if (!newMealName || !selectedTime) {
+      showNotification("Preencha todos os campos obrigatórios.", "warning");
+      return;
+    }
     addMealMutation.mutate({
       name: newMealName,
       time: formatTime(selectedTime),
@@ -350,8 +387,7 @@ export function MealPlanDetails() {
     setOpenAddFoodModal(true);
   };
 
-  const handleEditMeal = (meal: Meal | undefined) => {
-    if (!meal) return;
+  const handleEditMeal = (meal: Meal) => {
     setNewMealName(meal.name);
     setSelectedTime(meal.time);
     setMealMenuId(meal.id);
@@ -386,11 +422,11 @@ export function MealPlanDetails() {
     const mealToDuplicate = plan?.meals?.find((m) => m.id === mealId);
     if (mealToDuplicate) {
       addMealMutation.mutate({
-        name: `${mealToDuplicate.name} (cópia)`,
+        name: `${mealToDuplicate.name} (opção)`,
         time: mealToDuplicate.time,
         notes: mealToDuplicate.notes,
         mealType: mealToDuplicate.mealType,
-        isActiveForCalculation: mealToDuplicate.isActiveForCalculation,
+        isActiveForCalculation: false,
         totalCalories: mealToDuplicate.totalCalories,
         totalProtein: mealToDuplicate.totalProtein,
         totalCarbs: mealToDuplicate.totalCarbs,
@@ -398,19 +434,6 @@ export function MealPlanDetails() {
         mealFoods: mealToDuplicate.mealFoods || [],
       } as CreateMeal);
     }
-    setAnchorEl(null);
-  };
-
-  const handleOpenMenu = (
-    event: React.MouseEvent<HTMLElement>,
-    mealId: string
-  ) => {
-    setAnchorEl(event.currentTarget as HTMLElement);
-    setMealMenuId(mealId);
-  };
-
-  const handleCloseMenu = () => {
-    setAnchorEl(null);
   };
 
   // Modificar a função calculateTotalNutrients para usar a função centralizada
@@ -479,6 +502,7 @@ export function MealPlanDetails() {
       ...prev,
       [mealId]: isActive,
     }));
+    setHasUnsavedChanges(true);
   };
 
   // Modificar a função de salvar para incluir as mudanças de cálculo
@@ -537,6 +561,7 @@ export function MealPlanDetails() {
 
       setSelectedEnergyPlanId(updatedPlan.energyPlanId || null);
       setLocalMealChanges({});
+      setHasUnsavedChanges(false);
 
       await queryClient.invalidateQueries({ queryKey: ["mealPlan", planId] });
       showNotification("Plano alimentar salvo com sucesso!", "success");
@@ -546,6 +571,7 @@ export function MealPlanDetails() {
         "Erro ao salvar plano alimentar. Tente novamente.",
         "error"
       );
+      throw error; // Re-throw para que o autoSave saiba que falhou
     }
   };
 
@@ -555,7 +581,23 @@ export function MealPlanDetails() {
       const sortedMeals = [...(plan.meals || [])].sort((a, b) => {
         const timeA = a.time.split(":").map(Number);
         const timeB = b.time.split(":").map(Number);
-        return timeA[0] * 60 + timeA[1] - (timeB[0] * 60 + timeB[1]);
+        const timeComparison =
+          timeA[0] * 60 + timeA[1] - (timeB[0] * 60 + timeB[1]);
+
+        // Se os horários forem iguais, ordena pelo nome
+        if (timeComparison === 0) {
+          // Se uma refeição for duplicada (contém "opção"), ela deve vir depois da original
+          const aIsOption = a.name.includes("(opção)");
+          const bIsOption = b.name.includes("(opção)");
+
+          if (aIsOption && !bIsOption) return 1;
+          if (!aIsOption && bIsOption) return -1;
+
+          // Se ambas forem opções ou nenhuma for opção, ordena alfabeticamente
+          return a.name.localeCompare(b.name);
+        }
+
+        return timeComparison;
       });
       const totalNutrients = calculateTotalNutrients();
       const pdfDataObj = {
@@ -587,7 +629,6 @@ export function MealPlanDetails() {
     setOpenEnergyPlanModal(false);
   };
 
-  const navigate = useNavigate();
   const handleCreateNewEnergyPlan = () => {
     navigate(`/patient/${patientId}/energy-plans/new`);
   };
@@ -597,6 +638,65 @@ export function MealPlanDetails() {
   const [selectedMealFood, setSelectedMealFood] = useState<MealFood | null>(
     null
   );
+
+  // Efeito para detectar mudanças
+  useEffect(() => {
+    if (plan) {
+      const hasLocalChanges = Object.keys(localMealChanges).length > 0;
+      const hasInstructionsChanges = patientInstructions !== plan.description;
+      setHasUnsavedChanges(hasLocalChanges || hasInstructionsChanges);
+    }
+  }, [localMealChanges, patientInstructions, plan]);
+
+  // Função para salvar automaticamente
+  const autoSave = async () => {
+    if (hasUnsavedChanges && !isSavingRef.current) {
+      isSavingRef.current = true;
+      try {
+        await handleSaveMealPlan();
+        setHasUnsavedChanges(false);
+      } catch (error) {
+        console.error("Erro ao salvar automaticamente:", error);
+      } finally {
+        isSavingRef.current = false;
+      }
+    }
+  };
+
+  // Efeito para salvar quando o usuário sair da página
+  useEffect(() => {
+    const handleBeforeUnload = async (e: BeforeUnloadEvent) => {
+      if (hasUnsavedChanges) {
+        e.preventDefault();
+        e.returnValue = "";
+        await autoSave();
+      }
+    };
+
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => {
+      window.removeEventListener("beforeunload", handleBeforeUnload);
+    };
+  }, [hasUnsavedChanges]);
+
+  // Efeito para salvar quando mudar de rota
+  useEffect(() => {
+    const handleRouteChange = async () => {
+      if (hasUnsavedChanges) {
+        await autoSave();
+      }
+    };
+
+    return () => {
+      handleRouteChange();
+    };
+  }, [location.pathname, hasUnsavedChanges]);
+
+  // Modificar a função setPatientInstructions
+  const handleInstructionsChange = (instructions: string) => {
+    setPatientInstructions(instructions);
+    setHasUnsavedChanges(true);
+  };
 
   if (isLoading) {
     return (
@@ -618,7 +718,23 @@ export function MealPlanDetails() {
   const sortedMeals = [...(plan.meals || [])].sort((a, b) => {
     const timeA = a.time.split(":").map(Number);
     const timeB = b.time.split(":").map(Number);
-    return timeA[0] * 60 + timeA[1] - (timeB[0] * 60 + timeB[1]);
+    const timeComparison =
+      timeA[0] * 60 + timeA[1] - (timeB[0] * 60 + timeB[1]);
+
+    // Se os horários forem iguais, ordena pelo nome
+    if (timeComparison === 0) {
+      // Se uma refeição for duplicada (contém "opção"), ela deve vir depois da original
+      const aIsOption = a.name.includes("(opção)");
+      const bIsOption = b.name.includes("(opção)");
+
+      if (aIsOption && !bIsOption) return 1;
+      if (!aIsOption && bIsOption) return -1;
+
+      // Se ambas forem opções ou nenhuma for opção, ordena alfabeticamente
+      return a.name.localeCompare(b.name);
+    }
+
+    return timeComparison;
   });
 
   const selectedMeal = plan.meals?.find((m) => m.id === selectedMealId);
@@ -651,13 +767,14 @@ export function MealPlanDetails() {
         expandedMeals={expandedMeals}
         onExpandMeal={handleExpandMeal}
         onAddFood={handleAddFood}
-        onOpenMenu={handleOpenMenu}
         onToggleCalculation={handleToggleCalculation}
+        onEdit={handleEditMeal}
+        onDuplicate={handleDuplicateMeal}
       />
 
       <PatientInstructionsCard
         instructions={patientInstructions}
-        onSave={setPatientInstructions}
+        onSave={handleInstructionsChange}
       />
 
       <NutrientAnalysisSection
@@ -677,13 +794,14 @@ export function MealPlanDetails() {
       <MealMenu
         anchorEl={anchorEl}
         open={Boolean(anchorEl)}
-        onClose={handleCloseMenu}
+        onClose={() => setAnchorEl(null)}
         onEdit={() =>
-          handleEditMeal(plan.meals?.find((m) => m.id === mealMenuId))
+          handleEditMeal(plan.meals?.find((m) => m.id === mealMenuId) as Meal)
         }
         onAddFood={() => handleAddFood(mealMenuId)}
         onDuplicate={() => handleDuplicateMeal(mealMenuId)}
         onDelete={() => deleteMealMutation.mutate(mealMenuId)}
+        isLoading={addMealMutation.isPending || deleteMealMutation.isPending}
       />
 
       {/* Modal para adicionar alimentos */}
