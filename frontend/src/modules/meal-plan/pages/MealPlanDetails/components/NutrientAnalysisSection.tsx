@@ -1,6 +1,10 @@
 import React from "react";
 import { Box, Stack } from "@mui/material";
-import { Save as SaveIcon, PictureAsPdf as PdfIcon } from "@mui/icons-material";
+import {
+  Save as SaveIcon,
+  PictureAsPdf as PdfIcon,
+  BookmarkAdd as BookmarkAddIcon,
+} from "@mui/icons-material";
 import NutrientAnalysis from "@/modules/meal-plan/components/NutrientAnalysis";
 import { DesignSystemButton } from "@/components/DesignSystem/Button/ButtonVariants";
 import type { EnergyPlan } from "@/modules/energy-plan/types/energyPlan";
@@ -26,6 +30,7 @@ interface NutrientAnalysisSectionProps {
   onEnergyPlanChange: () => void;
   onSave: () => void;
   onOpenPdf: () => void;
+  onSaveAsTemplate?: () => void;
   patientId: string;
 }
 
@@ -36,6 +41,7 @@ export function NutrientAnalysisSection({
   onEnergyPlanChange,
   onSave,
   onOpenPdf,
+  onSaveAsTemplate,
   patientId,
 }: NutrientAnalysisSectionProps) {
   return (
@@ -90,6 +96,16 @@ export function NutrientAnalysisSection({
         >
           Ver planejamento em PDF
         </DesignSystemButton>
+        {onSaveAsTemplate && (
+          <DesignSystemButton
+            variant="outlined"
+            color="primary"
+            startIcon={<BookmarkAddIcon />}
+            onClick={onSaveAsTemplate}
+          >
+            Salvar como template
+          </DesignSystemButton>
+        )}
       </Stack>
     </>
   );

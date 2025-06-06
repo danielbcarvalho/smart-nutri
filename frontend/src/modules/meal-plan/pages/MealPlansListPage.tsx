@@ -24,7 +24,6 @@ import { useTheme } from "@mui/material/styles";
 import React, { useState, useEffect, useCallback, memo } from "react";
 import { useLocation, useSearchParams } from "react-router-dom";
 import {
-  IconButton,
   Dialog,
   DialogTitle,
   DialogContent,
@@ -37,9 +36,12 @@ import { authService } from "../../auth/services/authService";
 import { alpha } from "@mui/material/styles";
 import { useFoodDb } from "@/services/useFoodDb";
 import { Meal } from "../services/mealPlanService";
-import type { MealFood } from "@/services/foodService";
-import type { Alimento } from "@/modules/meal-plan/components/AddFoodToMealModal";
 import { calculateTotalNutrients } from "../utils/nutrientCalculations";
+import { TemplateSelectionModal } from "../components/TemplateSelectionModal";
+import { PlanCreationMethodModal } from "../components/PlanCreationMethodModal";
+import { PlanFromTemplateModal } from "../components/PlanFromTemplateModal";
+import { NewPlanModal } from "../components/NewPlanModal";
+import type { MealPlan } from "../services/mealPlanService";
 
 // Estilo dos botões de ação para consistência
 const actionButtonSx = {
@@ -237,6 +239,7 @@ export function MealPlan() {
     mutationFn: mealPlanService.createPlan,
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["mealPlans", patientId] });
+      setNewPlanModalOpen(false);
       navigate(`/patient/${patientId}/meal-plans/${data.id}`);
     },
   });
@@ -264,7 +267,6 @@ export function MealPlan() {
       createPlanMutation.mutate({
         name: planName,
         description: formData.goal.trim() || undefined,
-        type: "alimentos",
         patientId: patientId as string,
         nutritionistId: nutritionistId as string,
         status: "draft",
@@ -278,6 +280,11 @@ export function MealPlan() {
 
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [planToDelete, setPlanToDelete] = useState<any | null>(null);
+  const [templateModalOpen, setTemplateModalOpen] = useState(false);
+  const [creationMethodModalOpen, setCreationMethodModalOpen] = useState(false);
+  const [planFromTemplateModalOpen, setPlanFromTemplateModalOpen] = useState(false);
+  const [newPlanModalOpen, setNewPlanModalOpen] = useState(false);
+  const [selectedTemplate, setSelectedTemplate] = useState<MealPlan | null>(null);
 
   const deletePlanMutation = useMutation({
     mutationFn: mealPlanService.deletePlan,
@@ -285,6 +292,21 @@ export function MealPlan() {
       queryClient.invalidateQueries({ queryKey: ["mealPlans", patientId] });
       setDeleteDialogOpen(false);
       setPlanToDelete(null);
+    },
+  });
+
+  const createFromTemplateMutation = useMutation({
+    mutationFn: ({ templateId, planData }: { 
+      templateId: string; 
+      planData: { name: string; description: string; startDate: string; endDate: string } 
+    }) => {
+      return mealPlanService.createPlanFromTemplate(templateId, patientId as string, planData);
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ["mealPlans", patientId] });
+      setPlanFromTemplateModalOpen(false);
+      setSelectedTemplate(null);
+      navigate(`/patient/${patientId}/meal-plans/${data.id}`);
     },
   });
 
@@ -302,6 +324,26 @@ export function MealPlan() {
   const handleConfirmDelete = () => {
     if (planToDelete) {
       deletePlanMutation.mutate(planToDelete.id);
+    }
+  };
+
+  const handleTemplateSelected = (template: MealPlan) => {
+    setSelectedTemplate(template);
+    setTemplateModalOpen(false);
+    setPlanFromTemplateModalOpen(true);
+  };
+
+  const handleCreateFromTemplate = (planData: {
+    name: string;
+    description: string;
+    startDate: string;
+    endDate: string;
+  }) => {
+    if (selectedTemplate) {
+      createFromTemplateMutation.mutate({
+        templateId: selectedTemplate.id,
+        planData,
+      });
     }
   };
 
@@ -419,7 +461,7 @@ export function MealPlan() {
         </Typography>
         <DesignSystemButton
           startIcon={<AddIcon />}
-          onClick={() => navigate(`/patient/${patientId}/meal-plans?new=true`)}
+          onClick={() => setCreationMethodModalOpen(true)}
         >
           Criar Novo Plano
         </DesignSystemButton>
@@ -751,6 +793,51 @@ export function MealPlan() {
           </DesignSystemButton>
         </DialogActions>
       </Dialog>
+
+      {/* Modal para escolha do método de criação */}
+      <PlanCreationMethodModal
+        open={creationMethodModalOpen}
+        onClose={() => setCreationMethodModalOpen(false)}
+        patientName={patient?.name}
+        onCreateFromScratch={() => {
+          setCreationMethodModalOpen(false);
+          setNewPlanModalOpen(true);
+        }}
+        onCreateFromTemplate={() => {
+          setCreationMethodModalOpen(false);
+          setTemplateModalOpen(true);
+        }}
+      />
+
+      {/* Modal para seleção de template */}
+      <TemplateSelectionModal
+        open={templateModalOpen}
+        onClose={() => setTemplateModalOpen(false)}
+        patientId={patientId!}
+        onTemplateSelected={handleTemplateSelected}
+      />
+
+      {/* Modal para personalizar plano do template */}
+      <PlanFromTemplateModal
+        open={planFromTemplateModalOpen}
+        onClose={() => {
+          setPlanFromTemplateModalOpen(false);
+          setSelectedTemplate(null);
+        }}
+        template={selectedTemplate}
+        patientName={patient?.name || ""}
+        onConfirm={handleCreateFromTemplate}
+        isCreating={createFromTemplateMutation.isPending}
+      />
+
+      {/* Modal para criar novo plano do zero */}
+      <NewPlanModal
+        open={newPlanModalOpen}
+        onClose={() => setNewPlanModalOpen(false)}
+        patientName={patient?.name || ""}
+        onConfirm={handleCreatePlan}
+        isCreating={createPlanMutation.isPending}
+      />
     </Box>
   );
 }

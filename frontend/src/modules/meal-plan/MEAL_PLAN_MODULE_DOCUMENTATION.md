@@ -1,6 +1,6 @@
 # Módulo de Planos Alimentares (`src/modules/meal-plan`)
 
-Este módulo centraliza toda a lógica, páginas, componentes e integrações relacionadas à criação, edição e visualização de planos alimentares dos pacientes.
+Este módulo centraliza toda a lógica, páginas, componentes e integrações relacionadas à criação, edição e visualização de planos alimentares dos pacientes, incluindo a funcionalidade completa de **templates reutilizáveis** para acelerar a criação de novos planos.
 
 ---
 
@@ -16,7 +16,9 @@ src/modules/meal-plan/
 │   ├── AddFoodToMealModal.tsx            # Modal para adicionar alimentos a uma refeição
 │   ├── MealCard.tsx                      # Card de refeição com controle de inclusão nos cálculos
 │   ├── MealPlan.tsx                      # Componente principal do plano alimentar
-│   └── MealPlanButton.tsx                # Botão de ação para planos alimentares
+│   ├── MealPlanButton.tsx                # Botão de ação para planos alimentares
+│   ├── SaveAsTemplateModal.tsx           # Modal para salvar plano como template
+│   └── TemplateSelectionModal.tsx        # Modal para selecionar templates
 ├── services/
 │   └── mealPlanService.ts                # Funções de API e tipos de planos alimentares
 ```
@@ -25,15 +27,29 @@ src/modules/meal-plan/
 
 ## 🧩 Principais Componentes
 
-- **MealPlanPage**: Página principal para listar, criar e excluir planos alimentares de um paciente.
-- **MealPlanDetailsPage**: Página para visualizar, editar e gerenciar refeições de um plano alimentar.
+### Páginas
+- **MealPlanPage**: Página principal para listar, criar e excluir planos alimentares de um paciente. Inclui botão "Usar Template" para criar planos a partir de templates.
+- **MealPlanDetailsPage**: Página para visualizar, editar e gerenciar refeições de um plano alimentar. Inclui botão "Salvar Template" para converter planos em templates reutilizáveis.
+
+### Componentes de Planos
 - **MealCard**: Componente que representa uma refeição individual, com controles para:
   - Expandir/recolher detalhes da refeição
   - Ativar/desativar inclusão nos cálculos nutricionais
   - Adicionar/editar alimentos
   - Acessar menu de ações
-- **AddFoodToMealModal**: Modal centralizado para busca, seleção e prescrição de alimentos em uma refeição. Toda a lógica de busca, seleção, análise de nutrientes e observações está encapsulada neste componente, que é utilizado pelo `MealPlanDetailsPage`.
-- **Componentes de UI**: Utiliza componentes globais (ex: botões, diálogos) de `src/components`.
+- **AddFoodToMealModal**: Modal centralizado para busca, seleção e prescrição de alimentos em uma refeição.
+
+### Componentes de Templates
+- **SaveAsTemplateModal**: Modal para converter planos existentes em templates reutilizáveis com:
+  - Nome e descrição do template
+  - Categorização e tags
+  - Configuração de visibilidade (público/privado)
+  - Definição de calorias alvo
+- **TemplateSelectionModal**: Modal para buscar e selecionar templates com:
+  - Busca textual por nome/descrição
+  - Filtros por categoria, tags, faixa de calorias
+  - Visualização de detalhes do template
+  - Criação direta de plano a partir do template
 
 ---
 
@@ -67,6 +83,76 @@ A busca e prescrição de alimentos neste módulo utiliza um fluxo totalmente lo
 > - Para garantir performance, sempre utilize o hook `useFoodDb` para acessar a base de alimentos nas telas/modais.
 
 Para mais detalhes, consulte também a seção "Busca de Alimentos (Food Database)" na [documentação geral do frontend](../../FRONTEND_DOCUMENTATION.md).
+
+---
+
+## 📋 Sistema de Templates
+
+O módulo implementa um sistema completo de templates reutilizáveis que permite aos nutricionistas criar uma biblioteca de planos alimentares padrão para acelerar a criação de novos planos.
+
+### Funcionalidades dos Templates
+
+**Salvar como Template:**
+- Conversão de qualquer plano alimentar existente em template
+- Preservação completa da estrutura (refeições, alimentos, quantidades)
+- Metadados específicos: nome, descrição, categoria, tags, calorias alvo
+- Controle de visibilidade (público para outros nutricionistas ou privado)
+
+**Biblioteca de Templates:**
+- Busca avançada com filtros múltiplos
+- Categorização por tipo de dieta/objetivo
+- Sistema de tags para organização
+- Filtros por faixa de calorias
+- Visualização de informações de uso (quantas vezes foi utilizado)
+
+**Criação a partir de Template:**
+- Seleção de template da biblioteca
+- Criação instantânea de novo plano para paciente específico
+- Mantém toda a estrutura original como ponto de partida
+- Permite edição posterior como qualquer plano regular
+
+### Integração com o Serviço
+
+```typescript
+// Extensões no mealPlanService.ts para templates
+interface SaveAsTemplateDto {
+  templateName: string;
+  templateDescription?: string;
+  isPublic?: boolean;
+  tags?: string[];
+  templateCategory?: string;
+  targetCalories?: number;
+}
+
+interface TemplateFiltersDto {
+  category?: string;
+  tags?: string;
+  search?: string;
+  isPublic?: boolean;
+  minCalories?: number;
+  maxCalories?: number;
+}
+
+// Novos métodos do serviço
+saveAsTemplate(planId: string, templateData: SaveAsTemplateDto)
+getTemplates()
+searchTemplates(filters: TemplateFiltersDto)
+createPlanFromTemplate(templateId: string, patientId: string)
+```
+
+### Fluxo de Uso
+
+1. **Criação de Template:**
+   - Nutricionista cria/edita um plano alimentar
+   - Clica em "Salvar Template" no cabeçalho
+   - Preenche metadados no modal `SaveAsTemplateModal`
+   - Template fica disponível na biblioteca
+
+2. **Uso de Template:**
+   - Na listagem de planos, clica em "Usar Template"
+   - Modal `TemplateSelectionModal` abre com busca/filtros
+   - Seleciona template desejado
+   - Novo plano é criado instantaneamente para o paciente
 
 ---
 
@@ -215,20 +301,79 @@ addMealMutation.mutate({
 />
 ```
 
+### 5. Salvar plano como template
+
+```tsx
+<SaveAsTemplateModal
+  open={saveAsTemplateModalOpen}
+  onClose={() => setSaveAsTemplateModalOpen(false)}
+  mealPlanId={plan.id}
+  mealPlanName={plan.name}
+  onSuccess={() => {
+    showNotification("Template salvo com sucesso!", "success");
+    setSaveAsTemplateModalOpen(false);
+  }}
+/>
+```
+
+### 6. Criar plano a partir de template
+
+```tsx
+<TemplateSelectionModal
+  open={templateModalOpen}
+  onClose={() => setTemplateModalOpen(false)}
+  patientId={patientId}
+  onSuccess={(newPlanId) => {
+    setTemplateModalOpen(false);
+    navigate(`/patient/${patientId}/meal-plans/${newPlanId}`);
+  }}
+/>
+```
+
+### 7. Buscar templates com filtros
+
+```ts
+const { data: templates } = useQuery({
+  queryKey: ['templates', filters],
+  queryFn: () => mealPlanService.searchTemplates({
+    category: 'Emagrecimento',
+    tags: 'lowcarb,ativo',
+    minCalories: 1400,
+    maxCalories: 1800
+  }),
+});
+```
+
 ---
 
 ## 🔎 Diagrama de Fluxo - Criação de Plano Alimentar
 
 ```mermaid
 flowchart TD
-  Start[Início] --> NovoPlano[Usuário clica em 'Criar Novo Plano']
+  Start[Início] --> Choice{Como criar?}
+  
+  Choice -->|Novo Plano| NovoPlano[Clica 'Criar Novo Plano']
+  Choice -->|Template| UsarTemplate[Clica 'Usar Template']
+  
   NovoPlano --> Form[Preenche dados do plano]
   Form --> Salvar[Salva plano via API]
+  
+  UsarTemplate --> BuscaTemplate[Modal de busca de templates]
+  BuscaTemplate --> SelecionaTemplate[Seleciona template]
+  SelecionaTemplate --> CriaDeTemplate[Cria plano a partir do template]
+  CriaDeTemplate --> Listagem
+  
   Salvar --> Listagem[Plano aparece na listagem]
   Listagem --> Detalhes[Usuário acessa detalhes do plano]
   Detalhes --> AdicionaRefeicao[Adiciona refeições]
   AdicionaRefeicao --> EditaRefeicao[Edita/Reordena refeições]
   EditaRefeicao --> SalvaRefeicao[Salva alterações]
+  
+  SalvaRefeicao --> SalvarTemplate{Salvar como template?}
+  SalvarTemplate -->|Sim| ModalTemplate[Modal 'Salvar Template']
+  SalvarTemplate -->|Não| Fim[Fim]
+  ModalTemplate --> CriaTemplate[Cria template reutilizável]
+  CriaTemplate --> Fim
 ```
 
 ---

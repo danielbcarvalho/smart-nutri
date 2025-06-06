@@ -1,163 +1,346 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { MealPlanTemplate } from '../entities/meal-plan-template.entity';
-import { MealTemplate } from '../entities/meal-template.entity';
-import { FoodTemplate } from '../entities/food-template.entity';
+import { Repository, ILike, In } from 'typeorm';
 import { MealPlan } from '../entities/meal-plan.entity';
 import { Meal } from '../entities/meal.entity';
-import { CreateMealPlanTemplateDto } from '../dto/create-meal-plan-template.dto';
-import { PartialType } from '@nestjs/swagger';
-import { Food } from '../../foods/entities/food.entity';
-
-// Use PartialType from swagger since we're using it in other places
-class UpdateMealPlanTemplateDto extends PartialType(
-  CreateMealPlanTemplateDto,
-) {}
+import { MealFood } from '../entities/meal-food.entity';
+import { SaveAsTemplateDto } from '../dto/save-as-template.dto';
+import { TemplateFiltersDto } from '../dto/template-filters.dto';
+import { CreatePlanFromTemplateDto } from '../dto/create-plan-from-template.dto';
+import { MealPlanTemplateEnhancedResponseDto } from '../dto/meal-plan-template-enhanced.response.dto';
+import { PatientsService } from '../../patients/patients.service';
 
 @Injectable()
 export class MealPlanTemplatesService {
+  private readonly logger = new Logger(MealPlanTemplatesService.name);
+
   constructor(
-    @InjectRepository(MealPlanTemplate)
-    private readonly mealPlanTemplateRepository: Repository<MealPlanTemplate>,
-    @InjectRepository(MealTemplate)
-    private readonly mealTemplateRepository: Repository<MealTemplate>,
-    @InjectRepository(FoodTemplate)
-    private readonly foodTemplateRepository: Repository<FoodTemplate>,
     @InjectRepository(MealPlan)
     private readonly mealPlanRepository: Repository<MealPlan>,
     @InjectRepository(Meal)
     private readonly mealRepository: Repository<Meal>,
-    @InjectRepository(Food)
-    private readonly foodRepository: Repository<Food>,
+    @InjectRepository(MealFood)
+    private readonly mealFoodRepository: Repository<MealFood>,
+    private readonly patientsService: PatientsService,
   ) {}
 
-  async create(
-    createMealPlanTemplateDto: CreateMealPlanTemplateDto,
+  /**
+   * Save an existing meal plan as a template
+   */
+  async saveAsTemplate(
+    mealPlanId: string,
+    saveAsTemplateDto: SaveAsTemplateDto,
     nutritionistId: string,
-  ): Promise<MealPlanTemplate> {
-    const template = this.mealPlanTemplateRepository.create({
-      ...createMealPlanTemplateDto,
+  ): Promise<MealPlan> {
+    // Get the original meal plan with all relations
+    const originalPlan = await this.mealPlanRepository.findOne({
+      where: { id: mealPlanId, nutritionistId },
+      relations: {
+        meals: {
+          mealFoods: {
+            substitutes: true,
+          },
+        },
+      },
+    });
+
+    if (!originalPlan) {
+      throw new NotFoundException(`Meal plan with ID ${mealPlanId} not found`);
+    }
+
+    // Create a copy of the meal plan as template
+    const template = this.mealPlanRepository.create({
+      name: originalPlan.name,
+      description: originalPlan.description,
       nutritionistId,
+      isTemplate: true,
+      templateName: saveAsTemplateDto.templateName,
+      templateDescription: saveAsTemplateDto.templateDescription,
+      isPublic: saveAsTemplateDto.isPublic ?? false,
+      tags: saveAsTemplateDto.tags,
+      templateCategory: saveAsTemplateDto.templateCategory,
+      targetCalories: saveAsTemplateDto.targetCalories,
+      dailyCalories: originalPlan.dailyCalories,
+      dailyProtein: originalPlan.dailyProtein,
+      dailyCarbs: originalPlan.dailyCarbs,
+      dailyFat: originalPlan.dailyFat,
     });
-    return this.mealPlanTemplateRepository.save(template);
+
+    const savedTemplate = await this.mealPlanRepository.save(template);
+
+    // Copy all meals and their foods
+    for (const originalMeal of originalPlan.meals) {
+      const templateMeal = this.mealRepository.create({
+        name: originalMeal.name,
+        time: originalMeal.time,
+        description: originalMeal.description,
+        isActiveForCalculation: originalMeal.isActiveForCalculation,
+        mealPlan: savedTemplate,
+        totalCalories: originalMeal.totalCalories,
+        totalProtein: originalMeal.totalProtein,
+        totalCarbs: originalMeal.totalCarbs,
+        totalFat: originalMeal.totalFat,
+      });
+
+      const savedMeal = await this.mealRepository.save(templateMeal);
+
+      // Copy all meal foods
+      for (const originalMealFood of originalMeal.mealFoods) {
+        const templateMealFood = this.mealFoodRepository.create({
+          foodId: originalMealFood.foodId,
+          source: originalMealFood.source,
+          amount: originalMealFood.amount,
+          unit: originalMealFood.unit,
+          meal: savedMeal,
+        });
+
+        await this.mealFoodRepository.save(templateMealFood);
+      }
+    }
+
+    this.logger.log(`Template '${saveAsTemplateDto.templateName}' created from meal plan ${mealPlanId}`);
+
+    return this.findOne(savedTemplate.id, nutritionistId);
   }
 
-  async findAll(nutritionistId: string): Promise<MealPlanTemplate[]> {
-    return this.mealPlanTemplateRepository.find({
-      where: [{ nutritionistId }, { isPublic: true }],
-      relations: ['meals', 'meals.foods'],
-      order: { name: 'ASC' },
-    });
-  }
-
-  async findOne(id: string, nutritionistId: string): Promise<MealPlanTemplate> {
-    const template = await this.mealPlanTemplateRepository.findOne({
+  /**
+   * Find all templates accessible to the nutritionist
+   */
+  async findAll(nutritionistId: string): Promise<MealPlan[]> {
+    return this.mealPlanRepository.find({
       where: [
-        { id, nutritionistId },
-        { id, isPublic: true },
+        { nutritionistId, isTemplate: true },
+        { isPublic: true, isTemplate: true },
       ],
-      relations: ['meals', 'meals.foods'],
+      relations: {
+        meals: {
+          mealFoods: true,
+        },
+      },
+      order: { 
+        usageCount: 'DESC',
+        templateName: 'ASC',
+      },
+    });
+  }
+
+  /**
+   * Find templates with advanced filtering
+   */
+  async searchTemplates(
+    filters: TemplateFiltersDto,
+    nutritionistId: string,
+  ): Promise<MealPlan[]> {
+    const queryBuilder = this.mealPlanRepository
+      .createQueryBuilder('template')
+      .leftJoinAndSelect('template.meals', 'meals')
+      .leftJoinAndSelect('meals.mealFoods', 'mealFoods')
+      .where('template.isTemplate = :isTemplate', { isTemplate: true })
+      .andWhere('(template.nutritionistId = :nutritionistId OR template.isPublic = :isPublic)', {
+        nutritionistId,
+        isPublic: true,
+      });
+
+    // Apply filters
+    if (filters.category) {
+      queryBuilder.andWhere('template.templateCategory = :category', {
+        category: filters.category,
+      });
+    }
+
+    if (filters.tags && filters.tags.length > 0) {
+      queryBuilder.andWhere('template.tags && :tags', {
+        tags: filters.tags,
+      });
+    }
+
+    if (filters.search) {
+      queryBuilder.andWhere(
+        '(template.templateName ILIKE :search OR template.templateDescription ILIKE :search OR template.templateCategory ILIKE :search)',
+        { search: `%${filters.search}%` },
+      );
+    }
+
+    if (filters.isPublic !== undefined) {
+      queryBuilder.andWhere('template.isPublic = :isPublicFilter', {
+        isPublicFilter: filters.isPublic,
+      });
+    }
+
+    if (filters.minCalories) {
+      queryBuilder.andWhere('template.targetCalories >= :minCalories', {
+        minCalories: filters.minCalories,
+      });
+    }
+
+    if (filters.maxCalories) {
+      queryBuilder.andWhere('template.targetCalories <= :maxCalories', {
+        maxCalories: filters.maxCalories,
+      });
+    }
+
+    return queryBuilder
+      .orderBy('template.usageCount', 'DESC')
+      .addOrderBy('template.templateName', 'ASC')
+      .getMany();
+  }
+
+  /**
+   * Find a specific template by ID
+   */
+  async findOne(id: string, nutritionistId: string): Promise<MealPlan> {
+    const template = await this.mealPlanRepository.findOne({
+      where: [
+        { id, nutritionistId, isTemplate: true },
+        { id, isPublic: true, isTemplate: true },
+      ],
+      relations: {
+        meals: {
+          mealFoods: {
+            substitutes: true,
+          },
+        },
+      },
     });
 
     if (!template) {
-      throw new NotFoundException(`Template com ID ${id} não encontrado`);
+      throw new NotFoundException(`Template with ID ${id} not found`);
     }
 
     return template;
   }
 
+  /**
+   * Update template metadata (only owner can update)
+   */
   async update(
     id: string,
-    updateMealPlanTemplateDto: UpdateMealPlanTemplateDto,
+    updateData: Partial<SaveAsTemplateDto>,
     nutritionistId: string,
-  ): Promise<MealPlanTemplate> {
-    const template = await this.findOne(id, nutritionistId);
+  ): Promise<MealPlan> {
+    const template = await this.mealPlanRepository.findOne({
+      where: { id, nutritionistId, isTemplate: true },
+    });
 
-    if (template.nutritionistId !== nutritionistId) {
-      throw new NotFoundException(`Template com ID ${id} não encontrado`);
+    if (!template) {
+      throw new NotFoundException(`Template with ID ${id} not found or not owned by user`);
     }
 
-    await this.mealPlanTemplateRepository.update(id, updateMealPlanTemplateDto);
+    await this.mealPlanRepository.update(id, {
+      templateName: updateData.templateName,
+      templateDescription: updateData.templateDescription,
+      isPublic: updateData.isPublic,
+      tags: updateData.tags,
+      templateCategory: updateData.templateCategory,
+      targetCalories: updateData.targetCalories,
+    });
+
     return this.findOne(id, nutritionistId);
   }
 
+  /**
+   * Remove a template (only owner can remove)
+   */
   async remove(id: string, nutritionistId: string): Promise<void> {
-    const template = await this.findOne(id, nutritionistId);
+    const template = await this.mealPlanRepository.findOne({
+      where: { id, nutritionistId, isTemplate: true },
+    });
 
-    if (template.nutritionistId !== nutritionistId) {
-      throw new NotFoundException(`Template com ID ${id} não encontrado`);
+    if (!template) {
+      throw new NotFoundException(`Template with ID ${id} not found or not owned by user`);
     }
 
-    await this.mealPlanTemplateRepository.remove(template);
+    await this.mealPlanRepository.remove(template);
+    this.logger.log(`Template '${template.templateName}' deleted by nutritionist ${nutritionistId}`);
   }
 
-  async searchFoodTemplates(query: string): Promise<FoodTemplate[]> {
-    return this.foodTemplateRepository
-      .createQueryBuilder('food')
-      .where('food.search_vector @@ plainto_tsquery(:query)', { query })
-      .orWhere('food.name % :query', { query })
-      .orderBy(
-        'ts_rank(food.search_vector, plainto_tsquery(:query)) DESC, ' +
-          'similarity(food.name, :query) DESC',
-      )
-      .take(10)
-      .getMany();
-  }
-
+  /**
+   * Create a new meal plan from a template
+   */
   async createMealPlanFromTemplate(
     templateId: string,
     patientId: string,
     nutritionistId: string,
+    customData?: CreatePlanFromTemplateDto,
   ): Promise<MealPlan> {
+    // Verify patient exists and belongs to nutritionist
+    await this.patientsService.findOne(patientId, nutritionistId);
+
+    // Get the template with all relations
     const template = await this.findOne(templateId, nutritionistId);
 
-    // Create new meal plan
-    const mealPlan = new MealPlan();
-    mealPlan.name = template.name;
-    mealPlan.patientId = patientId;
-    mealPlan.nutritionistId = nutritionistId;
-    mealPlan.startDate = new Date();
-    mealPlan.endDate = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days from now
+    // Increment usage count
+    await this.mealPlanRepository.update(templateId, {
+      usageCount: () => 'usage_count + 1',
+    });
 
-    await this.mealPlanRepository.save(mealPlan);
+    // Create new meal plan from template with optional customization
+    const defaultStartDate = new Date();
+    const defaultEndDate = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days from now
+    
+    const newMealPlan = this.mealPlanRepository.create({
+      name: customData?.name || template.templateName || template.name,
+      description: customData?.description || template.templateDescription || template.description,
+      patientId,
+      nutritionistId,
+      startDate: customData?.startDate ? new Date(customData.startDate) : defaultStartDate,
+      endDate: customData?.endDate ? new Date(customData.endDate) : defaultEndDate,
+      isTemplate: false, // This is a regular meal plan, not a template
+      dailyCalories: template.dailyCalories,
+      dailyProtein: template.dailyProtein,
+      dailyCarbs: template.dailyCarbs,
+      dailyFat: template.dailyFat,
+    });
 
-    // Copy meals from template
-    for (const mealTemplate of template.meals) {
-      // Create the meal with proper entity structure
-      const meal = new Meal();
-      meal.name = mealTemplate.name;
-      meal.time = mealTemplate.time || '12:00';
-      meal.description = mealTemplate.description || '';
-      meal.mealPlan = mealPlan;
+    const savedMealPlan = await this.mealPlanRepository.save(newMealPlan);
 
-      await this.mealRepository.save(meal);
+    // Copy all meals and their foods from template
+    for (const templateMeal of template.meals) {
+      const newMeal = this.mealRepository.create({
+        name: templateMeal.name,
+        time: templateMeal.time,
+        description: templateMeal.description,
+        isActiveForCalculation: templateMeal.isActiveForCalculation,
+        mealPlan: savedMealPlan,
+        totalCalories: templateMeal.totalCalories,
+        totalProtein: templateMeal.totalProtein,
+        totalCarbs: templateMeal.totalCarbs,
+        totalFat: templateMeal.totalFat,
+      });
 
-      // Copy foods from template to foods table, NOT directly to meal
-      // This is a conceptual issue we would need to revisit in the architecture
-      // For now, we'll just create the foods
-      for (const foodTemplate of mealTemplate.foods) {
-        const food = new Food();
-        food.name = foodTemplate.name;
-        food.servingSize = 100;
-        food.servingUnit = 'g';
-        food.calories = foodTemplate.calories || 0;
-        food.protein = foodTemplate.protein || 0;
-        food.carbohydrates = foodTemplate.carbs || 0;
-        food.fat = foodTemplate.fat || 0;
-        food.categories = foodTemplate.category ? [foodTemplate.category] : [];
+      const savedMeal = await this.mealRepository.save(newMeal);
 
-        await this.foodRepository.save(food);
+      // Copy all meal foods from template
+      for (const templateMealFood of templateMeal.mealFoods) {
+        const newMealFood = this.mealFoodRepository.create({
+          foodId: templateMealFood.foodId,
+          source: templateMealFood.source,
+          amount: templateMealFood.amount,
+          unit: templateMealFood.unit,
+          meal: savedMeal,
+        });
+
+        await this.mealFoodRepository.save(newMealFood);
       }
     }
 
+    this.logger.log(`New meal plan created from template '${template.templateName}' for patient ${patientId}`);
+
+    // Return the complete meal plan with relations
     const result = await this.mealPlanRepository.findOne({
-      where: { id: mealPlan.id },
-      relations: ['meals', 'meals.mealFoods'],
+      where: { id: savedMealPlan.id },
+      relations: {
+        meals: {
+          mealFoods: {
+            substitutes: true,
+          },
+        },
+        patient: true,
+      },
     });
 
     if (!result) {
-      throw new NotFoundException(`MealPlan with ID ${mealPlan.id} not found`);
+      throw new NotFoundException(`Created meal plan with ID ${savedMealPlan.id} not found`);
     }
 
     return result;
