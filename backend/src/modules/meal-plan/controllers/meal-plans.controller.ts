@@ -22,9 +22,11 @@ import {
   ApiBearerAuth,
 } from '@nestjs/swagger';
 import { MealPlansService } from '../services/meal-plans.service';
+import { MealPlanTemplatesService } from '../services/meal-plan-templates.service';
 import { CreateMealPlanDto } from '../dto/create-meal-plan.dto';
 import { UpdateMealPlanDto } from '../dto/update-meal-plan.dto';
 import { CreateMealDto } from '../dto/create-meal.dto';
+import { SaveAsTemplateDto } from '../dto/save-as-template.dto';
 import { MealPlan } from '../entities/meal-plan.entity';
 import { Meal } from '../entities/meal.entity';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
@@ -44,7 +46,10 @@ interface RequestWithUser extends Request {
 @UseGuards(JwtAuthGuard)
 @ApiBearerAuth()
 export class MealPlansController {
-  constructor(private readonly mealPlansService: MealPlansService) {}
+  constructor(
+    private readonly mealPlansService: MealPlansService,
+    private readonly mealPlanTemplatesService: MealPlanTemplatesService,
+  ) {}
 
   @Post()
   @ApiOperation({
@@ -385,5 +390,45 @@ export class MealPlansController {
     @Request() req: RequestWithUser,
   ) {
     await this.mealPlansService.deleteMeal(planId, mealId, req.user.id);
+  }
+
+  @Post(':id/save-as-template')
+  @ApiOperation({
+    summary: 'Salvar plano alimentar como template',
+    description: 'Cria um template reutilizável a partir de um plano alimentar existente',
+  })
+  @ApiParam({
+    name: 'id',
+    description: 'ID do plano alimentar',
+    example: '123e4567-e89b-12d3-a456-426614174000',
+    schema: {
+      type: 'string',
+      format: 'uuid',
+    },
+  })
+  @ApiBody({ type: SaveAsTemplateDto })
+  @ApiResponse({
+    status: 201,
+    description: 'Template criado com sucesso',
+    type: MealPlan,
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'Dados inválidos fornecidos',
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'Plano alimentar não encontrado',
+  })
+  async saveAsTemplate(
+    @Param('id') mealPlanId: string,
+    @Body() saveAsTemplateDto: SaveAsTemplateDto,
+    @Request() req: RequestWithUser,
+  ): Promise<MealPlan> {
+    return this.mealPlanTemplatesService.saveAsTemplate(
+      mealPlanId,
+      saveAsTemplateDto,
+      req.user.id,
+    );
   }
 }

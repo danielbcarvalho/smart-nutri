@@ -62,7 +62,10 @@ export class MealPlansService {
 
   async findAll(nutritionistId: string): Promise<MealPlan[]> {
     return this.mealPlanRepository.find({
-      where: { nutritionistId },
+      where: { 
+        nutritionistId,
+        isTemplate: false, // Only return regular meal plans, not templates
+      },
       relations: [
         'meals',
         'meals.mealFoods',
@@ -77,7 +80,11 @@ export class MealPlansService {
 
   async findOne(id: string, nutritionistId: string): Promise<MealPlan> {
     const mealPlan = await this.mealPlanRepository.findOne({
-      where: { id, nutritionistId },
+      where: { 
+        id, 
+        nutritionistId,
+        isTemplate: false, // Only return regular meal plans, not templates
+      },
       relations: {
         meals: {
           mealFoods: {
@@ -113,7 +120,11 @@ export class MealPlansService {
 
     // Buscar planos com todas as relações e campos
     return this.mealPlanRepository.find({
-      where: { patientId, nutritionistId },
+      where: { 
+        patientId, 
+        nutritionistId,
+        isTemplate: false, // Only return regular meal plans, not templates
+      },
       relations: ['meals', 'meals.mealFoods'],
       order: { startDate: 'DESC' },
     });
@@ -268,7 +279,11 @@ export class MealPlansService {
 
   async search(query: string, nutritionistId: string): Promise<MealPlan[]> {
     return this.mealPlanRepository.find({
-      where: [{ name: ILike(`%${query}%`), nutritionistId }],
+      where: [{ 
+        name: ILike(`%${query}%`), 
+        nutritionistId,
+        isTemplate: false, // Only return regular meal plans, not templates
+      }],
       relations: ['patient'],
       take: 5, // Limita a 5 resultados
     });
@@ -305,7 +320,7 @@ export class MealPlansService {
       const days = Math.max(
         1,
         Math.ceil(
-          (mealPlan.endDate.getTime() - mealPlan.startDate.getTime()) /
+          ((mealPlan.endDate?.getTime() || Date.now()) - (mealPlan.startDate?.getTime() || Date.now())) /
             (1000 * 60 * 60 * 24),
         ),
       );

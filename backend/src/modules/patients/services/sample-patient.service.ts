@@ -1298,7 +1298,7 @@ export class SamplePatientService {
     const days = Math.max(
       1,
       Math.ceil(
-        (mealPlan.endDate.getTime() - mealPlan.startDate.getTime()) /
+        ((mealPlan.endDate?.getTime() || Date.now()) - (mealPlan.startDate?.getTime() || Date.now())) /
           (1000 * 60 * 60 * 24),
       ),
     );

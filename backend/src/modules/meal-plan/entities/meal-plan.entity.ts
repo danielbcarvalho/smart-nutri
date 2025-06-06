@@ -28,16 +28,16 @@ export class MealPlan {
   @ApiProperty({ example: 'Plano alimentar para perda de peso' })
   description: string;
 
-  @Column({ name: 'patient_id' })
+  @Column({ name: 'patient_id', nullable: true })
   @ApiProperty({ example: '123e4567-e89b-12d3-a456-426614174000' })
-  patientId: string;
+  patientId?: string;
 
   @ManyToOne(() => Patient, (patient) => patient.mealPlans, {
     onDelete: 'CASCADE',
   })
   @JoinColumn({ name: 'patient_id' })
   @ApiProperty({ type: () => Patient })
-  patient: Patient;
+  patient?: Patient;
 
   @Column({ name: 'nutritionist_id' })
   @ApiProperty({ example: '123e4567-e89b-12d3-a456-426614174000' })
@@ -59,13 +59,13 @@ export class MealPlan {
   @ApiProperty({ type: () => EnergyPlan })
   energyPlan?: EnergyPlan;
 
-  @Column({ name: 'startDate', type: 'timestamp' })
+  @Column({ name: 'startDate', type: 'timestamp', nullable: true })
   @ApiProperty({ example: '2024-03-20T10:00:00Z' })
-  startDate: Date;
+  startDate?: Date;
 
-  @Column({ name: 'endDate', type: 'timestamp' })
+  @Column({ name: 'endDate', type: 'timestamp', nullable: true })
   @ApiProperty({ example: '2024-03-27T10:00:00Z' })
-  endDate: Date;
+  endDate?: Date;
 
   @OneToMany(() => Meal, (meal) => meal.mealPlan)
   @ApiProperty({ type: () => [Meal] })
@@ -94,4 +94,66 @@ export class MealPlan {
   @Column({ type: 'decimal', precision: 10, scale: 2, default: 0 })
   @ApiProperty({ example: 80.2 })
   dailyFat: number;
+
+  // Template-specific fields
+  @Column({ name: 'is_template', default: false })
+  @ApiProperty({ 
+    example: false, 
+    description: 'Indicates if this meal plan is used as a template' 
+  })
+  isTemplate: boolean;
+
+  @Column({ name: 'template_name', nullable: true })
+  @ApiProperty({ 
+    example: 'Plano Low Carb 1600kcal', 
+    description: 'Name when used as template',
+    required: false 
+  })
+  templateName?: string;
+
+  @Column({ name: 'template_description', type: 'text', nullable: true })
+  @ApiProperty({ 
+    example: 'Template de plano alimentar low carb para perda de peso', 
+    description: 'Description when used as template',
+    required: false 
+  })
+  templateDescription?: string;
+
+  @Column({ name: 'is_public', default: false })
+  @ApiProperty({ 
+    example: false, 
+    description: 'If true, template is visible to all nutritionists' 
+  })
+  isPublic: boolean;
+
+  @Column({ type: 'jsonb', nullable: true })
+  @ApiProperty({ 
+    example: ['lowcarb', 'emagrecimento', 'ativo'], 
+    description: 'Tags for template categorization',
+    required: false 
+  })
+  tags?: string[];
+
+  @Column({ name: 'template_category', nullable: true })
+  @ApiProperty({ 
+    example: 'emagrecimento', 
+    description: 'Category when used as template',
+    required: false 
+  })
+  templateCategory?: string;
+
+  @Column({ name: 'usage_count', default: 0 })
+  @ApiProperty({ 
+    example: 15, 
+    description: 'Number of times this template has been used' 
+  })
+  usageCount: number;
+
+  @Column({ name: 'target_calories', type: 'decimal', precision: 10, scale: 2, nullable: true })
+  @ApiProperty({ 
+    example: 1600, 
+    description: 'Target calories for template (for filtering)',
+    required: false 
+  })
+  targetCalories?: number;
 }

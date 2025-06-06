@@ -67,6 +67,35 @@ export interface MealPlan {
   dailyProtein?: number;
   dailyCarbs?: number;
   dailyFat?: number;
+  // Template-specific fields
+  isTemplate?: boolean;
+  templateName?: string;
+  templateDescription?: string;
+  isPublic?: boolean;
+  tags?: string[];
+  templateCategory?: string;
+  targetCalories?: number;
+  usageCount?: number;
+  lastUsedAt?: string;
+}
+
+// Template-specific types
+export interface SaveAsTemplateDto {
+  templateName: string;
+  templateDescription?: string;
+  isPublic?: boolean;
+  tags?: string[];
+  templateCategory?: string;
+  targetCalories?: number;
+}
+
+export interface TemplateFiltersDto {
+  category?: string;
+  tags?: string;
+  search?: string;
+  isPublic?: boolean;
+  minCalories?: number;
+  maxCalories?: number;
 }
 
 export const mealPlanService = {
@@ -164,6 +193,63 @@ export const mealPlanService = {
   getMealCalculationStatus: async (planId: string, mealId: string) => {
     const response = await api.get(
       `/meal-plans/${planId}/meals/${mealId}/calculation`
+    );
+    return response.data;
+  },
+
+  // Template management functions
+  saveAsTemplate: async (planId: string, templateData: SaveAsTemplateDto) => {
+    const response = await api.post<MealPlan>(
+      `/meal-plans/${planId}/save-as-template`,
+      templateData
+    );
+    return response.data;
+  },
+
+  getTemplates: async () => {
+    const response = await api.get<MealPlan[]>('/meal-plan-templates');
+    return response.data;
+  },
+
+  searchTemplates: async (filters: TemplateFiltersDto) => {
+    const params = new URLSearchParams();
+    Object.entries(filters).forEach(([key, value]) => {
+      if (value !== undefined && value !== null && value !== '') {
+        params.append(key, value.toString());
+      }
+    });
+    
+    const response = await api.get<MealPlan[]>(
+      `/meal-plan-templates/search?${params.toString()}`
+    );
+    return response.data;
+  },
+
+  getTemplateById: async (templateId: string) => {
+    const response = await api.get<MealPlan>(`/meal-plan-templates/${templateId}`);
+    return response.data;
+  },
+
+  updateTemplate: async (templateId: string, updateData: Partial<SaveAsTemplateDto>) => {
+    const response = await api.patch<MealPlan>(
+      `/meal-plan-templates/${templateId}`,
+      updateData
+    );
+    return response.data;
+  },
+
+  deleteTemplate: async (templateId: string) => {
+    await api.delete(`/meal-plan-templates/${templateId}`);
+  },
+
+  createPlanFromTemplate: async (
+    templateId: string, 
+    patientId: string, 
+    customData?: { name?: string; description?: string; startDate?: string; endDate?: string }
+  ) => {
+    const response = await api.post<MealPlan>(
+      `/meal-plan-templates/${templateId}/create-plan/${patientId}`,
+      customData
     );
     return response.data;
   },

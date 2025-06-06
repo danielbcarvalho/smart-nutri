@@ -55,6 +55,7 @@ import {
 import MealMenu from "../../components/MealMenu";
 import { PatientInstructionsCard } from "./components/PatientInstructionsCard";
 import { calculateTotalNutrients as calculateTotalNutrientsFromUtils } from "../../utils/nutrientCalculations";
+import { SaveAsTemplateModal } from "../../components/SaveAsTemplateModal";
 
 // Componente principal
 export function MealPlanDetails() {
@@ -88,6 +89,7 @@ export function MealPlanDetails() {
   const location = useLocation();
   const navigate = useNavigate();
   const isSavingRef = useRef(false);
+  const [saveAsTemplateModalOpen, setSaveAsTemplateModalOpen] = useState(false);
 
   // Carregar dados do plano alimentar
   const { data: plan, isLoading } = useQuery({
@@ -506,7 +508,7 @@ export function MealPlanDetails() {
   };
 
   // Modificar a função de salvar para incluir as mudanças de cálculo
-  const handleSaveMealPlan = async () => {
+  const handleSaveMealPlan = async (showSuccessNotification: boolean = true) => {
     if (!plan) {
       showNotification("Plano alimentar não encontrado.", "error");
       return;
@@ -564,7 +566,11 @@ export function MealPlanDetails() {
       setHasUnsavedChanges(false);
 
       await queryClient.invalidateQueries({ queryKey: ["mealPlan", planId] });
-      showNotification("Plano alimentar salvo com sucesso!", "success");
+      
+      // Only show success notification if explicitly requested (manual save)
+      if (showSuccessNotification) {
+        showNotification("Plano alimentar salvo com sucesso!", "success");
+      }
     } catch (error) {
       console.error("Erro ao salvar plano:", error);
       showNotification(
@@ -633,6 +639,10 @@ export function MealPlanDetails() {
     navigate(`/patient/${patientId}/energy-plans/new`);
   };
 
+  const handleSaveAsTemplate = () => {
+    setSaveAsTemplateModalOpen(true);
+  };
+
   // Adicionar estados
   const [substituteModalOpen, setSubstituteModalOpen] = useState(false);
   const [selectedMealFood, setSelectedMealFood] = useState<MealFood | null>(
@@ -653,7 +663,7 @@ export function MealPlanDetails() {
     if (hasUnsavedChanges && !isSavingRef.current) {
       isSavingRef.current = true;
       try {
-        await handleSaveMealPlan();
+        await handleSaveMealPlan(false); // Don't show notification for auto-save
         setHasUnsavedChanges(false);
       } catch (error) {
         console.error("Erro ao salvar automaticamente:", error);
@@ -784,6 +794,7 @@ export function MealPlanDetails() {
         onEnergyPlanChange={handleOpenEnergyPlanModal}
         onSave={handleSaveMealPlan}
         onOpenPdf={handleOpenPdfInNewTab}
+        onSaveAsTemplate={handleSaveAsTemplate}
         patientId={patientId as string}
       />
 
@@ -1150,6 +1161,18 @@ export function MealPlanDetails() {
         }
         onSubstituteAdded={() => {
           queryClient.invalidateQueries({ queryKey: ["mealPlan", planId] });
+        }}
+      />
+
+      {/* Modal para salvar como template */}
+      <SaveAsTemplateModal
+        open={saveAsTemplateModalOpen}
+        onClose={() => setSaveAsTemplateModalOpen(false)}
+        mealPlanId={plan.id}
+        mealPlanName={plan.name}
+        onSuccess={() => {
+          showNotification("Template salvo com sucesso!", "success");
+          setSaveAsTemplateModalOpen(false);
         }}
       />
     </Box>
