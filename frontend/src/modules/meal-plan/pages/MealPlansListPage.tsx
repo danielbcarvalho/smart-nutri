@@ -41,6 +41,7 @@ import { TemplateSelectionModal } from "../components/TemplateSelectionModal";
 import { PlanCreationMethodModal } from "../components/PlanCreationMethodModal";
 import { PlanFromTemplateModal } from "../components/PlanFromTemplateModal";
 import { NewPlanModal } from "../components/NewPlanModal";
+import { AiMealPlanModal } from "../../ai-meal-plan/components/AiMealPlanModal";
 import type { MealPlan } from "../services/mealPlanService";
 
 // Estilo dos botões de ação para consistência
@@ -284,6 +285,7 @@ export function MealPlan() {
   const [creationMethodModalOpen, setCreationMethodModalOpen] = useState(false);
   const [planFromTemplateModalOpen, setPlanFromTemplateModalOpen] = useState(false);
   const [newPlanModalOpen, setNewPlanModalOpen] = useState(false);
+  const [aiMealPlanModalOpen, setAiMealPlanModalOpen] = useState(false);
   const [selectedTemplate, setSelectedTemplate] = useState<MealPlan | null>(null);
 
   const deletePlanMutation = useMutation({
@@ -798,6 +800,7 @@ export function MealPlan() {
       <PlanCreationMethodModal
         open={creationMethodModalOpen}
         onClose={() => setCreationMethodModalOpen(false)}
+        patientId={patientId}
         patientName={patient?.name}
         onCreateFromScratch={() => {
           setCreationMethodModalOpen(false);
@@ -806,6 +809,10 @@ export function MealPlan() {
         onCreateFromTemplate={() => {
           setCreationMethodModalOpen(false);
           setTemplateModalOpen(true);
+        }}
+        onCreateWithAI={() => {
+          setCreationMethodModalOpen(false);
+          setAiMealPlanModalOpen(true);
         }}
       />
 
@@ -837,6 +844,13 @@ export function MealPlan() {
         patientName={patient?.name || ""}
         onConfirm={handleCreatePlan}
         isCreating={createPlanMutation.isPending}
+      />
+
+      {/* Modal para criar plano com IA */}
+      <AiMealPlanModal
+        open={aiMealPlanModalOpen}
+        onClose={() => setAiMealPlanModalOpen(false)}
+        patientId={patientId}
       />
     </Box>
   );

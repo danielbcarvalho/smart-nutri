@@ -15,6 +15,7 @@ import { PatientsModule } from './modules/patients/patients.module';
 import { StatsModule } from './modules/stats/stats.module';
 import { PhotosModule } from './modules/photos/photos.module';
 import { EnergyPlanModule } from './modules/energy-plan/energy-plan.module';
+import { AiMealPlansModule } from './modules/ai-meal-plans/ai-meal-plans.module';
 
 @Module({
   imports: [
@@ -67,6 +68,7 @@ import { EnergyPlanModule } from './modules/energy-plan/energy-plan.module';
     EncryptionModule,
     FoodsModule,
     EnergyPlanModule,
+    AiMealPlansModule,
   ],
   controllers: [AppController],
   providers: [AppService],

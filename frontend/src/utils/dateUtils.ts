@@ -32,3 +32,66 @@ export const formatDateToUTC = (dateString: string): string => {
     return dateString;
   }
 };
+
+// Additional utility functions for AI module
+export const formatDate = (date: string | Date): string => {
+  const dateObj = typeof date === 'string' ? new Date(date) : date;
+  
+  return dateObj.toLocaleDateString('pt-BR', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+  });
+};
+
+export const formatDateTime = (date: string | Date): string => {
+  const dateObj = typeof date === 'string' ? new Date(date) : date;
+  
+  return dateObj.toLocaleDateString('pt-BR', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+};
+
+export const calculateAge = (birthDate: string | Date): number => {
+  const birth = typeof birthDate === 'string' ? new Date(birthDate) : birthDate;
+  const today = new Date();
+  
+  let age = today.getFullYear() - birth.getFullYear();
+  const monthDiff = today.getMonth() - birth.getMonth();
+  
+  if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) {
+    age--;
+  }
+  
+  return age;
+};
+
+export const addDays = (date: Date, days: number): Date => {
+  const result = new Date(date);
+  result.setDate(result.getDate() + days);
+  return result;
+};
+
+export const formatDateForInput = (date: Date): string => {
+  return date.toISOString().split('T')[0];
+};
+
+export const isToday = (date: string | Date): boolean => {
+  const dateObj = typeof date === 'string' ? new Date(date) : date;
+  const today = new Date();
+  
+  return dateObj.toDateString() === today.toDateString();
+};
+
+export const isWithinDays = (date: string | Date, days: number): boolean => {
+  const dateObj = typeof date === 'string' ? new Date(date) : date;
+  const today = new Date();
+  const diffTime = Math.abs(today.getTime() - dateObj.getTime());
+  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+  
+  return diffDays <= days;
+};
